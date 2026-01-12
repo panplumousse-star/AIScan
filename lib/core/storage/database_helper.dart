@@ -375,6 +375,80 @@ class DatabaseHelper {
     return results;
   }
 
+  /// Searches documents using LIKE-based queries when FTS is unavailable.
+  ///
+  /// This is the fallback search method when neither FTS5 nor FTS4 is available.
+  /// It provides basic search functionality using SQL LIKE patterns:
+  /// - Each search term is converted to a '%term%' pattern
+  /// - Multiple terms are combined with AND for all-terms matching
+  /// - Searches across title, description, and OCR text columns
+  ///
+  /// LIKE-based search has limitations compared to FTS:
+  /// - No relevance ranking (results ordered by creation date instead)
+  /// - Case-insensitive matching depends on SQLite collation
+  /// - Slower performance on large datasets (no index optimization)
+  ///
+  /// Parameters:
+  /// - [db]: The database instance to query
+  /// - [query]: The search query string
+  ///
+  /// Returns a list of document maps matching the search query, ordered by creation date.
+  ///
+  /// Example:
+  /// ```dart
+  /// final results = await _searchWithLike(db, 'flutter tutorial');
+  /// // Returns documents where title, description, or OCR text contains both terms
+  /// ```
+  Future<List<Map<String, dynamic>>> _searchWithLike(
+    Database db,
+    String query,
+  ) async {
+    // Split query into terms and filter empty strings
+    final terms = query.trim().split(RegExp(r'\s+'))
+        .where((term) => term.isNotEmpty)
+        .toList();
+
+    if (terms.isEmpty) {
+      return [];
+    }
+
+    // Build conditions for each term across all searchable columns
+    final conditions = <String>[];
+    final args = <dynamic>[];
+
+    for (final term in terms) {
+      // Escape LIKE special characters (%, _) in the term
+      final escapedTerm = term
+          .replaceAll('%', r'\%')
+          .replaceAll('_', r'\_');
+      final likePattern = '%$escapedTerm%';
+
+      // Each term must match at least one column (OR within term)
+      // All terms must be found (AND between terms)
+      conditions.add('''
+        ($columnTitle LIKE ? ESCAPE '\\' OR
+         $columnDescription LIKE ? ESCAPE '\\' OR
+         $columnOcrText LIKE ? ESCAPE '\\')
+      ''');
+
+      // Add the pattern three times (once for each column)
+      args.addAll([likePattern, likePattern, likePattern]);
+    }
+
+    // Combine all term conditions with AND
+    final whereClause = conditions.join(' AND ');
+
+    // Query documents with LIKE matching, ordered by creation date (most recent first)
+    final results = await db.rawQuery('''
+      SELECT *
+      FROM $tableDocuments
+      WHERE $whereClause
+      ORDER BY $columnCreatedAt DESC
+    ''', args);
+
+    return results;
+  }
+
   /// Escapes special characters in FTS queries to prevent syntax errors.
   ///
   /// FTS5 and FTS4 have special characters that can cause query syntax errors:

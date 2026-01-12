@@ -1,0 +1,40 @@
+# Analysis options for AIScan Flutter project.
+# This file configures the analyzer to use the flutter_lints package.
+
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    # Effective Dart style rules
+    prefer_single_quotes: true
+    prefer_relative_imports: true
+    avoid_redundant_argument_values: true
+
+    # Code quality rules
+    avoid_print: true
+    avoid_empty_else: true
+    avoid_returning_null_for_void: true
+    avoid_types_as_parameter_names: true
+    avoid_unnecessary_containers: true
+    cancel_subscriptions: true
+    close_sinks: true
+
+    # Documentation rules
+    public_member_api_docs: false
+    package_api_docs: false
+
+    # Security-related rules
+    avoid_web_libraries_in_flutter: true
+
+analyzer:
+  errors:
+    # Treat these as errors
+    avoid_print: error
+    missing_required_param: error
+    missing_return: error
+
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "build/**"
+    - ".dart_tool/**"

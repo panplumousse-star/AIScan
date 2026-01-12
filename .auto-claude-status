@@ -1,0 +1,25 @@
+{
+  "active": true,
+  "spec": "001-plan",
+  "state": "complete",
+  "subtasks": {
+    "completed": 53,
+    "total": 53,
+    "in_progress": 0,
+    "failed": 0
+  },
+  "phase": {
+    "current": "Integration & E2E Testing",
+    "id": null,
+    "total": 6
+  },
+  "workers": {
+    "active": 0,
+    "max": 1
+  },
+  "session": {
+    "number": 20,
+    "started_at": "2026-01-11T16:02:24.580623"
+  },
+  "last_update": "2026-01-11T17:22:07.493711"
+}

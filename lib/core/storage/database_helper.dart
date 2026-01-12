@@ -1,7 +1,13 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+
+/// Riverpod provider for [DatabaseHelper].
+final databaseHelperProvider = Provider<DatabaseHelper>((ref) {
+  return DatabaseHelper();
+});
 
 /// Database helper class for managing SQLite database operations.
 ///
@@ -25,6 +31,10 @@ class DatabaseHelper {
   // Table names
   static const String tableDocuments = 'documents';
   static const String tableDocumentsFts = 'documents_fts';
+  static const String tableFolders = 'folders';
+  static const String tableTags = 'tags';
+  static const String tableDocumentTags = 'document_tags';
+  static const String tableSignatures = 'signatures';
 
   // Column names for documents table
   static const String columnId = 'id';
@@ -33,6 +43,16 @@ class DatabaseHelper {
   static const String columnOcrText = 'ocr_text';
   static const String columnCreatedAt = 'created_at';
   static const String columnUpdatedAt = 'updated_at';
+  static const String columnFolderId = 'folder_id';
+  static const String columnIsFavorite = 'is_favorite';
+  static const String columnFilePath = 'file_path';
+  static const String columnThumbnailPath = 'thumbnail_path';
+  static const String columnFileSize = 'file_size';
+  static const String columnPageCount = 'page_count';
+
+  // Column names for document_tags table
+  static const String columnDocumentId = 'document_id';
+  static const String columnTagId = 'tag_id';
 
   /// Active FTS version: 5 (FTS5), 4 (FTS4), or 0 (disabled)
   ///
@@ -70,17 +90,74 @@ class DatabaseHelper {
 
   /// Creates database tables and FTS indexes.
   Future<void> _onCreate(Database db, int version) async {
-    // Create main documents table
+    // Create folders table
     await db.execute('''
-      CREATE TABLE $tableDocuments (
-        $columnId INTEGER PRIMARY KEY AUTOINCREMENT,
-        $columnTitle TEXT NOT NULL,
-        $columnDescription TEXT,
-        $columnOcrText TEXT,
+      CREATE TABLE $tableFolders (
+        $columnId TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        parent_id TEXT,
         $columnCreatedAt TEXT NOT NULL,
         $columnUpdatedAt TEXT NOT NULL
       )
     ''');
+
+    // Create main documents table
+    await db.execute('''
+      CREATE TABLE $tableDocuments (
+        $columnId TEXT PRIMARY KEY,
+        $columnTitle TEXT NOT NULL,
+        $columnDescription TEXT,
+        $columnFilePath TEXT NOT NULL,
+        $columnThumbnailPath TEXT,
+        original_file_name TEXT,
+        $columnPageCount INTEGER NOT NULL DEFAULT 1,
+        $columnFileSize INTEGER NOT NULL DEFAULT 0,
+        mime_type TEXT,
+        $columnOcrText TEXT,
+        ocr_status TEXT DEFAULT 'pending',
+        $columnCreatedAt TEXT NOT NULL,
+        $columnUpdatedAt TEXT NOT NULL,
+        $columnFolderId TEXT,
+        $columnIsFavorite INTEGER NOT NULL DEFAULT 0,
+        FOREIGN KEY ($columnFolderId) REFERENCES $tableFolders($columnId) ON DELETE SET NULL
+      )
+    ''');
+
+    // Create tags table
+    await db.execute('''
+      CREATE TABLE $tableTags (
+        $columnId TEXT PRIMARY KEY,
+        name TEXT NOT NULL UNIQUE,
+        color TEXT,
+        $columnCreatedAt TEXT NOT NULL
+      )
+    ''');
+
+    // Create document_tags junction table
+    await db.execute('''
+      CREATE TABLE $tableDocumentTags (
+        $columnDocumentId TEXT NOT NULL,
+        $columnTagId TEXT NOT NULL,
+        PRIMARY KEY ($columnDocumentId, $columnTagId),
+        FOREIGN KEY ($columnDocumentId) REFERENCES $tableDocuments($columnId) ON DELETE CASCADE,
+        FOREIGN KEY ($columnTagId) REFERENCES $tableTags($columnId) ON DELETE CASCADE
+      )
+    ''');
+
+    // Create signatures table
+    await db.execute('''
+      CREATE TABLE $tableSignatures (
+        $columnId TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        $columnFilePath TEXT NOT NULL,
+        $columnCreatedAt TEXT NOT NULL
+      )
+    ''');
+
+    // Create indices for common queries
+    await db.execute('CREATE INDEX idx_documents_folder ON $tableDocuments($columnFolderId)');
+    await db.execute('CREATE INDEX idx_documents_favorite ON $tableDocuments($columnIsFavorite)');
+    await db.execute('CREATE INDEX idx_documents_created ON $tableDocuments($columnCreatedAt)');
 
     // Initialize FTS tables and triggers with automatic fallback
     await _initializeFts(db);
@@ -253,41 +330,83 @@ class DatabaseHelper {
   /// }
   /// ```
   Future<void> _initializeFts(Database db) async {
-    // Try FTS5 first (best performance)
-    try {
-      await _createFts5Tables(db);
-      await _createFts5Triggers(db);
-      setFtsVersion(5);
-      debugPrint('FTS5 initialized successfully');
-      return;
-    } catch (e) {
-      if (e.toString().contains('no such module')) {
-        debugPrint('FTS5 not available, trying FTS4...');
-      } else {
-        // Unexpected error - rethrow to avoid silent failures
-        rethrow;
+    // Check FTS5 availability first (without creating table)
+    if (await _isFtsModuleAvailable(db, 'fts5')) {
+      try {
+        await _createFts5Tables(db);
+        await _createFts5Triggers(db);
+        setFtsVersion(5);
+        debugPrint('FTS5 initialized successfully');
+        return;
+      } catch (e) {
+        debugPrint('FTS5 creation failed: $e');
+        await _cleanupFts(db);
       }
+    } else {
+      debugPrint('FTS5 module not available, trying FTS4...');
     }
 
-    // Try FTS4 fallback (universal compatibility)
-    try {
-      await _createFts4Tables(db);
-      await _createFts4Triggers(db);
-      setFtsVersion(4);
-      debugPrint('FTS4 initialized successfully');
-      return;
-    } catch (e) {
-      if (e.toString().contains('no such module')) {
-        debugPrint('FTS4 not available, disabling FTS');
-      } else {
-        // Unexpected error - rethrow to avoid silent failures
-        rethrow;
+    // Check FTS4 availability
+    if (await _isFtsModuleAvailable(db, 'fts4')) {
+      try {
+        await _createFts4Tables(db);
+        await _createFts4Triggers(db);
+        setFtsVersion(4);
+        debugPrint('FTS4 initialized successfully');
+        return;
+      } catch (e) {
+        debugPrint('FTS4 creation failed: $e');
+        await _cleanupFts(db);
       }
+    } else {
+      debugPrint('FTS4 module not available');
     }
 
     // FTS completely disabled - app will use LIKE-based search
     setFtsVersion(0);
     debugPrint('WARNING: FTS unavailable, using LIKE-based search');
+  }
+
+  /// Checks if an FTS module is available without creating a table.
+  Future<bool> _isFtsModuleAvailable(Database db, String moduleName) async {
+    try {
+      // Query the compile_options to check for FTS support
+      final result = await db.rawQuery('PRAGMA compile_options');
+      final options = result.map((r) => r.values.first.toString().toUpperCase()).toList();
+
+      if (moduleName == 'fts5') {
+        return options.any((o) => o.contains('FTS5') || o.contains('ENABLE_FTS5'));
+      } else if (moduleName == 'fts4') {
+        // FTS4 is usually enabled with FTS3
+        return options.any((o) => o.contains('FTS4') || o.contains('FTS3') || o.contains('ENABLE_FTS3'));
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Error checking FTS module availability: $e');
+      return false;
+    }
+  }
+
+  /// Cleans up FTS tables and triggers after a failed initialization attempt.
+  Future<void> _cleanupFts(Database db) async {
+    try {
+      await db.execute('DROP TRIGGER IF EXISTS documents_ai');
+      await db.execute('DROP TRIGGER IF EXISTS documents_ad');
+      await db.execute('DROP TRIGGER IF EXISTS documents_au');
+      // Use DELETE FROM sqlite_master as fallback if DROP TABLE fails
+      try {
+        await db.execute('DROP TABLE IF EXISTS $tableDocumentsFts');
+      } catch (e) {
+        debugPrint('Standard DROP failed, trying sqlite_master cleanup');
+        try {
+          await db.execute("DELETE FROM sqlite_master WHERE name = '$tableDocumentsFts'");
+        } catch (e2) {
+          debugPrint('sqlite_master cleanup also failed: $e2');
+        }
+      }
+    } catch (e) {
+      debugPrint('FTS cleanup error (ignored): $e');
+    }
   }
 
   /// Searches documents using FTS5 full-text search with rank ordering.
@@ -489,22 +608,13 @@ class DatabaseHelper {
   /// Parameters:
   /// - [query]: The search query string
   ///
-  /// Returns a list of document maps matching the search query.
+  /// Returns a list of document IDs matching the search query.
   /// Results are ordered by:
   /// - Relevance (FTS5): Best matches first
   /// - Creation date (FTS4/LIKE): Most recent first
   ///
   /// Returns an empty list if the query is empty or contains only whitespace.
-  ///
-  /// Example:
-  /// ```dart
-  /// final helper = DatabaseHelper();
-  /// final results = await helper.searchDocuments('flutter tutorial');
-  /// for (final doc in results) {
-  ///   print('${doc['title']}: ${doc['description']}');
-  /// }
-  /// ```
-  Future<List<Map<String, dynamic>>> searchDocuments(String query) async {
+  Future<List<String>> searchDocuments(String query) async {
     // Return empty list for empty queries
     if (query.trim().isEmpty) {
       return [];
@@ -512,16 +622,22 @@ class DatabaseHelper {
 
     final db = await database;
 
+    List<Map<String, dynamic>> results;
     // Dispatch to appropriate search method based on FTS version
     switch (_ftsVersion) {
       case 5:
-        return await _searchWithFts5(db, query);
+        results = await _searchWithFts5(db, query);
+        break;
       case 4:
-        return await _searchWithFts4(db, query);
+        results = await _searchWithFts4(db, query);
+        break;
       default:
         // FTS disabled (version 0) - use LIKE-based search
-        return await _searchWithLike(db, query);
+        results = await _searchWithLike(db, query);
     }
+
+    // Extract and return only the document IDs
+    return results.map((row) => row[columnId] as String).toList();
   }
 
   /// Rebuilds the FTS index to optimize search performance.
@@ -563,4 +679,108 @@ class DatabaseHelper {
       debugPrint('FTS$_ftsVersion index rebuilt successfully');
     }
   }
+
+  // ============================================================
+  // CRUD Methods
+  // ============================================================
+
+  /// Inserts a row into the specified table.
+  Future<int> insert(String table, Map<String, dynamic> values) async {
+    final db = await database;
+    return await db.insert(table, values);
+  }
+
+  /// Queries rows from the specified table.
+  Future<List<Map<String, dynamic>>> query(
+    String table, {
+    bool? distinct,
+    List<String>? columns,
+    String? where,
+    List<dynamic>? whereArgs,
+    String? groupBy,
+    String? having,
+    String? orderBy,
+    int? limit,
+    int? offset,
+  }) async {
+    final db = await database;
+    return await db.query(
+      table,
+      distinct: distinct,
+      columns: columns,
+      where: where,
+      whereArgs: whereArgs,
+      groupBy: groupBy,
+      having: having,
+      orderBy: orderBy,
+      limit: limit,
+      offset: offset,
+    );
+  }
+
+  /// Updates rows in the specified table.
+  Future<int> update(
+    String table,
+    Map<String, dynamic> values, {
+    String? where,
+    List<dynamic>? whereArgs,
+  }) async {
+    final db = await database;
+    return await db.update(table, values, where: where, whereArgs: whereArgs);
+  }
+
+  /// Deletes rows from the specified table.
+  Future<int> delete(
+    String table, {
+    String? where,
+    List<dynamic>? whereArgs,
+  }) async {
+    final db = await database;
+    return await db.delete(table, where: where, whereArgs: whereArgs);
+  }
+
+  /// Gets a single row by ID from the specified table.
+  Future<Map<String, dynamic>?> getById(String table, String id) async {
+    final db = await database;
+    final results = await db.query(
+      table,
+      where: '$columnId = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+    return results.isNotEmpty ? results.first : null;
+  }
+
+  /// Counts rows in the specified table.
+  Future<int> count(String table, {String? where, List<dynamic>? whereArgs}) async {
+    final db = await database;
+    final result = await db.rawQuery(
+      'SELECT COUNT(*) as count FROM $table${where != null ? ' WHERE $where' : ''}',
+      whereArgs,
+    );
+    return Sqflite.firstIntValue(result) ?? 0;
+  }
+
+  /// Executes a raw SQL query.
+  Future<List<Map<String, dynamic>>> rawQuery(
+    String sql, [
+    List<dynamic>? arguments,
+  ]) async {
+    final db = await database;
+    return await db.rawQuery(sql, arguments);
+  }
+
+  /// Executes operations within a transaction.
+  Future<T> transaction<T>(Future<T> Function(Transaction txn) action) async {
+    final db = await database;
+    return await db.transaction(action);
+  }
+
+  /// Initializes the database (call this at app startup).
+  Future<void> initialize() async {
+    await database;
+  }
+
+  /// Whether full-text search is available.
+  bool get isFtsAvailable => _ftsVersion > 0;
 }

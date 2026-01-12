@@ -289,4 +289,73 @@ class DatabaseHelper {
     setFtsVersion(0);
     debugPrint('WARNING: FTS unavailable, using LIKE-based search');
   }
+
+  /// Searches documents using FTS5 full-text search with rank ordering.
+  ///
+  /// FTS5 provides the best search performance with:
+  /// - `MATCH` clause for full-text queries
+  /// - Built-in `rank` column for relevance-based ordering
+  /// - Automatic tokenization and stemming
+  ///
+  /// The query is escaped to prevent FTS5 syntax errors from special characters.
+  /// Results are returned ordered by relevance (best matches first).
+  ///
+  /// Parameters:
+  /// - [db]: The database instance to query
+  /// - [query]: The search query string (will be escaped for FTS5 syntax)
+  ///
+  /// Returns a list of document maps matching the search query, ordered by relevance.
+  ///
+  /// Example:
+  /// ```dart
+  /// final results = await _searchWithFts5(db, 'flutter tutorial');
+  /// // Returns documents containing 'flutter' AND 'tutorial', ranked by relevance
+  /// ```
+  Future<List<Map<String, dynamic>>> _searchWithFts5(
+    Database db,
+    String query,
+  ) async {
+    // Escape special FTS5 characters to prevent syntax errors
+    final escapedQuery = _escapeFtsQuery(query);
+
+    // FTS5 query with rank ordering for relevance-based results
+    // JOIN with main table to get all document columns
+    // ORDER BY rank ASC because FTS5 rank values are negative (closer to 0 = better match)
+    final results = await db.rawQuery('''
+      SELECT d.*
+      FROM $tableDocuments d
+      INNER JOIN $tableDocumentsFts fts ON d.rowid = fts.rowid
+      WHERE $tableDocumentsFts MATCH ?
+      ORDER BY fts.rank
+    ''', [escapedQuery]);
+
+    return results;
+  }
+
+  /// Escapes special characters in FTS queries to prevent syntax errors.
+  ///
+  /// FTS5 and FTS4 have special characters that can cause query syntax errors:
+  /// - `"` (double quote) - phrase queries
+  /// - `*` (asterisk) - prefix queries
+  /// - `^` (caret) - boost operator (FTS5 only)
+  /// - `-` (minus) - exclusion operator
+  /// - `+` (plus) - required term operator
+  ///
+  /// This method wraps each search term in double quotes to treat them as literals.
+  ///
+  /// Parameters:
+  /// - [query]: The raw search query from user input
+  ///
+  /// Returns an escaped query string safe for FTS MATCH operations.
+  String _escapeFtsQuery(String query) {
+    // Split query into terms and wrap each in double quotes
+    // This treats each term as a literal phrase, escaping special characters
+    final terms = query.trim().split(RegExp(r'\s+'));
+    final escapedTerms = terms
+        .where((term) => term.isNotEmpty)
+        .map((term) => '"${term.replaceAll('"', '""')}"')
+        .toList();
+
+    return escapedTerms.join(' ');
+  }
 }

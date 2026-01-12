@@ -82,8 +82,8 @@ class DatabaseHelper {
       )
     ''');
 
-    // TODO: Initialize FTS tables and triggers via _initializeFts()
-    // Will be implemented in subsequent subtasks
+    // Initialize FTS tables and triggers with automatic fallback
+    await _initializeFts(db);
   }
 
   /// Handles database upgrades.

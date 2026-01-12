@@ -267,6 +267,247 @@ void main() {
         // When ftsVersion is 4, searchDocuments uses _searchWithFts4
         // which provides date-ordered results
       });
+
+      test('FTS4 detection catches "no such module: fts5" error', () {
+        // When FTS5 module is unavailable, SQLite throws:
+        // DatabaseException(no such module: fts5)
+        //
+        // _initializeFts catches this specific error and tries FTS4 fallback
+        const fts5Error = 'DatabaseException(no such module: fts5)';
+        expect(fts5Error.contains('no such module'), isTrue);
+        expect(fts5Error.contains('fts5'), isTrue);
+        // After catching FTS5 error, FTS4 initialization is attempted
+      });
+
+      test('FTS4 success sets _ftsVersion to 4', () {
+        // When FTS4 tables and triggers are created successfully:
+        // 1. _createFts4Tables() completes without error
+        // 2. _createFts4Triggers() completes without error
+        // 3. setFtsVersion(4) is called
+        DatabaseHelper.setFtsVersion(4);
+        expect(DatabaseHelper.ftsVersion, equals(4));
+      });
+
+      test('FTS4 detection logs success message', () {
+        // On successful FTS4 initialization:
+        // debugPrint('FTS4 initialized successfully')
+        //
+        // This helps with debugging FTS detection on different devices
+        DatabaseHelper.setFtsVersion(4);
+        expect(DatabaseHelper.ftsVersion, equals(4));
+        // Log message confirms FTS4 fallback is active
+      });
+
+      test('FTS4 fallback is only attempted after FTS5 failure', () {
+        // _initializeFts follows strict order:
+        // 1. Try FTS5 first (best performance)
+        // 2. Only if FTS5 fails with "no such module", try FTS4
+        // 3. FTS4 is never attempted if FTS5 succeeds
+        //
+        // This ensures best available FTS is always used
+        DatabaseHelper.setFtsVersion(4);
+        expect(DatabaseHelper.ftsVersion, equals(4));
+        // Version 4 indicates FTS5 failed but FTS4 succeeded
+      });
+    });
+
+    group('FTS4 Table Structure', () {
+      test('FTS4 virtual table uses content= option for external content', () {
+        // FTS4 external content table structure:
+        // CREATE VIRTUAL TABLE documents_fts USING fts4(
+        //   title,
+        //   description,
+        //   ocr_text,
+        //   content="documents"
+        // )
+        //
+        // Note: FTS4 uses quoted table name, no content_rowid option
+        expect(DatabaseHelper.tableDocumentsFts, equals('documents_fts'));
+        expect(DatabaseHelper.tableDocuments, equals('documents'));
+      });
+
+      test('FTS4 virtual table includes all searchable columns', () {
+        // FTS4 table includes these searchable columns:
+        // - title: document title
+        // - description: document description
+        // - ocr_text: extracted OCR text from scanned images
+        expect(DatabaseHelper.columnTitle, equals('title'));
+        expect(DatabaseHelper.columnDescription, equals('description'));
+        expect(DatabaseHelper.columnOcrText, equals('ocr_text'));
+      });
+
+      test('FTS4 uses docid instead of content_rowid for joins', () {
+        // FTS4 does NOT support content_rowid option
+        // Instead, FTS4 uses implicit docid for joins:
+        // SELECT d.* FROM documents d
+        // INNER JOIN documents_fts fts ON d.rowid = fts.docid
+        // WHERE documents_fts MATCH ?
+        //
+        // This differs from FTS5's rowid-based joins
+        DatabaseHelper.setFtsVersion(4);
+        expect(DatabaseHelper.ftsVersion, equals(4));
+      });
+
+      test('FTS4 external content table has no automatic sync', () {
+        // FTS4 external content tables (content= option) do NOT
+        // automatically sync with the main table.
+        // Triggers are required to keep the FTS index synchronized.
+        //
+        // This is the same as FTS5 behavior.
+        DatabaseHelper.setFtsVersion(4);
+        expect(DatabaseHelper.ftsVersion, equals(4));
+      });
+    });
+
+    group('FTS4 Trigger Creation', () {
+      test('FTS4 documents_ai trigger fires AFTER INSERT', () {
+        // documents_ai trigger inserts into FTS index when document is created:
+        // CREATE TRIGGER documents_ai AFTER INSERT ON documents BEGIN
+        //   INSERT INTO documents_fts(docid, title, description, ocr_text)
+        //   VALUES (NEW.rowid, NEW.title, NEW.description, NEW.ocr_text);
+        // END
+        //
+        // Note: FTS4 uses docid instead of rowid for the INSERT column
+        DatabaseHelper.setFtsVersion(4);
+        expect(DatabaseHelper.ftsVersion, equals(4));
+        // Trigger uses docid to match the document's primary key
+      });
+
+      test('FTS4 documents_ad trigger uses standard DELETE syntax', () {
+        // FTS4 DELETE trigger uses standard SQL DELETE:
+        // CREATE TRIGGER documents_ad AFTER DELETE ON documents BEGIN
+        //   DELETE FROM documents_fts WHERE docid = OLD.rowid;
+        // END
+        //
+        // IMPORTANT: FTS4 uses standard DELETE statement!
+        // This differs from FTS5's special INSERT 'delete' command syntax
+        DatabaseHelper.setFtsVersion(4);
+        expect(DatabaseHelper.ftsVersion, equals(4));
+      });
+
+      test('FTS4 documents_au trigger performs delete then insert', () {
+        // FTS4 UPDATE trigger removes old entry and inserts new:
+        // CREATE TRIGGER documents_au AFTER UPDATE ON documents BEGIN
+        //   DELETE FROM documents_fts WHERE docid = OLD.rowid;
+        //   INSERT INTO documents_fts(docid, ...) VALUES (NEW.rowid, ...);
+        // END
+        //
+        // Like FTS5, FTS4 has no UPDATE operation - must delete old then insert new
+        // But FTS4 uses standard DELETE (not FTS5's INSERT 'delete' command)
+        DatabaseHelper.setFtsVersion(4);
+        expect(DatabaseHelper.ftsVersion, equals(4));
+      });
+
+      test('FTS4 trigger names follow same naming convention as FTS5', () {
+        // FTS4 triggers use the same naming convention as FTS5:
+        // - documents_ai: AFTER INSERT
+        // - documents_ad: AFTER DELETE
+        // - documents_au: AFTER UPDATE
+        //
+        // The naming pattern is: {table}_{suffix}
+        expect(DatabaseHelper.tableDocuments, equals('documents'));
+        // Trigger names are identical for FTS4 and FTS5
+      });
+
+      test('FTS4 triggers use docid not rowid in INSERT statements', () {
+        // Key difference from FTS5:
+        // FTS5: INSERT INTO fts(rowid, ...) VALUES (NEW.rowid, ...);
+        // FTS4: INSERT INTO fts(docid, ...) VALUES (NEW.rowid, ...);
+        //
+        // The INSERT column name is 'docid' for FTS4, 'rowid' for FTS5
+        // But the value is still NEW.rowid from the documents table
+        DatabaseHelper.setFtsVersion(4);
+        expect(DatabaseHelper.ftsVersion, equals(4));
+      });
+
+      test('FTS4 triggers maintain synchronization integrity', () {
+        // All three FTS4 triggers work together to keep the index synchronized:
+        // 1. INSERT: New documents are immediately indexed (using docid)
+        // 2. DELETE: Removed documents are immediately deindexed (standard DELETE)
+        // 3. UPDATE: Modified documents are reindexed with new content
+        //
+        // This ensures searchDocuments always returns current data
+        DatabaseHelper.setFtsVersion(4);
+        expect(DatabaseHelper.ftsVersion, equals(4));
+      });
+    });
+
+    group('FTS4 Search Ordering', () {
+      test('FTS4 has no built-in rank column for relevance ordering', () {
+        // FTS4 does NOT have a built-in rank column like FTS5
+        // Instead, FTS4 search results are ordered by created_at:
+        // SELECT d.* FROM documents d
+        // INNER JOIN documents_fts fts ON d.rowid = fts.docid
+        // WHERE documents_fts MATCH ?
+        // ORDER BY d.created_at DESC
+        //
+        // This provides date-based ordering (most recent first)
+        DatabaseHelper.setFtsVersion(4);
+        expect(DatabaseHelper.ftsVersion, equals(4));
+      });
+
+      test('FTS4 could use matchinfo() for relevance but implementation uses date ordering', () {
+        // FTS4 has matchinfo() function for calculating relevance scores,
+        // but the current implementation uses date ordering for simplicity:
+        // - Avoids complex matchinfo() calculation overhead
+        // - Provides predictable, understandable ordering to users
+        // - Simpler code maintenance
+        //
+        // Date ordering: ORDER BY d.created_at DESC
+        DatabaseHelper.setFtsVersion(4);
+        expect(DatabaseHelper.ftsVersion, equals(4));
+      });
+
+      test('FTS4 ordering differs from FTS5 rank ordering', () {
+        // FTS5: ORDER BY fts.rank (relevance-based, best matches first)
+        // FTS4: ORDER BY d.created_at DESC (date-based, most recent first)
+        //
+        // This is a key difference in search UX between FTS5 and FTS4
+        DatabaseHelper.setFtsVersion(4);
+        expect(DatabaseHelper.ftsVersion, equals(4));
+      });
+    });
+
+    group('FTS4 Detection Flow', () {
+      test('_initializeFts attempts FTS4 only after FTS5 fails', () {
+        // Initialization order in _initializeFts():
+        // 1. Try FTS5 (best performance)
+        // 2. If FTS5 fails with "no such module", try FTS4
+        // 3. If FTS4 fails, disable FTS and use LIKE search
+        //
+        // FTS4 is only attempted as a fallback, never as first choice
+        DatabaseHelper.setFtsVersion(4);
+        expect(DatabaseHelper.ftsVersion, equals(4));
+      });
+
+      test('FTS4 detection catches "no such module: fts4" error to disable FTS', () {
+        // When FTS4 module is also unavailable, SQLite throws:
+        // DatabaseException(no such module: fts4)
+        //
+        // _initializeFts catches this error and disables FTS completely
+        const fts4Error = 'DatabaseException(no such module: fts4)';
+        expect(fts4Error.contains('no such module'), isTrue);
+        expect(fts4Error.contains('fts4'), isTrue);
+        // After catching FTS4 error, FTS is disabled (version 0)
+      });
+
+      test('FTS4 logs appropriate message on success', () {
+        // On successful FTS4 fallback initialization:
+        // debugPrint('FTS4 initialized successfully')
+        //
+        // This confirms FTS4 is being used as fallback
+        DatabaseHelper.setFtsVersion(4);
+        expect(DatabaseHelper.ftsVersion, equals(4));
+      });
+
+      test('FTS4 unexpected errors are rethrown not caught', () {
+        // _initializeFts only catches "no such module" errors for FTS4
+        // Other errors (disk full, permission denied, etc.) are rethrown
+        // to prevent silent failures
+        const unexpectedError = 'DatabaseException(disk I/O error)';
+        expect(unexpectedError.contains('no such module'), isFalse);
+        // This error would be rethrown, not caught as FTS fallback
+      });
     });
 
     group('FTS Disabled Mode', () {

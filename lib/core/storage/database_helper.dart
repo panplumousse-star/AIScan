@@ -193,4 +193,42 @@ class DatabaseHelper {
       )
     ''');
   }
+
+  /// Creates FTS4 triggers to keep the FTS index synchronized with the main table.
+  ///
+  /// FTS4 external content tables require triggers to maintain synchronization:
+  /// - `documents_ai`: AFTER INSERT - adds new documents to FTS index
+  /// - `documents_ad`: AFTER DELETE - removes deleted documents from FTS index
+  /// - `documents_au`: AFTER UPDATE - updates modified documents in FTS index
+  ///
+  /// Note: FTS4 uses standard DELETE statement syntax for removing entries,
+  /// which differs from FTS5's special 'delete' command syntax.
+  Future<void> _createFts4Triggers(Database db) async {
+    // AFTER INSERT trigger - add new document to FTS index
+    // FTS4 uses docid instead of rowid for the primary key reference
+    await db.execute('''
+      CREATE TRIGGER documents_ai AFTER INSERT ON $tableDocuments BEGIN
+        INSERT INTO $tableDocumentsFts(docid, $columnTitle, $columnDescription, $columnOcrText)
+        VALUES (NEW.rowid, NEW.$columnTitle, NEW.$columnDescription, NEW.$columnOcrText);
+      END
+    ''');
+
+    // AFTER DELETE trigger - remove document from FTS index
+    // FTS4 uses standard DELETE statement (not FTS5's special INSERT syntax)
+    await db.execute('''
+      CREATE TRIGGER documents_ad AFTER DELETE ON $tableDocuments BEGIN
+        DELETE FROM $tableDocumentsFts WHERE docid = OLD.rowid;
+      END
+    ''');
+
+    // AFTER UPDATE trigger - update document in FTS index
+    // FTS4 requires delete of old entry followed by insert of new entry
+    await db.execute('''
+      CREATE TRIGGER documents_au AFTER UPDATE ON $tableDocuments BEGIN
+        DELETE FROM $tableDocumentsFts WHERE docid = OLD.rowid;
+        INSERT INTO $tableDocumentsFts(docid, $columnTitle, $columnDescription, $columnOcrText)
+        VALUES (NEW.rowid, NEW.$columnTitle, NEW.$columnDescription, NEW.$columnOcrText);
+      END
+    ''');
+  }
 }

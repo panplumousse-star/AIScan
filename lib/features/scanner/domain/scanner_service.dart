@@ -345,10 +345,6 @@ enum ScanMode {
 /// - **Multi-Page Support**: Scan up to 100 pages in one session
 /// - **Gallery Import**: Import existing photos as documents
 ///
-/// ## Camera Permissions
-/// **IMPORTANT**: ML Kit handles camera permissions automatically.
-/// Do NOT request camera permissions manually - this will cause conflicts.
-///
 /// ## Usage
 /// ```dart
 /// final scanner = ref.read(scannerServiceProvider);

@@ -113,4 +113,25 @@ class DatabaseHelper {
     assert(version >= 0 && version <= 5, 'FTS version must be 0, 4, or 5');
     _ftsVersion = version;
   }
+
+  /// Creates FTS5 virtual table for full-text search.
+  ///
+  /// FTS5 provides the best search performance with:
+  /// - Built-in `rank` column for relevance ordering
+  /// - `content=` option for external content tables
+  /// - `content_rowid=` option to specify the rowid column
+  ///
+  /// Throws [DatabaseException] with 'no such module: fts5' if FTS5
+  /// is not available on the device.
+  Future<void> _createFts5Tables(Database db) async {
+    await db.execute('''
+      CREATE VIRTUAL TABLE $tableDocumentsFts USING fts5(
+        $columnTitle,
+        $columnDescription,
+        $columnOcrText,
+        content=$tableDocuments,
+        content_rowid=rowid
+      )
+    ''');
+  }
 }

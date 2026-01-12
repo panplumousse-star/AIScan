@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
-import '../../../lib/core/storage/database_helper.dart';
+import 'package:aiscan/core/storage/database_helper.dart';
 
 /// Tests for DatabaseHelper FTS detection and fallback logic.
 ///

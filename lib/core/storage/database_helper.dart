@@ -523,4 +523,44 @@ class DatabaseHelper {
         return await _searchWithLike(db, query);
     }
   }
+
+  /// Rebuilds the FTS index to optimize search performance.
+  ///
+  /// FTS indexes can become fragmented over time as documents are added,
+  /// updated, and deleted. Rebuilding the index optimizes storage and
+  /// can improve search performance.
+  ///
+  /// Behavior based on [_ftsVersion]:
+  /// - FTS5 (version 5): Executes 'rebuild' command to optimize index
+  /// - FTS4 (version 4): Executes 'rebuild' command to optimize index
+  /// - Disabled (version 0): No-op, returns immediately (no index to rebuild)
+  ///
+  /// This operation can be slow for large datasets and should typically
+  /// be run during app idle time or maintenance windows.
+  ///
+  /// Example:
+  /// ```dart
+  /// final helper = DatabaseHelper();
+  /// await helper.rebuildFtsIndex();
+  /// debugPrint('FTS index rebuilt successfully');
+  /// ```
+  Future<void> rebuildFtsIndex() async {
+    // No FTS index to rebuild in disabled mode
+    if (_ftsVersion == 0) {
+      debugPrint('FTS disabled, skipping index rebuild');
+      return;
+    }
+
+    final db = await database;
+
+    // Both FTS5 and FTS4 support the 'rebuild' command
+    // FTS5/FTS4 syntax: INSERT INTO fts_table(fts_table) VALUES('rebuild')
+    // This optimizes the FTS index by merging segments and removing deleted content
+    if (_ftsVersion == 5 || _ftsVersion == 4) {
+      await db.execute('''
+        INSERT INTO $tableDocumentsFts($tableDocumentsFts) VALUES('rebuild')
+      ''');
+      debugPrint('FTS$_ftsVersion index rebuilt successfully');
+    }
+  }
 }

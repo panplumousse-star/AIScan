@@ -134,4 +134,43 @@ class DatabaseHelper {
       )
     ''');
   }
+
+  /// Creates FTS5 triggers to keep the FTS index synchronized with the main table.
+  ///
+  /// FTS5 external content tables require triggers to maintain synchronization:
+  /// - `documents_ai`: AFTER INSERT - adds new documents to FTS index
+  /// - `documents_ad`: AFTER DELETE - removes deleted documents from FTS index
+  /// - `documents_au`: AFTER UPDATE - updates modified documents in FTS index
+  ///
+  /// Note: FTS5 uses a special 'delete' command syntax for removing entries,
+  /// which differs from FTS4's standard DELETE statement.
+  Future<void> _createFts5Triggers(Database db) async {
+    // AFTER INSERT trigger - add new document to FTS index
+    await db.execute('''
+      CREATE TRIGGER documents_ai AFTER INSERT ON $tableDocuments BEGIN
+        INSERT INTO $tableDocumentsFts(rowid, $columnTitle, $columnDescription, $columnOcrText)
+        VALUES (NEW.rowid, NEW.$columnTitle, NEW.$columnDescription, NEW.$columnOcrText);
+      END
+    ''');
+
+    // AFTER DELETE trigger - remove document from FTS index
+    // FTS5 uses special INSERT with 'delete' command (not standard DELETE)
+    await db.execute('''
+      CREATE TRIGGER documents_ad AFTER DELETE ON $tableDocuments BEGIN
+        INSERT INTO $tableDocumentsFts($tableDocumentsFts, rowid, $columnTitle, $columnDescription, $columnOcrText)
+        VALUES ('delete', OLD.rowid, OLD.$columnTitle, OLD.$columnDescription, OLD.$columnOcrText);
+      END
+    ''');
+
+    // AFTER UPDATE trigger - update document in FTS index
+    // FTS5 requires delete of old entry followed by insert of new entry
+    await db.execute('''
+      CREATE TRIGGER documents_au AFTER UPDATE ON $tableDocuments BEGIN
+        INSERT INTO $tableDocumentsFts($tableDocumentsFts, rowid, $columnTitle, $columnDescription, $columnOcrText)
+        VALUES ('delete', OLD.rowid, OLD.$columnTitle, OLD.$columnDescription, OLD.$columnOcrText);
+        INSERT INTO $tableDocumentsFts(rowid, $columnTitle, $columnDescription, $columnOcrText)
+        VALUES (NEW.rowid, NEW.$columnTitle, NEW.$columnDescription, NEW.$columnOcrText);
+      END
+    ''');
+  }
 }

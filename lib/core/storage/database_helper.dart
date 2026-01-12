@@ -332,6 +332,49 @@ class DatabaseHelper {
     return results;
   }
 
+  /// Searches documents using FTS4 full-text search without rank ordering.
+  ///
+  /// FTS4 provides universal compatibility with older Android devices:
+  /// - `MATCH` clause for full-text queries
+  /// - Uses `docid` as the implicit rowid reference
+  /// - No built-in `rank` column (results ordered by creation date instead)
+  ///
+  /// The query is escaped to prevent FTS4 syntax errors from special characters.
+  /// Results are returned ordered by creation date (most recent first) since
+  /// FTS4 does not provide built-in relevance scoring like FTS5's rank.
+  ///
+  /// Parameters:
+  /// - [db]: The database instance to query
+  /// - [query]: The search query string (will be escaped for FTS4 syntax)
+  ///
+  /// Returns a list of document maps matching the search query, ordered by creation date.
+  ///
+  /// Example:
+  /// ```dart
+  /// final results = await _searchWithFts4(db, 'flutter tutorial');
+  /// // Returns documents containing 'flutter' AND 'tutorial', ordered by date
+  /// ```
+  Future<List<Map<String, dynamic>>> _searchWithFts4(
+    Database db,
+    String query,
+  ) async {
+    // Escape special FTS4 characters to prevent syntax errors
+    final escapedQuery = _escapeFtsQuery(query);
+
+    // FTS4 query without rank ordering (FTS4 has no built-in rank)
+    // JOIN with main table to get all document columns
+    // ORDER BY created_at DESC for most recent first (no relevance ranking available)
+    final results = await db.rawQuery('''
+      SELECT d.*
+      FROM $tableDocuments d
+      INNER JOIN $tableDocumentsFts fts ON d.rowid = fts.docid
+      WHERE $tableDocumentsFts MATCH ?
+      ORDER BY d.$columnCreatedAt DESC
+    ''', [escapedQuery]);
+
+    return results;
+  }
+
   /// Escapes special characters in FTS queries to prevent syntax errors.
   ///
   /// FTS5 and FTS4 have special characters that can cause query syntax errors:

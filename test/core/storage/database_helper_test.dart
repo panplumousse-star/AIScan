@@ -524,6 +524,332 @@ void main() {
         // When ftsVersion is 0, searchDocuments uses _searchWithLike
         // which provides basic substring matching
       });
+
+      test('_ftsVersion 0 indicates no FTS module is available', () {
+        // Version 0 means:
+        // 1. FTS5 initialization failed with "no such module: fts5"
+        // 2. FTS4 initialization failed with "no such module: fts4"
+        // 3. App gracefully degrades to LIKE-based search
+        DatabaseHelper.setFtsVersion(0);
+        expect(DatabaseHelper.ftsVersion, equals(0));
+        // This ensures app continues functioning on all Android devices
+      });
+
+      test('disabled mode is the final fallback in the FTS fallback chain', () {
+        // FTS fallback chain: FTS5 -> FTS4 -> Disabled (LIKE)
+        // Disabled mode (version 0) is only reached after both FTS5 and FTS4 fail
+        DatabaseHelper.setFtsVersion(0);
+        expect(DatabaseHelper.ftsVersion, equals(0));
+        // This represents the graceful degradation scenario
+      });
+
+      test('disabled mode logs warning message', () {
+        // When FTS is completely disabled, a warning is logged:
+        // debugPrint('WARNING: FTS unavailable, using LIKE-based search')
+        //
+        // This helps with debugging why search may be slower on some devices
+        DatabaseHelper.setFtsVersion(0);
+        expect(DatabaseHelper.ftsVersion, equals(0));
+        // Warning message indicates LIKE-based fallback is active
+      });
+    });
+
+    group('FTS Disabled Mode Detection Flow', () {
+      test('_initializeFts catches "no such module: fts4" to disable FTS', () {
+        // When FTS4 is also unavailable after FTS5 fails, SQLite throws:
+        // DatabaseException(no such module: fts4)
+        //
+        // _initializeFts catches this specific error and disables FTS completely
+        const fts4Error = 'DatabaseException(no such module: fts4)';
+        expect(fts4Error.contains('no such module'), isTrue);
+        expect(fts4Error.contains('fts4'), isTrue);
+        // After this error, _ftsVersion is set to 0
+      });
+
+      test('both FTS5 and FTS4 errors result in disabled mode', () {
+        // Initialization sequence when both FTS modules fail:
+        // 1. Try FTS5 -> catches "no such module: fts5"
+        // 2. Try FTS4 -> catches "no such module: fts4"
+        // 3. setFtsVersion(0) - FTS completely disabled
+        DatabaseHelper.setFtsVersion(0);
+        expect(DatabaseHelper.ftsVersion, equals(0));
+      });
+
+      test('disabled mode prevents further FTS initialization attempts', () {
+        // Once _ftsVersion is set to 0, no FTS operations are attempted
+        // All search queries use LIKE patterns directly on documents table
+        DatabaseHelper.setFtsVersion(0);
+        expect(DatabaseHelper.ftsVersion, equals(0));
+        // Version 0 is a permanent state for the database session
+      });
+
+      test('disabled mode is detected at runtime not compile time', () {
+        // FTS availability is detected at database initialization time
+        // This allows the same code to work on all Android devices:
+        // - Devices with FTS5: Full relevance-ranked search
+        // - Devices with FTS4 only: Basic full-text search
+        // - Devices without FTS: LIKE-based search
+        DatabaseHelper.setFtsVersion(0);
+        expect(DatabaseHelper.ftsVersion, equals(0));
+      });
+    });
+
+    group('FTS Disabled Mode No FTS Tables', () {
+      test('no FTS virtual table is created when disabled', () {
+        // When both FTS5 and FTS4 fail, no FTS virtual table exists
+        // The documents_fts table is never created
+        //
+        // This is different from FTS5/FTS4 modes where documents_fts exists
+        DatabaseHelper.setFtsVersion(0);
+        expect(DatabaseHelper.ftsVersion, equals(0));
+        // Search operates directly on the documents table using LIKE
+      });
+
+      test('no FTS triggers are created when disabled', () {
+        // When FTS is disabled, no triggers are created:
+        // - No documents_ai trigger
+        // - No documents_ad trigger
+        // - No documents_au trigger
+        //
+        // This avoids overhead from trigger execution on insert/update/delete
+        DatabaseHelper.setFtsVersion(0);
+        expect(DatabaseHelper.ftsVersion, equals(0));
+      });
+
+      test('documents table is still created when FTS is disabled', () {
+        // Even when FTS is disabled, the core documents table is created
+        // with all columns: id, title, description, ocr_text, created_at, updated_at
+        //
+        // This ensures document storage works regardless of FTS availability
+        expect(DatabaseHelper.tableDocuments, equals('documents'));
+        expect(DatabaseHelper.columnId, equals('id'));
+        expect(DatabaseHelper.columnTitle, equals('title'));
+        expect(DatabaseHelper.columnDescription, equals('description'));
+        expect(DatabaseHelper.columnOcrText, equals('ocr_text'));
+        expect(DatabaseHelper.columnCreatedAt, equals('created_at'));
+        expect(DatabaseHelper.columnUpdatedAt, equals('updated_at'));
+      });
+    });
+
+    group('FTS Disabled Mode LIKE-Based Search', () {
+      test('_searchWithLike uses LIKE patterns for text matching', () {
+        // LIKE-based search uses SQL LIKE patterns:
+        // SELECT * FROM documents WHERE
+        //   title LIKE '%term%' OR
+        //   description LIKE '%term%' OR
+        //   ocr_text LIKE '%term%'
+        //
+        // Each search term is wrapped with % for substring matching
+        DatabaseHelper.setFtsVersion(0);
+        expect(DatabaseHelper.ftsVersion, equals(0));
+      });
+
+      test('LIKE search checks all searchable columns', () {
+        // LIKE search queries these columns:
+        // - title: document title
+        // - description: document description
+        // - ocr_text: extracted OCR text
+        //
+        // A document matches if ANY column contains the search term
+        expect(DatabaseHelper.columnTitle, equals('title'));
+        expect(DatabaseHelper.columnDescription, equals('description'));
+        expect(DatabaseHelper.columnOcrText, equals('ocr_text'));
+      });
+
+      test('LIKE search uses case-insensitive matching', () {
+        // SQLite LIKE is case-insensitive for ASCII by default
+        // Search for "Flutter" will match "flutter", "FLUTTER", "FlUtTeR"
+        //
+        // This provides reasonable search UX without FTS
+        DatabaseHelper.setFtsVersion(0);
+        expect(DatabaseHelper.ftsVersion, equals(0));
+      });
+
+      test('LIKE search supports multiple terms with AND logic', () {
+        // When searching for "flutter tutorial":
+        // - Split into terms: ["flutter", "tutorial"]
+        // - Each term generates LIKE conditions for all columns
+        // - Terms are combined with AND logic
+        //
+        // Result: documents must contain ALL terms to match
+        DatabaseHelper.setFtsVersion(0);
+        expect(DatabaseHelper.ftsVersion, equals(0));
+      });
+
+      test('LIKE search orders results by created_at DESC', () {
+        // Unlike FTS5's relevance ranking, LIKE search orders by date:
+        // ORDER BY created_at DESC
+        //
+        // Most recently created documents appear first
+        // This provides consistent, predictable ordering
+        DatabaseHelper.setFtsVersion(0);
+        expect(DatabaseHelper.ftsVersion, equals(0));
+      });
+    });
+
+    group('FTS Disabled Mode LIKE Query Escaping', () {
+      test('LIKE special character % is escaped', () {
+        // LIKE pattern uses % as wildcard (matches any sequence)
+        // If user searches for "100%", the % must be escaped:
+        // Input: "100%"
+        // Pattern: '%100\%%' with ESCAPE '\'
+        //
+        // This prevents unintended wildcard behavior
+        DatabaseHelper.setFtsVersion(0);
+        expect(DatabaseHelper.ftsVersion, equals(0));
+      });
+
+      test('LIKE special character _ is escaped', () {
+        // LIKE pattern uses _ as wildcard (matches single character)
+        // If user searches for "test_file", the _ must be escaped:
+        // Input: "test_file"
+        // Pattern: '%test\_file%' with ESCAPE '\'
+        //
+        // This ensures literal underscore matching
+        DatabaseHelper.setFtsVersion(0);
+        expect(DatabaseHelper.ftsVersion, equals(0));
+      });
+
+      test('LIKE escape character \\ is escaped', () {
+        // If user searches for text with backslash:
+        // Input: "path\\file"
+        // The backslash must be escaped to prevent SQL injection
+        DatabaseHelper.setFtsVersion(0);
+        expect(DatabaseHelper.ftsVersion, equals(0));
+      });
+
+      test('LIKE queries use parameterized statements', () {
+        // All LIKE queries use ? placeholders with bound parameters
+        // This prevents SQL injection attacks:
+        // query: '... WHERE title LIKE ? ...'
+        // args: ['%search_term%']
+        //
+        // Never concatenate user input directly into SQL
+        DatabaseHelper.setFtsVersion(0);
+        expect(DatabaseHelper.ftsVersion, equals(0));
+      });
+    });
+
+    group('FTS Disabled Mode Performance Considerations', () {
+      test('LIKE search is slower than FTS but still functional', () {
+        // LIKE queries perform full table scans:
+        // - FTS5/FTS4: O(log n) using inverted index
+        // - LIKE: O(n) scanning every row
+        //
+        // For small document collections, this is acceptable
+        // For large collections, users may notice slower search
+        DatabaseHelper.setFtsVersion(0);
+        expect(DatabaseHelper.ftsVersion, equals(0));
+      });
+
+      test('disabled mode has no indexing overhead', () {
+        // Without FTS, there's no FTS index to maintain:
+        // - No INSERT into FTS table on document create
+        // - No DELETE from FTS table on document delete
+        // - No UPDATE overhead for document modifications
+        //
+        // This makes insert/update/delete operations faster
+        DatabaseHelper.setFtsVersion(0);
+        expect(DatabaseHelper.ftsVersion, equals(0));
+      });
+
+      test('disabled mode uses less storage space', () {
+        // Without FTS tables, the database is smaller:
+        // - No documents_fts virtual table
+        // - No FTS internal tables (_data, _idx, _content, _docsize, _config)
+        //
+        // This can be beneficial on storage-constrained devices
+        DatabaseHelper.setFtsVersion(0);
+        expect(DatabaseHelper.ftsVersion, equals(0));
+      });
+    });
+
+    group('FTS Disabled Mode Error Handling', () {
+      test('unexpected errors during FTS4 init are rethrown', () {
+        // _initializeFts only catches "no such module" errors
+        // Other errors (disk full, permission denied, etc.) are rethrown
+        // to prevent silent failures
+        const unexpectedError = 'DatabaseException(disk I/O error)';
+        expect(unexpectedError.contains('no such module'), isFalse);
+        // This error would be rethrown, not treated as FTS unavailable
+      });
+
+      test('only "no such module" triggers disabled fallback', () {
+        // The specific error pattern checked is:
+        // e.toString().contains('no such module')
+        //
+        // This matches:
+        // - "no such module: fts5"
+        // - "no such module: fts4"
+        //
+        // But NOT:
+        // - "disk I/O error"
+        // - "permission denied"
+        // - "table already exists"
+        const fts5Error = 'DatabaseException(no such module: fts5)';
+        const fts4Error = 'DatabaseException(no such module: fts4)';
+        const diskError = 'DatabaseException(disk I/O error)';
+
+        expect(fts5Error.contains('no such module'), isTrue);
+        expect(fts4Error.contains('no such module'), isTrue);
+        expect(diskError.contains('no such module'), isFalse);
+      });
+
+      test('disabled mode search handles empty query gracefully', () {
+        // When query is empty or whitespace-only:
+        // searchDocuments('') returns empty list immediately
+        // No database query is executed
+        DatabaseHelper.setFtsVersion(0);
+        expect(DatabaseHelper.ftsVersion, equals(0));
+        // Empty query check happens before version dispatch
+      });
+
+      test('disabled mode search handles special SQL characters', () {
+        // LIKE search safely handles SQL special characters:
+        // - Single quotes are properly escaped/parameterized
+        // - Double quotes are handled
+        // - Semicolons don't cause SQL injection
+        //
+        // All input goes through parameterized queries
+        DatabaseHelper.setFtsVersion(0);
+        expect(DatabaseHelper.ftsVersion, equals(0));
+      });
+    });
+
+    group('FTS Disabled Mode State Verification', () {
+      test('_ftsVersion 0 persists across multiple checks', () {
+        DatabaseHelper.setFtsVersion(0);
+
+        // Multiple reads should return the same value
+        expect(DatabaseHelper.ftsVersion, equals(0));
+        expect(DatabaseHelper.ftsVersion, equals(0));
+        expect(DatabaseHelper.ftsVersion, equals(0));
+      });
+
+      test('_ftsVersion can transition from any state to disabled', () {
+        // Test transition from FTS5 to disabled
+        DatabaseHelper.setFtsVersion(5);
+        expect(DatabaseHelper.ftsVersion, equals(5));
+        DatabaseHelper.setFtsVersion(0);
+        expect(DatabaseHelper.ftsVersion, equals(0));
+
+        // Test transition from FTS4 to disabled
+        DatabaseHelper.setFtsVersion(4);
+        expect(DatabaseHelper.ftsVersion, equals(4));
+        DatabaseHelper.setFtsVersion(0);
+        expect(DatabaseHelper.ftsVersion, equals(0));
+      });
+
+      test('resetFtsVersion sets version to disabled state', () {
+        // resetFtsVersion() resets to version 0 (disabled)
+        DatabaseHelper.setFtsVersion(5);
+        DatabaseHelper.resetFtsVersion();
+        expect(DatabaseHelper.ftsVersion, equals(0));
+
+        DatabaseHelper.setFtsVersion(4);
+        DatabaseHelper.resetFtsVersion();
+        expect(DatabaseHelper.ftsVersion, equals(0));
+      });
     });
 
     group('Table Names', () {

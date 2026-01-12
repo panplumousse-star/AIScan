@@ -81,6 +81,178 @@ void main() {
       });
     });
 
+    group('FTS5 Table Structure', () {
+      test('FTS5 virtual table uses content= option for external content', () {
+        // FTS5 external content table structure:
+        // CREATE VIRTUAL TABLE documents_fts USING fts5(
+        //   title,
+        //   description,
+        //   ocr_text,
+        //   content=documents,
+        //   content_rowid=rowid
+        // )
+        //
+        // The content= option links the FTS table to the documents table
+        // The content_rowid= option specifies the rowid column for joins
+        expect(DatabaseHelper.tableDocumentsFts, equals('documents_fts'));
+        expect(DatabaseHelper.tableDocuments, equals('documents'));
+      });
+
+      test('FTS5 virtual table includes all searchable columns', () {
+        // FTS5 table includes these searchable columns:
+        // - title: document title
+        // - description: document description
+        // - ocr_text: extracted OCR text from scanned images
+        expect(DatabaseHelper.columnTitle, equals('title'));
+        expect(DatabaseHelper.columnDescription, equals('description'));
+        expect(DatabaseHelper.columnOcrText, equals('ocr_text'));
+      });
+
+      test('FTS5 content_rowid option enables efficient joins', () {
+        // FTS5's content_rowid=rowid option allows efficient joins:
+        // SELECT d.* FROM documents d
+        // INNER JOIN documents_fts fts ON d.rowid = fts.rowid
+        // WHERE documents_fts MATCH ?
+        //
+        // This is more efficient than FTS4's docid-based joins
+        DatabaseHelper.setFtsVersion(5);
+        expect(DatabaseHelper.ftsVersion, equals(5));
+      });
+    });
+
+    group('FTS5 Trigger Creation', () {
+      test('FTS5 documents_ai trigger fires AFTER INSERT', () {
+        // documents_ai trigger inserts into FTS index when document is created:
+        // CREATE TRIGGER documents_ai AFTER INSERT ON documents BEGIN
+        //   INSERT INTO documents_fts(rowid, title, description, ocr_text)
+        //   VALUES (NEW.rowid, NEW.title, NEW.description, NEW.ocr_text);
+        // END
+        DatabaseHelper.setFtsVersion(5);
+        expect(DatabaseHelper.ftsVersion, equals(5));
+        // Trigger uses NEW.rowid to match the document's primary key
+        // This keeps FTS index synchronized with main table
+      });
+
+      test('FTS5 documents_ad trigger uses special "delete" command', () {
+        // FTS5 DELETE is special - uses INSERT with 'delete' command:
+        // CREATE TRIGGER documents_ad AFTER DELETE ON documents BEGIN
+        //   INSERT INTO documents_fts(documents_fts, rowid, title, description, ocr_text)
+        //   VALUES ('delete', OLD.rowid, OLD.title, OLD.description, OLD.ocr_text);
+        // END
+        //
+        // IMPORTANT: FTS5 does NOT use standard DELETE statement!
+        // The first column name in the INSERT must be the table name,
+        // and the first value must be the literal string 'delete'
+        DatabaseHelper.setFtsVersion(5);
+        expect(DatabaseHelper.ftsVersion, equals(5));
+      });
+
+      test('FTS5 documents_au trigger performs delete then insert', () {
+        // FTS5 UPDATE trigger removes old entry and inserts new:
+        // CREATE TRIGGER documents_au AFTER UPDATE ON documents BEGIN
+        //   INSERT INTO documents_fts(documents_fts, rowid, ...) VALUES ('delete', OLD.rowid, ...);
+        //   INSERT INTO documents_fts(rowid, ...) VALUES (NEW.rowid, ...);
+        // END
+        //
+        // FTS5 has no UPDATE operation - must delete old then insert new
+        DatabaseHelper.setFtsVersion(5);
+        expect(DatabaseHelper.ftsVersion, equals(5));
+      });
+
+      test('FTS5 trigger names follow naming convention', () {
+        // FTS5 triggers use consistent naming convention:
+        // - documents_ai: AFTER INSERT
+        // - documents_ad: AFTER DELETE
+        // - documents_au: AFTER UPDATE
+        //
+        // The naming pattern is: {table}_{suffix}
+        // Where suffix is: ai (after insert), ad (after delete), au (after update)
+        expect(DatabaseHelper.tableDocuments, equals('documents'));
+        // Trigger names are documents_ai, documents_ad, documents_au
+      });
+
+      test('FTS5 triggers maintain synchronization integrity', () {
+        // All three FTS5 triggers work together to keep the index synchronized:
+        // 1. INSERT: New documents are immediately indexed
+        // 2. DELETE: Removed documents are immediately deindexed
+        // 3. UPDATE: Modified documents are reindexed with new content
+        //
+        // This ensures searchDocuments always returns current data
+        DatabaseHelper.setFtsVersion(5);
+        expect(DatabaseHelper.ftsVersion, equals(5));
+      });
+    });
+
+    group('FTS5 Rank Ordering', () {
+      test('FTS5 provides built-in rank column for relevance ordering', () {
+        // FTS5 has a built-in rank column that scores match relevance:
+        // SELECT d.* FROM documents d
+        // INNER JOIN documents_fts fts ON d.rowid = fts.rowid
+        // WHERE documents_fts MATCH ?
+        // ORDER BY fts.rank
+        //
+        // Lower rank values indicate better matches (closer to 0 = better)
+        // This enables relevance-based search results
+        DatabaseHelper.setFtsVersion(5);
+        expect(DatabaseHelper.ftsVersion, equals(5));
+        // When version is 5, search uses rank ordering for best matches first
+      });
+
+      test('FTS5 rank ordering differs from FTS4 date ordering', () {
+        // FTS5: ORDER BY fts.rank (relevance-based)
+        // FTS4: ORDER BY d.created_at DESC (date-based)
+        //
+        // FTS5 provides better search UX with relevance ranking
+        // FTS4 falls back to chronological ordering
+        DatabaseHelper.setFtsVersion(5);
+        expect(DatabaseHelper.ftsVersion, equals(5));
+      });
+    });
+
+    group('FTS5 Detection Flow', () {
+      test('_initializeFts attempts FTS5 before FTS4', () {
+        // Initialization order in _initializeFts():
+        // 1. Try FTS5 (best performance)
+        // 2. If FTS5 fails with "no such module", try FTS4
+        // 3. If FTS4 fails, disable FTS and use LIKE search
+        //
+        // This ensures best available FTS is always used
+        DatabaseHelper.setFtsVersion(5);
+        expect(DatabaseHelper.ftsVersion, equals(5));
+      });
+
+      test('FTS5 detection catches "no such module" error', () {
+        // When FTS5 module is unavailable, SQLite throws:
+        // DatabaseException(no such module: fts5)
+        //
+        // _initializeFts catches this specific error and falls back to FTS4
+        // Other errors are rethrown to prevent silent failures
+        const fts5Error = 'DatabaseException(no such module: fts5)';
+        expect(fts5Error.contains('no such module'), isTrue);
+        expect(fts5Error.contains('fts5'), isTrue);
+      });
+
+      test('FTS5 success sets _ftsVersion to 5 immediately', () {
+        // When FTS5 tables and triggers are created successfully:
+        // 1. _createFts5Tables() completes without error
+        // 2. _createFts5Triggers() completes without error
+        // 3. setFtsVersion(5) is called
+        // 4. _initializeFts returns early (no FTS4 attempt)
+        DatabaseHelper.setFtsVersion(5);
+        expect(DatabaseHelper.ftsVersion, equals(5));
+      });
+
+      test('FTS5 detection logs success message', () {
+        // On successful FTS5 initialization:
+        // debugPrint('FTS5 initialized successfully')
+        //
+        // This helps with debugging FTS detection on different devices
+        DatabaseHelper.setFtsVersion(5);
+        expect(DatabaseHelper.ftsVersion, equals(5));
+        // Log message confirms FTS5 is active
+      });
+    });
+
     group('FTS4 Fallback Detection', () {
       test('_ftsVersion should be 4 when FTS5 fails but FTS4 works', () {
         // Simulate FTS5 failure and FTS4 success

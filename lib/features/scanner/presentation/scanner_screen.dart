@@ -251,17 +251,6 @@ final scannerScreenProvider =
 /// );
 /// ```
 ///
-/// ## One-Click Scan Workflow
-/// For the one-click scan workflow, use [ScannerScreen.withQuickScan]:
-/// ```dart
-/// Navigator.push(
-///   context,
-///   MaterialPageRoute(
-///     builder: (_) => const ScannerScreen(startWithQuickScan: true),
-///   ),
-/// );
-/// ```
-///
 /// ## Custom Title and Folder
 /// ```dart
 /// ScannerScreen(
@@ -273,19 +262,12 @@ final scannerScreenProvider =
 class ScannerScreen extends ConsumerStatefulWidget {
   const ScannerScreen({
     super.key,
-    this.startWithQuickScan = false,
     this.documentTitle,
     this.folderId,
     this.onDocumentSaved,
     @Deprecated('Use onDocumentSaved instead')
     this.onScanComplete,
   });
-
-  /// Whether to automatically start a quick scan on screen open.
-  ///
-  /// When true, the scanner will open immediately when the screen loads.
-  /// This enables the one-click scan workflow from the home screen.
-  final bool startWithQuickScan;
 
   /// Optional title for the saved document.
   ///
@@ -306,34 +288,11 @@ class ScannerScreen extends ConsumerStatefulWidget {
   @Deprecated('Use onDocumentSaved instead')
   final void Function(ScanResult result)? onScanComplete;
 
-  /// Creates a ScannerScreen that starts scanning immediately.
-  static Widget withQuickScan({
-    Key? key,
-    void Function(Document document)? onDocumentSaved,
-  }) {
-    return ScannerScreen(
-      key: key,
-      startWithQuickScan: true,
-      onDocumentSaved: onDocumentSaved,
-    );
-  }
-
   @override
   ConsumerState<ScannerScreen> createState() => _ScannerScreenState();
 }
 
 class _ScannerScreenState extends ConsumerState<ScannerScreen> {
-  @override
-  void initState() {
-    super.initState();
-    if (widget.startWithQuickScan) {
-      // Start quick scan after the first frame
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(scannerScreenProvider.notifier).quickScan();
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(scannerScreenProvider);

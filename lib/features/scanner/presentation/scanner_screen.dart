@@ -377,8 +377,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     }
 
     return _EmptyView(
-      onQuickScan: notifier.quickScan,
-      onMultiPageScan: () => notifier.multiPageScan(),
+      onScan: () => notifier.multiPageScan(),
     );
   }
 
@@ -494,15 +493,13 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
   }
 }
 
-/// Empty state view with scan options.
+/// Empty state view with scan action.
 class _EmptyView extends StatelessWidget {
   const _EmptyView({
-    required this.onQuickScan,
-    required this.onMultiPageScan,
+    required this.onScan,
   });
 
-  final VoidCallback onQuickScan;
-  final VoidCallback onMultiPageScan;
+  final VoidCallback onScan;
 
   @override
   Widget build(BuildContext context) {
@@ -528,7 +525,7 @@ class _EmptyView extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Choose a scanning mode to get started',
+              'Position your document and tap to start scanning',
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -536,19 +533,10 @@ class _EmptyView extends StatelessWidget {
             ),
             const SizedBox(height: 48),
             FilledButton.icon(
-              onPressed: onQuickScan,
-              icon: const Icon(Icons.camera_alt_outlined),
-              label: const Text('Quick Scan'),
+              onPressed: onScan,
+              icon: const Icon(Icons.document_scanner_outlined),
+              label: const Text('Start Scanning'),
               style: FilledButton.styleFrom(
-                minimumSize: const Size(200, 56),
-              ),
-            ),
-            const SizedBox(height: 16),
-            OutlinedButton.icon(
-              onPressed: onMultiPageScan,
-              icon: const Icon(Icons.photo_library_outlined),
-              label: const Text('Multi-Page Scan'),
-              style: OutlinedButton.styleFrom(
                 minimumSize: const Size(200, 56),
               ),
             ),

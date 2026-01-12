@@ -231,4 +231,62 @@ class DatabaseHelper {
       END
     ''');
   }
+
+  /// Initializes FTS (Full-Text Search) tables with automatic fallback.
+  ///
+  /// Implements a three-tier fallback strategy:
+  /// 1. FTS5 (best performance with rank ordering)
+  /// 2. FTS4 (universal compatibility fallback)
+  /// 3. Disabled (graceful degradation with LIKE-based search)
+  ///
+  /// This method detects FTS module availability at runtime by attempting
+  /// to create FTS virtual tables and catching "no such module" errors.
+  /// The detected version is stored in [_ftsVersion] for use by search methods.
+  ///
+  /// Should be called during database creation in [_onCreate].
+  ///
+  /// Example:
+  /// ```dart
+  /// Future<void> _onCreate(Database db, int version) async {
+  ///   await db.execute('CREATE TABLE ...');
+  ///   await _initializeFts(db);
+  /// }
+  /// ```
+  Future<void> _initializeFts(Database db) async {
+    // Try FTS5 first (best performance)
+    try {
+      await _createFts5Tables(db);
+      await _createFts5Triggers(db);
+      setFtsVersion(5);
+      debugPrint('FTS5 initialized successfully');
+      return;
+    } catch (e) {
+      if (e.toString().contains('no such module')) {
+        debugPrint('FTS5 not available, trying FTS4...');
+      } else {
+        // Unexpected error - rethrow to avoid silent failures
+        rethrow;
+      }
+    }
+
+    // Try FTS4 fallback (universal compatibility)
+    try {
+      await _createFts4Tables(db);
+      await _createFts4Triggers(db);
+      setFtsVersion(4);
+      debugPrint('FTS4 initialized successfully');
+      return;
+    } catch (e) {
+      if (e.toString().contains('no such module')) {
+        debugPrint('FTS4 not available, disabling FTS');
+      } else {
+        // Unexpected error - rethrow to avoid silent failures
+        rethrow;
+      }
+    }
+
+    // FTS completely disabled - app will use LIKE-based search
+    setFtsVersion(0);
+    debugPrint('WARNING: FTS unavailable, using LIKE-based search');
+  }
 }

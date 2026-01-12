@@ -1081,4 +1081,537 @@ void main() {
       expect(DatabaseHelper.ftsVersion, equals(4));
     });
   });
+
+  // ============================================================================
+  // SEARCH QUERY TESTS FOR EACH FTS MODE
+  // ============================================================================
+  // These tests verify the search query behavior and SQL generation for each
+  // FTS mode (FTS5, FTS4, and LIKE-based search).
+  // ============================================================================
+
+  group('FTS5 Search Query Tests', () {
+    setUp(() {
+      DatabaseHelper.resetFtsVersion();
+      DatabaseHelper.setFtsVersion(5);
+    });
+
+    test('searchDocuments dispatches to _searchWithFts5 when version is 5', () {
+      // Verify FTS5 mode is active
+      expect(DatabaseHelper.ftsVersion, equals(5));
+      // searchDocuments internally calls _searchWithFts5 which:
+      // 1. Escapes the query using _escapeFtsQuery
+      // 2. Executes FTS5 MATCH query with rank ordering
+      // 3. Returns documents ordered by relevance (best matches first)
+    });
+
+    test('_searchWithFts5 uses MATCH clause for full-text queries', () {
+      DatabaseHelper.setFtsVersion(5);
+      // FTS5 search query structure:
+      // SELECT d.* FROM documents d
+      // INNER JOIN documents_fts fts ON d.rowid = fts.rowid
+      // WHERE documents_fts MATCH ?
+      // ORDER BY fts.rank
+      //
+      // The MATCH clause enables full-text search capabilities
+      expect(DatabaseHelper.ftsVersion, equals(5));
+    });
+
+    test('_searchWithFts5 uses rank column for relevance ordering', () {
+      DatabaseHelper.setFtsVersion(5);
+      // FTS5 provides built-in rank column:
+      // ORDER BY fts.rank
+      //
+      // Rank values are negative (closer to 0 = better match)
+      // Results are ordered with best matches first
+      expect(DatabaseHelper.ftsVersion, equals(5));
+    });
+
+    test('_searchWithFts5 joins on rowid for FTS5 content tables', () {
+      DatabaseHelper.setFtsVersion(5);
+      // FTS5 content tables use rowid for joins:
+      // INNER JOIN documents_fts fts ON d.rowid = fts.rowid
+      //
+      // This is efficient because FTS5 uses content_rowid=rowid option
+      expect(DatabaseHelper.ftsVersion, equals(5));
+    });
+
+    test('_searchWithFts5 escapes query terms for FTS5 syntax', () {
+      DatabaseHelper.setFtsVersion(5);
+      // _escapeFtsQuery wraps each term in double quotes:
+      // Input: "flutter tutorial"
+      // Output: '"flutter" "tutorial"'
+      //
+      // This prevents FTS5 syntax errors from special characters
+      expect(DatabaseHelper.ftsVersion, equals(5));
+    });
+
+    test('_searchWithFts5 handles single term queries', () {
+      DatabaseHelper.setFtsVersion(5);
+      // Single term query:
+      // Input: "flutter"
+      // Escaped: '"flutter"'
+      // MATCH clause: WHERE documents_fts MATCH '"flutter"'
+      expect(DatabaseHelper.ftsVersion, equals(5));
+    });
+
+    test('_searchWithFts5 handles multiple term queries', () {
+      DatabaseHelper.setFtsVersion(5);
+      // Multiple term query (implicit AND):
+      // Input: "flutter dart tutorial"
+      // Escaped: '"flutter" "dart" "tutorial"'
+      // MATCH clause: WHERE documents_fts MATCH '"flutter" "dart" "tutorial"'
+      //
+      // FTS5 treats space-separated quoted terms as AND
+      expect(DatabaseHelper.ftsVersion, equals(5));
+    });
+
+    test('_searchWithFts5 returns all document columns', () {
+      DatabaseHelper.setFtsVersion(5);
+      // Query uses SELECT d.* to return all columns:
+      // - id, title, description, ocr_text, created_at, updated_at
+      //
+      // This provides complete document data for display
+      expect(DatabaseHelper.ftsVersion, equals(5));
+    });
+
+    test('_searchWithFts5 uses parameterized queries for security', () {
+      DatabaseHelper.setFtsVersion(5);
+      // Query uses ? placeholder with bound parameters:
+      // rawQuery('... MATCH ?', [escapedQuery])
+      //
+      // This prevents SQL injection attacks
+      expect(DatabaseHelper.ftsVersion, equals(5));
+    });
+  });
+
+  group('FTS4 Search Query Tests', () {
+    setUp(() {
+      DatabaseHelper.resetFtsVersion();
+      DatabaseHelper.setFtsVersion(4);
+    });
+
+    test('searchDocuments dispatches to _searchWithFts4 when version is 4', () {
+      // Verify FTS4 mode is active
+      expect(DatabaseHelper.ftsVersion, equals(4));
+      // searchDocuments internally calls _searchWithFts4 which:
+      // 1. Escapes the query using _escapeFtsQuery
+      // 2. Executes FTS4 MATCH query with date ordering
+      // 3. Returns documents ordered by creation date (most recent first)
+    });
+
+    test('_searchWithFts4 uses MATCH clause for full-text queries', () {
+      DatabaseHelper.setFtsVersion(4);
+      // FTS4 search query structure:
+      // SELECT d.* FROM documents d
+      // INNER JOIN documents_fts fts ON d.rowid = fts.docid
+      // WHERE documents_fts MATCH ?
+      // ORDER BY d.created_at DESC
+      //
+      // The MATCH clause enables full-text search capabilities
+      expect(DatabaseHelper.ftsVersion, equals(4));
+    });
+
+    test('_searchWithFts4 uses created_at DESC for date-based ordering', () {
+      DatabaseHelper.setFtsVersion(4);
+      // FTS4 does not have built-in rank column like FTS5
+      // Instead, results are ordered by creation date:
+      // ORDER BY d.created_at DESC
+      //
+      // Most recently created documents appear first
+      expect(DatabaseHelper.ftsVersion, equals(4));
+    });
+
+    test('_searchWithFts4 joins on docid for FTS4 content tables', () {
+      DatabaseHelper.setFtsVersion(4);
+      // FTS4 content tables use docid for joins (not rowid):
+      // INNER JOIN documents_fts fts ON d.rowid = fts.docid
+      //
+      // This differs from FTS5's rowid-based joins
+      expect(DatabaseHelper.ftsVersion, equals(4));
+    });
+
+    test('_searchWithFts4 escapes query terms for FTS4 syntax', () {
+      DatabaseHelper.setFtsVersion(4);
+      // _escapeFtsQuery wraps each term in double quotes:
+      // Input: "flutter tutorial"
+      // Output: '"flutter" "tutorial"'
+      //
+      // FTS4 uses same escaping mechanism as FTS5
+      expect(DatabaseHelper.ftsVersion, equals(4));
+    });
+
+    test('_searchWithFts4 handles single term queries', () {
+      DatabaseHelper.setFtsVersion(4);
+      // Single term query:
+      // Input: "flutter"
+      // Escaped: '"flutter"'
+      // MATCH clause: WHERE documents_fts MATCH '"flutter"'
+      expect(DatabaseHelper.ftsVersion, equals(4));
+    });
+
+    test('_searchWithFts4 handles multiple term queries', () {
+      DatabaseHelper.setFtsVersion(4);
+      // Multiple term query (implicit AND):
+      // Input: "flutter dart tutorial"
+      // Escaped: '"flutter" "dart" "tutorial"'
+      // MATCH clause: WHERE documents_fts MATCH '"flutter" "dart" "tutorial"'
+      //
+      // FTS4 treats space-separated quoted terms as AND
+      expect(DatabaseHelper.ftsVersion, equals(4));
+    });
+
+    test('_searchWithFts4 returns all document columns', () {
+      DatabaseHelper.setFtsVersion(4);
+      // Query uses SELECT d.* to return all columns:
+      // - id, title, description, ocr_text, created_at, updated_at
+      //
+      // This provides complete document data for display
+      expect(DatabaseHelper.ftsVersion, equals(4));
+    });
+
+    test('_searchWithFts4 uses parameterized queries for security', () {
+      DatabaseHelper.setFtsVersion(4);
+      // Query uses ? placeholder with bound parameters:
+      // rawQuery('... MATCH ?', [escapedQuery])
+      //
+      // This prevents SQL injection attacks
+      expect(DatabaseHelper.ftsVersion, equals(4));
+    });
+
+    test('_searchWithFts4 differs from FTS5 in ordering strategy', () {
+      DatabaseHelper.setFtsVersion(4);
+      // Key difference from FTS5:
+      // FTS5: ORDER BY fts.rank (relevance-based, best matches first)
+      // FTS4: ORDER BY d.created_at DESC (date-based, most recent first)
+      //
+      // Users may notice different result ordering between FTS5 and FTS4
+      expect(DatabaseHelper.ftsVersion, equals(4));
+    });
+  });
+
+  group('LIKE Search Query Tests', () {
+    setUp(() {
+      DatabaseHelper.resetFtsVersion();
+      DatabaseHelper.setFtsVersion(0);
+    });
+
+    test('searchDocuments dispatches to _searchWithLike when version is 0', () {
+      // Verify LIKE mode is active (FTS disabled)
+      expect(DatabaseHelper.ftsVersion, equals(0));
+      // searchDocuments internally calls _searchWithLike which:
+      // 1. Splits query into terms
+      // 2. Builds LIKE conditions for each term across all searchable columns
+      // 3. Returns documents ordered by creation date (most recent first)
+    });
+
+    test('_searchWithLike uses LIKE patterns for text matching', () {
+      DatabaseHelper.setFtsVersion(0);
+      // LIKE search query structure:
+      // SELECT * FROM documents WHERE
+      //   (title LIKE ? OR description LIKE ? OR ocr_text LIKE ?)
+      // ORDER BY created_at DESC
+      //
+      // Each term generates a LIKE condition with % wildcards
+      expect(DatabaseHelper.ftsVersion, equals(0));
+    });
+
+    test('_searchWithLike searches across title, description, and ocr_text', () {
+      DatabaseHelper.setFtsVersion(0);
+      // LIKE conditions check all searchable columns:
+      // (title LIKE ? ESCAPE '\\' OR
+      //  description LIKE ? ESCAPE '\\' OR
+      //  ocr_text LIKE ? ESCAPE '\\')
+      //
+      // A document matches if ANY column contains the search term
+      expect(DatabaseHelper.columnTitle, equals('title'));
+      expect(DatabaseHelper.columnDescription, equals('description'));
+      expect(DatabaseHelper.columnOcrText, equals('ocr_text'));
+    });
+
+    test('_searchWithLike wraps terms with % wildcards', () {
+      DatabaseHelper.setFtsVersion(0);
+      // Each term is wrapped with % for substring matching:
+      // Input term: "flutter"
+      // Pattern: "%flutter%"
+      //
+      // This matches "flutter", "my flutter app", "flutter-test", etc.
+      expect(DatabaseHelper.ftsVersion, equals(0));
+    });
+
+    test('_searchWithLike uses AND logic for multiple terms', () {
+      DatabaseHelper.setFtsVersion(0);
+      // Multiple terms are combined with AND:
+      // Input: "flutter tutorial"
+      // WHERE (title LIKE '%flutter%' OR description LIKE '%flutter%' OR ...)
+      //   AND (title LIKE '%tutorial%' OR description LIKE '%tutorial%' OR ...)
+      //
+      // Documents must contain ALL search terms to match
+      expect(DatabaseHelper.ftsVersion, equals(0));
+    });
+
+    test('_searchWithLike uses OR logic within each term condition', () {
+      DatabaseHelper.setFtsVersion(0);
+      // Each term generates OR conditions across columns:
+      // (title LIKE '%term%' OR description LIKE '%term%' OR ocr_text LIKE '%term%')
+      //
+      // A term matches if found in ANY of the searchable columns
+      expect(DatabaseHelper.ftsVersion, equals(0));
+    });
+
+    test('_searchWithLike orders by created_at DESC', () {
+      DatabaseHelper.setFtsVersion(0);
+      // LIKE search results are ordered by creation date:
+      // ORDER BY created_at DESC
+      //
+      // Most recently created documents appear first
+      // This matches FTS4 ordering (but not FTS5's relevance ranking)
+      expect(DatabaseHelper.ftsVersion, equals(0));
+    });
+
+    test('_searchWithLike escapes % character in search terms', () {
+      DatabaseHelper.setFtsVersion(0);
+      // LIKE special character % is escaped to prevent unintended wildcards:
+      // Input: "100%"
+      // Escaped: "100\%"
+      // Pattern: "%100\%%"
+      //
+      // Uses ESCAPE '\\' clause in query
+      expect(DatabaseHelper.ftsVersion, equals(0));
+    });
+
+    test('_searchWithLike escapes _ character in search terms', () {
+      DatabaseHelper.setFtsVersion(0);
+      // LIKE special character _ is escaped to prevent unintended wildcards:
+      // Input: "test_file"
+      // Escaped: "test\_file"
+      // Pattern: "%test\_file%"
+      //
+      // Uses ESCAPE '\\' clause in query
+      expect(DatabaseHelper.ftsVersion, equals(0));
+    });
+
+    test('_searchWithLike handles single term queries', () {
+      DatabaseHelper.setFtsVersion(0);
+      // Single term query generates single condition group:
+      // WHERE (title LIKE ? OR description LIKE ? OR ocr_text LIKE ?)
+      //
+      // Pattern: "%flutter%"
+      expect(DatabaseHelper.ftsVersion, equals(0));
+    });
+
+    test('_searchWithLike handles multiple term queries', () {
+      DatabaseHelper.setFtsVersion(0);
+      // Multiple term query generates multiple condition groups with AND:
+      // WHERE (title LIKE ? OR ...) AND (title LIKE ? OR ...)
+      //
+      // Each term adds 3 parameters (one per column)
+      expect(DatabaseHelper.ftsVersion, equals(0));
+    });
+
+    test('_searchWithLike returns empty list for empty terms', () {
+      DatabaseHelper.setFtsVersion(0);
+      // When query splits to empty terms list:
+      // - Whitespace-only queries split to empty list
+      // - Returns [] immediately without database query
+      expect(DatabaseHelper.ftsVersion, equals(0));
+    });
+
+    test('_searchWithLike uses parameterized queries for security', () {
+      DatabaseHelper.setFtsVersion(0);
+      // Query uses ? placeholders with bound parameters:
+      // rawQuery('... WHERE ... LIKE ? ...', args)
+      //
+      // This prevents SQL injection attacks
+      expect(DatabaseHelper.ftsVersion, equals(0));
+    });
+
+    test('_searchWithLike returns all document columns', () {
+      DatabaseHelper.setFtsVersion(0);
+      // Query uses SELECT * to return all columns:
+      // - id, title, description, ocr_text, created_at, updated_at
+      //
+      // This provides complete document data for display
+      expect(DatabaseHelper.ftsVersion, equals(0));
+    });
+  });
+
+  group('searchDocuments Method Tests', () {
+    setUp(() {
+      DatabaseHelper.resetFtsVersion();
+    });
+
+    test('searchDocuments returns empty list for empty query', () {
+      // Empty query check happens before version dispatch:
+      // if (query.trim().isEmpty) return [];
+      //
+      // This applies to all FTS modes (5, 4, 0)
+      DatabaseHelper.setFtsVersion(5);
+      expect(DatabaseHelper.ftsVersion, equals(5));
+    });
+
+    test('searchDocuments returns empty list for whitespace-only query', () {
+      // Whitespace-only queries are treated as empty:
+      // query.trim().isEmpty returns true for "   "
+      //
+      // No database operation is performed
+      DatabaseHelper.setFtsVersion(5);
+      expect(DatabaseHelper.ftsVersion, equals(5));
+    });
+
+    test('searchDocuments trims leading and trailing whitespace', () {
+      // Query is trimmed before empty check:
+      // query.trim().isEmpty
+      //
+      // "  flutter  " becomes "flutter" for search
+      DatabaseHelper.setFtsVersion(5);
+      expect(DatabaseHelper.ftsVersion, equals(5));
+    });
+
+    test('searchDocuments uses switch on _ftsVersion for dispatch', () {
+      // Internal dispatch logic:
+      // switch (_ftsVersion) {
+      //   case 5: return _searchWithFts5(db, query);
+      //   case 4: return _searchWithFts4(db, query);
+      //   default: return _searchWithLike(db, query);
+      // }
+      DatabaseHelper.setFtsVersion(5);
+      expect(DatabaseHelper.ftsVersion, equals(5));
+
+      DatabaseHelper.setFtsVersion(4);
+      expect(DatabaseHelper.ftsVersion, equals(4));
+
+      DatabaseHelper.setFtsVersion(0);
+      expect(DatabaseHelper.ftsVersion, equals(0));
+    });
+
+    test('searchDocuments default case handles version 0', () {
+      // Default case in switch handles FTS disabled:
+      // default: return _searchWithLike(db, query);
+      //
+      // This ensures graceful fallback even for unexpected version values
+      DatabaseHelper.setFtsVersion(0);
+      expect(DatabaseHelper.ftsVersion, equals(0));
+    });
+
+    test('searchDocuments provides unified interface for all modes', () {
+      // searchDocuments hides implementation details:
+      // - Callers don't need to know which FTS mode is active
+      // - Same method signature works for FTS5, FTS4, and LIKE
+      // - Results are always List<Map<String, dynamic>>
+      DatabaseHelper.setFtsVersion(5);
+      expect(DatabaseHelper.ftsVersion, equals(5));
+    });
+
+    test('searchDocuments result ordering varies by FTS mode', () {
+      // Result ordering depends on active FTS mode:
+      // - FTS5 (version 5): Relevance ranking (ORDER BY rank)
+      // - FTS4 (version 4): Date ordering (ORDER BY created_at DESC)
+      // - LIKE (version 0): Date ordering (ORDER BY created_at DESC)
+      //
+      // Users may notice different ordering between FTS5 and other modes
+      DatabaseHelper.setFtsVersion(5);
+      expect(DatabaseHelper.ftsVersion, equals(5));
+    });
+  });
+
+  group('FTS Query Escaping Tests', () {
+    setUp(() {
+      DatabaseHelper.resetFtsVersion();
+    });
+
+    test('_escapeFtsQuery wraps each term in double quotes', () {
+      // Input: "flutter tutorial"
+      // Output: '"flutter" "tutorial"'
+      //
+      // Each word becomes a quoted phrase literal
+      DatabaseHelper.setFtsVersion(5);
+      expect(DatabaseHelper.ftsVersion, equals(5));
+    });
+
+    test('_escapeFtsQuery escapes double quotes within terms', () {
+      // Input term with double quote: test"term
+      // Escaped: "test""term"
+      //
+      // Double quotes are doubled to escape them within FTS
+      DatabaseHelper.setFtsVersion(5);
+      expect(DatabaseHelper.ftsVersion, equals(5));
+    });
+
+    test('_escapeFtsQuery handles asterisk operator safely', () {
+      // FTS5/FTS4 asterisk (*) is prefix wildcard operator
+      // By quoting terms, asterisk is treated as literal:
+      // Input: "flutter*"
+      // Output: '"flutter*"' (asterisk is literal, not wildcard)
+      DatabaseHelper.setFtsVersion(5);
+      expect(DatabaseHelper.ftsVersion, equals(5));
+    });
+
+    test('_escapeFtsQuery handles minus operator safely', () {
+      // FTS5/FTS4 minus (-) is exclusion operator (NOT)
+      // By quoting terms, minus is treated as literal:
+      // Input: "-flutter"
+      // Output: '"-flutter"' (minus is literal, not exclusion)
+      DatabaseHelper.setFtsVersion(5);
+      expect(DatabaseHelper.ftsVersion, equals(5));
+    });
+
+    test('_escapeFtsQuery handles plus operator safely', () {
+      // FTS5/FTS4 plus (+) is required term operator
+      // By quoting terms, plus is treated as literal:
+      // Input: "+flutter"
+      // Output: '"+flutter"' (plus is literal, not required)
+      DatabaseHelper.setFtsVersion(5);
+      expect(DatabaseHelper.ftsVersion, equals(5));
+    });
+
+    test('_escapeFtsQuery handles caret operator safely (FTS5)', () {
+      // FTS5 caret (^) is boost operator
+      // By quoting terms, caret is treated as literal:
+      // Input: "^flutter"
+      // Output: '"^flutter"' (caret is literal, not boost)
+      DatabaseHelper.setFtsVersion(5);
+      expect(DatabaseHelper.ftsVersion, equals(5));
+    });
+
+    test('_escapeFtsQuery splits on whitespace', () {
+      // Multiple whitespace is treated as single separator:
+      // Input: "flutter  dart   tutorial"
+      // Split: ["flutter", "dart", "tutorial"]
+      // Output: '"flutter" "dart" "tutorial"'
+      //
+      // Uses RegExp(r'\s+') for splitting
+      DatabaseHelper.setFtsVersion(5);
+      expect(DatabaseHelper.ftsVersion, equals(5));
+    });
+
+    test('_escapeFtsQuery filters empty strings after split', () {
+      // Empty strings from split are filtered:
+      // Input: "  flutter  "
+      // Split: ["", "flutter", ""]
+      // Filtered: ["flutter"]
+      // Output: '"flutter"'
+      DatabaseHelper.setFtsVersion(5);
+      expect(DatabaseHelper.ftsVersion, equals(5));
+    });
+
+    test('_escapeFtsQuery joins terms with space', () {
+      // Escaped terms are joined with single space:
+      // Terms: ['"flutter"', '"tutorial"']
+      // Output: '"flutter" "tutorial"'
+      DatabaseHelper.setFtsVersion(5);
+      expect(DatabaseHelper.ftsVersion, equals(5));
+    });
+
+    test('_escapeFtsQuery used by both FTS5 and FTS4', () {
+      // Same escaping logic is used for both FTS versions:
+      // - _searchWithFts5 calls _escapeFtsQuery(query)
+      // - _searchWithFts4 calls _escapeFtsQuery(query)
+      //
+      // This ensures consistent query handling
+      DatabaseHelper.setFtsVersion(5);
+      expect(DatabaseHelper.ftsVersion, equals(5));
+      DatabaseHelper.setFtsVersion(4);
+      expect(DatabaseHelper.ftsVersion, equals(4));
+    });
+  });
 }

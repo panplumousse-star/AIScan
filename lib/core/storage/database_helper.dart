@@ -475,4 +475,52 @@ class DatabaseHelper {
 
     return escapedTerms.join(' ');
   }
+
+  /// Searches documents using the best available search method.
+  ///
+  /// Dispatches to the appropriate search implementation based on [_ftsVersion]:
+  /// - FTS5 (version 5): Uses [_searchWithFts5] for relevance-ranked results
+  /// - FTS4 (version 4): Uses [_searchWithFts4] for date-ordered results
+  /// - Disabled (version 0): Uses [_searchWithLike] for basic LIKE-based search
+  ///
+  /// This method provides a unified search interface regardless of the underlying
+  /// FTS capability, ensuring consistent behavior across all Android devices.
+  ///
+  /// Parameters:
+  /// - [query]: The search query string
+  ///
+  /// Returns a list of document maps matching the search query.
+  /// Results are ordered by:
+  /// - Relevance (FTS5): Best matches first
+  /// - Creation date (FTS4/LIKE): Most recent first
+  ///
+  /// Returns an empty list if the query is empty or contains only whitespace.
+  ///
+  /// Example:
+  /// ```dart
+  /// final helper = DatabaseHelper();
+  /// final results = await helper.searchDocuments('flutter tutorial');
+  /// for (final doc in results) {
+  ///   print('${doc['title']}: ${doc['description']}');
+  /// }
+  /// ```
+  Future<List<Map<String, dynamic>>> searchDocuments(String query) async {
+    // Return empty list for empty queries
+    if (query.trim().isEmpty) {
+      return [];
+    }
+
+    final db = await database;
+
+    // Dispatch to appropriate search method based on FTS version
+    switch (_ftsVersion) {
+      case 5:
+        return await _searchWithFts5(db, query);
+      case 4:
+        return await _searchWithFts4(db, query);
+      default:
+        // FTS disabled (version 0) - use LIKE-based search
+        return await _searchWithLike(db, query);
+    }
+  }
 }

@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/permissions/camera_permission_service.dart';
+import '../../../core/permissions/permission_dialog.dart';
 import '../../documents/domain/document_model.dart';
 import '../domain/scanner_service.dart';
 
@@ -329,8 +331,122 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     if (widget.startWithQuickScan) {
       // Start quick scan after the first frame
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(scannerScreenProvider.notifier).quickScan();
+        _startQuickScanWithPermissionCheck();
       });
+    }
+  }
+
+  /// Checks camera permission and shows dialog if needed.
+  ///
+  /// Returns `true` if permission is granted (permanent or session),
+  /// `false` if denied or cancelled.
+  Future<bool> _checkAndRequestPermission() async {
+    final permissionService = ref.read(cameraPermissionServiceProvider);
+    final state = await permissionService.checkPermission();
+
+    // If already granted, proceed
+    if (state == CameraPermissionState.granted ||
+        state == CameraPermissionState.sessionOnly) {
+      return true;
+    }
+
+    // If permission is unknown, show our custom dialog
+    if (state == CameraPermissionState.unknown) {
+      if (!mounted) return false;
+
+      final result = await showCameraPermissionDialog(context);
+      if (result == null) return false; // User dismissed
+
+      switch (result) {
+        case PermissionDialogResult.granted:
+          await permissionService.grantPermanentPermission();
+        case PermissionDialogResult.sessionOnly:
+          permissionService.grantSessionPermission();
+        case PermissionDialogResult.denied:
+          await permissionService.denyPermission();
+          if (mounted) {
+            showCameraPermissionDeniedSnackbar(
+              context,
+              onSettingsPressed: () async {
+                await permissionService.openSettings();
+              },
+            );
+          }
+          return false;
+      }
+
+      // Request system permission after user consent
+      final systemState = await permissionService.requestSystemPermission();
+
+      // Check if system permission was granted
+      if (systemState == CameraPermissionState.granted ||
+          systemState == CameraPermissionState.sessionOnly) {
+        return true;
+      }
+
+      // System permission denied or permanently denied
+      if (systemState == CameraPermissionState.permanentlyDenied) {
+        if (mounted) {
+          final shouldOpenSettings = await showCameraSettingsDialog(context);
+          if (shouldOpenSettings) {
+            await permissionService.openSettings();
+          }
+        }
+        return false;
+      }
+
+      if (mounted) {
+        showCameraPermissionDeniedSnackbar(
+          context,
+          onSettingsPressed: () async {
+            await permissionService.openSettings();
+          },
+        );
+      }
+      return false;
+    }
+
+    // If permanently denied or restricted, prompt to open settings
+    if (state == CameraPermissionState.permanentlyDenied ||
+        state == CameraPermissionState.restricted) {
+      if (!mounted) return false;
+
+      final shouldOpenSettings = await showCameraSettingsDialog(context);
+      if (shouldOpenSettings) {
+        await permissionService.openSettings();
+      }
+      return false;
+    }
+
+    // If denied, show snackbar with settings option
+    if (state == CameraPermissionState.denied) {
+      if (!mounted) return false;
+
+      showCameraPermissionDeniedSnackbar(
+        context,
+        onSettingsPressed: () async {
+          await permissionService.openSettings();
+        },
+      );
+      return false;
+    }
+
+    return false;
+  }
+
+  /// Starts a quick scan with permission check.
+  Future<void> _startQuickScanWithPermissionCheck() async {
+    final hasPermission = await _checkAndRequestPermission();
+    if (hasPermission && mounted) {
+      ref.read(scannerScreenProvider.notifier).quickScan();
+    }
+  }
+
+  /// Starts a multi-page scan with permission check.
+  Future<void> _startMultiPageScanWithPermissionCheck() async {
+    final hasPermission = await _checkAndRequestPermission();
+    if (hasPermission && mounted) {
+      ref.read(scannerScreenProvider.notifier).multiPageScan();
     }
   }
 
@@ -384,7 +500,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
               tooltip: 'Add more pages',
               onPressed: state.isLoading
                   ? null
-                  : () => notifier.multiPageScan(),
+                  : _startMultiPageScanWithPermissionCheck,
             ),
           ],
         ],
@@ -418,8 +534,8 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     }
 
     return _EmptyView(
-      onQuickScan: notifier.quickScan,
-      onMultiPageScan: () => notifier.multiPageScan(),
+      onQuickScan: _startQuickScanWithPermissionCheck,
+      onMultiPageScan: _startMultiPageScanWithPermissionCheck,
     );
   }
 

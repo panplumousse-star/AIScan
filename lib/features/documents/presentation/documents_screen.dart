@@ -539,7 +539,7 @@ final documentsScreenProvider =
 /// - Filtering options (favorites, OCR, tags, folder)
 /// - Multi-select for batch operations
 /// - Pull-to-refresh
-/// - Quick scan FAB for one-click scanning
+/// - Scan FAB for one-click scanning
 ///
 /// ## Usage
 /// ```dart
@@ -798,7 +798,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
   Widget? _buildFab(BuildContext context, DocumentsScreenState state) {
     if (state.isSelectionMode) return null;
 
-    return _QuickScanFab(
+    return _ScanFab(
       onPressed: widget.onScanPressed,
     );
   }
@@ -1897,15 +1897,15 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
-/// Prominent floating action button for one-click scan workflow.
+/// Prominent floating action button for scan workflow.
 ///
 /// Features:
 /// - Large, extended FAB with clear call-to-action
 /// - Haptic feedback for tactile confirmation
 /// - Semantic labels for accessibility
 /// - Elevated styling to draw attention
-class _QuickScanFab extends StatelessWidget {
-  const _QuickScanFab({required this.onPressed});
+class _ScanFab extends StatelessWidget {
+  const _ScanFab({required this.onPressed});
 
   final VoidCallback? onPressed;
 

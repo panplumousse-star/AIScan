@@ -755,12 +755,12 @@ void main() {
     });
   });
 
-  group('E2E Flow: Complete One-Click Scan', () {
-    test('should complete one-click quick scan workflow', () async {
+  group('E2E Flow: Single Page Scan', () {
+    test('should complete single page scan workflow', () async {
       // Arrange
       final testImagePath = await createTestImageFile(
         testTempDir,
-        'quick_scan.jpg',
+        'single_page_scan.jpg',
       );
 
       final mlKitResult = MockDocumentScanningResult(
@@ -780,11 +780,11 @@ void main() {
         ),
       ).thenAnswer((_) async => testDocument);
 
-      // Act - Quick scan (one-click)
+      // Act - Single page scan via domain service (uses quickScan for single-page scanning)
       final scanResult = await scannerService.quickScan();
       expect(scanResult, isNotNull);
 
-      // Act - Save immediately (auto-generated title)
+      // Act - Save single page result (auto-generated title)
       final savedResult = await storageService.saveQuickScan(scanResult!);
 
       // Assert - Document saved with auto-generated title

@@ -1,852 +1,1425 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
+
 import 'package:aiscan/core/storage/database_helper.dart';
+import 'package:aiscan/core/storage/document_repository.dart';
+import 'package:aiscan/features/documents/domain/document_model.dart';
 import 'package:aiscan/features/search/domain/search_service.dart';
 
-/// Tests for SearchService FTS mode-aware functionality.
-///
-/// These tests verify the SearchService works correctly across all FTS modes:
-/// - FTS5 mode (ftsVersion = 5): Full relevance ranking
-/// - FTS4 mode (ftsVersion = 4): Basic full-text search
-/// - Disabled mode (ftsVersion = 0): LIKE-based fallback search
-///
-/// The tests cover:
-/// - Service initialization and FTS version caching
-/// - Helper property behavior (isFtsAvailable, hasRelevanceRanking, searchModeDescription)
-/// - Search execution with different FTS modes
-/// - Graceful error handling and fallback behavior
+@GenerateMocks([DatabaseHelper, DocumentRepository])
+import 'search_service_test.mocks.dart';
+
 void main() {
-  group('SearchService', () {
-    late SearchService searchService;
+  late MockDatabaseHelper mockDatabaseHelper;
+  late MockDocumentRepository mockDocumentRepository;
+  late SearchService searchService;
 
-    setUp(() {
-      // Reset FTS version before each test to ensure clean state
-      DatabaseHelper.resetFtsVersion();
-      searchService = SearchService();
-    });
+  /// Creates a test document with specified properties.
+  Document createTestDocument({
+    String id = 'doc-1',
+    String title = 'Test Document',
+    String? description,
+    String? ocrText,
+    String? folderId,
+    bool isFavorite = false,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    int fileSize = 1024,
+  }) {
+    final now = DateTime.now();
+    return Document(
+      id: id,
+      title: title,
+      description: description,
+      filePath: '/path/to/$id.enc',
+      thumbnailPath: '/path/to/$id-thumb.enc',
+      originalFileName: '$id.jpg',
+      pageCount: 1,
+      fileSize: fileSize,
+      mimeType: 'image/jpeg',
+      ocrText: ocrText,
+      ocrStatus: ocrText != null ? OcrStatus.completed : OcrStatus.pending,
+      createdAt: createdAt ?? now,
+      updatedAt: updatedAt ?? now,
+      folderId: folderId,
+      isFavorite: isFavorite,
+    );
+  }
 
-    tearDown(() {
-      // Dispose of the service after each test
-      searchService.dispose();
-    });
+  setUp(() {
+    mockDatabaseHelper = MockDatabaseHelper();
+    mockDocumentRepository = MockDocumentRepository();
 
-    group('Constructor', () {
-      test('creates instance with default DatabaseHelper', () {
-        final service = SearchService();
-        expect(service, isNotNull);
-        expect(service.isInitialized, isFalse);
-        service.dispose();
-      });
+    when(mockDatabaseHelper.initialize()).thenAnswer((_) async => true);
 
-      test('creates instance with provided DatabaseHelper', () {
-        final customHelper = DatabaseHelper();
-        final service = SearchService(databaseHelper: customHelper);
-        expect(service, isNotNull);
-        expect(service.isInitialized, isFalse);
-        service.dispose();
-      });
-    });
-
-    group('isInitialized', () {
-      test('should be false before initialization', () {
-        expect(searchService.isInitialized, isFalse);
-      });
-
-      test('should be false after dispose', () {
-        // Simulate initialized state by testing dispose behavior
-        searchService.dispose();
-        expect(searchService.isInitialized, isFalse);
-      });
-    });
-
-    group('ftsVersion Getter', () {
-      test('returns current FTS version from DatabaseHelper', () {
-        DatabaseHelper.setFtsVersion(5);
-        expect(searchService.ftsVersion, equals(5));
-
-        DatabaseHelper.setFtsVersion(4);
-        expect(searchService.ftsVersion, equals(4));
-
-        DatabaseHelper.setFtsVersion(0);
-        expect(searchService.ftsVersion, equals(0));
-      });
-
-      test('returns 0 (disabled) by default', () {
-        // After reset, version should be 0
-        DatabaseHelper.resetFtsVersion();
-        expect(searchService.ftsVersion, equals(0));
-      });
-
-      test('reflects runtime FTS version changes', () {
-        // FTS version can change during database initialization
-        DatabaseHelper.setFtsVersion(5);
-        expect(searchService.ftsVersion, equals(5));
-
-        // If FTS5 fails, version might change to 4
-        DatabaseHelper.setFtsVersion(4);
-        expect(searchService.ftsVersion, equals(4));
-
-        // If both fail, version becomes 0
-        DatabaseHelper.setFtsVersion(0);
-        expect(searchService.ftsVersion, equals(0));
-      });
-    });
-
-    group('isFtsAvailable', () {
-      test('returns true when FTS5 is active (version 5)', () {
-        DatabaseHelper.setFtsVersion(5);
-        expect(searchService.isFtsAvailable, isTrue);
-      });
-
-      test('returns true when FTS4 is active (version 4)', () {
-        DatabaseHelper.setFtsVersion(4);
-        expect(searchService.isFtsAvailable, isTrue);
-      });
-
-      test('returns false when FTS is disabled (version 0)', () {
-        DatabaseHelper.setFtsVersion(0);
-        expect(searchService.isFtsAvailable, isFalse);
-      });
-
-      test('helper is based on ftsVersion > 0', () {
-        // Version 0 means disabled
-        DatabaseHelper.setFtsVersion(0);
-        expect(searchService.isFtsAvailable, equals(searchService.ftsVersion > 0));
-
-        // Version 4 means FTS4 available
-        DatabaseHelper.setFtsVersion(4);
-        expect(searchService.isFtsAvailable, equals(searchService.ftsVersion > 0));
-
-        // Version 5 means FTS5 available
-        DatabaseHelper.setFtsVersion(5);
-        expect(searchService.isFtsAvailable, equals(searchService.ftsVersion > 0));
-      });
-    });
-
-    group('hasRelevanceRanking', () {
-      test('returns true only for FTS5 (version 5)', () {
-        DatabaseHelper.setFtsVersion(5);
-        expect(searchService.hasRelevanceRanking, isTrue);
-      });
-
-      test('returns false for FTS4 (version 4)', () {
-        DatabaseHelper.setFtsVersion(4);
-        expect(searchService.hasRelevanceRanking, isFalse);
-      });
-
-      test('returns false when FTS is disabled (version 0)', () {
-        DatabaseHelper.setFtsVersion(0);
-        expect(searchService.hasRelevanceRanking, isFalse);
-      });
-
-      test('FTS5 is only mode with relevance ranking', () {
-        // FTS5 has built-in rank column for relevance
-        DatabaseHelper.setFtsVersion(5);
-        expect(searchService.hasRelevanceRanking, isTrue);
-        expect(searchService.ftsVersion, equals(5));
-
-        // FTS4 does not have built-in rank (uses date ordering instead)
-        DatabaseHelper.setFtsVersion(4);
-        expect(searchService.hasRelevanceRanking, isFalse);
-
-        // LIKE mode has no relevance ranking
-        DatabaseHelper.setFtsVersion(0);
-        expect(searchService.hasRelevanceRanking, isFalse);
-      });
-    });
-
-    group('searchModeDescription', () {
-      test('returns FTS5 description for version 5', () {
-        DatabaseHelper.setFtsVersion(5);
-        expect(
-          searchService.searchModeDescription,
-          equals('Full-text search with relevance ranking (FTS5)'),
-        );
-      });
-
-      test('returns FTS4 description for version 4', () {
-        DatabaseHelper.setFtsVersion(4);
-        expect(
-          searchService.searchModeDescription,
-          equals('Full-text search (FTS4)'),
-        );
-      });
-
-      test('returns LIKE-based description for version 0', () {
-        DatabaseHelper.setFtsVersion(0);
-        expect(
-          searchService.searchModeDescription,
-          equals('Basic search (LIKE-based)'),
-        );
-      });
-
-      test('descriptions are user-friendly for display', () {
-        // All descriptions should be human-readable
-        DatabaseHelper.setFtsVersion(5);
-        expect(searchService.searchModeDescription, contains('FTS5'));
-        expect(searchService.searchModeDescription, contains('relevance'));
-
-        DatabaseHelper.setFtsVersion(4);
-        expect(searchService.searchModeDescription, contains('FTS4'));
-
-        DatabaseHelper.setFtsVersion(0);
-        expect(searchService.searchModeDescription, contains('LIKE'));
-      });
-    });
-
-    group('dispose', () {
-      test('resets initialized state', () {
-        // Service starts uninitialized
-        expect(searchService.isInitialized, isFalse);
-
-        // After dispose, should remain uninitialized
-        searchService.dispose();
-        expect(searchService.isInitialized, isFalse);
-      });
-
-      test('can be called multiple times safely', () {
-        // Dispose should be idempotent
-        searchService.dispose();
-        searchService.dispose();
-        searchService.dispose();
-        expect(searchService.isInitialized, isFalse);
-      });
-    });
+    searchService = SearchService(
+      databaseHelper: mockDatabaseHelper,
+      documentRepository: mockDocumentRepository,
+    );
   });
 
-  group('SearchService FTS5 Mode', () {
-    late SearchService searchService;
-
-    setUp(() {
-      DatabaseHelper.resetFtsVersion();
-      DatabaseHelper.setFtsVersion(5);
-      searchService = SearchService();
+  group('SearchException', () {
+    test('creates with message only', () {
+      const exception = SearchException('Test error');
+      expect(exception.message, 'Test error');
+      expect(exception.cause, isNull);
     });
 
-    tearDown(() {
-      searchService.dispose();
+    test('creates with message and cause', () {
+      final cause = Exception('Original error');
+      final exception = SearchException('Test error', cause: cause);
+      expect(exception.message, 'Test error');
+      expect(exception.cause, cause);
     });
 
-    test('ftsVersion returns 5', () {
-      expect(searchService.ftsVersion, equals(5));
+    test('toString without cause', () {
+      const exception = SearchException('Test error');
+      expect(exception.toString(), 'SearchException: Test error');
     });
 
-    test('isFtsAvailable returns true', () {
-      expect(searchService.isFtsAvailable, isTrue);
-    });
-
-    test('hasRelevanceRanking returns true', () {
-      expect(searchService.hasRelevanceRanking, isTrue);
-    });
-
-    test('searchModeDescription indicates FTS5', () {
-      expect(searchService.searchModeDescription, contains('FTS5'));
-      expect(searchService.searchModeDescription, contains('relevance'));
-    });
-
-    test('FTS5 mode provides best search experience', () {
-      // FTS5 mode characteristics:
-      // - Full-text search capability
-      // - Relevance-based ranking
-      // - ORDER BY rank
-      expect(searchService.ftsVersion, equals(5));
-      expect(searchService.hasRelevanceRanking, isTrue);
-      expect(searchService.isFtsAvailable, isTrue);
-    });
-
-    test('FTS5 search results can include relevance scores', () {
-      // In FTS5 mode, SearchResult.relevanceScore can be populated
-      // from the 'rank' column returned by FTS5 queries
-      expect(searchService.ftsVersion, equals(5));
-      // SearchResult.fromMap handles rank column when present
-    });
-  });
-
-  group('SearchService FTS4 Mode', () {
-    late SearchService searchService;
-
-    setUp(() {
-      DatabaseHelper.resetFtsVersion();
-      DatabaseHelper.setFtsVersion(4);
-      searchService = SearchService();
-    });
-
-    tearDown(() {
-      searchService.dispose();
-    });
-
-    test('ftsVersion returns 4', () {
-      expect(searchService.ftsVersion, equals(4));
-    });
-
-    test('isFtsAvailable returns true', () {
-      expect(searchService.isFtsAvailable, isTrue);
-    });
-
-    test('hasRelevanceRanking returns false', () {
-      expect(searchService.hasRelevanceRanking, isFalse);
-    });
-
-    test('searchModeDescription indicates FTS4', () {
-      expect(searchService.searchModeDescription, contains('FTS4'));
-      expect(searchService.searchModeDescription, isNot(contains('relevance')));
-    });
-
-    test('FTS4 mode provides fallback search experience', () {
-      // FTS4 mode characteristics:
-      // - Full-text search capability
-      // - Date-based ordering (no rank)
-      // - ORDER BY created_at DESC
-      expect(searchService.ftsVersion, equals(4));
-      expect(searchService.hasRelevanceRanking, isFalse);
-      expect(searchService.isFtsAvailable, isTrue);
-    });
-
-    test('FTS4 search results do not include relevance scores', () {
-      // In FTS4 mode, SearchResult.relevanceScore should be null
-      // because FTS4 does not have built-in rank column
-      expect(searchService.ftsVersion, equals(4));
-      expect(searchService.hasRelevanceRanking, isFalse);
-      // SearchResult.fromMap returns null for rank when not present
-    });
-
-    test('FTS4 uses docid-based joins instead of rowid', () {
-      // FTS4 differs from FTS5 in join syntax:
-      // FTS5: INNER JOIN documents_fts fts ON d.rowid = fts.rowid
-      // FTS4: INNER JOIN documents_fts fts ON d.rowid = fts.docid
-      expect(searchService.ftsVersion, equals(4));
-      // This is an internal implementation detail but affects query generation
-    });
-  });
-
-  group('SearchService Disabled Mode', () {
-    late SearchService searchService;
-
-    setUp(() {
-      DatabaseHelper.resetFtsVersion();
-      DatabaseHelper.setFtsVersion(0);
-      searchService = SearchService();
-    });
-
-    tearDown(() {
-      searchService.dispose();
-    });
-
-    test('ftsVersion returns 0', () {
-      expect(searchService.ftsVersion, equals(0));
-    });
-
-    test('isFtsAvailable returns false', () {
-      expect(searchService.isFtsAvailable, isFalse);
-    });
-
-    test('hasRelevanceRanking returns false', () {
-      expect(searchService.hasRelevanceRanking, isFalse);
-    });
-
-    test('searchModeDescription indicates LIKE-based search', () {
-      expect(searchService.searchModeDescription, contains('LIKE'));
-      expect(searchService.searchModeDescription, contains('Basic'));
-    });
-
-    test('disabled mode provides basic search experience', () {
-      // Disabled mode characteristics:
-      // - No FTS virtual table
-      // - LIKE-based queries
-      // - Date-based ordering
-      // - Slower on large datasets
-      expect(searchService.ftsVersion, equals(0));
-      expect(searchService.hasRelevanceRanking, isFalse);
-      expect(searchService.isFtsAvailable, isFalse);
-    });
-
-    test('disabled mode search results do not include relevance scores', () {
-      // In disabled mode, SearchResult.relevanceScore should be null
-      // because LIKE queries do not calculate relevance
-      expect(searchService.ftsVersion, equals(0));
-      expect(searchService.hasRelevanceRanking, isFalse);
-      // SearchResult.fromMap returns null for rank when not present
-    });
-
-    test('disabled mode searches across all columns', () {
-      // LIKE-based search queries title, description, and ocr_text columns
-      // using patterns like: title LIKE '%term%' OR description LIKE '%term%' OR ...
-      expect(searchService.ftsVersion, equals(0));
-      // This is handled internally by DatabaseHelper._searchWithLike
-    });
-
-    test('disabled mode handles special characters in queries', () {
-      // LIKE special characters (%, _) are escaped to prevent
-      // unintended wildcard behavior:
-      // Input: "100%"
-      // Pattern: "%100\%%"
-      expect(searchService.ftsVersion, equals(0));
-      // This is handled internally by DatabaseHelper._searchWithLike
-    });
-  });
-
-  group('SearchOptions', () {
-    test('defaultOptions has expected values', () {
-      final options = SearchOptions.defaultOptions;
-      expect(options.limit, equals(50));
-      expect(options.offset, equals(0));
-      expect(options.includeOcrText, isTrue);
-      expect(options.includeDescription, isTrue);
-    });
-
-    test('custom options can be created', () {
-      const options = SearchOptions(
-        limit: 20,
-        offset: 10,
-        includeOcrText: false,
-        includeDescription: false,
+    test('toString with cause', () {
+      final exception = SearchException(
+        'Test error',
+        cause: Exception('Original'),
       );
-      expect(options.limit, equals(20));
-      expect(options.offset, equals(10));
-      expect(options.includeOcrText, isFalse);
-      expect(options.includeDescription, isFalse);
+      expect(
+        exception.toString(),
+        contains('SearchException: Test error'),
+      );
+      expect(exception.toString(), contains('caused by:'));
+    });
+  });
+
+  group('SearchSnippet', () {
+    test('creates with required fields', () {
+      const snippet = SearchSnippet(
+        text: 'This is a test snippet',
+        field: 'title',
+      );
+      expect(snippet.text, 'This is a test snippet');
+      expect(snippet.field, 'title');
+      expect(snippet.highlights, isEmpty);
+      expect(snippet.hasHighlights, isFalse);
     });
 
-    test('limit controls maximum results', () {
-      const options = SearchOptions(limit: 10);
-      expect(options.limit, equals(10));
+    test('creates with highlights', () {
+      const snippet = SearchSnippet(
+        text: 'This is a test',
+        field: 'ocr_text',
+        highlights: [
+          [0, 4],
+          [10, 14]
+        ],
+      );
+      expect(snippet.hasHighlights, isTrue);
+      expect(snippet.highlights.length, 2);
     });
 
-    test('offset controls pagination starting point', () {
-      const options = SearchOptions(offset: 20);
-      expect(options.offset, equals(20));
+    test('fieldDisplayName returns correct names', () {
+      expect(
+        const SearchSnippet(text: '', field: 'title').fieldDisplayName,
+        'Title',
+      );
+      expect(
+        const SearchSnippet(text: '', field: 'description').fieldDisplayName,
+        'Description',
+      );
+      expect(
+        const SearchSnippet(text: '', field: 'ocr_text').fieldDisplayName,
+        'Document Text',
+      );
+      expect(
+        const SearchSnippet(text: '', field: 'unknown').fieldDisplayName,
+        'unknown',
+      );
     });
 
-    test('includeOcrText controls OCR text search', () {
-      const withOcr = SearchOptions(includeOcrText: true);
-      const withoutOcr = SearchOptions(includeOcrText: false);
-      expect(withOcr.includeOcrText, isTrue);
-      expect(withoutOcr.includeOcrText, isFalse);
+    test('copyWith creates new instance with updated values', () {
+      const original = SearchSnippet(
+        text: 'Original text',
+        field: 'title',
+        highlights: [
+          [0, 5]
+        ],
+      );
+
+      final updated = original.copyWith(
+        text: 'Updated text',
+        field: 'description',
+      );
+
+      expect(updated.text, 'Updated text');
+      expect(updated.field, 'description');
+      expect(updated.highlights, original.highlights);
     });
 
-    test('includeDescription controls description search', () {
-      const withDesc = SearchOptions(includeDescription: true);
-      const withoutDesc = SearchOptions(includeDescription: false);
-      expect(withDesc.includeDescription, isTrue);
-      expect(withoutDesc.includeDescription, isFalse);
+    test('equality works correctly', () {
+      const snippet1 = SearchSnippet(
+        text: 'Test',
+        field: 'title',
+        highlights: [
+          [0, 4]
+        ],
+      );
+      const snippet2 = SearchSnippet(
+        text: 'Test',
+        field: 'title',
+        highlights: [
+          [0, 4]
+        ],
+      );
+      const snippet3 = SearchSnippet(
+        text: 'Different',
+        field: 'title',
+      );
+
+      expect(snippet1, equals(snippet2));
+      expect(snippet1, isNot(equals(snippet3)));
+    });
+
+    test('hashCode is consistent', () {
+      const snippet1 = SearchSnippet(text: 'Test', field: 'title');
+      const snippet2 = SearchSnippet(text: 'Test', field: 'title');
+      expect(snippet1.hashCode, equals(snippet2.hashCode));
+    });
+
+    test('toString returns expected format', () {
+      const snippet = SearchSnippet(
+        text: 'This is a test',
+        field: 'title',
+        highlights: [
+          [0, 4]
+        ],
+      );
+      final str = snippet.toString();
+      expect(str, contains('field: title'));
+      expect(str, contains('14 chars'));
+      expect(str, contains('highlights: 1'));
     });
   });
 
   group('SearchResult', () {
-    test('fromMap creates result from database row', () {
-      final map = {
-        DatabaseHelper.columnId: 1,
-        DatabaseHelper.columnTitle: 'Test Document',
-        DatabaseHelper.columnDescription: 'Test description',
-        DatabaseHelper.columnOcrText: 'OCR text content',
-        DatabaseHelper.columnCreatedAt: '2024-01-15T10:30:00.000',
-      };
-
-      final result = SearchResult.fromMap(map);
-
-      expect(result.id, equals(1));
-      expect(result.title, equals('Test Document'));
-      expect(result.description, equals('Test description'));
-      expect(result.ocrText, equals('OCR text content'));
-      expect(result.createdAt, equals(DateTime.parse('2024-01-15T10:30:00.000')));
-      expect(result.relevanceScore, isNull);
-    });
-
-    test('fromMap handles null description', () {
-      final map = {
-        DatabaseHelper.columnId: 1,
-        DatabaseHelper.columnTitle: 'Test',
-        DatabaseHelper.columnDescription: null,
-        DatabaseHelper.columnOcrText: 'OCR text',
-        DatabaseHelper.columnCreatedAt: '2024-01-15T10:30:00.000',
-      };
-
-      final result = SearchResult.fromMap(map);
-      expect(result.description, isNull);
-    });
-
-    test('fromMap handles null ocrText', () {
-      final map = {
-        DatabaseHelper.columnId: 1,
-        DatabaseHelper.columnTitle: 'Test',
-        DatabaseHelper.columnDescription: 'Description',
-        DatabaseHelper.columnOcrText: null,
-        DatabaseHelper.columnCreatedAt: '2024-01-15T10:30:00.000',
-      };
-
-      final result = SearchResult.fromMap(map);
-      expect(result.ocrText, isNull);
-    });
-
-    test('fromMap extracts rank as relevanceScore when present', () {
-      // FTS5 queries include rank column
-      final map = {
-        DatabaseHelper.columnId: 1,
-        DatabaseHelper.columnTitle: 'Test',
-        DatabaseHelper.columnDescription: null,
-        DatabaseHelper.columnOcrText: null,
-        DatabaseHelper.columnCreatedAt: '2024-01-15T10:30:00.000',
-        'rank': -0.5,
-      };
-
-      final result = SearchResult.fromMap(map);
-      expect(result.relevanceScore, equals(-0.5));
-    });
-
-    test('fromMap returns null relevanceScore when rank not present', () {
-      // FTS4 and LIKE queries do not include rank
-      final map = {
-        DatabaseHelper.columnId: 1,
-        DatabaseHelper.columnTitle: 'Test',
-        DatabaseHelper.columnDescription: null,
-        DatabaseHelper.columnOcrText: null,
-        DatabaseHelper.columnCreatedAt: '2024-01-15T10:30:00.000',
-      };
-
-      final result = SearchResult.fromMap(map);
-      expect(result.relevanceScore, isNull);
-    });
-
-    test('constructor allows manual creation', () {
+    test('creates with required fields', () {
+      final document = createTestDocument();
       final result = SearchResult(
-        id: 42,
-        title: 'Manual Result',
-        description: 'Manual description',
-        ocrText: 'Manual OCR',
-        createdAt: DateTime(2024, 1, 15),
-        relevanceScore: -0.8,
+        document: document,
+        score: -1.5,
       );
 
-      expect(result.id, equals(42));
-      expect(result.title, equals('Manual Result'));
-      expect(result.description, equals('Manual description'));
-      expect(result.ocrText, equals('Manual OCR'));
-      expect(result.createdAt, equals(DateTime(2024, 1, 15)));
-      expect(result.relevanceScore, equals(-0.8));
+      expect(result.document, document);
+      expect(result.score, -1.5);
+      expect(result.snippets, isEmpty);
+      expect(result.matchedFields, isEmpty);
+    });
+
+    test('creates with all fields', () {
+      final document = createTestDocument();
+      const snippet = SearchSnippet(text: 'test', field: 'title');
+      final result = SearchResult(
+        document: document,
+        score: -2.0,
+        snippets: [snippet],
+        matchedFields: ['title', 'ocr_text'],
+      );
+
+      expect(result.snippets.length, 1);
+      expect(result.matchedFields.length, 2);
+    });
+
+    test('matchedTitle returns true when title matched', () {
+      final result = SearchResult(
+        document: createTestDocument(),
+        score: 0,
+        matchedFields: ['title'],
+      );
+      expect(result.matchedTitle, isTrue);
+      expect(result.matchedDescription, isFalse);
+      expect(result.matchedOcrText, isFalse);
+    });
+
+    test('matchedDescription returns true when description matched', () {
+      final result = SearchResult(
+        document: createTestDocument(),
+        score: 0,
+        matchedFields: ['description'],
+      );
+      expect(result.matchedTitle, isFalse);
+      expect(result.matchedDescription, isTrue);
+    });
+
+    test('matchedOcrText returns true when ocr_text matched', () {
+      final result = SearchResult(
+        document: createTestDocument(),
+        score: 0,
+        matchedFields: ['ocr_text'],
+      );
+      expect(result.matchedOcrText, isTrue);
+    });
+
+    test('preview returns snippet text when available', () {
+      const snippet = SearchSnippet(text: 'Snippet content', field: 'title');
+      final result = SearchResult(
+        document: createTestDocument(),
+        score: 0,
+        snippets: [snippet],
+      );
+      expect(result.preview, 'Snippet content');
+    });
+
+    test('preview returns description when no snippets', () {
+      final result = SearchResult(
+        document: createTestDocument(description: 'Document description'),
+        score: 0,
+      );
+      expect(result.preview, 'Document description');
+    });
+
+    test('preview returns OCR text when no snippets or description', () {
+      final result = SearchResult(
+        document: createTestDocument(ocrText: 'OCR extracted text'),
+        score: 0,
+      );
+      expect(result.preview, 'OCR extracted text');
+    });
+
+    test('preview truncates long OCR text', () {
+      final longText = 'A' * 300;
+      final result = SearchResult(
+        document: createTestDocument(ocrText: longText),
+        score: 0,
+      );
+      expect(result.preview.length, 203); // 200 chars + '...'
+      expect(result.preview.endsWith('...'), isTrue);
+    });
+
+    test('preview returns title as fallback', () {
+      final result = SearchResult(
+        document: createTestDocument(title: 'My Document'),
+        score: 0,
+      );
+      expect(result.preview, 'My Document');
+    });
+
+    test('copyWith creates new instance with updated values', () {
+      final original = SearchResult(
+        document: createTestDocument(id: 'original'),
+        score: -1.0,
+        matchedFields: ['title'],
+      );
+
+      final newDocument = createTestDocument(id: 'updated');
+      final updated = original.copyWith(
+        document: newDocument,
+        score: -2.0,
+      );
+
+      expect(updated.document.id, 'updated');
+      expect(updated.score, -2.0);
+      expect(updated.matchedFields, ['title']);
+    });
+
+    test('equality works correctly', () {
+      final document = createTestDocument();
+      final result1 = SearchResult(document: document, score: -1.0);
+      final result2 = SearchResult(document: document, score: -1.0);
+      final result3 = SearchResult(document: document, score: -2.0);
+
+      expect(result1, equals(result2));
+      expect(result1, isNot(equals(result3)));
+    });
+
+    test('hashCode is consistent', () {
+      final document = createTestDocument();
+      final result1 = SearchResult(document: document, score: -1.0);
+      final result2 = SearchResult(document: document, score: -1.0);
+      expect(result1.hashCode, equals(result2.hashCode));
+    });
+
+    test('toString returns expected format', () {
+      final result = SearchResult(
+        document: createTestDocument(id: 'test-doc'),
+        score: -1.5,
+        matchedFields: ['title'],
+      );
+      final str = result.toString();
+      expect(str, contains('document: test-doc'));
+      expect(str, contains('-1.500'));
+      expect(str, contains('matchedFields: [title]'));
     });
   });
 
-  group('FTS Mode Transitions', () {
-    setUp(() {
-      DatabaseHelper.resetFtsVersion();
+  group('SearchOptions', () {
+    test('defaults are correct', () {
+      const options = SearchOptions();
+      expect(options.field, SearchField.all);
+      expect(options.matchMode, SearchMatchMode.prefix);
+      expect(options.limit, 50);
+      expect(options.offset, 0);
+      expect(options.includeSnippets, isTrue);
+      expect(options.snippetLength, 150);
+      expect(options.includeTags, isFalse);
+      expect(options.folderId, isNull);
+      expect(options.favoritesOnly, isFalse);
+      expect(options.hasOcrOnly, isFalse);
+      expect(options.sortBy, SearchSortBy.relevance);
+      expect(options.sortDescending, isTrue);
     });
 
-    test('service reflects FTS version changes', () {
-      final service = SearchService();
-
-      // Start with disabled mode
-      DatabaseHelper.setFtsVersion(0);
-      expect(service.ftsVersion, equals(0));
-      expect(service.isFtsAvailable, isFalse);
-
-      // Transition to FTS4
-      DatabaseHelper.setFtsVersion(4);
-      expect(service.ftsVersion, equals(4));
-      expect(service.isFtsAvailable, isTrue);
-      expect(service.hasRelevanceRanking, isFalse);
-
-      // Transition to FTS5
-      DatabaseHelper.setFtsVersion(5);
-      expect(service.ftsVersion, equals(5));
-      expect(service.isFtsAvailable, isTrue);
-      expect(service.hasRelevanceRanking, isTrue);
-
-      service.dispose();
+    test('SearchOptions.defaults() creates default options', () {
+      const options = SearchOptions.defaults();
+      expect(options.field, SearchField.all);
+      expect(options.limit, 50);
     });
 
-    test('searchModeDescription updates with FTS version', () {
-      final service = SearchService();
-
-      DatabaseHelper.setFtsVersion(5);
-      expect(service.searchModeDescription, contains('FTS5'));
-
-      DatabaseHelper.setFtsVersion(4);
-      expect(service.searchModeDescription, contains('FTS4'));
-
-      DatabaseHelper.setFtsVersion(0);
-      expect(service.searchModeDescription, contains('LIKE'));
-
-      service.dispose();
+    test('SearchOptions.suggestions() creates suggestion options', () {
+      const options = SearchOptions.suggestions();
+      expect(options.limit, 5);
+      expect(options.includeSnippets, isFalse);
+      expect(options.matchMode, SearchMatchMode.prefix);
     });
 
-    test('helper properties are consistent with ftsVersion', () {
-      final service = SearchService();
-
-      // Version 0: disabled
-      DatabaseHelper.setFtsVersion(0);
-      expect(service.ftsVersion, equals(0));
-      expect(service.isFtsAvailable, isFalse);
-      expect(service.hasRelevanceRanking, isFalse);
-
-      // Version 4: FTS4
-      DatabaseHelper.setFtsVersion(4);
-      expect(service.ftsVersion, equals(4));
-      expect(service.isFtsAvailable, isTrue);
-      expect(service.hasRelevanceRanking, isFalse);
-
-      // Version 5: FTS5
-      DatabaseHelper.setFtsVersion(5);
-      expect(service.ftsVersion, equals(5));
-      expect(service.isFtsAvailable, isTrue);
-      expect(service.hasRelevanceRanking, isTrue);
-
-      service.dispose();
-    });
-  });
-
-  group('Search Query Validation', () {
-    late SearchService searchService;
-
-    setUp(() {
-      DatabaseHelper.resetFtsVersion();
-      DatabaseHelper.setFtsVersion(5);
-      searchService = SearchService();
+    test('SearchOptions.titlesOnly() creates title-only options', () {
+      const options = SearchOptions.titlesOnly();
+      expect(options.field, SearchField.title);
+      expect(options.includeSnippets, isFalse);
     });
 
-    tearDown(() {
-      searchService.dispose();
+    test('SearchOptions.titlesOnly() accepts custom parameters', () {
+      const options = SearchOptions.titlesOnly(
+        limit: 20,
+        includeSnippets: true,
+      );
+      expect(options.limit, 20);
+      expect(options.includeSnippets, isTrue);
     });
 
-    test('empty query returns empty results synchronously', () async {
-      // Empty query should return immediately without database access
-      // This behavior is consistent across all FTS modes
-      expect(searchService.ftsVersion, equals(5));
-      // search('') should return [] without hitting the database
+    test('SearchOptions.ocrTextOnly() creates OCR options', () {
+      const options = SearchOptions.ocrTextOnly();
+      expect(options.field, SearchField.ocrText);
+      expect(options.matchMode, SearchMatchMode.phrase);
+      expect(options.hasOcrOnly, isTrue);
+      expect(options.snippetLength, 200);
     });
 
-    test('whitespace-only query returns empty results', () async {
-      // Whitespace is trimmed, resulting in empty query
-      // search('   ') should return []
-      expect(searchService.ftsVersion, equals(5));
+    test('copyWith creates new instance with updated values', () {
+      const original = SearchOptions(
+        limit: 50,
+        field: SearchField.all,
+      );
+
+      final updated = original.copyWith(
+        limit: 100,
+        field: SearchField.title,
+        favoritesOnly: true,
+      );
+
+      expect(updated.limit, 100);
+      expect(updated.field, SearchField.title);
+      expect(updated.favoritesOnly, isTrue);
+      expect(updated.matchMode, SearchMatchMode.prefix);
     });
 
-    test('query validation happens before FTS mode dispatch', () {
-      // Empty query check: if (query.trim().isEmpty) return [];
-      // This check happens in search() before _executeSearch is called
-      expect(searchService.ftsVersion, equals(5));
-    });
-  });
-
-  group('FTS Version Logging', () {
-    test('FTS5 mode logs appropriate message', () {
-      DatabaseHelper.setFtsVersion(5);
-      // _logFtsMode logs: 'SearchService: Using FTS5 mode (full relevance ranking)'
-      // This is called during initialize()
-      expect(DatabaseHelper.ftsVersion, equals(5));
+    test('copyWith with clearFolderId clears folder', () {
+      const original = SearchOptions(folderId: 'folder-1');
+      final updated = original.copyWith(clearFolderId: true);
+      expect(updated.folderId, isNull);
     });
 
-    test('FTS4 mode logs appropriate message', () {
-      DatabaseHelper.setFtsVersion(4);
-      // _logFtsMode logs: 'SearchService: Using FTS4 mode (basic full-text search)'
-      // This is called during initialize()
-      expect(DatabaseHelper.ftsVersion, equals(4));
+    test('equality works correctly', () {
+      const options1 = SearchOptions(limit: 20, field: SearchField.title);
+      const options2 = SearchOptions(limit: 20, field: SearchField.title);
+      const options3 = SearchOptions(limit: 30, field: SearchField.title);
+
+      expect(options1, equals(options2));
+      expect(options1, isNot(equals(options3)));
     });
 
-    test('disabled mode logs appropriate message', () {
-      DatabaseHelper.setFtsVersion(0);
-      // _logFtsMode logs: 'SearchService: FTS disabled, using LIKE-based search'
-      // This is called during initialize()
-      expect(DatabaseHelper.ftsVersion, equals(0));
+    test('hashCode is consistent', () {
+      const options1 = SearchOptions(limit: 20);
+      const options2 = SearchOptions(limit: 20);
+      expect(options1.hashCode, equals(options2.hashCode));
+    });
+
+    test('toString returns expected format', () {
+      const options = SearchOptions(
+        field: SearchField.ocrText,
+        matchMode: SearchMatchMode.phrase,
+        limit: 25,
+      );
+      final str = options.toString();
+      expect(str, contains('field: SearchField.ocrText'));
+      expect(str, contains('matchMode: SearchMatchMode.phrase'));
+      expect(str, contains('limit: 25'));
     });
   });
 
-  group('Error Handling and Fallback', () {
-    late SearchService searchService;
-
-    setUp(() {
-      DatabaseHelper.resetFtsVersion();
-      searchService = SearchService();
-    });
-
-    tearDown(() {
-      searchService.dispose();
-    });
-
-    test('_fallbackSearch is available for error recovery', () {
-      // _fallbackSearch provides LIKE-based search when primary search fails
-      // This is separate from disabled mode (ftsVersion == 0)
-      // It handles cases like corrupt FTS index or query syntax errors
-      expect(searchService, isNotNull);
-    });
-
-    test('_fallbackSearch uses LIKE patterns', () {
-      // Fallback search builds LIKE conditions:
-      // title LIKE '%term%' OR description LIKE '%term%' OR ocr_text LIKE '%term%'
-      // Terms are combined with AND logic
-      expect(searchService, isNotNull);
-    });
-
-    test('_fallbackSearch escapes LIKE special characters', () {
-      // Special characters are escaped:
-      // % -> \%
-      // _ -> \_
-      // Uses ESCAPE '\' clause
-      expect(searchService, isNotNull);
-    });
-
-    test('_fallbackSearch returns empty list on failure', () {
-      // If _fallbackSearch itself fails, it returns []
-      // This prevents app crashes in worst-case scenarios
-      expect(searchService, isNotNull);
-    });
-
-    test('error recovery logs search failures', () {
-      // When FTS query fails, _executeSearch logs:
-      // 'SearchService._executeSearch: FTS{version} query failed: {error}'
-      // Then falls back to _fallbackSearch
-      expect(searchService, isNotNull);
+  group('SearchField enum', () {
+    test('has all expected values', () {
+      expect(SearchField.values, contains(SearchField.all));
+      expect(SearchField.values, contains(SearchField.title));
+      expect(SearchField.values, contains(SearchField.description));
+      expect(SearchField.values, contains(SearchField.ocrText));
+      expect(SearchField.values.length, 4);
     });
   });
 
-  group('Pagination', () {
-    late SearchService searchService;
-
-    setUp(() {
-      DatabaseHelper.resetFtsVersion();
-      DatabaseHelper.setFtsVersion(5);
-      searchService = SearchService();
-    });
-
-    tearDown(() {
-      searchService.dispose();
-    });
-
-    test('_applyPagination respects limit option', () {
-      // SearchOptions.limit controls maximum results
-      // Results are truncated to fit within limit
-      expect(searchService.ftsVersion, equals(5));
-    });
-
-    test('_applyPagination respects offset option', () {
-      // SearchOptions.offset controls starting point
-      // Results skip first 'offset' items
-      expect(searchService.ftsVersion, equals(5));
-    });
-
-    test('pagination works across all FTS modes', () {
-      // Pagination is applied in _executeSearch after receiving results
-      // It works the same for FTS5, FTS4, and LIKE modes
-      DatabaseHelper.setFtsVersion(5);
-      expect(searchService.ftsVersion, equals(5));
-
-      DatabaseHelper.setFtsVersion(4);
-      expect(searchService.ftsVersion, equals(4));
-
-      DatabaseHelper.setFtsVersion(0);
-      expect(searchService.ftsVersion, equals(0));
-    });
-
-    test('empty results return empty list regardless of pagination', () {
-      // If no results, pagination returns empty list
-      // This handles edge cases gracefully
-      expect(searchService.ftsVersion, equals(5));
-    });
-
-    test('offset beyond results returns empty list', () {
-      // If offset >= results.length, returns []
-      // This handles edge cases gracefully
-      expect(searchService.ftsVersion, equals(5));
+  group('SearchMatchMode enum', () {
+    test('has all expected values', () {
+      expect(SearchMatchMode.values, contains(SearchMatchMode.prefix));
+      expect(SearchMatchMode.values, contains(SearchMatchMode.phrase));
+      expect(SearchMatchMode.values, contains(SearchMatchMode.allWords));
+      expect(SearchMatchMode.values, contains(SearchMatchMode.anyWord));
+      expect(SearchMatchMode.values.length, 4);
     });
   });
 
-  group('Search Result Ordering', () {
-    setUp(() {
-      DatabaseHelper.resetFtsVersion();
-    });
-
-    test('FTS5 mode orders by relevance rank', () {
-      DatabaseHelper.setFtsVersion(5);
-      final service = SearchService();
-
-      // FTS5 search: ORDER BY fts.rank
-      // Best matches (rank closer to 0) appear first
-      expect(service.ftsVersion, equals(5));
-      expect(service.hasRelevanceRanking, isTrue);
-
-      service.dispose();
-    });
-
-    test('FTS4 mode orders by created_at DESC', () {
-      DatabaseHelper.setFtsVersion(4);
-      final service = SearchService();
-
-      // FTS4 search: ORDER BY d.created_at DESC
-      // Most recent documents appear first
-      expect(service.ftsVersion, equals(4));
-      expect(service.hasRelevanceRanking, isFalse);
-
-      service.dispose();
-    });
-
-    test('disabled mode orders by created_at DESC', () {
-      DatabaseHelper.setFtsVersion(0);
-      final service = SearchService();
-
-      // LIKE search: ORDER BY created_at DESC
-      // Most recent documents appear first
-      expect(service.ftsVersion, equals(0));
-      expect(service.hasRelevanceRanking, isFalse);
-
-      service.dispose();
-    });
-
-    test('only FTS5 provides relevance-based ordering', () {
-      // FTS5 is the only mode with rank column
-      final service = SearchService();
-
-      DatabaseHelper.setFtsVersion(5);
-      expect(service.hasRelevanceRanking, isTrue);
-
-      DatabaseHelper.setFtsVersion(4);
-      expect(service.hasRelevanceRanking, isFalse);
-
-      DatabaseHelper.setFtsVersion(0);
-      expect(service.hasRelevanceRanking, isFalse);
-
-      service.dispose();
+  group('SearchSortBy enum', () {
+    test('has all expected values', () {
+      expect(SearchSortBy.values, contains(SearchSortBy.relevance));
+      expect(SearchSortBy.values, contains(SearchSortBy.title));
+      expect(SearchSortBy.values, contains(SearchSortBy.createdAt));
+      expect(SearchSortBy.values, contains(SearchSortBy.updatedAt));
+      expect(SearchSortBy.values, contains(SearchSortBy.fileSize));
+      expect(SearchSortBy.values.length, 5);
     });
   });
 
-  group('Integration with DatabaseHelper', () {
-    setUp(() {
-      DatabaseHelper.resetFtsVersion();
+  group('SearchResults', () {
+    test('creates with required fields', () {
+      final results = SearchResults(
+        query: 'test',
+        results: [],
+        totalCount: 0,
+        searchTimeMs: 10,
+        options: const SearchOptions(),
+      );
+
+      expect(results.query, 'test');
+      expect(results.results, isEmpty);
+      expect(results.totalCount, 0);
+      expect(results.searchTimeMs, 10);
     });
 
-    test('uses DatabaseHelper.ftsVersion for mode detection', () {
-      final service = SearchService();
-
-      DatabaseHelper.setFtsVersion(5);
-      expect(service.ftsVersion, equals(DatabaseHelper.ftsVersion));
-
-      DatabaseHelper.setFtsVersion(4);
-      expect(service.ftsVersion, equals(DatabaseHelper.ftsVersion));
-
-      DatabaseHelper.setFtsVersion(0);
-      expect(service.ftsVersion, equals(DatabaseHelper.ftsVersion));
-
-      service.dispose();
+    test('SearchResults.empty() creates empty results', () {
+      const results = SearchResults.empty(query: 'test');
+      expect(results.query, 'test');
+      expect(results.results, isEmpty);
+      expect(results.totalCount, 0);
+      expect(results.searchTimeMs, 0);
     });
 
-    test('uses DatabaseHelper.searchDocuments for queries', () {
-      // _executeSearch calls _databaseHelper.searchDocuments(query)
-      // DatabaseHelper.searchDocuments handles FTS version dispatch internally
-      final service = SearchService();
-      expect(service, isNotNull);
-      service.dispose();
+    test('hasResults returns true when results exist', () {
+      final document = createTestDocument();
+      final results = SearchResults(
+        query: 'test',
+        results: [SearchResult(document: document, score: -1.0)],
+        totalCount: 1,
+        searchTimeMs: 10,
+        options: const SearchOptions(),
+      );
+      expect(results.hasResults, isTrue);
     });
 
-    test('SearchResult uses DatabaseHelper column constants', () {
-      // SearchResult.fromMap uses:
-      // - DatabaseHelper.columnId
-      // - DatabaseHelper.columnTitle
-      // - DatabaseHelper.columnDescription
-      // - DatabaseHelper.columnOcrText
-      // - DatabaseHelper.columnCreatedAt
-      expect(DatabaseHelper.columnId, equals('id'));
-      expect(DatabaseHelper.columnTitle, equals('title'));
-      expect(DatabaseHelper.columnDescription, equals('description'));
-      expect(DatabaseHelper.columnOcrText, equals('ocr_text'));
-      expect(DatabaseHelper.columnCreatedAt, equals('created_at'));
+    test('hasResults returns false when no results', () {
+      const results = SearchResults.empty();
+      expect(results.hasResults, isFalse);
+    });
+
+    test('hasMore returns true when more results available', () {
+      final results = SearchResults(
+        query: 'test',
+        results: [],
+        totalCount: 100,
+        searchTimeMs: 10,
+        options: const SearchOptions(limit: 50, offset: 0),
+      );
+      expect(results.hasMore, isTrue);
+    });
+
+    test('hasMore returns false when all results returned', () {
+      final document = createTestDocument();
+      final results = SearchResults(
+        query: 'test',
+        results: [SearchResult(document: document, score: -1.0)],
+        totalCount: 1,
+        searchTimeMs: 10,
+        options: const SearchOptions(limit: 50, offset: 0),
+      );
+      expect(results.hasMore, isFalse);
+    });
+
+    test('count returns number of results', () {
+      final document = createTestDocument();
+      final results = SearchResults(
+        query: 'test',
+        results: [
+          SearchResult(document: document, score: -1.0),
+          SearchResult(document: document, score: -0.5),
+        ],
+        totalCount: 2,
+        searchTimeMs: 10,
+        options: const SearchOptions(),
+      );
+      expect(results.count, 2);
+    });
+
+    test('documents returns list of documents', () {
+      final doc1 = createTestDocument(id: 'doc-1');
+      final doc2 = createTestDocument(id: 'doc-2');
+      final results = SearchResults(
+        query: 'test',
+        results: [
+          SearchResult(document: doc1, score: -1.0),
+          SearchResult(document: doc2, score: -0.5),
+        ],
+        totalCount: 2,
+        searchTimeMs: 10,
+        options: const SearchOptions(),
+      );
+      expect(results.documents.length, 2);
+      expect(results.documents[0].id, 'doc-1');
+      expect(results.documents[1].id, 'doc-2');
+    });
+
+    test('copyWith creates new instance with updated values', () {
+      const original = SearchResults.empty(query: 'original');
+      final updated = original.copyWith(
+        query: 'updated',
+        totalCount: 10,
+      );
+
+      expect(updated.query, 'updated');
+      expect(updated.totalCount, 10);
+      expect(updated.results, isEmpty);
+    });
+
+    test('equality works correctly', () {
+      final results1 = SearchResults(
+        query: 'test',
+        results: [],
+        totalCount: 0,
+        searchTimeMs: 10,
+        options: const SearchOptions(),
+      );
+      final results2 = SearchResults(
+        query: 'test',
+        results: [],
+        totalCount: 0,
+        searchTimeMs: 10,
+        options: const SearchOptions(),
+      );
+      final results3 = SearchResults(
+        query: 'different',
+        results: [],
+        totalCount: 0,
+        searchTimeMs: 10,
+        options: const SearchOptions(),
+      );
+
+      expect(results1, equals(results2));
+      expect(results1, isNot(equals(results3)));
+    });
+
+    test('hashCode is consistent', () {
+      final results1 = SearchResults(
+        query: 'test',
+        results: [],
+        totalCount: 0,
+        searchTimeMs: 10,
+        options: const SearchOptions(),
+      );
+      final results2 = SearchResults(
+        query: 'test',
+        results: [],
+        totalCount: 0,
+        searchTimeMs: 10,
+        options: const SearchOptions(),
+      );
+      expect(results1.hashCode, equals(results2.hashCode));
+    });
+
+    test('toString returns expected format', () {
+      final results = SearchResults(
+        query: 'test query',
+        results: [],
+        totalCount: 5,
+        searchTimeMs: 25,
+        options: const SearchOptions(),
+      );
+      final str = results.toString();
+      expect(str, contains('query: "test query"'));
+      expect(str, contains('count: 0'));
+      expect(str, contains('total: 5'));
+      expect(str, contains('time: 25ms'));
+    });
+  });
+
+  group('RecentSearch', () {
+    test('creates with required fields', () {
+      final timestamp = DateTime(2024, 1, 15, 10, 30);
+      final recent = RecentSearch(
+        query: 'test search',
+        timestamp: timestamp,
+      );
+
+      expect(recent.query, 'test search');
+      expect(recent.timestamp, timestamp);
+      expect(recent.resultCount, isNull);
+    });
+
+    test('creates with resultCount', () {
+      final recent = RecentSearch(
+        query: 'test',
+        timestamp: DateTime.now(),
+        resultCount: 42,
+      );
+      expect(recent.resultCount, 42);
+    });
+
+    test('copyWith creates new instance with updated values', () {
+      final original = RecentSearch(
+        query: 'original',
+        timestamp: DateTime(2024, 1, 1),
+      );
+
+      final updated = original.copyWith(
+        query: 'updated',
+        resultCount: 10,
+      );
+
+      expect(updated.query, 'updated');
+      expect(updated.resultCount, 10);
+      expect(updated.timestamp, original.timestamp);
+    });
+
+    test('toMap serializes correctly', () {
+      final timestamp = DateTime(2024, 1, 15, 10, 30);
+      final recent = RecentSearch(
+        query: 'test',
+        timestamp: timestamp,
+        resultCount: 5,
+      );
+
+      final map = recent.toMap();
+      expect(map['query'], 'test');
+      expect(map['timestamp'], timestamp.toIso8601String());
+      expect(map['resultCount'], 5);
+    });
+
+    test('toMap omits null resultCount', () {
+      final recent = RecentSearch(
+        query: 'test',
+        timestamp: DateTime.now(),
+      );
+
+      final map = recent.toMap();
+      expect(map.containsKey('resultCount'), isFalse);
+    });
+
+    test('fromMap deserializes correctly', () {
+      final map = {
+        'query': 'test query',
+        'timestamp': '2024-01-15T10:30:00.000',
+        'resultCount': 10,
+      };
+
+      final recent = RecentSearch.fromMap(map);
+      expect(recent.query, 'test query');
+      expect(recent.timestamp.year, 2024);
+      expect(recent.timestamp.month, 1);
+      expect(recent.timestamp.day, 15);
+      expect(recent.resultCount, 10);
+    });
+
+    test('fromMap handles null resultCount', () {
+      final map = {
+        'query': 'test',
+        'timestamp': '2024-01-15T10:30:00.000',
+      };
+
+      final recent = RecentSearch.fromMap(map);
+      expect(recent.resultCount, isNull);
+    });
+
+    test('equality works correctly', () {
+      final timestamp = DateTime(2024, 1, 15);
+      final recent1 = RecentSearch(query: 'test', timestamp: timestamp);
+      final recent2 = RecentSearch(query: 'test', timestamp: timestamp);
+      final recent3 = RecentSearch(query: 'different', timestamp: timestamp);
+
+      expect(recent1, equals(recent2));
+      expect(recent1, isNot(equals(recent3)));
+    });
+
+    test('hashCode is consistent', () {
+      final timestamp = DateTime(2024, 1, 15);
+      final recent1 = RecentSearch(query: 'test', timestamp: timestamp);
+      final recent2 = RecentSearch(query: 'test', timestamp: timestamp);
+      expect(recent1.hashCode, equals(recent2.hashCode));
+    });
+
+    test('toString returns expected format', () {
+      final recent = RecentSearch(
+        query: 'test query',
+        timestamp: DateTime(2024, 1, 15),
+        resultCount: 5,
+      );
+      final str = recent.toString();
+      expect(str, contains('query: "test query"'));
+      expect(str, contains('resultCount: 5'));
+    });
+  });
+
+  group('SearchService', () {
+    test('isReady returns false before initialization', () {
+      expect(searchService.isReady, isFalse);
+    });
+
+    test('recentSearches is empty initially', () {
+      expect(searchService.recentSearches, isEmpty);
+    });
+
+    test('initialize returns true on success', () async {
+      final result = await searchService.initialize();
+      expect(result, isTrue);
+      expect(searchService.isReady, isTrue);
+    });
+
+    test('initialize is idempotent', () async {
+      await searchService.initialize();
+      final result = await searchService.initialize();
+      expect(result, isTrue);
+      verify(mockDatabaseHelper.initialize()).called(1);
+    });
+
+    test('initialize throws SearchException on failure', () async {
+      when(mockDatabaseHelper.initialize())
+          .thenThrow(Exception('Database error'));
+
+      expect(
+        () => searchService.initialize(),
+        throwsA(isA<SearchException>()),
+      );
+    });
+
+    test('search throws if not initialized', () async {
+      expect(
+        () => searchService.search('test'),
+        throwsA(isA<SearchException>()),
+      );
+    });
+
+    test('search returns empty results for empty query', () async {
+      await searchService.initialize();
+
+      final results = await searchService.search('');
+      expect(results.results, isEmpty);
+      expect(results.totalCount, 0);
+    });
+
+    test('search returns empty results for whitespace query', () async {
+      await searchService.initialize();
+
+      final results = await searchService.search('   ');
+      expect(results.results, isEmpty);
+    });
+
+    test('search executes FTS query', () async {
+      await searchService.initialize();
+
+      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => [
+            {
+              'id': 'doc-1',
+              'title': 'Test Document',
+              'description': 'Description',
+              'ocr_text': 'OCR text',
+              'score': -1.5,
+            },
+          ]);
+
+      when(mockDocumentRepository.getDocument('doc-1', includeTags: false))
+          .thenAnswer((_) async => createTestDocument(
+                id: 'doc-1',
+                title: 'Test Document',
+              ));
+
+      final results = await searchService.search('test');
+
+      expect(results.hasResults, isTrue);
+      expect(results.results.length, 1);
+      expect(results.results.first.document.id, 'doc-1');
+    });
+
+    test('search adds to recent searches', () async {
+      await searchService.initialize();
+
+      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => []);
+
+      await searchService.search('my query');
+
+      expect(searchService.recentSearches.length, 1);
+      expect(searchService.recentSearches.first.query, 'my query');
+    });
+
+    test('search deduplicates recent searches', () async {
+      await searchService.initialize();
+
+      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => []);
+
+      await searchService.search('query1');
+      await searchService.search('query2');
+      await searchService.search('query1'); // Duplicate
+
+      expect(searchService.recentSearches.length, 2);
+      expect(searchService.recentSearches.first.query, 'query1');
+    });
+
+    test('search trims recent searches to max', () async {
+      await searchService.initialize();
+
+      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => []);
+
+      // Add more than maxRecentSearches
+      for (var i = 0; i < 25; i++) {
+        await searchService.search('query$i');
+      }
+
+      expect(
+        searchService.recentSearches.length,
+        SearchService.maxRecentSearches,
+      );
+    });
+
+    test('search with phrase mode wraps query in quotes', () async {
+      await searchService.initialize();
+
+      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => []);
+
+      await searchService.search(
+        'important document',
+        options: const SearchOptions(matchMode: SearchMatchMode.phrase),
+      );
+
+      verify(
+        mockDatabaseHelper.rawQuery(
+          any,
+          argThat(contains('"important document"')),
+        ),
+      ).called(1);
+    });
+
+    test('search with prefix mode adds asterisks', () async {
+      await searchService.initialize();
+
+      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => []);
+
+      await searchService.search(
+        'test query',
+        options: const SearchOptions(matchMode: SearchMatchMode.prefix),
+      );
+
+      verify(
+        mockDatabaseHelper.rawQuery(
+          any,
+          argThat(contains('test* query*')),
+        ),
+      ).called(1);
+    });
+
+    test('search with anyWord mode uses OR', () async {
+      await searchService.initialize();
+
+      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => []);
+
+      await searchService.search(
+        'word1 word2',
+        options: const SearchOptions(matchMode: SearchMatchMode.anyWord),
+      );
+
+      verify(
+        mockDatabaseHelper.rawQuery(
+          any,
+          argThat(contains('word1 OR word2')),
+        ),
+      ).called(1);
+    });
+
+    test('search with title field adds column prefix', () async {
+      await searchService.initialize();
+
+      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => []);
+
+      await searchService.search(
+        'test',
+        options: const SearchOptions(field: SearchField.title),
+      );
+
+      verify(
+        mockDatabaseHelper.rawQuery(
+          any,
+          argThat(contains('title:')),
+        ),
+      ).called(1);
+    });
+
+    test('search falls back to LIKE on FTS failure', () async {
+      await searchService.initialize();
+
+      // First call fails (FTS)
+      var callCount = 0;
+      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async {
+        callCount++;
+        if (callCount == 1) {
+          throw Exception('FTS error');
+        }
+        return [];
+      });
+
+      final results = await searchService.search('test');
+
+      expect(results.results, isEmpty);
+      verify(mockDatabaseHelper.rawQuery(any, any)).called(2);
+    });
+
+    test('search filters by favorites', () async {
+      await searchService.initialize();
+
+      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => [
+            {
+              'id': 'doc-1',
+              'title': 'Test',
+              'description': null,
+              'ocr_text': null,
+              'score': -1.0,
+            },
+          ]);
+
+      when(mockDocumentRepository.getDocument('doc-1'))
+          .thenAnswer((_) async => createTestDocument(
+                id: 'doc-1',
+                isFavorite: false,
+              ));
+
+      final results = await searchService.search(
+        'test',
+        options: const SearchOptions(favoritesOnly: true),
+      );
+
+      expect(results.results, isEmpty);
+    });
+
+    test('search filters by hasOcrOnly', () async {
+      await searchService.initialize();
+
+      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => [
+            {
+              'id': 'doc-1',
+              'title': 'Test',
+              'description': null,
+              'ocr_text': null,
+              'score': -1.0,
+            },
+          ]);
+
+      when(mockDocumentRepository.getDocument('doc-1'))
+          .thenAnswer((_) async => createTestDocument(
+                id: 'doc-1',
+                ocrText: null,
+              ));
+
+      final results = await searchService.search(
+        'test',
+        options: const SearchOptions(hasOcrOnly: true),
+      );
+
+      expect(results.results, isEmpty);
+    });
+
+    test('search filters by folderId', () async {
+      await searchService.initialize();
+
+      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => [
+            {
+              'id': 'doc-1',
+              'title': 'Test',
+              'description': null,
+              'ocr_text': null,
+              'score': -1.0,
+            },
+          ]);
+
+      when(mockDocumentRepository.getDocument('doc-1'))
+          .thenAnswer((_) async => createTestDocument(
+                id: 'doc-1',
+                folderId: 'folder-1',
+              ));
+
+      final results = await searchService.search(
+        'test',
+        options: const SearchOptions(folderId: 'folder-2'),
+      );
+
+      expect(results.results, isEmpty);
+    });
+
+    test('getSuggestions throws if not initialized', () async {
+      expect(
+        () => searchService.getSuggestions('test'),
+        throwsA(isA<SearchException>()),
+      );
+    });
+
+    test('getSuggestions returns recent searches for empty query', () async {
+      await searchService.initialize();
+      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => []);
+
+      await searchService.search('query1');
+      await searchService.search('query2');
+
+      final suggestions = await searchService.getSuggestions('');
+
+      expect(suggestions.isNotEmpty, isTrue);
+      expect(suggestions, contains('query2'));
+    });
+
+    test('getSuggestions returns matching recent searches', () async {
+      await searchService.initialize();
+      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => []);
+
+      await searchService.search('invoice 2024');
+      await searchService.search('contract agreement');
+      await searchService.search('invoice summary');
+
+      final suggestions = await searchService.getSuggestions('inv');
+
+      expect(suggestions.contains('invoice 2024'), isTrue);
+      expect(suggestions.contains('invoice summary'), isTrue);
+      expect(suggestions.contains('contract agreement'), isFalse);
+    });
+
+    test('getRecentSearches returns empty list initially', () async {
+      final recent = await searchService.getRecentSearches();
+      expect(recent, isEmpty);
+    });
+
+    test('getRecentSearches respects limit', () async {
+      await searchService.initialize();
+      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => []);
+
+      for (var i = 0; i < 10; i++) {
+        await searchService.search('query$i');
+      }
+
+      final recent = await searchService.getRecentSearches(limit: 3);
+      expect(recent.length, 3);
+    });
+
+    test('clearRecentSearches removes all entries', () async {
+      await searchService.initialize();
+      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => []);
+
+      await searchService.search('query1');
+      await searchService.search('query2');
+
+      await searchService.clearRecentSearches();
+
+      expect(searchService.recentSearches, isEmpty);
+    });
+
+    test('removeRecentSearch removes specific entry', () async {
+      await searchService.initialize();
+      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => []);
+
+      await searchService.search('query1');
+      await searchService.search('query2');
+      await searchService.search('query3');
+
+      await searchService.removeRecentSearch('query2');
+
+      expect(searchService.recentSearches.length, 2);
+      expect(
+        searchService.recentSearches.any((s) => s.query == 'query2'),
+        isFalse,
+      );
+    });
+
+    test('removeRecentSearch is case insensitive', () async {
+      await searchService.initialize();
+      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => []);
+
+      await searchService.search('MyQuery');
+
+      await searchService.removeRecentSearch('MYQUERY');
+
+      expect(searchService.recentSearches, isEmpty);
+    });
+
+    test('rebuildIndex throws if not initialized', () async {
+      expect(
+        () => searchService.rebuildIndex(),
+        throwsA(isA<SearchException>()),
+      );
+    });
+
+    test('rebuildIndex calls database rebuild', () async {
+      await searchService.initialize();
+      when(mockDatabaseHelper.rebuildFtsIndex()).thenAnswer((_) async {});
+
+      await searchService.rebuildIndex();
+
+      verify(mockDatabaseHelper.rebuildFtsIndex()).called(1);
+    });
+
+    test('rebuildIndex throws SearchException on failure', () async {
+      await searchService.initialize();
+      when(mockDatabaseHelper.rebuildFtsIndex())
+          .thenThrow(Exception('Rebuild failed'));
+
+      expect(
+        () => searchService.rebuildIndex(),
+        throwsA(isA<SearchException>()),
+      );
+    });
+
+    test('getIndexSize returns 0', () async {
+      final size = await searchService.getIndexSize();
+      expect(size, 0);
+    });
+  });
+
+  group('SearchService sorting', () {
+    test('sorts by relevance by default', () async {
+      await searchService.initialize();
+
+      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => [
+            {
+              'id': 'doc-1',
+              'title': 'Test 1',
+              'description': null,
+              'ocr_text': null,
+              'score': -2.0,
+            },
+            {
+              'id': 'doc-2',
+              'title': 'Test 2',
+              'description': null,
+              'ocr_text': null,
+              'score': -1.0,
+            },
+          ]);
+
+      when(mockDocumentRepository.getDocument('doc-1', includeTags: false))
+          .thenAnswer((_) async => createTestDocument(id: 'doc-1'));
+      when(mockDocumentRepository.getDocument('doc-2', includeTags: false))
+          .thenAnswer((_) async => createTestDocument(id: 'doc-2'));
+
+      final results = await searchService.search('test');
+
+      // More negative score = better match, should be first
+      expect(results.results[0].score, lessThan(results.results[1].score));
+    });
+
+    test('sorts by title when specified', () async {
+      await searchService.initialize();
+
+      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => [
+            {
+              'id': 'doc-1',
+              'title': 'Zebra',
+              'description': null,
+              'ocr_text': null,
+              'score': -1.0,
+            },
+            {
+              'id': 'doc-2',
+              'title': 'Apple',
+              'description': null,
+              'ocr_text': null,
+              'score': -2.0,
+            },
+          ]);
+
+      when(mockDocumentRepository.getDocument('doc-1', includeTags: false))
+          .thenAnswer(
+              (_) async => createTestDocument(id: 'doc-1', title: 'Zebra'));
+      when(mockDocumentRepository.getDocument('doc-2', includeTags: false))
+          .thenAnswer(
+              (_) async => createTestDocument(id: 'doc-2', title: 'Apple'));
+
+      final results = await searchService.search(
+        'test',
+        options: const SearchOptions(
+          sortBy: SearchSortBy.title,
+          sortDescending: false,
+        ),
+      );
+
+      expect(results.results[0].document.title, 'Apple');
+      expect(results.results[1].document.title, 'Zebra');
+    });
+
+    test('sorts descending when specified', () async {
+      await searchService.initialize();
+
+      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => [
+            {
+              'id': 'doc-1',
+              'title': 'Small',
+              'description': null,
+              'ocr_text': null,
+              'score': -1.0,
+            },
+            {
+              'id': 'doc-2',
+              'title': 'Large',
+              'description': null,
+              'ocr_text': null,
+              'score': -1.0,
+            },
+          ]);
+
+      when(mockDocumentRepository.getDocument('doc-1', includeTags: false))
+          .thenAnswer(
+              (_) async => createTestDocument(id: 'doc-1', fileSize: 100));
+      when(mockDocumentRepository.getDocument('doc-2', includeTags: false))
+          .thenAnswer(
+              (_) async => createTestDocument(id: 'doc-2', fileSize: 1000));
+
+      final results = await searchService.search(
+        'test',
+        options: const SearchOptions(
+          sortBy: SearchSortBy.fileSize,
+          sortDescending: true,
+        ),
+      );
+
+      expect(results.results[0].document.fileSize, 1000);
+      expect(results.results[1].document.fileSize, 100);
+    });
+  });
+
+  group('Riverpod provider', () {
+    test('searchServiceProvider creates SearchService', () {
+      final container = ProviderContainer(
+        overrides: [
+          databaseHelperProvider.overrideWithValue(mockDatabaseHelper),
+          documentRepositoryProvider.overrideWithValue(mockDocumentRepository),
+        ],
+      );
+
+      addTearDown(container.dispose);
+
+      final service = container.read(searchServiceProvider);
+      expect(service, isA<SearchService>());
+    });
+  });
+
+  group('Integration tests', () {
+    test('full search workflow', () async {
+      await searchService.initialize();
+
+      // Setup mock responses
+      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => [
+            {
+              'id': 'doc-1',
+              'title': 'Invoice 2024',
+              'description': 'Annual invoice',
+              'ocr_text': 'Total: \$500',
+              'score': -2.5,
+            },
+          ]);
+
+      when(mockDocumentRepository.getDocument('doc-1', includeTags: false))
+          .thenAnswer((_) async => createTestDocument(
+                id: 'doc-1',
+                title: 'Invoice 2024',
+                description: 'Annual invoice',
+                ocrText: 'Total: \$500',
+              ));
+
+      // Perform search
+      final results = await searchService.search(
+        'invoice',
+        options: const SearchOptions(
+          includeSnippets: true,
+          snippetLength: 100,
+        ),
+      );
+
+      // Verify results
+      expect(results.hasResults, isTrue);
+      expect(results.query, 'invoice');
+      expect(results.results.first.document.title, 'Invoice 2024');
+      expect(results.results.first.matchedTitle, isTrue);
+
+      // Verify snippets generated
+      expect(results.results.first.snippets.isNotEmpty, isTrue);
+
+      // Verify recent search added
+      expect(searchService.recentSearches.length, 1);
+      expect(searchService.recentSearches.first.query, 'invoice');
+    });
+
+    test('pagination works correctly', () async {
+      await searchService.initialize();
+
+      // Create 5 mock results
+      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => [
+            for (var i = 1; i <= 5; i++)
+              {
+                'id': 'doc-$i',
+                'title': 'Document $i',
+                'description': null,
+                'ocr_text': null,
+                'score': -1.0 * i,
+              },
+          ]);
+
+      for (var i = 1; i <= 5; i++) {
+        when(mockDocumentRepository.getDocument('doc-$i', includeTags: false))
+            .thenAnswer((_) async => createTestDocument(id: 'doc-$i'));
+      }
+
+      // Get first page
+      final page1 = await searchService.search(
+        'test',
+        options: const SearchOptions(limit: 2, offset: 0),
+      );
+
+      expect(page1.results.length, 2);
+      expect(page1.totalCount, 5);
+      expect(page1.hasMore, isTrue);
+
+      // Get second page
+      final page2 = await searchService.search(
+        'test',
+        options: const SearchOptions(limit: 2, offset: 2),
+      );
+
+      expect(page2.results.length, 2);
+      expect(page2.hasMore, isTrue);
+
+      // Get last page
+      final page3 = await searchService.search(
+        'test',
+        options: const SearchOptions(limit: 2, offset: 4),
+      );
+
+      expect(page3.results.length, 1);
+      expect(page3.hasMore, isFalse);
+    });
+
+    test('empty results handling', () async {
+      await searchService.initialize();
+      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => []);
+
+      final results = await searchService.search('nonexistent');
+
+      expect(results.hasResults, isFalse);
+      expect(results.totalCount, 0);
+      expect(results.searchTimeMs, greaterThanOrEqualTo(0));
     });
   });
 }

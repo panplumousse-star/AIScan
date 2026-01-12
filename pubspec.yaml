@@ -9,14 +9,56 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+
+  # Document Scanning
+  google_mlkit_document_scanner: ^0.4.0
+
+  # OCR
+  flutter_tesseract_ocr: ^0.4.23
+
+  # PDF Generation
+  pdf: ^3.10.0
+  printing: ^5.11.0
+
+  # Image Processing
+  image: ^4.0.0
+
+  # Storage & Database
   sqflite: ^2.3.0
   path_provider: ^2.1.0
+
+  # Security
+  flutter_secure_storage: ^9.0.0
+  encrypt: ^5.0.3
+  aes_encrypt_file: ^0.0.4
+
+  # State Management
+  flutter_riverpod: ^2.4.0
+
+  # UI Components
+  flutter_svg: ^2.0.0
+
+  # Signature Capture
+  hand_signature: ^3.0.0
+
+  # Utilities
   path: ^1.8.0
+  uuid: ^4.2.0
+  intl: ^0.18.0
+  permission_handler: ^11.1.0
+  share_plus: ^7.2.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0
+  mockito: ^5.4.0
+  build_runner: ^2.4.0
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - assets/tessdata/
+    - assets/images/
+    - assets/icons/

@@ -54,6 +54,13 @@ class DatabaseHelper {
   static const String columnDocumentId = 'document_id';
   static const String columnTagId = 'tag_id';
 
+  // Column names for folders table
+  static const String columnName = 'name';
+  static const String columnParentId = 'parent_id';
+
+  // Column names for tags table
+  static const String columnColor = 'color';
+
   /// Active FTS version: 5 (FTS5), 4 (FTS4), or 0 (disabled)
   ///
   /// This variable tracks the detected FTS capability at runtime:
@@ -781,6 +788,40 @@ class DatabaseHelper {
     await database;
   }
 
+  /// Checks if a row with the given ID exists in the specified table.
+  Future<bool> exists(String table, String id) async {
+    final db = await database;
+    final result = await db.query(
+      table,
+      columns: [columnId],
+      where: '$columnId = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+    return result.isNotEmpty;
+  }
+
   /// Whether full-text search is available.
   bool get isFtsAvailable => _ftsVersion > 0;
+
+  /// Whether the database has been initialized.
+  bool get isInitialized => _database != null;
+
+  /// Gets all tags from the database.
+  Future<List<Map<String, dynamic>>> getAllTags({String? orderBy}) async {
+    final db = await database;
+    return await db.query(
+      tableTags,
+      orderBy: orderBy ?? '$columnName ASC',
+    );
+  }
+
+  /// Gets all folders from the database.
+  Future<List<Map<String, dynamic>>> getAllFolders({String? orderBy}) async {
+    final db = await database;
+    return await db.query(
+      tableFolders,
+      orderBy: orderBy ?? '$columnName ASC',
+    );
+  }
 }

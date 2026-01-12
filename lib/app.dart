@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/theme/app_theme.dart';
 import 'core/widgets/animated_widgets.dart';
+import 'features/documents/presentation/documents_screen.dart';
 import 'features/scanner/presentation/scanner_screen.dart';
 
 /// The root widget of the AIScan application.
@@ -159,12 +160,33 @@ class _PlaceholderHomeScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              const SizedBox(height: AppSpacing.md),
+              // My Documents button with slide-in animation
+              AnimatedSlideIn(
+                delay: const Duration(milliseconds: 500),
+                direction: SlideDirection.up,
+                child: TapScaleFeedback(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const DocumentsScreen(),
+                      ),
+                    );
+                  },
+                  child: OutlinedButton.icon(
+                    onPressed: null, // Handled by TapScaleFeedback
+                    icon: const Icon(Icons.folder_outlined),
+                    label: const Text('My Documents'),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
       ),
       floatingActionButton: AnimatedSlideIn(
-        delay: const Duration(milliseconds: 500),
+        delay: const Duration(milliseconds: 600),
         direction: SlideDirection.up,
         child: FloatingActionButton.extended(
           onPressed: () {

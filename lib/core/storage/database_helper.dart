@@ -173,4 +173,24 @@ class DatabaseHelper {
       END
     ''');
   }
+
+  /// Creates FTS4 virtual table for full-text search (fallback).
+  ///
+  /// FTS4 provides universal compatibility with older Android devices:
+  /// - Uses `content=` option for external content tables (quoted table name)
+  /// - Uses `docid` as the implicit rowid reference
+  /// - No built-in `rank` column (requires manual matchinfo() for relevance)
+  ///
+  /// Throws [DatabaseException] with 'no such module: fts4' if FTS4
+  /// is not available on the device.
+  Future<void> _createFts4Tables(Database db) async {
+    await db.execute('''
+      CREATE VIRTUAL TABLE $tableDocumentsFts USING fts4(
+        $columnTitle,
+        $columnDescription,
+        $columnOcrText,
+        content="$tableDocuments"
+      )
+    ''');
+  }
 }

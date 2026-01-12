@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/permissions/camera_permission_service.dart';
+import 'core/permissions/permission_dialog.dart';
 import 'core/theme/app_theme.dart';
 import 'core/widgets/animated_widgets.dart';
 import 'features/documents/presentation/documents_screen.dart';
@@ -85,11 +87,133 @@ class AIScanApp extends ConsumerWidget {
 /// This provides a basic UI to verify the app structure is working correctly.
 /// Demonstrates animated widgets and micro-interactions.
 /// Uses [ThemeContextExtension] for convenient theme access.
-class _PlaceholderHomeScreen extends StatelessWidget {
+///
+/// ## Camera Permission
+/// Before navigating to the scanner, this screen checks camera permission
+/// using [CameraPermissionService] and shows the permission dialog if needed.
+class _PlaceholderHomeScreen extends ConsumerWidget {
   const _PlaceholderHomeScreen();
 
+  /// Checks camera permission and shows dialog if needed.
+  ///
+  /// Returns `true` if permission is granted (permanent or session),
+  /// `false` if denied or cancelled.
+  Future<bool> _checkAndRequestPermission(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final permissionService = ref.read(cameraPermissionServiceProvider);
+    final state = await permissionService.checkPermission();
+
+    // If already granted, proceed
+    if (state == CameraPermissionState.granted ||
+        state == CameraPermissionState.sessionOnly) {
+      return true;
+    }
+
+    // If permission is unknown, show our custom dialog
+    if (state == CameraPermissionState.unknown) {
+      if (!context.mounted) return false;
+
+      final result = await showCameraPermissionDialog(context);
+      if (result == null) return false; // User dismissed
+
+      switch (result) {
+        case PermissionDialogResult.granted:
+          await permissionService.grantPermanentPermission();
+        case PermissionDialogResult.sessionOnly:
+          permissionService.grantSessionPermission();
+        case PermissionDialogResult.denied:
+          await permissionService.denyPermission();
+          if (context.mounted) {
+            showCameraPermissionDeniedSnackbar(
+              context,
+              onSettingsPressed: () async {
+                await permissionService.openSettings();
+              },
+            );
+          }
+          return false;
+      }
+
+      // Request system permission after user consent
+      final systemState = await permissionService.requestSystemPermission();
+
+      // Check if system permission was granted
+      if (systemState == CameraPermissionState.granted ||
+          systemState == CameraPermissionState.sessionOnly) {
+        return true;
+      }
+
+      // System permission denied or permanently denied
+      if (systemState == CameraPermissionState.permanentlyDenied) {
+        if (context.mounted) {
+          final shouldOpenSettings = await showCameraSettingsDialog(context);
+          if (shouldOpenSettings) {
+            await permissionService.openSettings();
+          }
+        }
+        return false;
+      }
+
+      if (context.mounted) {
+        showCameraPermissionDeniedSnackbar(
+          context,
+          onSettingsPressed: () async {
+            await permissionService.openSettings();
+          },
+        );
+      }
+      return false;
+    }
+
+    // If permanently denied or restricted, prompt to open settings
+    if (state == CameraPermissionState.permanentlyDenied ||
+        state == CameraPermissionState.restricted) {
+      if (!context.mounted) return false;
+
+      final shouldOpenSettings = await showCameraSettingsDialog(context);
+      if (shouldOpenSettings) {
+        await permissionService.openSettings();
+      }
+      return false;
+    }
+
+    // If denied, show snackbar with settings option
+    if (state == CameraPermissionState.denied) {
+      if (!context.mounted) return false;
+
+      showCameraPermissionDeniedSnackbar(
+        context,
+        onSettingsPressed: () async {
+          await permissionService.openSettings();
+        },
+      );
+      return false;
+    }
+
+    return false;
+  }
+
+  /// Navigates to scanner screen after checking permission.
+  Future<void> _navigateToScanner(
+    BuildContext context,
+    WidgetRef ref, {
+    bool startWithQuickScan = false,
+  }) async {
+    final hasPermission = await _checkAndRequestPermission(context, ref);
+    if (hasPermission && context.mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ScannerScreen(startWithQuickScan: startWithQuickScan),
+        ),
+      );
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     // Use theme extension for cleaner access
     final colorScheme = context.colorScheme;
     final textTheme = context.textTheme;
@@ -141,14 +265,7 @@ class _PlaceholderHomeScreen extends StatelessWidget {
                 delay: const Duration(milliseconds: 400),
                 direction: SlideDirection.up,
                 child: TapScaleFeedback(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const ScannerScreen(),
-                      ),
-                    );
-                  },
+                  onTap: () => _navigateToScanner(context, ref),
                   child: FilledButton.icon(
                     onPressed: null, // Handled by TapScaleFeedback
                     icon: const Icon(Icons.camera_alt_outlined),
@@ -189,14 +306,11 @@ class _PlaceholderHomeScreen extends StatelessWidget {
         delay: const Duration(milliseconds: 600),
         direction: SlideDirection.up,
         child: FloatingActionButton.extended(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const ScannerScreen(startWithQuickScan: true),
-              ),
-            );
-          },
+          onPressed: () => _navigateToScanner(
+            context,
+            ref,
+            startWithQuickScan: true,
+          ),
           icon: const Icon(Icons.add_a_photo_outlined),
           label: const Text('Quick Scan'),
         ),

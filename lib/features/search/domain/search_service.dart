@@ -1,404 +1,1383 @@
-import 'dart:async';
 import 'package:flutter/foundation.dart';
-import '../../../core/storage/database_helper.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Search options for configuring search behavior.
+import '../../../core/storage/database_helper.dart';
+import '../../../core/storage/document_repository.dart';
+import '../../documents/domain/document_model.dart';
+
+/// Riverpod provider for [SearchService].
+///
+/// Provides a singleton instance of the search service for
+/// dependency injection throughout the application.
+final searchServiceProvider = Provider<SearchService>((ref) {
+  final databaseHelper = ref.read(databaseHelperProvider);
+  final documentRepository = ref.read(documentRepositoryProvider);
+  return SearchService(
+    databaseHelper: databaseHelper,
+    documentRepository: documentRepository,
+  );
+});
+
+/// Exception thrown when search operations fail.
+///
+/// Contains the original error message and optional underlying exception.
+class SearchException implements Exception {
+  /// Creates a [SearchException] with the given [message].
+  const SearchException(this.message, {this.cause});
+
+  /// Human-readable error message.
+  final String message;
+
+  /// The underlying exception that caused this error, if any.
+  final Object? cause;
+
+  @override
+  String toString() {
+    if (cause != null) {
+      return 'SearchException: $message (caused by: $cause)';
+    }
+    return 'SearchException: $message';
+  }
+}
+
+/// A single search result with relevance information.
+///
+/// Contains the matching document along with search-specific metadata
+/// like relevance score and highlighted snippets.
+@immutable
+class SearchResult {
+  /// Creates a [SearchResult] with the required data.
+  const SearchResult({
+    required this.document,
+    required this.score,
+    this.snippets = const [],
+    this.matchedFields = const [],
+  });
+
+  /// The matching document.
+  final Document document;
+
+  /// Relevance score (higher is more relevant).
+  ///
+  /// Typically based on BM25 ranking from FTS5.
+  /// Score is typically negative (closer to 0 is better match).
+  final double score;
+
+  /// Text snippets showing matching portions with context.
+  ///
+  /// Each snippet may contain highlighted matching terms.
+  final List<SearchSnippet> snippets;
+
+  /// List of fields that matched the query.
+  ///
+  /// Possible values: 'title', 'description', 'ocr_text'.
+  final List<String> matchedFields;
+
+  /// Whether the search matched in the document title.
+  bool get matchedTitle => matchedFields.contains('title');
+
+  /// Whether the search matched in the document description.
+  bool get matchedDescription => matchedFields.contains('description');
+
+  /// Whether the search matched in the OCR text.
+  bool get matchedOcrText => matchedFields.contains('ocr_text');
+
+  /// Gets a brief preview of the best matching content.
+  String get preview {
+    if (snippets.isNotEmpty) {
+      return snippets.first.text;
+    }
+    if (document.description != null && document.description!.isNotEmpty) {
+      return document.description!;
+    }
+    if (document.hasOcrText) {
+      final ocrPreview = document.ocrText!;
+      return ocrPreview.length > 200
+          ? '${ocrPreview.substring(0, 200)}...'
+          : ocrPreview;
+    }
+    return document.title;
+  }
+
+  /// Creates a copy with updated values.
+  SearchResult copyWith({
+    Document? document,
+    double? score,
+    List<SearchSnippet>? snippets,
+    List<String>? matchedFields,
+  }) {
+    return SearchResult(
+      document: document ?? this.document,
+      score: score ?? this.score,
+      snippets: snippets ?? this.snippets,
+      matchedFields: matchedFields ?? this.matchedFields,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is SearchResult &&
+        other.document == document &&
+        other.score == score &&
+        listEquals(other.snippets, snippets) &&
+        listEquals(other.matchedFields, matchedFields);
+  }
+
+  @override
+  int get hashCode => Object.hash(
+        document,
+        score,
+        Object.hashAll(snippets),
+        Object.hashAll(matchedFields),
+      );
+
+  @override
+  String toString() => 'SearchResult('
+      'document: ${document.id}, '
+      'score: ${score.toStringAsFixed(3)}, '
+      'matchedFields: $matchedFields)';
+}
+
+/// A text snippet from a search result with optional highlighting.
+///
+/// Contains a portion of text from the matched document with
+/// markers indicating where the search terms appear.
+@immutable
+class SearchSnippet {
+  /// Creates a [SearchSnippet] with the text and highlighting info.
+  const SearchSnippet({
+    required this.text,
+    required this.field,
+    this.highlights = const [],
+  });
+
+  /// The snippet text, potentially with highlight markers.
+  final String text;
+
+  /// The field this snippet came from ('title', 'description', 'ocr_text').
+  final String field;
+
+  /// Character ranges of highlighted terms in the text.
+  ///
+  /// Each entry is a [start, end] pair indicating a range to highlight.
+  final List<List<int>> highlights;
+
+  /// Whether the snippet has any highlights.
+  bool get hasHighlights => highlights.isNotEmpty;
+
+  /// Gets the display name for the source field.
+  String get fieldDisplayName {
+    switch (field) {
+      case 'title':
+        return 'Title';
+      case 'description':
+        return 'Description';
+      case 'ocr_text':
+        return 'Document Text';
+      default:
+        return field;
+    }
+  }
+
+  /// Creates a copy with updated values.
+  SearchSnippet copyWith({
+    String? text,
+    String? field,
+    List<List<int>>? highlights,
+  }) {
+    return SearchSnippet(
+      text: text ?? this.text,
+      field: field ?? this.field,
+      highlights: highlights ?? this.highlights,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! SearchSnippet) return false;
+    if (other.text != text || other.field != field) return false;
+    if (other.highlights.length != highlights.length) return false;
+    for (var i = 0; i < highlights.length; i++) {
+      if (!listEquals(other.highlights[i], highlights[i])) return false;
+    }
+    return true;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+        text,
+        field,
+        Object.hashAll(highlights.map((h) => Object.hashAll(h))),
+      );
+
+  @override
+  String toString() => 'SearchSnippet('
+      'field: $field, '
+      'text: ${text.length} chars, '
+      'highlights: ${highlights.length})';
+}
+
+/// The field to search in.
+enum SearchField {
+  /// Search in all fields.
+  all,
+
+  /// Search only in document titles.
+  title,
+
+  /// Search only in document descriptions.
+  description,
+
+  /// Search only in OCR text.
+  ocrText,
+}
+
+/// Configuration options for search operations.
+@immutable
 class SearchOptions {
+  /// Creates [SearchOptions] with the specified parameters.
+  const SearchOptions({
+    this.field = SearchField.all,
+    this.matchMode = SearchMatchMode.prefix,
+    this.limit = 50,
+    this.offset = 0,
+    this.includeSnippets = true,
+    this.snippetLength = 150,
+    this.includeTags = false,
+    this.folderId,
+    this.favoritesOnly = false,
+    this.hasOcrOnly = false,
+    this.sortBy = SearchSortBy.relevance,
+    this.sortDescending = true,
+  });
+
+  /// Creates default search options.
+  const SearchOptions.defaults() : this();
+
+  /// Creates options optimized for quick search suggestions.
+  ///
+  /// Returns minimal data without snippets, limited results.
+  const SearchOptions.suggestions()
+      : field = SearchField.all,
+        matchMode = SearchMatchMode.prefix,
+        limit = 5,
+        offset = 0,
+        includeSnippets = false,
+        snippetLength = 0,
+        includeTags = false,
+        folderId = null,
+        favoritesOnly = false,
+        hasOcrOnly = false,
+        sortBy = SearchSortBy.relevance,
+        sortDescending = true;
+
+  /// Creates options for searching document titles only.
+  const SearchOptions.titlesOnly({
+    int limit = 50,
+    bool includeSnippets = false,
+  })  : field = SearchField.title,
+        matchMode = SearchMatchMode.prefix,
+        this.limit = limit,
+        offset = 0,
+        this.includeSnippets = includeSnippets,
+        snippetLength = 100,
+        includeTags = false,
+        folderId = null,
+        favoritesOnly = false,
+        hasOcrOnly = false,
+        sortBy = SearchSortBy.relevance,
+        sortDescending = true;
+
+  /// Creates options for searching OCR text only.
+  const SearchOptions.ocrTextOnly({
+    int limit = 50,
+    int snippetLength = 200,
+  })  : field = SearchField.ocrText,
+        matchMode = SearchMatchMode.phrase,
+        this.limit = limit,
+        offset = 0,
+        includeSnippets = true,
+        this.snippetLength = snippetLength,
+        includeTags = false,
+        folderId = null,
+        favoritesOnly = false,
+        hasOcrOnly = true,
+        sortBy = SearchSortBy.relevance,
+        sortDescending = true;
+
+  /// Which field(s) to search in.
+  final SearchField field;
+
+  /// How to match the search query.
+  final SearchMatchMode matchMode;
+
   /// Maximum number of results to return.
   final int limit;
 
-  /// Offset for pagination.
+  /// Number of results to skip (for pagination).
   final int offset;
 
-  /// Whether to include OCR text in search.
-  final bool includeOcrText;
+  /// Whether to generate text snippets with highlights.
+  final bool includeSnippets;
 
-  /// Whether to include description in search.
-  final bool includeDescription;
+  /// Approximate length of generated snippets in characters.
+  final int snippetLength;
 
-  const SearchOptions({
-    this.limit = 50,
-    this.offset = 0,
-    this.includeOcrText = true,
-    this.includeDescription = true,
-  });
+  /// Whether to include document tags in results.
+  final bool includeTags;
 
-  /// Default search options.
-  static const SearchOptions defaultOptions = SearchOptions();
-}
+  /// Limit results to documents in this folder.
+  ///
+  /// Use null for all folders.
+  final String? folderId;
 
-/// Result from a search operation.
-class SearchResult {
-  /// The document ID.
-  final int id;
+  /// Only return favorite documents.
+  final bool favoritesOnly;
 
-  /// The document title.
-  final String title;
+  /// Only return documents that have OCR text.
+  final bool hasOcrOnly;
 
-  /// The document description.
-  final String? description;
+  /// How to sort the results.
+  final SearchSortBy sortBy;
 
-  /// The OCR text content.
-  final String? ocrText;
+  /// Whether to sort in descending order.
+  final bool sortDescending;
 
-  /// When the document was created.
-  final DateTime createdAt;
-
-  /// Relevance score (available in FTS5 mode, otherwise null).
-  final double? relevanceScore;
-
-  SearchResult({
-    required this.id,
-    required this.title,
-    this.description,
-    this.ocrText,
-    required this.createdAt,
-    this.relevanceScore,
-  });
-
-  /// Creates a SearchResult from a database row map.
-  factory SearchResult.fromMap(Map<String, dynamic> map) {
-    return SearchResult(
-      id: map[DatabaseHelper.columnId] as int,
-      title: map[DatabaseHelper.columnTitle] as String,
-      description: map[DatabaseHelper.columnDescription] as String?,
-      ocrText: map[DatabaseHelper.columnOcrText] as String?,
-      createdAt: DateTime.parse(map[DatabaseHelper.columnCreatedAt] as String),
-      relevanceScore: map['rank'] != null
-          ? (map['rank'] as num).toDouble()
-          : null,
+  /// Creates a copy with updated values.
+  SearchOptions copyWith({
+    SearchField? field,
+    SearchMatchMode? matchMode,
+    int? limit,
+    int? offset,
+    bool? includeSnippets,
+    int? snippetLength,
+    bool? includeTags,
+    String? folderId,
+    bool? clearFolderId,
+    bool? favoritesOnly,
+    bool? hasOcrOnly,
+    SearchSortBy? sortBy,
+    bool? sortDescending,
+  }) {
+    return SearchOptions(
+      field: field ?? this.field,
+      matchMode: matchMode ?? this.matchMode,
+      limit: limit ?? this.limit,
+      offset: offset ?? this.offset,
+      includeSnippets: includeSnippets ?? this.includeSnippets,
+      snippetLength: snippetLength ?? this.snippetLength,
+      includeTags: includeTags ?? this.includeTags,
+      folderId: clearFolderId == true ? null : (folderId ?? this.folderId),
+      favoritesOnly: favoritesOnly ?? this.favoritesOnly,
+      hasOcrOnly: hasOcrOnly ?? this.hasOcrOnly,
+      sortBy: sortBy ?? this.sortBy,
+      sortDescending: sortDescending ?? this.sortDescending,
     );
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is SearchOptions &&
+        other.field == field &&
+        other.matchMode == matchMode &&
+        other.limit == limit &&
+        other.offset == offset &&
+        other.includeSnippets == includeSnippets &&
+        other.snippetLength == snippetLength &&
+        other.includeTags == includeTags &&
+        other.folderId == folderId &&
+        other.favoritesOnly == favoritesOnly &&
+        other.hasOcrOnly == hasOcrOnly &&
+        other.sortBy == sortBy &&
+        other.sortDescending == sortDescending;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+        field,
+        matchMode,
+        limit,
+        offset,
+        includeSnippets,
+        snippetLength,
+        includeTags,
+        folderId,
+        favoritesOnly,
+        hasOcrOnly,
+        sortBy,
+        sortDescending,
+      );
+
+  @override
+  String toString() => 'SearchOptions('
+      'field: $field, '
+      'matchMode: $matchMode, '
+      'limit: $limit)';
 }
 
-/// Service for searching documents with FTS version-aware capabilities.
+/// How the search query should be matched against documents.
+enum SearchMatchMode {
+  /// Prefix matching - finds words starting with the query.
+  ///
+  /// Example: "doc" matches "document", "documentation".
+  prefix,
+
+  /// Exact phrase matching - finds the exact phrase.
+  ///
+  /// Example: "important document" matches only that exact phrase.
+  phrase,
+
+  /// Match all words in any order.
+  ///
+  /// Example: "document important" matches documents containing both words.
+  allWords,
+
+  /// Match any of the words.
+  ///
+  /// Example: "document important" matches documents with either word.
+  anyWord,
+}
+
+/// How to sort search results.
+enum SearchSortBy {
+  /// Sort by relevance score (default for search).
+  relevance,
+
+  /// Sort by document title alphabetically.
+  title,
+
+  /// Sort by creation date.
+  createdAt,
+
+  /// Sort by last updated date.
+  updatedAt,
+
+  /// Sort by file size.
+  fileSize,
+}
+
+/// Aggregated results from a search operation.
+@immutable
+class SearchResults {
+  /// Creates [SearchResults] with the search data.
+  const SearchResults({
+    required this.query,
+    required this.results,
+    required this.totalCount,
+    required this.searchTimeMs,
+    required this.options,
+  });
+
+  /// Creates empty search results.
+  const SearchResults.empty({
+    String query = '',
+    SearchOptions options = const SearchOptions.defaults(),
+  })  : this.query = query,
+        results = const [],
+        totalCount = 0,
+        searchTimeMs = 0,
+        this.options = options;
+
+  /// The original search query.
+  final String query;
+
+  /// The list of matching search results.
+  final List<SearchResult> results;
+
+  /// Total number of matching documents (before pagination).
+  final int totalCount;
+
+  /// Time taken to perform the search in milliseconds.
+  final int searchTimeMs;
+
+  /// Options used for this search.
+  final SearchOptions options;
+
+  /// Whether any results were found.
+  bool get hasResults => results.isNotEmpty;
+
+  /// Whether more results are available (for pagination).
+  bool get hasMore => (options.offset + results.length) < totalCount;
+
+  /// Number of results returned.
+  int get count => results.length;
+
+  /// The documents from the search results.
+  List<Document> get documents => results.map((r) => r.document).toList();
+
+  /// Creates a copy with updated values.
+  SearchResults copyWith({
+    String? query,
+    List<SearchResult>? results,
+    int? totalCount,
+    int? searchTimeMs,
+    SearchOptions? options,
+  }) {
+    return SearchResults(
+      query: query ?? this.query,
+      results: results ?? this.results,
+      totalCount: totalCount ?? this.totalCount,
+      searchTimeMs: searchTimeMs ?? this.searchTimeMs,
+      options: options ?? this.options,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is SearchResults &&
+        other.query == query &&
+        listEquals(other.results, results) &&
+        other.totalCount == totalCount &&
+        other.searchTimeMs == searchTimeMs &&
+        other.options == options;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+        query,
+        Object.hashAll(results),
+        totalCount,
+        searchTimeMs,
+        options,
+      );
+
+  @override
+  String toString() => 'SearchResults('
+      'query: "$query", '
+      'count: $count, '
+      'total: $totalCount, '
+      'time: ${searchTimeMs}ms)';
+}
+
+/// A recent search entry for search history.
+@immutable
+class RecentSearch {
+  /// Creates a [RecentSearch] with the query and timestamp.
+  const RecentSearch({
+    required this.query,
+    required this.timestamp,
+    this.resultCount,
+  });
+
+  /// The search query string.
+  final String query;
+
+  /// When the search was performed.
+  final DateTime timestamp;
+
+  /// Number of results found (optional).
+  final int? resultCount;
+
+  /// Creates a copy with updated values.
+  RecentSearch copyWith({
+    String? query,
+    DateTime? timestamp,
+    int? resultCount,
+  }) {
+    return RecentSearch(
+      query: query ?? this.query,
+      timestamp: timestamp ?? this.timestamp,
+      resultCount: resultCount ?? this.resultCount,
+    );
+  }
+
+  /// Serializes to a map for storage.
+  Map<String, dynamic> toMap() {
+    return {
+      'query': query,
+      'timestamp': timestamp.toIso8601String(),
+      if (resultCount != null) 'resultCount': resultCount,
+    };
+  }
+
+  /// Creates from a serialized map.
+  factory RecentSearch.fromMap(Map<String, dynamic> map) {
+    return RecentSearch(
+      query: map['query'] as String,
+      timestamp: DateTime.parse(map['timestamp'] as String),
+      resultCount: map['resultCount'] as int?,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is RecentSearch &&
+        other.query == query &&
+        other.timestamp == timestamp &&
+        other.resultCount == resultCount;
+  }
+
+  @override
+  int get hashCode => Object.hash(query, timestamp, resultCount);
+
+  @override
+  String toString() => 'RecentSearch('
+      'query: "$query", '
+      'timestamp: $timestamp, '
+      'resultCount: $resultCount)';
+}
+
+/// Service for full-text search across documents.
 ///
-/// SearchService provides a high-level interface for searching documents,
-/// automatically handling the underlying FTS implementation (FTS5, FTS4, or LIKE).
+/// Provides powerful search functionality using SQLite FTS5 (Full-Text Search),
+/// enabling fast and relevant searches across document titles, descriptions,
+/// and OCR-extracted text.
 ///
-/// The service integrates with [DatabaseHelper] to:
-/// - Detect the active FTS version
-/// - Execute version-appropriate search queries
-/// - Provide graceful fallback when FTS is unavailable
+/// ## Key Features
+/// - **Full-Text Search**: Uses SQLite FTS5 for efficient text matching
+/// - **Relevance Ranking**: Results sorted by BM25 relevance scoring
+/// - **Snippet Generation**: Creates context snippets with matching terms
+/// - **Search History**: Tracks recent searches for quick access
+/// - **Flexible Options**: Configurable search field, match mode, and filters
+/// - **Offline-First**: All search operations work completely offline
 ///
-/// Example:
+/// ## Search Modes
+/// The service supports different matching modes:
+/// - **Prefix**: "doc" matches "document", "documentation" (default)
+/// - **Phrase**: "important document" matches exact phrase
+/// - **All Words**: Matches documents containing all query words
+/// - **Any Word**: Matches documents containing any query word
+///
+/// ## Usage
 /// ```dart
-/// final searchService = SearchService();
-/// await searchService.initialize();
+/// final searchService = ref.read(searchServiceProvider);
 ///
-/// final results = await searchService.search('flutter tutorial');
-/// for (final result in results) {
-///   print('Found: ${result.title}');
-/// }
+/// // Simple search
+/// final results = await searchService.search('invoice');
+///
+/// // Search with options
+/// final results = await searchService.search(
+///   'contract',
+///   options: const SearchOptions(
+///     field: SearchField.ocrText,
+///     matchMode: SearchMatchMode.phrase,
+///     limit: 20,
+///   ),
+/// );
+///
+/// // Get search suggestions
+/// final suggestions = await searchService.getSuggestions('inv');
+///
+/// // Recent searches
+/// final recent = await searchService.getRecentSearches();
 /// ```
+///
+/// ## FTS5 Query Syntax
+/// The service translates user queries to FTS5 syntax:
+/// - Prefix: `word*` for prefix matching
+/// - Phrase: `"word1 word2"` for exact phrase
+/// - AND: `word1 word2` for all words
+/// - OR: `word1 OR word2` for any word
+/// - Field: `title:word` for specific field
 class SearchService {
-  final DatabaseHelper _databaseHelper;
+  /// Creates a [SearchService] with the required dependencies.
+  SearchService({
+    required DatabaseHelper databaseHelper,
+    required DocumentRepository documentRepository,
+  })  : _database = databaseHelper,
+        _documentRepository = documentRepository;
+
+  /// The database helper for FTS queries.
+  final DatabaseHelper _database;
+
+  /// The document repository for retrieving full documents.
+  final DocumentRepository _documentRepository;
+
+  /// Maximum number of recent searches to store.
+  static const int maxRecentSearches = 20;
+
+  /// In-memory cache of recent searches.
+  /// In a production app, this would be persisted.
+  final List<RecentSearch> _recentSearches = [];
 
   /// Whether the service has been initialized.
-  bool _initialized = false;
+  bool _isInitialized = false;
 
-  /// Cached FTS version for logging and decision making.
-  int _cachedFtsVersion = 0;
+  /// Whether the service is ready for use.
+  bool get isReady => _isInitialized;
 
-  /// Creates a new SearchService instance.
-  ///
-  /// If [databaseHelper] is not provided, uses the singleton instance.
-  SearchService({DatabaseHelper? databaseHelper})
-      : _databaseHelper = databaseHelper ?? DatabaseHelper();
-
-  /// Whether the service has been initialized.
-  bool get isInitialized => _initialized;
-
-  /// Gets the active FTS version from DatabaseHelper.
-  ///
-  /// Returns:
-  /// - 5: FTS5 is active (best performance with relevance ranking)
-  /// - 4: FTS4 is active (universal compatibility)
-  /// - 0: FTS is disabled (LIKE-based search)
-  int get ftsVersion => DatabaseHelper.ftsVersion;
+  /// Gets the list of recent searches.
+  List<RecentSearch> get recentSearches => List.unmodifiable(_recentSearches);
 
   /// Initializes the search service.
   ///
-  /// This method:
-  /// 1. Ensures the database is initialized
-  /// 2. Caches the detected FTS version
-  /// 3. Logs the FTS mode for debugging
+  /// This must be called before performing searches. It verifies
+  /// that the database FTS index is available.
   ///
-  /// Must be called before performing searches.
-  Future<void> initialize() async {
-    if (_initialized) {
-      return;
-    }
+  /// Returns true if initialization was successful.
+  ///
+  /// Throws [SearchException] if initialization fails.
+  Future<bool> initialize() async {
+    if (_isInitialized) return true;
 
-    // Access the database to ensure it's initialized
-    // This triggers FTS detection in DatabaseHelper._onCreate()
-    await _databaseHelper.database;
+    try {
+      // Verify the database is available
+      await _database.initialize();
 
-    // Cache the FTS version for logging
-    _cachedFtsVersion = DatabaseHelper.ftsVersion;
-
-    // Log the active FTS mode for debugging
-    _logFtsMode();
-
-    _initialized = true;
-  }
-
-  /// Logs the active FTS mode for debugging purposes.
-  void _logFtsMode() {
-    switch (_cachedFtsVersion) {
-      case 5:
-        debugPrint('SearchService: Using FTS5 mode (full relevance ranking)');
-        break;
-      case 4:
-        debugPrint('SearchService: Using FTS4 mode (basic full-text search)');
-        break;
-      default:
-        debugPrint('SearchService: FTS disabled, using LIKE-based search');
+      _isInitialized = true;
+      debugPrint('Search service initialized');
+      return true;
+    } catch (e) {
+      throw SearchException(
+        'Failed to initialize search service',
+        cause: e,
+      );
     }
   }
 
-  /// Searches documents with the given query.
+  /// Performs a full-text search across documents.
   ///
-  /// This is the main search entry point. It:
-  /// 1. Validates the query
-  /// 2. Executes the search using [_executeSearch]
-  /// 3. Transforms results into [SearchResult] objects
+  /// The [query] string is searched against document fields based
+  /// on the [options] configuration.
   ///
-  /// Parameters:
-  /// - [query]: The search query string
-  /// - [options]: Optional search configuration
+  /// Returns a [SearchResults] object containing matching documents
+  /// with relevance scores and optional snippets.
   ///
-  /// Returns a list of [SearchResult] objects matching the query.
+  /// Throws [SearchException] if:
+  /// - The service is not initialized
+  /// - The query is empty
+  /// - The search operation fails
   ///
   /// Example:
   /// ```dart
-  /// final results = await searchService.search('invoice 2024');
+  /// final results = await searchService.search(
+  ///   'contract agreement',
+  ///   options: const SearchOptions(
+  ///     matchMode: SearchMatchMode.allWords,
+  ///     limit: 20,
+  ///     includeSnippets: true,
+  ///   ),
+  /// );
+  ///
+  /// for (final result in results.results) {
+  ///   print('${result.document.title}: ${result.score}');
+  /// }
   /// ```
-  Future<List<SearchResult>> search(
+  Future<SearchResults> search(
     String query, {
-    SearchOptions options = SearchOptions.defaultOptions,
+    SearchOptions options = const SearchOptions.defaults(),
   }) async {
-    // Ensure service is initialized
-    if (!_initialized) {
-      await initialize();
+    if (!_isInitialized) {
+      throw const SearchException(
+        'Search service not initialized. Call initialize() first.',
+      );
     }
 
-    // Validate query
-    if (query.trim().isEmpty) {
-      return [];
+    final trimmedQuery = query.trim();
+    if (trimmedQuery.isEmpty) {
+      return SearchResults.empty(query: query, options: options);
     }
-
-    // Execute the search with graceful FTS mode handling
-    final rawResults = await _executeSearch(query, options);
-
-    // Transform raw results to SearchResult objects
-    return rawResults.map((row) => SearchResult.fromMap(row)).toList();
-  }
-
-  /// Executes the search using the appropriate method based on FTS version.
-  ///
-  /// This method handles all FTS modes gracefully:
-  /// - FTS5 (version 5): Uses DatabaseHelper.searchDocuments() with rank ordering
-  /// - FTS4 (version 4): Uses DatabaseHelper.searchDocuments() with date ordering
-  /// - Disabled (version 0): Uses DatabaseHelper.searchDocuments() with LIKE queries
-  ///
-  /// The method provides graceful error handling:
-  /// - If FTS query fails (e.g., corrupt index), falls back to [_fallbackSearch]
-  /// - All errors are logged for debugging
-  ///
-  /// Parameters:
-  /// - [query]: The search query string
-  /// - [options]: Search configuration options
-  ///
-  /// Returns raw database result maps.
-  Future<List<Map<String, dynamic>>> _executeSearch(
-    String query,
-    SearchOptions options,
-  ) async {
-    final ftsVersion = DatabaseHelper.ftsVersion;
 
     try {
-      // DatabaseHelper.searchDocuments() already dispatches based on _ftsVersion
-      // It handles FTS5, FTS4, and LIKE modes internally
-      final results = await _databaseHelper.searchDocuments(query);
+      final stopwatch = Stopwatch()..start();
+
+      // Build FTS query based on options
+      final ftsQuery = _buildFtsQuery(trimmedQuery, options);
+
+      // Execute search
+      final searchResultsRaw = await _executeSearch(ftsQuery, options);
+
+      // Apply additional filters not supported by FTS
+      final filteredResults = await _applyFilters(searchResultsRaw, options);
+
+      // Calculate total count before pagination
+      final totalCount = filteredResults.length;
 
       // Apply pagination
-      final paginatedResults = _applyPagination(results, options);
+      final paginatedResults = filteredResults
+          .skip(options.offset)
+          .take(options.limit)
+          .toList();
 
-      // Log search mode and results for debugging
-      if (kDebugMode) {
-        final modeLabel = ftsVersion == 5
-            ? 'FTS5'
-            : ftsVersion == 4
-                ? 'FTS4'
-                : 'LIKE';
-        debugPrint(
-          'SearchService._executeSearch: $modeLabel query="$query" '
-          'found ${results.length} results (returning ${paginatedResults.length})',
-        );
-      }
-
-      return paginatedResults;
-    } catch (e) {
-      // FTS query may fail due to:
-      // - Corrupt FTS index
-      // - Invalid query syntax that escaped sanitization
-      // - Database connection issues
-      debugPrint(
-        'SearchService._executeSearch: FTS$ftsVersion query failed: $e',
+      // Build full search results with snippets if requested
+      final results = await _buildSearchResults(
+        paginatedResults,
+        trimmedQuery,
+        options,
       );
-      debugPrint('SearchService._executeSearch: Falling back to LIKE search');
 
-      // Attempt fallback search as last resort
-      return await _fallbackSearch(query, options);
+      // Sort results
+      _sortResults(results, options);
+
+      stopwatch.stop();
+
+      // Add to recent searches
+      _addToRecentSearches(trimmedQuery, totalCount);
+
+      return SearchResults(
+        query: trimmedQuery,
+        results: results,
+        totalCount: totalCount,
+        searchTimeMs: stopwatch.elapsedMilliseconds,
+        options: options,
+      );
+    } catch (e) {
+      if (e is SearchException) rethrow;
+      throw SearchException(
+        'Search failed for query: $query',
+        cause: e,
+      );
     }
   }
 
-  /// Performs a LIKE-based fallback search when primary search fails.
-  ///
-  /// This method is called when:
-  /// - The primary search method throws an exception
-  /// - FTS index is corrupted or unavailable
-  ///
-  /// It provides a safety net to ensure search functionality remains available
-  /// even when FTS encounters unexpected errors.
-  ///
-  /// Note: This is different from the disabled mode (ftsVersion == 0) which
-  /// uses _searchWithLike in DatabaseHelper. This fallback is for error recovery.
-  ///
-  /// Parameters:
-  /// - [query]: The search query string
-  /// - [options]: Search configuration options
-  ///
-  /// Returns raw database result maps using LIKE-based queries.
-  Future<List<Map<String, dynamic>>> _fallbackSearch(
-    String query,
+  /// Builds an FTS5 query string based on search options.
+  String _buildFtsQuery(String query, SearchOptions options) {
+    // Escape special FTS5 characters
+    var escapedQuery = _escapeFtsSpecialChars(query);
+
+    // Apply match mode
+    switch (options.matchMode) {
+      case SearchMatchMode.prefix:
+        // Add prefix operator to each word
+        final words = escapedQuery.split(RegExp(r'\s+'));
+        escapedQuery = words.map((w) => w.isEmpty ? w : '$w*').join(' ');
+        break;
+
+      case SearchMatchMode.phrase:
+        // Wrap in quotes for phrase matching
+        escapedQuery = '"$escapedQuery"';
+        break;
+
+      case SearchMatchMode.allWords:
+        // Default FTS5 behavior is AND
+        break;
+
+      case SearchMatchMode.anyWord:
+        // Join words with OR
+        final words = escapedQuery.split(RegExp(r'\s+'));
+        escapedQuery = words.where((w) => w.isNotEmpty).join(' OR ');
+        break;
+    }
+
+    // Apply field filter if not searching all fields
+    if (options.field != SearchField.all) {
+      final column = _getColumnName(options.field);
+      escapedQuery = '$column:$escapedQuery';
+    }
+
+    return escapedQuery;
+  }
+
+  /// Escapes special FTS5 characters in a query.
+  String _escapeFtsSpecialChars(String query) {
+    // FTS5 special characters: " * - ^ OR AND NOT NEAR
+    // We want to treat them as literals, so escape with quotes where needed
+    return query
+        .replaceAll('"', ' ')
+        .replaceAll('*', ' ')
+        .replaceAll('^', ' ')
+        .trim();
+  }
+
+  /// Gets the FTS column name for a search field.
+  String _getColumnName(SearchField field) {
+    switch (field) {
+      case SearchField.all:
+        return '*';
+      case SearchField.title:
+        return 'title';
+      case SearchField.description:
+        return 'description';
+      case SearchField.ocrText:
+        return 'ocr_text';
+    }
+  }
+
+  /// Executes the FTS search and returns raw results.
+  Future<List<_RawSearchResult>> _executeSearch(
+    String ftsQuery,
     SearchOptions options,
   ) async {
     try {
-      // Split query into terms
-      final terms = query.trim().split(RegExp(r'\s+'))
-          .where((term) => term.isNotEmpty)
-          .toList();
+      // Query FTS table with ranking
+      final sql = '''
+        SELECT
+          d.${DatabaseHelper.columnId} as id,
+          d.${DatabaseHelper.columnTitle} as title,
+          d.${DatabaseHelper.columnDescription} as description,
+          d.${DatabaseHelper.columnOcrText} as ocr_text,
+          fts.rank as score
+        FROM ${DatabaseHelper.tableDocuments} d
+        INNER JOIN ${DatabaseHelper.tableDocumentsFts} fts ON d.rowid = fts.rowid
+        WHERE ${DatabaseHelper.tableDocumentsFts} MATCH ?
+        ORDER BY fts.rank
+      ''';
 
-      if (terms.isEmpty) {
-        return [];
-      }
+      final results = await _database.rawQuery(sql, [ftsQuery]);
 
-      // Build LIKE conditions for each term
-      final conditions = <String>[];
-      final args = <dynamic>[];
+      return results.map((row) {
+        return _RawSearchResult(
+          documentId: row['id'] as String,
+          title: row['title'] as String?,
+          description: row['description'] as String?,
+          ocrText: row['ocr_text'] as String?,
+          score: (row['score'] as num?)?.toDouble() ?? 0.0,
+        );
+      }).toList();
+    } catch (e) {
+      // If FTS query fails, try fallback LIKE search
+      debugPrint('FTS search failed, falling back to LIKE: $e');
+      return _fallbackSearch(ftsQuery, options);
+    }
+  }
 
-      for (final term in terms) {
-        // Escape LIKE special characters
-        final escapedTerm = term
-            .replaceAll('%', r'\%')
-            .replaceAll('_', r'\_');
-        final likePattern = '%$escapedTerm%';
+  /// Fallback LIKE-based search when FTS fails.
+  Future<List<_RawSearchResult>> _fallbackSearch(
+    String query,
+    SearchOptions options,
+  ) async {
+    // Extract simple terms from query
+    final terms = query
+        .replaceAll(RegExp(r'[*":]'), ' ')
+        .split(RegExp(r'\s+'))
+        .where((t) => t.length >= 2)
+        .toList();
 
-        // Each term must match at least one searchable column
-        final termConditions = <String>[];
+    if (terms.isEmpty) {
+      return [];
+    }
 
-        // Always include title
-        termConditions.add("${DatabaseHelper.columnTitle} LIKE ? ESCAPE '\\'");
+    // Build LIKE conditions
+    final conditions = <String>[];
+    final args = <String>[];
+
+    for (final term in terms) {
+      final likePattern = '%$term%';
+      if (options.field == SearchField.all) {
+        conditions.add(
+          '(${DatabaseHelper.columnTitle} LIKE ? OR '
+          '${DatabaseHelper.columnDescription} LIKE ? OR '
+          '${DatabaseHelper.columnOcrText} LIKE ?)',
+        );
+        args.addAll([likePattern, likePattern, likePattern]);
+      } else {
+        final column = _getColumnName(options.field);
+        conditions.add('$column LIKE ?');
         args.add(likePattern);
+      }
+    }
 
-        // Optionally include description
-        if (options.includeDescription) {
-          termConditions.add(
-            "${DatabaseHelper.columnDescription} LIKE ? ESCAPE '\\'",
-          );
-          args.add(likePattern);
-        }
+    final whereClause = conditions.join(
+      options.matchMode == SearchMatchMode.anyWord ? ' OR ' : ' AND ',
+    );
 
-        // Optionally include OCR text
-        if (options.includeOcrText) {
-          termConditions.add(
-            "${DatabaseHelper.columnOcrText} LIKE ? ESCAPE '\\'",
-          );
-          args.add(likePattern);
-        }
+    final sql = '''
+      SELECT
+        ${DatabaseHelper.columnId} as id,
+        ${DatabaseHelper.columnTitle} as title,
+        ${DatabaseHelper.columnDescription} as description,
+        ${DatabaseHelper.columnOcrText} as ocr_text,
+        0.0 as score
+      FROM ${DatabaseHelper.tableDocuments}
+      WHERE $whereClause
+    ''';
 
-        conditions.add('(${termConditions.join(' OR ')})');
+    final results = await _database.rawQuery(sql, args);
+
+    return results.map((row) {
+      return _RawSearchResult(
+        documentId: row['id'] as String,
+        title: row['title'] as String?,
+        description: row['description'] as String?,
+        ocrText: row['ocr_text'] as String?,
+        score: 0.0,
+      );
+    }).toList();
+  }
+
+  /// Applies additional filters to raw search results.
+  Future<List<_RawSearchResult>> _applyFilters(
+    List<_RawSearchResult> results,
+    SearchOptions options,
+  ) async {
+    if (!options.favoritesOnly &&
+        !options.hasOcrOnly &&
+        options.folderId == null) {
+      return results;
+    }
+
+    final filtered = <_RawSearchResult>[];
+
+    for (final result in results) {
+      final document = await _documentRepository.getDocument(result.documentId);
+      if (document == null) continue;
+
+      // Apply filters
+      if (options.favoritesOnly && !document.isFavorite) continue;
+      if (options.hasOcrOnly && !document.hasOcrText) continue;
+      if (options.folderId != null && document.folderId != options.folderId) {
+        continue;
       }
 
-      // Combine all term conditions with AND
-      final whereClause = conditions.join(' AND ');
+      filtered.add(result);
+    }
 
-      // Query documents
-      final db = await _databaseHelper.database;
-      final results = await db.rawQuery('''
-        SELECT *
-        FROM ${DatabaseHelper.tableDocuments}
-        WHERE $whereClause
-        ORDER BY ${DatabaseHelper.columnCreatedAt} DESC
-        LIMIT ? OFFSET ?
-      ''', [...args, options.limit, options.offset]);
+    return filtered;
+  }
 
-      debugPrint(
-        'SearchService._fallbackSearch: LIKE query found ${results.length} results',
+  /// Builds full search results with documents and snippets.
+  Future<List<SearchResult>> _buildSearchResults(
+    List<_RawSearchResult> rawResults,
+    String query,
+    SearchOptions options,
+  ) async {
+    final results = <SearchResult>[];
+
+    for (final raw in rawResults) {
+      // Get full document
+      final document = await _documentRepository.getDocument(
+        raw.documentId,
+        includeTags: options.includeTags,
       );
 
-      return results;
-    } catch (e) {
-      debugPrint('SearchService._fallbackSearch: Failed with error: $e');
-      // Return empty results rather than propagating the error
-      // This ensures the app doesn't crash even in worst-case scenarios
-      return [];
+      if (document == null) continue;
+
+      // Determine matched fields
+      final matchedFields = _determineMatchedFields(raw, query);
+
+      // Generate snippets if requested
+      List<SearchSnippet> snippets = [];
+      if (options.includeSnippets) {
+        snippets = _generateSnippets(raw, query, options.snippetLength);
+      }
+
+      results.add(SearchResult(
+        document: document,
+        score: raw.score,
+        snippets: snippets,
+        matchedFields: matchedFields,
+      ));
     }
+
+    return results;
   }
 
-  /// Applies pagination to search results.
-  ///
-  /// Parameters:
-  /// - [results]: The full list of search results
-  /// - [options]: Search options containing limit and offset
-  ///
-  /// Returns the paginated subset of results.
-  List<Map<String, dynamic>> _applyPagination(
-    List<Map<String, dynamic>> results,
-    SearchOptions options,
+  /// Determines which fields matched the search query.
+  List<String> _determineMatchedFields(_RawSearchResult result, String query) {
+    final queryLower = query.toLowerCase();
+    final terms = queryLower
+        .replaceAll(RegExp(r'[*":]'), ' ')
+        .split(RegExp(r'\s+'))
+        .where((t) => t.length >= 2)
+        .toList();
+
+    final matchedFields = <String>[];
+
+    bool containsAnyTerm(String? text) {
+      if (text == null || text.isEmpty) return false;
+      final textLower = text.toLowerCase();
+      return terms.any((term) => textLower.contains(term));
+    }
+
+    if (containsAnyTerm(result.title)) {
+      matchedFields.add('title');
+    }
+    if (containsAnyTerm(result.description)) {
+      matchedFields.add('description');
+    }
+    if (containsAnyTerm(result.ocrText)) {
+      matchedFields.add('ocr_text');
+    }
+
+    return matchedFields;
+  }
+
+  /// Generates snippets from search results.
+  List<SearchSnippet> _generateSnippets(
+    _RawSearchResult result,
+    String query,
+    int snippetLength,
   ) {
-    if (results.isEmpty) {
-      return results;
+    final snippets = <SearchSnippet>[];
+    final queryTerms = query
+        .toLowerCase()
+        .replaceAll(RegExp(r'[*":]'), ' ')
+        .split(RegExp(r'\s+'))
+        .where((t) => t.length >= 2)
+        .toSet();
+
+    // Helper to create snippet from text
+    SearchSnippet? createSnippet(String? text, String field) {
+      if (text == null || text.isEmpty) return null;
+
+      final textLower = text.toLowerCase();
+
+      // Find the first matching term
+      int? matchStart;
+      String? matchedTerm;
+      for (final term in queryTerms) {
+        final index = textLower.indexOf(term);
+        if (index != -1 && (matchStart == null || index < matchStart)) {
+          matchStart = index;
+          matchedTerm = term;
+        }
+      }
+
+      if (matchStart == null) return null;
+
+      // Calculate snippet window
+      final halfLength = snippetLength ~/ 2;
+      var start = matchStart - halfLength;
+      var end = matchStart + halfLength;
+
+      if (start < 0) {
+        end = end - start;
+        start = 0;
+      }
+      if (end > text.length) {
+        start = start - (end - text.length);
+        end = text.length;
+      }
+      start = start.clamp(0, text.length);
+      end = end.clamp(0, text.length);
+
+      var snippetText = text.substring(start, end);
+
+      // Add ellipsis if truncated
+      if (start > 0) {
+        snippetText = '...$snippetText';
+      }
+      if (end < text.length) {
+        snippetText = '$snippetText...';
+      }
+
+      // Find highlights in snippet
+      final highlights = _findHighlights(snippetText, queryTerms);
+
+      return SearchSnippet(
+        text: snippetText,
+        field: field,
+        highlights: highlights,
+      );
     }
 
-    final startIndex = options.offset;
-    if (startIndex >= results.length) {
-      return [];
+    // Create snippets from each field
+    final titleSnippet = createSnippet(result.title, 'title');
+    if (titleSnippet != null) snippets.add(titleSnippet);
+
+    final descSnippet = createSnippet(result.description, 'description');
+    if (descSnippet != null) snippets.add(descSnippet);
+
+    final ocrSnippet = createSnippet(result.ocrText, 'ocr_text');
+    if (ocrSnippet != null) snippets.add(ocrSnippet);
+
+    return snippets;
+  }
+
+  /// Finds highlight ranges for query terms in text.
+  List<List<int>> _findHighlights(String text, Set<String> terms) {
+    final highlights = <List<int>>[];
+    final textLower = text.toLowerCase();
+
+    for (final term in terms) {
+      var searchStart = 0;
+      while (true) {
+        final index = textLower.indexOf(term, searchStart);
+        if (index == -1) break;
+        highlights.add([index, index + term.length]);
+        searchStart = index + 1;
+      }
     }
 
-    final endIndex = (startIndex + options.limit).clamp(0, results.length);
-    return results.sublist(startIndex, endIndex);
+    // Sort by start position
+    highlights.sort((a, b) => a[0].compareTo(b[0]));
+
+    return highlights;
   }
 
-  /// Checks if FTS is available (either FTS5 or FTS4).
-  ///
-  /// Returns true if FTS is available, false if using LIKE-based search.
-  bool get isFtsAvailable => ftsVersion > 0;
+  /// Sorts search results based on options.
+  void _sortResults(List<SearchResult> results, SearchOptions options) {
+    results.sort((a, b) {
+      int comparison;
+      switch (options.sortBy) {
+        case SearchSortBy.relevance:
+          // Lower score is better in FTS5 (more negative = better match)
+          comparison = a.score.compareTo(b.score);
+          break;
+        case SearchSortBy.title:
+          comparison = a.document.title.compareTo(b.document.title);
+          break;
+        case SearchSortBy.createdAt:
+          comparison = a.document.createdAt.compareTo(b.document.createdAt);
+          break;
+        case SearchSortBy.updatedAt:
+          comparison = a.document.updatedAt.compareTo(b.document.updatedAt);
+          break;
+        case SearchSortBy.fileSize:
+          comparison = a.document.fileSize.compareTo(b.document.fileSize);
+          break;
+      }
+      return options.sortDescending ? -comparison : comparison;
+    });
+  }
 
-  /// Checks if full relevance ranking is available (FTS5 only).
-  ///
-  /// Returns true if FTS5 is active and relevance scores are available.
-  bool get hasRelevanceRanking => ftsVersion == 5;
+  /// Adds a query to recent searches.
+  void _addToRecentSearches(String query, int resultCount) {
+    // Remove existing entry with same query
+    _recentSearches.removeWhere(
+      (s) => s.query.toLowerCase() == query.toLowerCase(),
+    );
 
-  /// Gets a human-readable description of the current search mode.
-  ///
-  /// Useful for displaying search capabilities to users or in logs.
-  String get searchModeDescription {
-    switch (ftsVersion) {
-      case 5:
-        return 'Full-text search with relevance ranking (FTS5)';
-      case 4:
-        return 'Full-text search (FTS4)';
-      default:
-        return 'Basic search (LIKE-based)';
+    // Add new entry at the beginning
+    _recentSearches.insert(
+      0,
+      RecentSearch(
+        query: query,
+        timestamp: DateTime.now(),
+        resultCount: resultCount,
+      ),
+    );
+
+    // Trim to max size
+    while (_recentSearches.length > maxRecentSearches) {
+      _recentSearches.removeLast();
     }
   }
 
-  /// Disposes of resources used by the search service.
-  void dispose() {
-    _initialized = false;
-    _cachedFtsVersion = 0;
+  /// Gets search suggestions based on a partial query.
+  ///
+  /// Returns suggestions from:
+  /// 1. Recent searches matching the prefix
+  /// 2. Document titles matching the prefix
+  ///
+  /// Example:
+  /// ```dart
+  /// final suggestions = await searchService.getSuggestions('inv');
+  /// // Returns: ['invoice', 'investment report', ...]
+  /// ```
+  Future<List<String>> getSuggestions(
+    String partialQuery, {
+    int limit = 5,
+  }) async {
+    if (!_isInitialized) {
+      throw const SearchException(
+        'Search service not initialized. Call initialize() first.',
+      );
+    }
+
+    final query = partialQuery.trim().toLowerCase();
+    if (query.isEmpty) {
+      // Return recent searches if no query
+      return _recentSearches
+          .take(limit)
+          .map((s) => s.query)
+          .toList();
+    }
+
+    final suggestions = <String>[];
+
+    // Add matching recent searches
+    for (final recent in _recentSearches) {
+      if (recent.query.toLowerCase().startsWith(query)) {
+        suggestions.add(recent.query);
+        if (suggestions.length >= limit) break;
+      }
+    }
+
+    // Add matching document titles
+    if (suggestions.length < limit) {
+      try {
+        final results = await search(
+          partialQuery,
+          options: const SearchOptions.titlesOnly(limit: 10),
+        );
+        for (final result in results.results) {
+          if (suggestions.length >= limit) break;
+          final title = result.document.title;
+          if (!suggestions.contains(title)) {
+            suggestions.add(title);
+          }
+        }
+      } catch (_) {
+        // Ignore errors in suggestions
+      }
+    }
+
+    return suggestions.take(limit).toList();
   }
+
+  /// Gets recent searches.
+  ///
+  /// Returns the list of recent searches, most recent first.
+  ///
+  /// Example:
+  /// ```dart
+  /// final recent = await searchService.getRecentSearches(limit: 10);
+  /// for (final search in recent) {
+  ///   print('${search.query} - ${search.resultCount} results');
+  /// }
+  /// ```
+  Future<List<RecentSearch>> getRecentSearches({int limit = 10}) async {
+    return _recentSearches.take(limit).toList();
+  }
+
+  /// Clears recent search history.
+  Future<void> clearRecentSearches() async {
+    _recentSearches.clear();
+  }
+
+  /// Removes a specific search from history.
+  Future<void> removeRecentSearch(String query) async {
+    _recentSearches.removeWhere(
+      (s) => s.query.toLowerCase() == query.toLowerCase(),
+    );
+  }
+
+  /// Rebuilds the search index.
+  ///
+  /// Call this if search results seem inconsistent or after
+  /// bulk document operations.
+  ///
+  /// Throws [SearchException] if rebuild fails.
+  Future<void> rebuildIndex() async {
+    if (!_isInitialized) {
+      throw const SearchException(
+        'Search service not initialized. Call initialize() first.',
+      );
+    }
+
+    try {
+      await _database.rebuildFtsIndex();
+      debugPrint('Search index rebuilt');
+    } catch (e) {
+      throw SearchException(
+        'Failed to rebuild search index',
+        cause: e,
+      );
+    }
+  }
+
+  /// Gets the approximate size of the search index.
+  ///
+  /// Returns the size in bytes, or 0 if unable to determine.
+  Future<int> getIndexSize() async {
+    try {
+      // FTS5 doesn't have a direct size query, return 0
+      return 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+}
+
+/// Internal class for raw search results before document loading.
+class _RawSearchResult {
+  const _RawSearchResult({
+    required this.documentId,
+    this.title,
+    this.description,
+    this.ocrText,
+    required this.score,
+  });
+
+  final String documentId;
+  final String? title;
+  final String? description;
+  final String? ocrText;
+  final double score;
 }

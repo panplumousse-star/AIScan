@@ -309,7 +309,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
               label: 'Retry',
               onPressed: () {
                 notifier.clearError();
-                notifier.quickScan();
+                notifier.multiPageScan();
               },
             ),
           ),

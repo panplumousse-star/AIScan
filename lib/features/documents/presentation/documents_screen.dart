@@ -916,14 +916,18 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
       await shareService.cleanupTempFiles(result.tempFilePaths);
     } on DocumentShareException catch (e) {
       if (context.mounted) {
+        String message;
         if (e.message.contains('not found')) {
-          showDocumentNotFoundSnackbar(context);
+          message = 'Document file not found. It may have been deleted.';
         } else if (e.message.contains('prepare') ||
             e.message.contains('decrypt')) {
-          showDecryptionFailedSnackbar(context);
+          message = 'Failed to prepare document for sharing. Please try again.';
         } else {
-          showShareErrorSnackbar(context, e.message);
+          message = 'Failed to share: ${e.message}';
         }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
+        );
       }
     }
   }

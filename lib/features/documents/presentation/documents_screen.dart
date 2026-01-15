@@ -4,8 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/permissions/storage_permission_dialog.dart';
-import '../../../core/permissions/storage_permission_service.dart';
 import '../../../core/storage/document_repository.dart';
 import '../../sharing/domain/document_share_service.dart';
 import '../domain/document_model.dart';
@@ -884,12 +882,9 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
 
   /// Handles sharing selected documents.
   ///
-  /// This method:
-  /// 1. Checks storage permission status
-  /// 2. Requests permission if needed
-  /// 3. Shows settings dialog if permission is blocked
-  /// 4. Shares selected documents via native share sheet
-  /// 5. Cleans up temporary decrypted files after sharing
+  /// Shares documents directly via native Android share sheet.
+  /// No storage permission is required on Android 10+ (API 29+) as
+  /// share_plus uses FileProvider internally.
   Future<void> _handleShareSelected(
     BuildContext context,
     DocumentsScreenState state,
@@ -905,56 +900,8 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
       return;
     }
 
-    // Check permission status
-    final permissionResult = await shareService.checkSharePermission();
-
-    switch (permissionResult) {
-      case SharePermissionResult.granted:
-        // Permission granted, proceed with sharing
-        await _shareDocuments(context, shareService, selectedDocuments);
-        break;
-
-      case SharePermissionResult.needsSystemRequest:
-        // Request permission from system
-        final permissionState = await shareService.requestPermission();
-        if (permissionState == StoragePermissionState.granted ||
-            permissionState == StoragePermissionState.sessionOnly) {
-          await _shareDocuments(context, shareService, selectedDocuments);
-        } else {
-          // Permission was denied
-          if (context.mounted) {
-            showStoragePermissionDeniedSnackbar(
-              context,
-              onOpenSettings: () async {
-                await shareService.openSettings();
-              },
-            );
-          }
-        }
-        break;
-
-      case SharePermissionResult.blocked:
-        // Show settings redirect dialog
-        if (context.mounted) {
-          final shouldOpenSettings = await showStorageSettingsDialog(context);
-          if (shouldOpenSettings) {
-            await shareService.openSettings();
-          }
-        }
-        break;
-
-      case SharePermissionResult.denied:
-        // Show denied snackbar
-        if (context.mounted) {
-          showStoragePermissionDeniedSnackbar(
-            context,
-            onOpenSettings: () async {
-              await shareService.openSettings();
-            },
-          );
-        }
-        break;
-    }
+    // Share directly - no permission needed for share_plus on modern Android
+    await _shareDocuments(context, shareService, selectedDocuments);
   }
 
   /// Performs the actual document sharing.

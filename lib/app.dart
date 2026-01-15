@@ -111,84 +111,39 @@ class _PlaceholderHomeScreen extends ConsumerWidget {
       return true;
     }
 
-    // If permission is unknown, show our custom dialog
-    if (state == CameraPermissionState.unknown) {
-      if (!context.mounted) return false;
+    // Check if this is a first-time request or if permission is blocked
+    if (await permissionService.isFirstTimeRequest()) {
+      // Show native Android permission dialog
+      final result = await permissionService.requestSystemPermission();
 
-      final result = await showCameraPermissionDialog(context);
-      if (result == null) return false; // User dismissed
-
-      switch (result) {
-        case PermissionDialogResult.granted:
-          await permissionService.grantPermanentPermission();
-        case PermissionDialogResult.sessionOnly:
-          permissionService.grantSessionPermission();
-        case PermissionDialogResult.denied:
-          await permissionService.denyPermission();
-          if (context.mounted) {
-            showCameraPermissionDeniedSnackbar(
-              context,
-              onSettingsPressed: () async {
-                await permissionService.openSettings();
-              },
-            );
-          }
-          return false;
-      }
-
-      // Request system permission after user consent
-      final systemState = await permissionService.requestSystemPermission();
-
-      // Check if system permission was granted
-      if (systemState == CameraPermissionState.granted ||
-          systemState == CameraPermissionState.sessionOnly) {
+      if (result == CameraPermissionState.granted ||
+          result == CameraPermissionState.sessionOnly) {
         return true;
       }
 
-      // System permission denied or permanently denied
-      if (systemState == CameraPermissionState.permanentlyDenied) {
-        if (context.mounted) {
-          final shouldOpenSettings = await showCameraSettingsDialog(context);
-          if (shouldOpenSettings) {
-            await permissionService.openSettings();
-          }
-        }
-        return false;
-      }
-
+      // Permission denied, show snackbar
       if (context.mounted) {
-        showCameraPermissionDeniedSnackbar(
-          context,
-          onSettingsPressed: () async {
-            await permissionService.openSettings();
-          },
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Camera permission is required to scan documents'),
+            action: SnackBarAction(
+              label: 'Settings',
+              onPressed: () => permissionService.openSettings(),
+            ),
+          ),
         );
       }
       return false;
     }
 
-    // If permanently denied or restricted, prompt to open settings
-    if (state == CameraPermissionState.permanentlyDenied ||
-        state == CameraPermissionState.restricted) {
+    // Permission is blocked, show settings dialog
+    if (await permissionService.isPermissionBlocked()) {
       if (!context.mounted) return false;
 
       final shouldOpenSettings = await showCameraSettingsDialog(context);
-      if (shouldOpenSettings) {
+      if (shouldOpenSettings == true) {
         await permissionService.openSettings();
       }
-      return false;
-    }
-
-    // If denied, show snackbar with settings option
-    if (state == CameraPermissionState.denied) {
-      if (!context.mounted) return false;
-
-      showCameraPermissionDeniedSnackbar(
-        context,
-        onSettingsPressed: () async {
-          await permissionService.openSettings();
-        },
-      );
       return false;
     }
 

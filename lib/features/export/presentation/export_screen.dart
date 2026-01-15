@@ -7,6 +7,9 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../core/permissions/storage_permission_dialog.dart';
+import '../../../core/permissions/storage_permission_service.dart';
+import '../../sharing/domain/document_share_service.dart';
 import '../domain/image_exporter.dart';
 import '../domain/pdf_generator.dart';
 
@@ -729,7 +732,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
           content: Text('Exported: ${result.fileName}'),
           action: SnackBarAction(
             label: 'Share',
-            onPressed: () => notifier.share(),
+            onPressed: () => _handleShareAfterSave(context, result),
           ),
         ),
       );
@@ -740,18 +743,107 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
     BuildContext context,
     ExportScreenNotifier notifier,
   ) async {
-    await notifier.share();
+    final state = ref.read(exportScreenProvider);
+    final result = state.lastExportResult;
+    if (result != null) {
+      await _handleShareAfterSave(context, result);
+    }
   }
 
   Future<void> _handleExportAndShare(
     BuildContext context,
     ExportScreenNotifier notifier,
   ) async {
-    final success = await notifier.exportAndShare();
-    if (success && mounted) {
-      final result = ref.read(exportScreenProvider).lastExportResult;
-      if (result != null) {
-        widget.onExportComplete?.call(result);
+    // First export the file
+    final result = await notifier.export();
+    if (result != null && mounted) {
+      widget.onExportComplete?.call(result);
+      // Then share using permission-aware flow
+      await _handleShareAfterSave(context, result);
+    }
+  }
+
+  /// Handles sharing an exported file with permission checking.
+  ///
+  /// Uses the [DocumentShareService] to ensure storage permission is
+  /// properly requested before sharing.
+  Future<void> _handleShareAfterSave(
+    BuildContext context,
+    ExportResult result,
+  ) async {
+    final shareService = ref.read(documentShareServiceProvider);
+
+    // Check permission status
+    final permissionResult = await shareService.checkSharePermission();
+
+    switch (permissionResult) {
+      case SharePermissionResult.granted:
+        // Permission granted, proceed with sharing
+        await _shareExportedFile(context, shareService, result);
+        break;
+
+      case SharePermissionResult.needsSystemRequest:
+        // Request permission from system
+        final permissionState = await shareService.requestPermission();
+        if (permissionState == StoragePermissionState.granted ||
+            permissionState == StoragePermissionState.sessionOnly) {
+          await _shareExportedFile(context, shareService, result);
+        } else {
+          // Permission was denied
+          if (context.mounted) {
+            showStoragePermissionDeniedSnackbar(
+              context,
+              onOpenSettings: () async {
+                await shareService.openSettings();
+              },
+            );
+          }
+        }
+        break;
+
+      case SharePermissionResult.blocked:
+        // Show settings redirect dialog
+        if (context.mounted) {
+          final shouldOpenSettings = await showStorageSettingsDialog(context);
+          if (shouldOpenSettings) {
+            await shareService.openSettings();
+          }
+        }
+        break;
+
+      case SharePermissionResult.denied:
+        // Show denied snackbar
+        if (context.mounted) {
+          showStoragePermissionDeniedSnackbar(
+            context,
+            onOpenSettings: () async {
+              await shareService.openSettings();
+            },
+          );
+        }
+        break;
+    }
+  }
+
+  /// Performs the actual file sharing.
+  Future<void> _shareExportedFile(
+    BuildContext context,
+    DocumentShareService shareService,
+    ExportResult result,
+  ) async {
+    try {
+      await shareService.shareExportedFile(
+        result.filePath,
+        fileName: result.fileName,
+        subject: widget.documentTitle ?? 'Exported Document',
+      );
+    } on DocumentShareException catch (e) {
+      if (context.mounted) {
+        if (e.message.contains('not found')) {
+          showDocumentNotFoundSnackbar(context);
+        } else {
+          showShareErrorSnackbar(context, e.message);
+        }
       }
     }
   }

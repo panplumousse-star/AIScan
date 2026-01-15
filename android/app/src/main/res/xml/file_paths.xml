@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  FileProvider path configuration for AIScan.
+  Defines which directories can be shared via FileProvider URIs.
+  Used for secure PDF document sharing via the native share sheet.
+-->
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Internal app cache directory for temporary decrypted files -->
+    <cache-path
+        name="cache"
+        path="." />
+
+    <!-- Internal app files directory for app-managed documents -->
+    <files-path
+        name="files"
+        path="." />
+
+    <!-- App-specific external files directory -->
+    <external-files-path
+        name="external_files"
+        path="." />
+
+    <!-- App-specific external cache directory -->
+    <external-cache-path
+        name="external_cache"
+        path="." />
+</paths>

@@ -4,7 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/permissions/storage_permission_dialog.dart';
+import '../../../core/permissions/storage_permission_service.dart';
 import '../../../core/storage/document_repository.dart';
+import '../../sharing/domain/document_share_service.dart';
 import '../domain/document_model.dart';
 import 'widgets/filter_sheet.dart';
 
@@ -539,7 +542,7 @@ final documentsScreenProvider =
 /// - Filtering options (favorites, OCR, tags, folder)
 /// - Multi-select for batch operations
 /// - Pull-to-refresh
-/// - Scan FAB for one-click scanning
+/// - Quick scan FAB for one-click scanning
 ///
 /// ## Usage
 /// ```dart
@@ -649,6 +652,13 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                 ? notifier.clearSelection
                 : notifier.selectAll,
             tooltip: state.allSelected ? 'Deselect all' : 'Select all',
+          ),
+          IconButton(
+            icon: const Icon(Icons.share),
+            onPressed: state.selectedCount > 0
+                ? () => _handleShareSelected(context, state)
+                : null,
+            tooltip: 'Share selected',
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline),
@@ -798,7 +808,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
   Widget? _buildFab(BuildContext context, DocumentsScreenState state) {
     if (state.isSelectionMode) return null;
 
-    return _ScanFab(
+    return _QuickScanFab(
       onPressed: widget.onScanPressed,
     );
   }
@@ -869,6 +879,105 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
 
     if (confirmed == true) {
       await notifier.deleteSelected();
+    }
+  }
+
+  /// Handles sharing selected documents.
+  ///
+  /// This method:
+  /// 1. Checks storage permission status
+  /// 2. Requests permission if needed
+  /// 3. Shows settings dialog if permission is blocked
+  /// 4. Shares selected documents via native share sheet
+  /// 5. Cleans up temporary decrypted files after sharing
+  Future<void> _handleShareSelected(
+    BuildContext context,
+    DocumentsScreenState state,
+  ) async {
+    final shareService = ref.read(documentShareServiceProvider);
+
+    // Get selected documents
+    final selectedDocuments = state.documents
+        .where((doc) => state.selectedDocumentIds.contains(doc.id))
+        .toList();
+
+    if (selectedDocuments.isEmpty) {
+      return;
+    }
+
+    // Check permission status
+    final permissionResult = await shareService.checkSharePermission();
+
+    switch (permissionResult) {
+      case SharePermissionResult.granted:
+        // Permission granted, proceed with sharing
+        await _shareDocuments(context, shareService, selectedDocuments);
+        break;
+
+      case SharePermissionResult.needsSystemRequest:
+        // Request permission from system
+        final permissionState = await shareService.requestPermission();
+        if (permissionState == StoragePermissionState.granted ||
+            permissionState == StoragePermissionState.sessionOnly) {
+          await _shareDocuments(context, shareService, selectedDocuments);
+        } else {
+          // Permission was denied
+          if (context.mounted) {
+            showStoragePermissionDeniedSnackbar(
+              context,
+              onOpenSettings: () async {
+                await shareService.openSettings();
+              },
+            );
+          }
+        }
+        break;
+
+      case SharePermissionResult.blocked:
+        // Show settings redirect dialog
+        if (context.mounted) {
+          final shouldOpenSettings = await showStorageSettingsDialog(context);
+          if (shouldOpenSettings) {
+            await shareService.openSettings();
+          }
+        }
+        break;
+
+      case SharePermissionResult.denied:
+        // Show denied snackbar
+        if (context.mounted) {
+          showStoragePermissionDeniedSnackbar(
+            context,
+            onOpenSettings: () async {
+              await shareService.openSettings();
+            },
+          );
+        }
+        break;
+    }
+  }
+
+  /// Performs the actual document sharing.
+  Future<void> _shareDocuments(
+    BuildContext context,
+    DocumentShareService shareService,
+    List<Document> documents,
+  ) async {
+    try {
+      final result = await shareService.shareDocuments(documents);
+      // Clean up temporary files after sharing
+      await shareService.cleanupTempFiles(result.tempFilePaths);
+    } on DocumentShareException catch (e) {
+      if (context.mounted) {
+        if (e.message.contains('not found')) {
+          showDocumentNotFoundSnackbar(context);
+        } else if (e.message.contains('prepare') ||
+            e.message.contains('decrypt')) {
+          showDecryptionFailedSnackbar(context);
+        } else {
+          showShareErrorSnackbar(context, e.message);
+        }
+      }
     }
   }
 }
@@ -1897,15 +2006,15 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
-/// Prominent floating action button for scan workflow.
+/// Prominent floating action button for one-click scan workflow.
 ///
 /// Features:
 /// - Large, extended FAB with clear call-to-action
 /// - Haptic feedback for tactile confirmation
 /// - Semantic labels for accessibility
 /// - Elevated styling to draw attention
-class _ScanFab extends StatelessWidget {
-  const _ScanFab({required this.onPressed});
+class _QuickScanFab extends StatelessWidget {
+  const _QuickScanFab({required this.onPressed});
 
   final VoidCallback? onPressed;
 

@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "001-plan",
-  "state": "complete",
+  "spec": "008-delete-quick-scan",
+  "state": "building",
   "subtasks": {
-    "completed": 53,
-    "total": 53,
-    "in_progress": 0,
+    "completed": 4,
+    "total": 11,
+    "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Integration & E2E Testing",
+    "current": "Accessibility Cleanup",
     "id": null,
-    "total": 6
+    "total": 1
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 20,
-    "started_at": "2026-01-11T16:02:24.580623"
+    "number": 5,
+    "started_at": "2026-01-12T17:10:22.184595"
   },
-  "last_update": "2026-01-11T17:22:07.493711"
+  "last_update": "2026-01-12T17:16:24.731305"
 }

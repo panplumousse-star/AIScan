@@ -185,22 +185,6 @@ class _PlaceholderHomeScreen extends StatelessWidget {
           ),
         ),
       ),
-      floatingActionButton: AnimatedSlideIn(
-        delay: const Duration(milliseconds: 600),
-        direction: SlideDirection.up,
-        child: FloatingActionButton.extended(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const ScannerScreen(startWithQuickScan: true),
-              ),
-            );
-          },
-          icon: const Icon(Icons.add_a_photo_outlined),
-          label: const Text('Quick Scan'),
-        ),
-      ),
     );
   }
 }

@@ -257,11 +257,11 @@ void main() {
         },
       );
 
-      test('should complete quick scan workflow for one-click scan', () async {
+      test('should complete single page scan workflow for one-click scan', () async {
         // Arrange - Create test image
         final testImagePath = await createTestImageFile(
           testTempDir,
-          'quick_scan.jpg',
+          'single_page_scan.jpg',
         );
 
         final mlKitResult = MockDocumentScanningResult(
@@ -269,14 +269,14 @@ void main() {
         );
         when(mockScanner.scanDocument()).thenAnswer((_) async => mlKitResult);
 
-        // Act - Quick scan
+        // Act - Single page scan via domain service
         final scanResult = await scannerService.quickScan();
 
         // Assert - Scan succeeded
         expect(scanResult, isNotNull);
         expect(scanResult!.pageCount, equals(1));
 
-        // Act - Save using quick save method
+        // Act - Save using single page save method
         final savedResult = await storageService.saveQuickScan(scanResult);
 
         // Assert - Save succeeded with auto-generated title
@@ -1048,7 +1048,7 @@ void main() {
         expect(savedResult.document, isNotNull);
       });
 
-      test('quick scan one-click workflow', () async {
+      test('single page scan one-click workflow', () async {
         // Arrange
         final imagePath = await createTestImageFile(
           testTempDir,
@@ -1058,7 +1058,7 @@ void main() {
         final mlKitResult = MockDocumentScanningResult(mockImages: [imagePath]);
         when(mockScanner.scanDocument()).thenAnswer((_) async => mlKitResult);
 
-        // Act - Simulate one-click scan
+        // Act - Single page scan via domain service
         final scanResult = await scannerService.quickScan();
         expect(scanResult, isNotNull);
 
@@ -1140,9 +1140,9 @@ void main() {
   });
 
   group('Scanner Options Integration', () {
-    test('quickScan options should limit to single page', () async {
+    test('single page scan options should limit to single page', () async {
       // Arrange
-      final imagePath = await createTestImageFile(testTempDir, 'quick_opt.jpg');
+      final imagePath = await createTestImageFile(testTempDir, 'single_page_opt.jpg');
 
       final mlKitResult = MockDocumentScanningResult(mockImages: [imagePath]);
       when(mockScanner.scanDocument()).thenAnswer((_) async => mlKitResult);

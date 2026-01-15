@@ -198,15 +198,14 @@ class _PlaceholderHomeScreen extends ConsumerWidget {
   /// Navigates to scanner screen after checking permission.
   Future<void> _navigateToScanner(
     BuildContext context,
-    WidgetRef ref, {
-    bool startWithQuickScan = false,
-  }) async {
+    WidgetRef ref,
+  ) async {
     final hasPermission = await _checkAndRequestPermission(context, ref);
     if (hasPermission && context.mounted) {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => ScannerScreen(startWithQuickScan: startWithQuickScan),
+          builder: (_) => const ScannerScreen(),
         ),
       );
     }
@@ -300,19 +299,6 @@ class _PlaceholderHomeScreen extends ConsumerWidget {
               ),
             ],
           ),
-        ),
-      ),
-      floatingActionButton: AnimatedSlideIn(
-        delay: const Duration(milliseconds: 600),
-        direction: SlideDirection.up,
-        child: FloatingActionButton.extended(
-          onPressed: () => _navigateToScanner(
-            context,
-            ref,
-            startWithQuickScan: true,
-          ),
-          icon: const Icon(Icons.add_a_photo_outlined),
-          label: const Text('Quick Scan'),
         ),
       ),
     );

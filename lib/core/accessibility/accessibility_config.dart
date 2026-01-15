@@ -65,12 +65,6 @@ abstract final class A11yLabels {
   static const String scanDocumentHint =
       'Opens camera to scan a new document with automatic edge detection';
 
-  /// Label for quick scan action.
-  static const String quickScan = 'Quick scan';
-
-  /// Hint for quick scan action.
-  static const String quickScanHint = 'Quickly scan a single page document';
-
   /// Label for multi-page scan.
   static const String multiPageScan = 'Multi-page scan';
 

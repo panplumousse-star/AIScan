@@ -253,17 +253,6 @@ final scannerScreenProvider =
 /// );
 /// ```
 ///
-/// ## One-Click Scan Workflow
-/// For the one-click scan workflow, use [ScannerScreen.withQuickScan]:
-/// ```dart
-/// Navigator.push(
-///   context,
-///   MaterialPageRoute(
-///     builder: (_) => const ScannerScreen(startWithQuickScan: true),
-///   ),
-/// );
-/// ```
-///
 /// ## Custom Title and Folder
 /// ```dart
 /// ScannerScreen(
@@ -275,19 +264,12 @@ final scannerScreenProvider =
 class ScannerScreen extends ConsumerStatefulWidget {
   const ScannerScreen({
     super.key,
-    this.startWithQuickScan = false,
     this.documentTitle,
     this.folderId,
     this.onDocumentSaved,
     @Deprecated('Use onDocumentSaved instead')
     this.onScanComplete,
   });
-
-  /// Whether to automatically start a quick scan on screen open.
-  ///
-  /// When true, the scanner will open immediately when the screen loads.
-  /// This enables the one-click scan workflow from the home screen.
-  final bool startWithQuickScan;
 
   /// Optional title for the saved document.
   ///
@@ -308,34 +290,11 @@ class ScannerScreen extends ConsumerStatefulWidget {
   @Deprecated('Use onDocumentSaved instead')
   final void Function(ScanResult result)? onScanComplete;
 
-  /// Creates a ScannerScreen that starts scanning immediately.
-  static Widget withQuickScan({
-    Key? key,
-    void Function(Document document)? onDocumentSaved,
-  }) {
-    return ScannerScreen(
-      key: key,
-      startWithQuickScan: true,
-      onDocumentSaved: onDocumentSaved,
-    );
-  }
-
   @override
   ConsumerState<ScannerScreen> createState() => _ScannerScreenState();
 }
 
 class _ScannerScreenState extends ConsumerState<ScannerScreen> {
-  @override
-  void initState() {
-    super.initState();
-    if (widget.startWithQuickScan) {
-      // Start quick scan after the first frame
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _startQuickScanWithPermissionCheck();
-      });
-    }
-  }
-
   /// Checks camera permission and shows dialog if needed.
   ///
   /// Returns `true` if permission is granted (permanent or session),
@@ -434,14 +393,6 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     return false;
   }
 
-  /// Starts a quick scan with permission check.
-  Future<void> _startQuickScanWithPermissionCheck() async {
-    final hasPermission = await _checkAndRequestPermission();
-    if (hasPermission && mounted) {
-      ref.read(scannerScreenProvider.notifier).quickScan();
-    }
-  }
-
   /// Starts a multi-page scan with permission check.
   Future<void> _startMultiPageScanWithPermissionCheck() async {
     final hasPermission = await _checkAndRequestPermission();
@@ -466,7 +417,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
               label: 'Retry',
               onPressed: () {
                 notifier.clearError();
-                notifier.quickScan();
+                notifier.multiPageScan();
               },
             ),
           ),
@@ -534,8 +485,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     }
 
     return _EmptyView(
-      onQuickScan: _startQuickScanWithPermissionCheck,
-      onMultiPageScan: _startMultiPageScanWithPermissionCheck,
+      onScan: _startMultiPageScanWithPermissionCheck,
     );
   }
 
@@ -651,15 +601,13 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
   }
 }
 
-/// Empty state view with scan options.
+/// Empty state view with scan action.
 class _EmptyView extends StatelessWidget {
   const _EmptyView({
-    required this.onQuickScan,
-    required this.onMultiPageScan,
+    required this.onScan,
   });
 
-  final VoidCallback onQuickScan;
-  final VoidCallback onMultiPageScan;
+  final VoidCallback onScan;
 
   @override
   Widget build(BuildContext context) {
@@ -685,7 +633,7 @@ class _EmptyView extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Choose a scanning mode to get started',
+              'Position your document and tap to start scanning',
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -693,19 +641,10 @@ class _EmptyView extends StatelessWidget {
             ),
             const SizedBox(height: 48),
             FilledButton.icon(
-              onPressed: onQuickScan,
-              icon: const Icon(Icons.camera_alt_outlined),
-              label: const Text('Quick Scan'),
+              onPressed: onScan,
+              icon: const Icon(Icons.document_scanner_outlined),
+              label: const Text('Start Scanning'),
               style: FilledButton.styleFrom(
-                minimumSize: const Size(200, 56),
-              ),
-            ),
-            const SizedBox(height: 16),
-            OutlinedButton.icon(
-              onPressed: onMultiPageScan,
-              icon: const Icon(Icons.photo_library_outlined),
-              label: const Text('Multi-Page Scan'),
-              style: OutlinedButton.styleFrom(
                 minimumSize: const Size(200, 56),
               ),
             ),

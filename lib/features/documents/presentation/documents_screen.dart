@@ -797,7 +797,6 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
 
   Widget? _buildFab(BuildContext context, DocumentsScreenState state) {
     if (state.isSelectionMode) return null;
-    if (!state.hasDocuments) return null; // Hide FAB on empty state
 
     return _ScanFab(
       onPressed: widget.onScanPressed,

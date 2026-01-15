@@ -1,795 +1,637 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/annotations.dart';
-import 'package:mockito/mockito.dart';
+import 'package:permission_handler_platform_interface/permission_handler_platform_interface.dart';
 
 import 'package:aiscan/core/permissions/camera_permission_service.dart';
 import 'package:aiscan/core/permissions/permission_dialog.dart';
 
-import 'permission_flow_test.mocks.dart';
+/// Fake implementation of PermissionHandlerPlatform for testing.
+///
+/// This mock intercepts all permission checks and requests, allowing us to
+/// control the behavior without needing actual platform channels.
+class FakePermissionHandlerPlatform extends PermissionHandlerPlatform {
+  PermissionStatus _cameraStatus = PermissionStatus.denied;
+  bool _shouldShowRationale = false;
+  PermissionStatus? _requestResult;
 
-@GenerateMocks([FlutterSecureStorage])
-void main() {
-  late MockFlutterSecureStorage mockStorage;
-  late CameraPermissionService permissionService;
+  /// Sets the camera permission status for testing.
+  void setCameraStatus(PermissionStatus status) {
+    _cameraStatus = status;
+  }
 
-  /// Storage key used by CameraPermissionService.
-  const permissionStorageKey = 'aiscan_camera_permission';
+  /// Sets whether shouldShowRequestRationale returns true.
+  void setShouldShowRationale(bool value) {
+    _shouldShowRationale = value;
+  }
 
-  /// Value stored for permanent grant.
-  const grantedValue = 'granted';
+  /// Sets the result returned by requestPermissions (if different from status).
+  void setRequestResult(PermissionStatus? result) {
+    _requestResult = result;
+  }
 
-  /// Value stored for denial.
-  const deniedValue = 'denied';
+  @override
+  Future<PermissionStatus> checkPermissionStatus(Permission permission) async {
+    return _cameraStatus;
+  }
 
-  setUp(() {
-    mockStorage = MockFlutterSecureStorage();
-    permissionService = CameraPermissionService(storage: mockStorage);
+  @override
+  Future<bool> shouldShowRequestPermissionRationale(Permission permission) async {
+    return _shouldShowRationale;
+  }
 
-    // Default mock behaviors
-    when(mockStorage.read(key: anyNamed('key'))).thenAnswer((_) async => null);
-    when(mockStorage.write(key: anyNamed('key'), value: anyNamed('value')))
-        .thenAnswer((_) async {});
-    when(mockStorage.delete(key: anyNamed('key'))).thenAnswer((_) async {});
+  @override
+  Future<Map<Permission, PermissionStatus>> requestPermissions(
+    List<Permission> permissions,
+  ) async {
+    final resultStatus = _requestResult ?? _cameraStatus;
+    return {
+      for (final permission in permissions) permission: resultStatus,
+    };
+  }
+
+  @override
+  Future<bool> openAppSettings() async {
+    return true;
+  }
+
+  @override
+  Future<ServiceStatus> checkServiceStatus(Permission permission) async {
+    return ServiceStatus.enabled;
+  }
+}
+
+/// A testable version of the permission flow logic from ScannerScreen.
+///
+/// This class extracts the permission checking logic to make it testable
+/// without needing to render the full widget.
+class TestablePermissionFlow {
+  TestablePermissionFlow({
+    required this.permissionService,
+    required this.onShowSettingsDialog,
+    required this.onOpenSettings,
   });
 
-  group('Permission Flow Integration Tests', () {
-    group('Permission → Scanner Access Flow', () {
-      test(
-        'should block scanner access when permission not granted',
-        () async {
-          // Arrange - No stored permission, no session permission
-          when(mockStorage.read(key: permissionStorageKey))
-              .thenAnswer((_) async => null);
+  final CameraPermissionService permissionService;
+  final Future<bool> Function() onShowSettingsDialog;
+  final Future<void> Function() onOpenSettings;
 
-          // Act
-          final isAllowed = permissionService.isAccessAllowed;
+  /// Flag to prevent multiple permission dialogs from appearing.
+  bool isPermissionDialogShowing = false;
 
-          // Assert - Access should be blocked with no permission
-          expect(isAllowed, isFalse);
-          expect(permissionService.needsPermission, isTrue);
-        },
-      );
+  /// Flag to track if we directed the user to settings.
+  bool waitingForSettingsReturn = false;
 
-      test(
-        'should allow scanner access after permanent permission grant',
-        () async {
-          // Act - Grant permanent permission
-          await permissionService.grantPermanentPermission();
+  /// Checks camera permission and requests if needed.
+  ///
+  /// Implements the new permission flow:
+  /// 1. If permission is already granted or sessionOnly -> return true
+  /// 2. If this is a first-time request -> show native Android dialog
+  /// 3. If permission is blocked -> show Yes/No dialog to redirect to settings
+  ///
+  /// Returns `true` if permission is granted and camera can be used,
+  /// `false` otherwise.
+  Future<bool> checkAndRequestPermission() async {
+    // Prevent multiple dialogs from appearing
+    if (isPermissionDialogShowing) {
+      return false;
+    }
 
-          // Assert - Access should be allowed
-          expect(permissionService.isAccessAllowed, isTrue);
-          expect(
-            permissionService.currentState,
-            equals(CameraPermissionState.granted),
-          );
+    // Check current permission state
+    final state = await permissionService.checkPermission();
 
-          // Verify storage was called
-          verify(
-            mockStorage.write(
-              key: permissionStorageKey,
-              value: grantedValue,
-            ),
-          ).called(1);
-        },
-      );
+    // If already granted, proceed
+    if (state == CameraPermissionState.granted ||
+        state == CameraPermissionState.sessionOnly) {
+      return true;
+    }
 
-      test(
-        'should allow scanner access after session permission grant',
-        () async {
-          // Act - Grant session permission
-          permissionService.grantSessionPermission();
+    // Check if this is a first-time request (native dialog should be shown)
+    final isFirstTime = await permissionService.isFirstTimeRequest();
 
-          // Assert - Access should be allowed
-          expect(permissionService.isAccessAllowed, isTrue);
-          expect(
-            permissionService.currentState,
-            equals(CameraPermissionState.sessionOnly),
-          );
+    if (isFirstTime) {
+      // Show native Android permission dialog
+      final result = await permissionService.requestSystemPermission();
 
-          // Verify storage was NOT called for session permission
-          verifyNever(
-            mockStorage.write(key: anyNamed('key'), value: anyNamed('value')),
-          );
-        },
-      );
+      return result == CameraPermissionState.granted ||
+          result == CameraPermissionState.sessionOnly;
+    }
 
-      test(
-        'should block scanner access after permission denial',
-        () async {
-          // Act - Deny permission
-          await permissionService.denyPermission();
+    // Permission is blocked - show Yes/No dialog to redirect to settings
+    if (await permissionService.isPermissionBlocked()) {
+      isPermissionDialogShowing = true;
+      try {
+        final shouldOpenSettings = await onShowSettingsDialog();
 
-          // Assert - Access should be blocked
-          expect(permissionService.isAccessAllowed, isFalse);
-          expect(
-            permissionService.currentState,
-            equals(CameraPermissionState.denied),
-          );
+        if (shouldOpenSettings) {
+          // Set flag to re-check permission when app resumes
+          waitingForSettingsReturn = true;
 
-          // Verify denial was stored
-          verify(
-            mockStorage.write(
-              key: permissionStorageKey,
-              value: deniedValue,
-            ),
-          ).called(1);
-        },
-      );
+          // Open settings
+          await onOpenSettings();
 
-      test(
-        'should require permission dialog when state is unknown',
-        () async {
-          // Arrange - Clear any existing state
-          await permissionService.clearAllPermissions();
+          // Return false for now - user will need to tap scan again after settings
+          return false;
+        }
+      } finally {
+        isPermissionDialogShowing = false;
+      }
 
-          // Assert - Should need permission dialog
-          expect(permissionService.needsPermission, isTrue);
-          expect(permissionService.isAccessAllowed, isFalse);
-          expect(
-            permissionService.currentState,
-            equals(CameraPermissionState.unknown),
-          );
-        },
-      );
+      return false;
+    }
+
+    // Unknown state - try requesting permission
+    final result = await permissionService.requestSystemPermission();
+    return result == CameraPermissionState.granted ||
+        result == CameraPermissionState.sessionOnly;
+  }
+
+  /// Simulates app resume from settings.
+  Future<void> handleAppResume() async {
+    if (waitingForSettingsReturn) {
+      waitingForSettingsReturn = false;
+      permissionService.clearCache();
+    }
+  }
+}
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  late FakePermissionHandlerPlatform fakePermissionHandler;
+  late CameraPermissionService permissionService;
+  late TestablePermissionFlow permissionFlow;
+  late bool settingsDialogShown;
+  late bool settingsOpened;
+  late bool settingsDialogResult;
+
+  setUp(() {
+    fakePermissionHandler = FakePermissionHandlerPlatform();
+    PermissionHandlerPlatform.instance = fakePermissionHandler;
+    permissionService = CameraPermissionService();
+    settingsDialogShown = false;
+    settingsOpened = false;
+    settingsDialogResult = false;
+
+    permissionFlow = TestablePermissionFlow(
+      permissionService: permissionService,
+      onShowSettingsDialog: () async {
+        settingsDialogShown = true;
+        return settingsDialogResult;
+      },
+      onOpenSettings: () async {
+        settingsOpened = true;
+      },
+    );
+  });
+
+  tearDown(() {
+    // Reset state between tests
+    permissionService.clearAllPermissions();
+  });
+
+  group('Permission Flow Integration', () {
+    group('Permission already granted scenarios', () {
+      test('should return true immediately when permission is granted', () async {
+        fakePermissionHandler.setCameraStatus(PermissionStatus.granted);
+
+        final result = await permissionFlow.checkAndRequestPermission();
+
+        expect(result, isTrue);
+        expect(settingsDialogShown, isFalse);
+        expect(settingsOpened, isFalse);
+      });
+
+      test('should return true immediately when sessionOnly permission is active', () async {
+        // First grant permission via request (sets session flag)
+        fakePermissionHandler.setCameraStatus(PermissionStatus.granted);
+        await permissionService.requestSystemPermission();
+
+        // Clear cache so next check returns sessionOnly
+        permissionService.clearCache();
+
+        final result = await permissionFlow.checkAndRequestPermission();
+
+        expect(result, isTrue);
+        expect(settingsDialogShown, isFalse);
+        expect(settingsOpened, isFalse);
+      });
     });
 
-    group('Permission Persistence Flow', () {
-      test(
-        'permanent grant should persist across service recreations',
-        () async {
-          // Arrange - First service instance grants permission
-          final service1 = CameraPermissionService(storage: mockStorage);
-          await service1.grantPermanentPermission();
+    group('First-time permission request scenarios', () {
+      test('should request system permission on first-time request', () async {
+        // First-time request: denied status, no rationale shown
+        fakePermissionHandler.setCameraStatus(PermissionStatus.denied);
+        fakePermissionHandler.setShouldShowRationale(false);
 
-          // Mock storage to return granted value
-          when(mockStorage.read(key: permissionStorageKey))
-              .thenAnswer((_) async => grantedValue);
+        // When requested, grant permission
+        fakePermissionHandler.setRequestResult(PermissionStatus.granted);
 
-          // Act - Create new service instance (simulates app restart)
-          final service2 = CameraPermissionService(storage: mockStorage);
+        final result = await permissionFlow.checkAndRequestPermission();
 
-          // Need to read from storage to get the persisted value
-          // In real app, checkPermission would be called
-          final storedValue = await mockStorage.read(key: permissionStorageKey);
+        expect(result, isTrue);
+        expect(settingsDialogShown, isFalse);
+        expect(settingsOpened, isFalse);
+      });
 
-          // Assert - Permission should be retrievable
-          expect(storedValue, equals(grantedValue));
+      test('should return false when user denies first-time request', () async {
+        // First-time request: denied status, no rationale shown
+        fakePermissionHandler.setCameraStatus(PermissionStatus.denied);
+        fakePermissionHandler.setShouldShowRationale(false);
 
-          // Verify storage write was called once by service1
-          verify(
-            mockStorage.write(
-              key: permissionStorageKey,
-              value: grantedValue,
-            ),
-          ).called(1);
-        },
-      );
+        // When requested, deny permission
+        fakePermissionHandler.setRequestResult(PermissionStatus.denied);
 
-      test(
-        'denial should persist across service recreations',
-        () async {
-          // Arrange - First service instance denies permission
-          final service1 = CameraPermissionService(storage: mockStorage);
-          await service1.denyPermission();
+        final result = await permissionFlow.checkAndRequestPermission();
 
-          // Mock storage to return denied value
-          when(mockStorage.read(key: permissionStorageKey))
-              .thenAnswer((_) async => deniedValue);
+        // Result depends on whether it's blocked after denial
+        // After denial, rationale would be true on next check, so this returns false
+        expect(result, isFalse);
+        expect(settingsDialogShown, isFalse);
+      });
+    });
 
-          // Act - Create new service instance
-          final service2 = CameraPermissionService(storage: mockStorage);
-          final storedValue = await mockStorage.read(key: permissionStorageKey);
+    group('Blocked permission scenarios', () {
+      test('should show settings dialog when permission was previously denied', () async {
+        // Previously denied: denied status with rationale shown
+        fakePermissionHandler.setCameraStatus(PermissionStatus.denied);
+        fakePermissionHandler.setShouldShowRationale(true);
 
-          // Assert - Denial should be retrievable
-          expect(storedValue, equals(deniedValue));
-        },
-      );
+        final result = await permissionFlow.checkAndRequestPermission();
 
-      test(
-        'should store and retrieve permission state correctly',
-        () async {
-          // Arrange
-          String? storedPermissionValue;
+        expect(result, isFalse);
+        expect(settingsDialogShown, isTrue);
+        expect(settingsOpened, isFalse);
+      });
 
-          when(
-            mockStorage.write(key: anyNamed('key'), value: anyNamed('value')),
-          ).thenAnswer((invocation) async {
-            storedPermissionValue =
-                invocation.namedArguments[const Symbol('value')] as String?;
-          });
+      test('should show settings dialog when permission is permanently denied', () async {
+        fakePermissionHandler.setCameraStatus(PermissionStatus.permanentlyDenied);
 
-          when(mockStorage.read(key: anyNamed('key')))
-              .thenAnswer((_) async => storedPermissionValue);
+        final result = await permissionFlow.checkAndRequestPermission();
 
-          // Act - Grant permanent permission
-          await permissionService.grantPermanentPermission();
+        expect(result, isFalse);
+        expect(settingsDialogShown, isTrue);
+        expect(settingsOpened, isFalse);
+      });
 
-          // Assert - Value should be stored
-          expect(storedPermissionValue, equals(grantedValue));
+      test('should show settings dialog when permission is restricted', () async {
+        fakePermissionHandler.setCameraStatus(PermissionStatus.restricted);
 
-          // Act - Read back from storage
-          final readValue = await mockStorage.read(key: permissionStorageKey);
+        final result = await permissionFlow.checkAndRequestPermission();
 
-          // Assert - Should get same value back
-          expect(readValue, equals(grantedValue));
-        },
-      );
+        expect(result, isFalse);
+        expect(settingsDialogShown, isTrue);
+        expect(settingsOpened, isFalse);
+      });
 
-      test(
-        'should handle storage errors gracefully',
-        () async {
-          // Arrange - Storage throws error
-          when(
-            mockStorage.write(key: anyNamed('key'), value: anyNamed('value')),
-          ).thenThrow(Exception('Storage encryption failed'));
+      test('should open settings when user confirms dialog', () async {
+        fakePermissionHandler.setCameraStatus(PermissionStatus.permanentlyDenied);
+        settingsDialogResult = true;
 
-          // Act & Assert - Should throw CameraPermissionException
-          expect(
-            () => permissionService.grantPermanentPermission(),
-            throwsA(
-              isA<CameraPermissionException>().having(
-                (e) => e.message,
-                'message',
-                contains('Failed to store permanent permission grant'),
+        final result = await permissionFlow.checkAndRequestPermission();
+
+        expect(result, isFalse); // Returns false since permission not yet granted
+        expect(settingsDialogShown, isTrue);
+        expect(settingsOpened, isTrue);
+        expect(permissionFlow.waitingForSettingsReturn, isTrue);
+      });
+
+      test('should not open settings when user cancels dialog', () async {
+        fakePermissionHandler.setCameraStatus(PermissionStatus.permanentlyDenied);
+        settingsDialogResult = false;
+
+        final result = await permissionFlow.checkAndRequestPermission();
+
+        expect(result, isFalse);
+        expect(settingsDialogShown, isTrue);
+        expect(settingsOpened, isFalse);
+        expect(permissionFlow.waitingForSettingsReturn, isFalse);
+      });
+    });
+
+    group('Settings return handling', () {
+      test('should clear cache when returning from settings', () async {
+        fakePermissionHandler.setCameraStatus(PermissionStatus.permanentlyDenied);
+        settingsDialogResult = true;
+
+        await permissionFlow.checkAndRequestPermission();
+        expect(permissionFlow.waitingForSettingsReturn, isTrue);
+
+        // Simulate user granting permission in settings
+        fakePermissionHandler.setCameraStatus(PermissionStatus.granted);
+
+        await permissionFlow.handleAppResume();
+
+        expect(permissionFlow.waitingForSettingsReturn, isFalse);
+
+        // Now permission check should return granted
+        final result = await permissionFlow.checkAndRequestPermission();
+        expect(result, isTrue);
+      });
+
+      test('should stay blocked if user did not grant permission in settings', () async {
+        fakePermissionHandler.setCameraStatus(PermissionStatus.permanentlyDenied);
+        settingsDialogResult = true;
+
+        await permissionFlow.checkAndRequestPermission();
+        await permissionFlow.handleAppResume();
+
+        // Permission still denied
+        fakePermissionHandler.setCameraStatus(PermissionStatus.permanentlyDenied);
+
+        final result = await permissionFlow.checkAndRequestPermission();
+        expect(result, isFalse);
+        expect(settingsDialogShown, isTrue);
+      });
+    });
+
+    group('Session permission expiration', () {
+      test('should return true when session permission is active', () async {
+        // Grant permission in this session
+        fakePermissionHandler.setCameraStatus(PermissionStatus.granted);
+        await permissionService.requestSystemPermission();
+
+        // Clear cache to simulate fresh check
+        permissionService.clearCache();
+
+        final result = await permissionFlow.checkAndRequestPermission();
+        expect(result, isTrue);
+      });
+
+      test('should show dialog after session expires (app restart)', () async {
+        // Grant permission in this session
+        fakePermissionHandler.setCameraStatus(PermissionStatus.granted);
+        await permissionService.requestSystemPermission();
+
+        // Simulate app restart
+        permissionService.clearSessionPermission();
+
+        // System now returns denied (temporary permission expired)
+        fakePermissionHandler.setCameraStatus(PermissionStatus.denied);
+        fakePermissionHandler.setShouldShowRationale(true);
+
+        final result = await permissionFlow.checkAndRequestPermission();
+        expect(result, isFalse);
+        expect(settingsDialogShown, isTrue);
+      });
+    });
+
+    group('Multiple dialog prevention', () {
+      test('should prevent showing multiple dialogs simultaneously', () async {
+        fakePermissionHandler.setCameraStatus(PermissionStatus.permanentlyDenied);
+
+        // Simulate dialog being shown
+        permissionFlow.isPermissionDialogShowing = true;
+
+        final result = await permissionFlow.checkAndRequestPermission();
+
+        expect(result, isFalse);
+        // Dialog should not have been shown again
+        expect(settingsDialogShown, isFalse);
+      });
+
+      test('should reset dialog flag after dialog closes', () async {
+        fakePermissionHandler.setCameraStatus(PermissionStatus.permanentlyDenied);
+        settingsDialogResult = false;
+
+        await permissionFlow.checkAndRequestPermission();
+
+        expect(permissionFlow.isPermissionDialogShowing, isFalse);
+      });
+    });
+
+    group('Complete user journey scenarios', () {
+      test('fresh install user flow', () async {
+        // Step 1: Fresh install - first time request
+        fakePermissionHandler.setCameraStatus(PermissionStatus.denied);
+        fakePermissionHandler.setShouldShowRationale(false);
+        fakePermissionHandler.setRequestResult(PermissionStatus.granted);
+
+        final result = await permissionFlow.checkAndRequestPermission();
+
+        expect(result, isTrue);
+        expect(settingsDialogShown, isFalse);
+      });
+
+      test('user who denied once flow', () async {
+        // User denied permission once before
+        fakePermissionHandler.setCameraStatus(PermissionStatus.denied);
+        fakePermissionHandler.setShouldShowRationale(true);
+
+        final result = await permissionFlow.checkAndRequestPermission();
+
+        expect(result, isFalse);
+        expect(settingsDialogShown, isTrue);
+      });
+
+      test('user with dont ask again selected', () async {
+        fakePermissionHandler.setCameraStatus(PermissionStatus.permanentlyDenied);
+
+        final result = await permissionFlow.checkAndRequestPermission();
+
+        expect(result, isFalse);
+        expect(settingsDialogShown, isTrue);
+      });
+    });
+  });
+
+  group('Camera Settings Dialog Widget Tests', () {
+    testWidgets('should show correct title and content', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: ElevatedButton(
+                onPressed: () => showCameraSettingsDialog(context),
+                child: const Text('Show Dialog'),
               ),
             ),
-          );
-        },
+          ),
+        ),
       );
 
-      test(
-        'clearAllPermissions should remove persistent state',
-        () async {
-          // Arrange - First grant permission
-          await permissionService.grantPermanentPermission();
+      await tester.tap(find.text('Show Dialog'));
+      await tester.pumpAndSettle();
 
-          // Act - Clear all permissions
-          await permissionService.clearAllPermissions();
-
-          // Assert
-          verify(mockStorage.delete(key: permissionStorageKey)).called(1);
-          expect(
-            permissionService.currentState,
-            equals(CameraPermissionState.unknown),
-          );
-        },
+      expect(find.text('Camera Access Required'), findsOneWidget);
+      expect(
+        find.textContaining('Would you like to open Settings'),
+        findsOneWidget,
       );
     });
 
-    group('Session Permission Reset Flow', () {
-      test(
-        'session permission should reset on clearSessionPermission',
-        () async {
-          // Arrange - Grant session permission
-          permissionService.grantSessionPermission();
-          expect(permissionService.isAccessAllowed, isTrue);
-
-          // Act - Clear session permission (simulates cold start)
-          permissionService.clearSessionPermission();
-
-          // Assert - Access should be revoked
-          expect(permissionService.currentState, isNull);
-          expect(permissionService.needsPermission, isTrue);
-
-          // Verify storage was NOT affected
-          verifyNever(mockStorage.delete(key: anyNamed('key')));
-        },
-      );
-
-      test(
-        'session permission should not persist to storage',
-        () async {
-          // Act - Grant session permission multiple times
-          permissionService.grantSessionPermission();
-          permissionService.clearSessionPermission();
-          permissionService.grantSessionPermission();
-
-          // Assert - Storage should never be called for session permissions
-          verifyNever(
-            mockStorage.write(key: anyNamed('key'), value: anyNamed('value')),
-          );
-          verifyNever(mockStorage.delete(key: anyNamed('key')));
-        },
-      );
-
-      test(
-        'permanent permission should survive clearSessionPermission',
-        () async {
-          // Arrange - Grant permanent permission
-          await permissionService.grantPermanentPermission();
-
-          // Act - Clear session permission (simulates cold start)
-          permissionService.clearSessionPermission();
-
-          // Assert - Storage should NOT be cleared
-          verifyNever(mockStorage.delete(key: anyNamed('key')));
-
-          // Verify storage still has the granted value
-          verify(
-            mockStorage.write(
-              key: permissionStorageKey,
-              value: grantedValue,
+    testWidgets('should have Not Now and Open Settings buttons', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: ElevatedButton(
+                onPressed: () => showCameraSettingsDialog(context),
+                child: const Text('Show Dialog'),
+              ),
             ),
-          ).called(1);
-        },
+          ),
+        ),
       );
 
-      test(
-        'cold start should reset session but preserve permanent grants',
-        () async {
-          // Arrange - Create a service with both session and "stored" permission
-          final service1 = CameraPermissionService(storage: mockStorage);
+      await tester.tap(find.text('Show Dialog'));
+      await tester.pumpAndSettle();
 
-          // Grant permanent permission
-          await service1.grantPermanentPermission();
-
-          // Grant session permission on top
-          service1.grantSessionPermission();
-          expect(
-            service1.currentState,
-            equals(CameraPermissionState.sessionOnly),
-          );
-
-          // Mock storage to return granted value for new service
-          when(mockStorage.read(key: permissionStorageKey))
-              .thenAnswer((_) async => grantedValue);
-
-          // Act - Simulate cold start
-          final service2 = CameraPermissionService(storage: mockStorage);
-          service2.clearSessionPermission(); // Called in main.dart on cold start
-
-          // Assert - Session state should be cleared (null)
-          expect(service2.currentState, isNull);
-
-          // But storage should still have permanent grant
-          final storedValue = await mockStorage.read(key: permissionStorageKey);
-          expect(storedValue, equals(grantedValue));
-        },
-      );
-
-      test(
-        'app lifecycle: session grant -> background -> terminate -> restart',
-        () async {
-          // Step 1: User grants session-only permission
-          permissionService.grantSessionPermission();
-          expect(permissionService.isAccessAllowed, isTrue);
-          expect(
-            permissionService.currentState,
-            equals(CameraPermissionState.sessionOnly),
-          );
-
-          // Step 2: App goes to background (no effect on permission)
-          // (In real app, nothing changes when backgrounded)
-          expect(permissionService.isAccessAllowed, isTrue);
-
-          // Step 3: App terminates and restarts (new service instance)
-          final newService = CameraPermissionService(storage: mockStorage);
-          newService.clearSessionPermission(); // Called in main.dart
-
-          // Step 4: Verify session permission is gone
-          expect(newService.currentState, isNull);
-          expect(newService.needsPermission, isTrue);
-          expect(newService.isAccessAllowed, isFalse);
-
-          // Step 5: Verify no storage call was made for session
-          verifyNever(
-            mockStorage.write(
-              key: permissionStorageKey,
-              value: 'sessionOnly',
-            ),
-          );
-        },
-      );
-
-      test(
-        'app lifecycle: permanent grant -> background -> terminate -> restart',
-        () async {
-          // Step 1: User grants permanent permission
-          await permissionService.grantPermanentPermission();
-          expect(permissionService.isAccessAllowed, isTrue);
-          expect(
-            permissionService.currentState,
-            equals(CameraPermissionState.granted),
-          );
-
-          // Step 2: Mock storage to return granted value
-          when(mockStorage.read(key: permissionStorageKey))
-              .thenAnswer((_) async => grantedValue);
-
-          // Step 3: App terminates and restarts (new service instance)
-          final newService = CameraPermissionService(storage: mockStorage);
-          newService.clearSessionPermission(); // Called in main.dart
-
-          // Step 4: Storage should still have the grant
-          final storedValue = await mockStorage.read(key: permissionStorageKey);
-          expect(storedValue, equals(grantedValue));
-
-          // Step 5: Verify storage was called only once for the grant
-          verify(
-            mockStorage.write(
-              key: permissionStorageKey,
-              value: grantedValue,
-            ),
-          ).called(1);
-        },
-      );
+      expect(find.text('Not Now'), findsOneWidget);
+      expect(find.text('Open Settings'), findsOneWidget);
     });
 
-    group('Permission Dialog Result Handling', () {
-      test(
-        'PermissionDialogResult.granted should trigger permanent storage',
-        () async {
-          // Simulate dialog returning granted result
-          const dialogResult = PermissionDialogResult.granted;
+    testWidgets('should return false when Not Now is tapped', (tester) async {
+      bool? dialogResult;
 
-          // Act - Handle dialog result
-          switch (dialogResult) {
-            case PermissionDialogResult.granted:
-              await permissionService.grantPermanentPermission();
-            case PermissionDialogResult.sessionOnly:
-              permissionService.grantSessionPermission();
-            case PermissionDialogResult.denied:
-              await permissionService.denyPermission();
-          }
-
-          // Assert
-          expect(
-            permissionService.currentState,
-            equals(CameraPermissionState.granted),
-          );
-          verify(
-            mockStorage.write(
-              key: permissionStorageKey,
-              value: grantedValue,
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: ElevatedButton(
+                onPressed: () async {
+                  dialogResult = await showCameraSettingsDialog(context);
+                },
+                child: const Text('Show Dialog'),
+              ),
             ),
-          ).called(1);
-        },
+          ),
+        ),
       );
 
-      test(
-        'PermissionDialogResult.sessionOnly should not trigger storage',
-        () async {
-          // Simulate dialog returning sessionOnly result
-          const dialogResult = PermissionDialogResult.sessionOnly;
+      await tester.tap(find.text('Show Dialog'));
+      await tester.pumpAndSettle();
 
-          // Act - Handle dialog result
-          switch (dialogResult) {
-            case PermissionDialogResult.granted:
-              await permissionService.grantPermanentPermission();
-            case PermissionDialogResult.sessionOnly:
-              permissionService.grantSessionPermission();
-            case PermissionDialogResult.denied:
-              await permissionService.denyPermission();
-          }
+      await tester.tap(find.text('Not Now'));
+      await tester.pumpAndSettle();
 
-          // Assert
-          expect(
-            permissionService.currentState,
-            equals(CameraPermissionState.sessionOnly),
-          );
-          verifyNever(
-            mockStorage.write(key: anyNamed('key'), value: anyNamed('value')),
-          );
-        },
-      );
-
-      test(
-        'PermissionDialogResult.denied should trigger denial storage',
-        () async {
-          // Simulate dialog returning denied result
-          const dialogResult = PermissionDialogResult.denied;
-
-          // Act - Handle dialog result
-          switch (dialogResult) {
-            case PermissionDialogResult.granted:
-              await permissionService.grantPermanentPermission();
-            case PermissionDialogResult.sessionOnly:
-              permissionService.grantSessionPermission();
-            case PermissionDialogResult.denied:
-              await permissionService.denyPermission();
-          }
-
-          // Assert
-          expect(
-            permissionService.currentState,
-            equals(CameraPermissionState.denied),
-          );
-          verify(
-            mockStorage.write(
-              key: permissionStorageKey,
-              value: deniedValue,
-            ),
-          ).called(1);
-        },
-      );
+      expect(dialogResult, isFalse);
     });
 
-    group('State Transition Scenarios', () {
-      test(
-        'should transition: unknown -> denied -> granted',
-        () async {
-          // Start at unknown
-          await permissionService.clearAllPermissions();
-          expect(
-            permissionService.currentState,
-            equals(CameraPermissionState.unknown),
-          );
+    testWidgets('should return true when Open Settings is tapped', (tester) async {
+      bool? dialogResult;
 
-          // User denies
-          await permissionService.denyPermission();
-          expect(
-            permissionService.currentState,
-            equals(CameraPermissionState.denied),
-          );
-          expect(permissionService.isAccessAllowed, isFalse);
-
-          // User changes mind and grants
-          await permissionService.grantPermanentPermission();
-          expect(
-            permissionService.currentState,
-            equals(CameraPermissionState.granted),
-          );
-          expect(permissionService.isAccessAllowed, isTrue);
-        },
-      );
-
-      test(
-        'should transition: sessionOnly -> granted (upgrade)',
-        () async {
-          // Start with session permission
-          permissionService.grantSessionPermission();
-          expect(
-            permissionService.currentState,
-            equals(CameraPermissionState.sessionOnly),
-          );
-
-          // Upgrade to permanent
-          await permissionService.grantPermanentPermission();
-          expect(
-            permissionService.currentState,
-            equals(CameraPermissionState.granted),
-          );
-
-          // Verify storage was called for upgrade
-          verify(
-            mockStorage.write(
-              key: permissionStorageKey,
-              value: grantedValue,
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: ElevatedButton(
+                onPressed: () async {
+                  dialogResult = await showCameraSettingsDialog(context);
+                },
+                child: const Text('Show Dialog'),
+              ),
             ),
-          ).called(1);
-        },
+          ),
+        ),
       );
 
-      test(
-        'should transition: granted -> unknown (reset)',
-        () async {
-          // Start with permanent permission
-          await permissionService.grantPermanentPermission();
-          expect(
-            permissionService.currentState,
-            equals(CameraPermissionState.granted),
-          );
+      await tester.tap(find.text('Show Dialog'));
+      await tester.pumpAndSettle();
 
-          // Reset all permissions
-          await permissionService.clearAllPermissions();
-          expect(
-            permissionService.currentState,
-            equals(CameraPermissionState.unknown),
-          );
+      await tester.tap(find.text('Open Settings'));
+      await tester.pumpAndSettle();
 
-          // Verify storage was cleared
-          verify(mockStorage.delete(key: permissionStorageKey)).called(1);
-        },
-      );
+      expect(dialogResult, isTrue);
     });
 
-    group('Multiple Scanner Access Attempts', () {
-      test(
-        'should allow multiple scans with permanent permission',
-        () async {
-          // Grant permanent permission
-          await permissionService.grantPermanentPermission();
-
-          // Simulate multiple scan attempts
-          for (int i = 0; i < 5; i++) {
-            expect(permissionService.isAccessAllowed, isTrue);
-          }
-
-          // Verify storage was only called once
-          verify(
-            mockStorage.write(
-              key: permissionStorageKey,
-              value: grantedValue,
+    testWidgets('should have settings icon', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: ElevatedButton(
+                onPressed: () => showCameraSettingsDialog(context),
+                child: const Text('Show Dialog'),
+              ),
             ),
-          ).called(1);
-        },
+          ),
+        ),
       );
 
-      test(
-        'should allow multiple scans with session permission',
-        () async {
-          // Grant session permission
-          permissionService.grantSessionPermission();
+      await tester.tap(find.text('Show Dialog'));
+      await tester.pumpAndSettle();
 
-          // Simulate multiple scan attempts
-          for (int i = 0; i < 5; i++) {
-            expect(permissionService.isAccessAllowed, isTrue);
-          }
+      expect(find.byIcon(Icons.settings_outlined), findsOneWidget);
+    });
+  });
 
-          // Verify storage was never called
-          verifyNever(
-            mockStorage.write(key: anyNamed('key'), value: anyNamed('value')),
-          );
-        },
-      );
+  group('Permission Service with Flow Integration', () {
+    test('isFirstTimeRequest and isPermissionBlocked work together correctly', () async {
+      // Scenario 1: Fresh install (denied, no rationale)
+      fakePermissionHandler.setCameraStatus(PermissionStatus.denied);
+      fakePermissionHandler.setShouldShowRationale(false);
 
-      test(
-        'should block multiple scans when denied',
-        () async {
-          // Deny permission
-          await permissionService.denyPermission();
+      var isFirstTime = await permissionService.isFirstTimeRequest();
+      var isBlocked = await permissionService.isPermissionBlocked();
 
-          // Simulate multiple scan attempts
-          for (int i = 0; i < 5; i++) {
-            expect(permissionService.isAccessAllowed, isFalse);
-          }
+      expect(isFirstTime, isTrue);
+      expect(isBlocked, isTrue);
 
-          // Verify denial was stored only once
-          verify(
-            mockStorage.write(
-              key: permissionStorageKey,
-              value: deniedValue,
-            ),
-          ).called(1);
-        },
-      );
+      // Clear cache for next scenario
+      permissionService.clearCache();
+
+      // Scenario 2: After denial (denied, rationale shown)
+      fakePermissionHandler.setShouldShowRationale(true);
+
+      isFirstTime = await permissionService.isFirstTimeRequest();
+      permissionService.clearCache();
+      isBlocked = await permissionService.isPermissionBlocked();
+
+      expect(isFirstTime, isFalse);
+      expect(isBlocked, isTrue);
+
+      // Clear cache for next scenario
+      permissionService.clearCache();
+
+      // Scenario 3: Permanently denied
+      fakePermissionHandler.setCameraStatus(PermissionStatus.permanentlyDenied);
+
+      isFirstTime = await permissionService.isFirstTimeRequest();
+      permissionService.clearCache();
+      isBlocked = await permissionService.isPermissionBlocked();
+
+      expect(isFirstTime, isFalse);
+      expect(isBlocked, isTrue);
+
+      // Clear cache for next scenario
+      permissionService.clearCache();
+
+      // Scenario 4: Granted
+      fakePermissionHandler.setCameraStatus(PermissionStatus.granted);
+
+      isFirstTime = await permissionService.isFirstTimeRequest();
+      permissionService.clearCache();
+      isBlocked = await permissionService.isPermissionBlocked();
+
+      expect(isFirstTime, isFalse);
+      expect(isBlocked, isFalse);
     });
 
-    group('Riverpod Provider Integration', () {
-      test(
-        'cameraPermissionServiceProvider should provide singleton',
-        () {
-          // Arrange
-          final container = ProviderContainer();
+    test('session permission tracking works correctly', () async {
+      // Request permission and get granted
+      fakePermissionHandler.setCameraStatus(PermissionStatus.granted);
+      final result = await permissionService.requestSystemPermission();
 
-          // Act
-          final service1 = container.read(cameraPermissionServiceProvider);
-          final service2 = container.read(cameraPermissionServiceProvider);
+      expect(result, CameraPermissionState.granted);
+      expect(permissionService.isSessionPermissionGranted, isTrue);
 
-          // Assert - Should be same instance
-          expect(identical(service1, service2), isTrue);
+      // Clear cache and check - should be sessionOnly
+      permissionService.clearCache();
+      final state = await permissionService.checkPermission();
 
-          container.dispose();
-        },
-      );
+      expect(state, CameraPermissionState.sessionOnly);
+      expect(await permissionService.isPermissionBlocked(), isFalse);
 
-      test(
-        'provider should maintain state across reads',
-        () async {
-          // Arrange
-          final container = ProviderContainer();
+      // Clear session (simulate app restart)
+      permissionService.clearSessionPermission();
 
-          // Act - Grant permission through provider
-          final service1 = container.read(cameraPermissionServiceProvider);
-          service1.grantSessionPermission();
+      // System still shows granted, but session is cleared
+      // This would typically mean permission is still valid (not just session-only)
+      permissionService.clearCache();
+      final afterRestartState = await permissionService.checkPermission();
 
-          // Read again
-          final service2 = container.read(cameraPermissionServiceProvider);
-
-          // Assert - State should be preserved
-          expect(
-            service2.currentState,
-            equals(CameraPermissionState.sessionOnly),
-          );
-          expect(service2.isAccessAllowed, isTrue);
-
-          container.dispose();
-        },
-      );
-    });
-
-    group('Error Recovery Scenarios', () {
-      test(
-        'should recover from storage write failure',
-        () async {
-          // Arrange - First write fails
-          var callCount = 0;
-          when(
-            mockStorage.write(key: anyNamed('key'), value: anyNamed('value')),
-          ).thenAnswer((_) async {
-            callCount++;
-            if (callCount == 1) {
-              throw Exception('Network error');
-            }
-          });
-
-          // First attempt fails
-          expect(
-            () => permissionService.grantPermanentPermission(),
-            throwsA(isA<CameraPermissionException>()),
-          );
-
-          // Second attempt succeeds
-          await permissionService.grantPermanentPermission();
-          expect(
-            permissionService.currentState,
-            equals(CameraPermissionState.granted),
-          );
-        },
-      );
-
-      test(
-        'session permission should work when storage is unavailable',
-        () async {
-          // Arrange - Storage always fails
-          when(
-            mockStorage.write(key: anyNamed('key'), value: anyNamed('value')),
-          ).thenThrow(Exception('Storage unavailable'));
-
-          // Act - Grant session permission (should not use storage)
-          permissionService.grantSessionPermission();
-
-          // Assert - Should work without storage
-          expect(permissionService.isAccessAllowed, isTrue);
-          expect(
-            permissionService.currentState,
-            equals(CameraPermissionState.sessionOnly),
-          );
-        },
-      );
-    });
-
-    group('Edge Cases', () {
-      test(
-        'should handle rapid permission state changes',
-        () async {
-          // Rapidly change permission states
-          permissionService.grantSessionPermission();
-          await permissionService.grantPermanentPermission();
-          await permissionService.denyPermission();
-          permissionService.grantSessionPermission();
-          await permissionService.clearAllPermissions();
-
-          // Final state should be unknown
-          expect(
-            permissionService.currentState,
-            equals(CameraPermissionState.unknown),
-          );
-        },
-      );
-
-      test(
-        'should handle clearSessionPermission when already cleared',
-        () {
-          // Clear multiple times should not throw
-          permissionService.clearSessionPermission();
-          permissionService.clearSessionPermission();
-          permissionService.clearSessionPermission();
-
-          // Should be in consistent state
-          expect(permissionService.currentState, isNull);
-          expect(permissionService.needsPermission, isTrue);
-        },
-      );
-
-      test(
-        'should handle empty storage gracefully',
-        () async {
-          // Arrange - Storage returns null for all reads
-          when(mockStorage.read(key: anyNamed('key')))
-              .thenAnswer((_) async => null);
-
-          // Act - Create fresh service
-          final service = CameraPermissionService(storage: mockStorage);
-
-          // Assert - Should be in unknown state
-          expect(service.currentState, isNull);
-          expect(service.needsPermission, isTrue);
-          expect(service.isAccessAllowed, isFalse);
-        },
-      );
+      // Without session flag, granted status maps to granted (not sessionOnly)
+      expect(afterRestartState, CameraPermissionState.granted);
     });
   });
 }

@@ -4,83 +4,52 @@ import 'package:flutter/material.dart';
 // Permission Dialog Result
 // ============================================================================
 
-/// The result of the camera permission dialog.
+/// Result of the camera permission dialog.
 ///
-/// Used to determine how the user responded to the permission request.
+/// This enum represents the possible user choices from the camera permission
+/// dialog. It is kept for potential future use, but the 3-option dialog that
+/// uses it is deprecated.
+///
+/// See also:
+/// - [showCameraSettingsDialog] - the recommended Yes/No dialog for blocked permissions
 enum PermissionDialogResult {
   /// User denied camera permission.
-  ///
-  /// The app should not access the camera and should show
-  /// an appropriate message explaining why the scanner is unavailable.
   denied,
 
-  /// User granted camera permission permanently.
-  ///
-  /// This choice should be persisted across app restarts.
-  granted,
-
-  /// User granted camera permission for the current session only.
-  ///
-  /// This choice should be reset when the app process terminates.
+  /// User granted camera permission for this session only.
   sessionOnly,
+
+  /// User fully granted camera permission.
+  granted,
 }
 
 // ============================================================================
-// Camera Permission Dialog
+// Deprecated 3-Option Permission Dialog
 // ============================================================================
 
-/// Shows a camera permission dialog with three options.
+/// Shows a camera permission dialog with three options: Deny, This Session, Accept.
 ///
-/// Returns a [PermissionDialogResult] indicating the user's choice,
-/// or `null` if the dialog was dismissed without a selection.
+/// **DEPRECATED**: This dialog should not be used. The native Android permission
+/// dialog should be shown first via [CameraPermissionService.requestSystemPermission()].
+/// For blocked permissions, use [showCameraSettingsDialog] instead.
 ///
-/// ## Options
-/// - **Deny**: User does not want to grant camera access
-/// - **Accept for this session**: Grant access for the current session only
-/// - **Accept**: Grant permanent camera access
+/// This function is kept for backward compatibility but will be removed in a
+/// future release. The new permission flow is:
+/// 1. Show native Android dialog first (via permission_handler)
+/// 2. If permission is blocked, show [showCameraSettingsDialog] to redirect to settings
 ///
-/// ## Usage
-/// ```dart
-/// final result = await showCameraPermissionDialog(context);
-/// if (result == PermissionDialogResult.granted) {
-///   // Grant permanent permission
-/// } else if (result == PermissionDialogResult.sessionOnly) {
-///   // Grant session-only permission
-/// } else {
-///   // Permission denied or dialog dismissed
-/// }
-/// ```
+/// Parameters:
+/// - [context]: The build context for showing the dialog.
 ///
-/// ## Example Integration
-/// ```dart
-/// Future<void> _handleScanTap(BuildContext context) async {
-///   final permissionService = ref.read(cameraPermissionServiceProvider);
-///   final state = await permissionService.checkPermission();
-///
-///   if (state == CameraPermissionState.unknown) {
-///     final result = await showCameraPermissionDialog(context);
-///     if (result == null) return; // User dismissed
-///
-///     switch (result) {
-///       case PermissionDialogResult.granted:
-///         await permissionService.grantPermanentPermission();
-///       case PermissionDialogResult.sessionOnly:
-///         permissionService.grantSessionPermission();
-///       case PermissionDialogResult.denied:
-///         await permissionService.denyPermission();
-///         return; // Don't proceed with scanning
-///     }
-///
-///     // Request system permission
-///     await permissionService.requestSystemPermission();
-///   }
-///
-///   // Proceed with scanning...
-/// }
-/// ```
+/// Returns a [PermissionDialogResult] or `null` if the dialog was dismissed.
+@Deprecated(
+  'Use CameraPermissionService.requestSystemPermission() for first-time requests, '
+  'and showCameraSettingsDialog() for blocked permissions. '
+  'This dialog will be removed in a future release.',
+)
 Future<PermissionDialogResult?> showCameraPermissionDialog(
   BuildContext context,
-) {
+) async {
   return showDialog<PermissionDialogResult>(
     context: context,
     barrierDismissible: false,
@@ -88,7 +57,14 @@ Future<PermissionDialogResult?> showCameraPermissionDialog(
   );
 }
 
-/// Internal dialog widget for camera permission request.
+/// A dialog widget that shows three permission options: Deny, This Session, Accept.
+///
+/// **DEPRECATED**: This dialog should not be used. See [showCameraPermissionDialog]
+/// for details on the new permission flow.
+@Deprecated(
+  'This dialog is deprecated. Use the native Android permission dialog for '
+  'first-time requests, and showCameraSettingsDialog() for blocked permissions.',
+)
 class _CameraPermissionDialog extends StatelessWidget {
   const _CameraPermissionDialog();
 
@@ -104,47 +80,25 @@ class _CameraPermissionDialog extends StatelessWidget {
         color: colorScheme.primary,
       ),
       title: const Text('Camera Permission'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'AIScan needs access to your camera to scan documents.',
-            style: theme.textTheme.bodyLarge,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Your privacy is important to us. Choose how you would like to grant camera access:',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
+      content: const Text(
+        'AIScan needs camera access to scan documents. '
+        'Please choose how you would like to grant permission.',
       ),
-      actionsAlignment: MainAxisAlignment.spaceBetween,
-      actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
       actions: [
-        // Deny button - tertiary action
         TextButton(
           onPressed: () => Navigator.of(context).pop(PermissionDialogResult.denied),
-          child: const Text('Deny'),
+          child: Text(
+            'Deny',
+            style: TextStyle(color: colorScheme.error),
+          ),
         ),
-        // Row for the two accept options
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Accept for this session - secondary action
-            OutlinedButton(
-              onPressed: () => Navigator.of(context).pop(PermissionDialogResult.sessionOnly),
-              child: const Text('This Session'),
-            ),
-            const SizedBox(width: 8),
-            // Accept - primary action
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(PermissionDialogResult.granted),
-              child: const Text('Accept'),
-            ),
-          ],
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(PermissionDialogResult.sessionOnly),
+          child: const Text('This Session'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(PermissionDialogResult.granted),
+          child: const Text('Accept'),
         ),
       ],
     );
@@ -155,30 +109,42 @@ class _CameraPermissionDialog extends StatelessWidget {
 // Settings Redirect Dialog
 // ============================================================================
 
-/// Shows a dialog prompting the user to open settings to enable camera.
+/// Shows a Yes/No dialog for redirecting to system settings when camera
+/// permission is blocked.
 ///
-/// This dialog is shown when the system camera permission has been
-/// permanently denied or is restricted. The user must manually enable
-/// the permission in device settings.
+/// This dialog should be shown when:
+/// - The user has previously denied camera permission
+/// - The permission is permanently denied ("Don't ask again" selected)
+/// - A temporary "Only this time" permission has expired
 ///
-/// Returns `true` if the user chose to open settings, `false` otherwise.
+/// The dialog asks the user if they want to open system settings to enable
+/// camera access manually.
+///
+/// Parameters:
+/// - [context]: The build context for showing the dialog.
+///
+/// Returns `true` if the user taps "Open Settings", `false` if the user
+/// taps "Not Now" (dismiss), or `null` if the dialog is dismissed by tapping outside.
 ///
 /// ## Usage
 /// ```dart
-/// final shouldOpenSettings = await showCameraSettingsDialog(context);
-/// if (shouldOpenSettings) {
-///   await permissionService.openSettings();
+/// final permissionService = ref.read(cameraPermissionServiceProvider);
+///
+/// if (await permissionService.isPermissionBlocked()) {
+///   final shouldOpenSettings = await showCameraSettingsDialog(context);
+///   if (shouldOpenSettings == true) {
+///     await permissionService.openSettings();
+///   }
 /// }
 /// ```
-Future<bool> showCameraSettingsDialog(BuildContext context) async {
-  final result = await showDialog<bool>(
+Future<bool?> showCameraSettingsDialog(BuildContext context) async {
+  return showDialog<bool>(
     context: context,
     builder: (context) => const _CameraSettingsDialog(),
   );
-  return result ?? false;
 }
 
-/// Internal dialog widget for camera settings redirect.
+/// Dialog widget that asks the user if they want to open settings.
 class _CameraSettingsDialog extends StatelessWidget {
   const _CameraSettingsDialog();
 
@@ -194,27 +160,14 @@ class _CameraSettingsDialog extends StatelessWidget {
         color: colorScheme.secondary,
       ),
       title: const Text('Camera Access Required'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Camera permission has been denied.',
-            style: theme.textTheme.bodyLarge,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'To scan documents, please enable camera access in your device settings.',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
+      content: const Text(
+        'Camera permission is required to scan documents. '
+        'Would you like to open Settings to enable camera access?',
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('Cancel'),
+          child: const Text('Not Now'),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(true),
@@ -223,43 +176,4 @@ class _CameraSettingsDialog extends StatelessWidget {
       ],
     );
   }
-}
-
-// ============================================================================
-// Permission Denied Snackbar
-// ============================================================================
-
-/// Shows a snackbar indicating camera permission was denied.
-///
-/// Provides an action to re-request permission through settings.
-///
-/// ## Usage
-/// ```dart
-/// showCameraPermissionDeniedSnackbar(
-///   context,
-///   onSettingsPressed: () async {
-///     await permissionService.openSettings();
-///   },
-/// );
-/// ```
-void showCameraPermissionDeniedSnackbar(
-  BuildContext context, {
-  VoidCallback? onSettingsPressed,
-}) {
-  final theme = Theme.of(context);
-
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: const Text('Camera permission is required to scan documents'),
-      backgroundColor: theme.colorScheme.error,
-      action: onSettingsPressed != null
-          ? SnackBarAction(
-              label: 'Settings',
-              textColor: theme.colorScheme.onError,
-              onPressed: onSettingsPressed,
-            )
-          : null,
-      duration: const Duration(seconds: 4),
-    ),
-  );
 }

@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 /// Riverpod provider for [CameraPermissionService].
@@ -10,44 +9,38 @@ final cameraPermissionServiceProvider = Provider<CameraPermissionService>((ref) 
   return CameraPermissionService();
 });
 
-/// Represents the current state of camera permission.
+/// Represents the possible states of camera permission.
 ///
-/// This enum tracks both the user's consent choice and the system-level
-/// permission status for comprehensive permission management.
+/// These states map to the underlying system permission states while providing
+/// additional app-level tracking for temporary permissions.
 enum CameraPermissionState {
-  /// Initial state before permission has been checked.
-  ///
-  /// The app should check permission status before proceeding.
+  /// Permission status has not been checked yet.
   unknown,
 
-  /// User has permanently granted camera permission.
-  ///
-  /// This permission persists across app restarts and is stored
-  /// in secure storage.
+  /// Camera permission is fully granted.
   granted,
 
-  /// User has granted camera permission for the current session only.
+  /// Camera permission was granted for this session only ("Only this time").
   ///
-  /// This permission is stored in memory and will be reset when
-  /// the app process terminates.
+  /// This is an app-level state tracked when the system grants temporary permission.
+  /// On Android, this corresponds to the "Only this time" option in the native dialog.
   sessionOnly,
 
-  /// User has denied camera permission.
+  /// Camera permission was denied but can still be requested again.
   ///
-  /// The camera cannot be accessed. The user should be informed
-  /// why the camera is needed and how to grant permission.
+  /// The user declined the permission but has not selected "Don't ask again".
   denied,
 
-  /// Camera access is restricted by the system.
+  /// Camera is restricted due to device policy or lack of hardware.
   ///
-  /// This occurs on iOS with parental controls or MDM profiles,
-  /// or when the device doesn't have a camera.
+  /// This typically means the device doesn't have a camera or it's disabled
+  /// by enterprise policy. Permission cannot be requested.
   restricted,
 
   /// Camera permission was permanently denied by the user.
   ///
-  /// The user selected "Don't ask again" in the system permission dialog.
-  /// They must manually enable the permission in device settings.
+  /// The user selected "Don't ask again" or denied multiple times.
+  /// The only way to grant permission is through system settings.
   permanentlyDenied,
 }
 
@@ -73,13 +66,10 @@ class CameraPermissionException implements Exception {
   }
 }
 
-/// Service for managing camera permission requests and state.
+/// Service for managing camera permission state and requests.
 ///
-/// Handles both system-level camera permissions (via permission_handler)
-/// and user consent tracking with three options:
-/// - **Permanent Grant**: Stored in secure storage, persists across restarts
-/// - **Session Grant**: Stored in memory, resets when app closes
-/// - **Denial**: Prevents camera access with appropriate user feedback
+/// Uses [permission_handler] to interact with the native permission system
+/// and maintains app-level state for tracking temporary permissions.
 ///
 /// ## Usage
 /// ```dart
@@ -88,335 +78,240 @@ class CameraPermissionException implements Exception {
 /// // Check current permission state
 /// final state = await permissionService.checkPermission();
 ///
-/// // Request permission if not granted
-/// if (!permissionService.isAccessAllowed) {
-///   // Show permission dialog and request system permission
-///   final result = await permissionService.requestSystemPermission();
+/// // Check if permission is blocked and needs settings redirect
+/// if (await permissionService.isPermissionBlocked()) {
+///   // Show Yes/No dialog to redirect to settings
 /// }
+///
+/// // Request permission from system
+/// final result = await permissionService.requestSystemPermission();
 /// ```
 ///
-/// ## App Lifecycle
-/// Call [clearSessionPermission] on app startup to reset session-only
-/// permissions from the previous run:
-/// ```dart
-/// void main() async {
-///   WidgetsFlutterBinding.ensureInitialized();
-///   final service = CameraPermissionService();
-///   service.clearSessionPermission();
-///   // Continue with app initialization...
-/// }
-/// ```
-///
-/// ## Security Considerations
-/// - Permanent grants are stored using flutter_secure_storage
-/// - Session grants are stored in memory only
-/// - System permission must also be granted for camera access
+/// ## Session Permissions
+/// When the user grants "Only this time" permission, this service tracks it
+/// as [CameraPermissionState.sessionOnly]. Call [clearSessionPermission] on
+/// app startup to reset this state for the new session.
 class CameraPermissionService {
-  /// Creates a [CameraPermissionService] with platform-optimized storage.
-  CameraPermissionService({
-    FlutterSecureStorage? storage,
-  }) : _storage = storage ?? _createSecureStorage();
-
-  /// The underlying secure storage instance.
-  final FlutterSecureStorage _storage;
-
-  /// Key used to store the permanent permission grant in secure storage.
-  static const String _permissionStorageKey = 'aiscan_camera_permission';
-
-  /// Value stored for permanent grant.
-  static const String _grantedValue = 'granted';
-
-  /// Value stored for permanent denial.
-  static const String _deniedValue = 'denied';
-
-  /// In-memory flag for session-only permission.
+  /// Creates a [CameraPermissionService].
   ///
-  /// This is reset when the app process terminates.
+  /// Optionally accepts a custom [Permission] for testing purposes.
+  CameraPermissionService({
+    Permission? permission,
+  }) : _permission = permission ?? Permission.camera;
+
+  /// The permission to check/request.
+  final Permission _permission;
+
+  /// Tracks whether session-level permission was granted.
+  ///
+  /// This is set to `true` when the system returns a granted status that
+  /// might be temporary (Android "Only this time").
   bool _sessionPermissionGranted = false;
 
-  /// Cached permission state to avoid redundant storage reads.
+  /// Cached permission state to avoid redundant checks.
   CameraPermissionState? _cachedState;
-
-  /// Creates a [FlutterSecureStorage] instance with platform-optimized options.
-  static FlutterSecureStorage _createSecureStorage() {
-    const androidOptions = AndroidOptions(
-      encryptedSharedPreferences: true,
-      sharedPreferencesName: 'aiscan_secure_prefs',
-      preferencesKeyPrefix: 'aiscan_',
-    );
-
-    const iOSOptions = IOSOptions(
-      accessibility: KeychainAccessibility.unlocked_this_device,
-      accountName: 'AIScan',
-    );
-
-    return const FlutterSecureStorage(
-      aOptions: androidOptions,
-      iOptions: iOSOptions,
-    );
-  }
 
   /// Checks the current camera permission state.
   ///
-  /// This method checks both:
-  /// 1. The app's stored permission consent (permanent or session)
-  /// 2. The system-level camera permission status
+  /// Returns the current [CameraPermissionState] based on both the system
+  /// permission status and app-level session tracking.
   ///
-  /// Returns the combined [CameraPermissionState] based on both factors.
-  ///
-  /// Throws [CameraPermissionException] if checking fails.
+  /// Results are cached until [clearCache] or [clearSessionPermission] is called.
   Future<CameraPermissionState> checkPermission() async {
-    try {
-      // First check system-level permission
-      final systemStatus = await Permission.camera.status;
-
-      // If system permission is restricted or permanently denied,
-      // that takes precedence
-      if (systemStatus.isRestricted) {
-        _cachedState = CameraPermissionState.restricted;
-        return CameraPermissionState.restricted;
-      }
-
-      if (systemStatus.isPermanentlyDenied) {
-        _cachedState = CameraPermissionState.permanentlyDenied;
-        return CameraPermissionState.permanentlyDenied;
-      }
-
-      // Check session permission first (takes precedence if set)
-      if (_sessionPermissionGranted) {
-        // Verify system permission is also granted
-        if (systemStatus.isGranted) {
-          _cachedState = CameraPermissionState.sessionOnly;
-          return CameraPermissionState.sessionOnly;
-        }
-        // Session permission set but system permission revoked
-        _sessionPermissionGranted = false;
-      }
-
-      // Check persistent permission
-      final storedValue = await _storage.read(key: _permissionStorageKey);
-
-      if (storedValue == _grantedValue) {
-        // Verify system permission is also granted
-        if (systemStatus.isGranted) {
-          _cachedState = CameraPermissionState.granted;
-          return CameraPermissionState.granted;
-        }
-        // User consent granted but system permission revoked
-        // They need to re-grant system permission
-        _cachedState = CameraPermissionState.denied;
-        return CameraPermissionState.denied;
-      }
-
-      if (storedValue == _deniedValue) {
-        _cachedState = CameraPermissionState.denied;
-        return CameraPermissionState.denied;
-      }
-
-      // No stored permission - state is unknown
-      _cachedState = CameraPermissionState.unknown;
-      return CameraPermissionState.unknown;
-    } on Exception catch (e) {
-      throw CameraPermissionException(
-        'Failed to check camera permission',
-        cause: e,
-      );
+    if (_cachedState != null) {
+      return _cachedState!;
     }
+
+    final systemStatus = await _permission.status;
+    _cachedState = _mapSystemStatus(systemStatus);
+    return _cachedState!;
   }
 
   /// Requests camera permission from the system.
   ///
-  /// This triggers the platform-specific permission dialog. The result
-  /// indicates whether the system permission was granted.
+  /// This will show the native permission dialog if permission has not been
+  /// permanently denied. Returns the resulting [CameraPermissionState].
   ///
-  /// This method only requests system permission - it does not update
-  /// the app's consent state. Use [grantPermanentPermission] or
-  /// [grantSessionPermission] to record user consent.
-  ///
-  /// Returns the [CameraPermissionState] after the system dialog.
-  ///
-  /// Throws [CameraPermissionException] if the request fails.
+  /// Note: If permission is permanently denied, this will not show a dialog.
+  /// Use [openSettings] to redirect the user to app settings instead.
   Future<CameraPermissionState> requestSystemPermission() async {
-    try {
-      final status = await Permission.camera.request();
+    final status = await _permission.request();
+    final state = _mapSystemStatus(status);
 
-      if (status.isGranted) {
-        // System permission granted - check if we have app consent
-        if (_sessionPermissionGranted) {
-          _cachedState = CameraPermissionState.sessionOnly;
-          return CameraPermissionState.sessionOnly;
-        }
+    // Track if this might be a session-only grant
+    if (state == CameraPermissionState.granted) {
+      _sessionPermissionGranted = true;
+    }
 
-        final storedValue = await _storage.read(key: _permissionStorageKey);
-        if (storedValue == _grantedValue) {
-          _cachedState = CameraPermissionState.granted;
-          return CameraPermissionState.granted;
-        }
+    _cachedState = state;
+    return state;
+  }
 
-        // System granted but no app consent yet - return unknown
-        // to trigger consent dialog
-        _cachedState = CameraPermissionState.unknown;
-        return CameraPermissionState.unknown;
-      }
+  /// Returns `true` if permission is in a blocked state requiring settings redirect.
+  ///
+  /// A blocked state means the user cannot grant permission through the normal
+  /// dialog flow and needs to be redirected to system settings. This includes:
+  ///
+  /// - [CameraPermissionState.denied] - User denied but may have selected "Don't ask again"
+  /// - [CameraPermissionState.permanentlyDenied] - User explicitly blocked the permission
+  /// - [CameraPermissionState.restricted] - System/device restriction
+  /// - Session-only permission that has expired (app was restarted)
+  ///
+  /// Use this method to determine when to show the Yes/No dialog that offers
+  /// to redirect the user to system settings.
+  ///
+  /// ## Example
+  /// ```dart
+  /// final permissionService = ref.read(cameraPermissionServiceProvider);
+  ///
+  /// if (await permissionService.isPermissionBlocked()) {
+  ///   // Show Yes/No dialog asking if user wants to open settings
+  ///   final shouldOpenSettings = await showCameraSettingsDialog(context);
+  ///   if (shouldOpenSettings) {
+  ///     await permissionService.openSettings();
+  ///   }
+  /// }
+  /// ```
+  Future<bool> isPermissionBlocked() async {
+    final state = await checkPermission();
 
-      if (status.isPermanentlyDenied) {
-        _cachedState = CameraPermissionState.permanentlyDenied;
-        return CameraPermissionState.permanentlyDenied;
-      }
-
-      if (status.isRestricted) {
-        _cachedState = CameraPermissionState.restricted;
-        return CameraPermissionState.restricted;
-      }
-
-      // Permission denied
-      _cachedState = CameraPermissionState.denied;
-      return CameraPermissionState.denied;
-    } on Exception catch (e) {
-      throw CameraPermissionException(
-        'Failed to request camera permission',
-        cause: e,
-      );
+    switch (state) {
+      case CameraPermissionState.denied:
+      case CameraPermissionState.permanentlyDenied:
+      case CameraPermissionState.restricted:
+        return true;
+      case CameraPermissionState.sessionOnly:
+        // Session-only is blocked if the session was cleared (app restart)
+        return !_sessionPermissionGranted;
+      case CameraPermissionState.granted:
+      case CameraPermissionState.unknown:
+        return false;
     }
   }
 
-  /// Grants permanent camera permission.
+  /// Opens the app settings page where the user can grant camera permission.
   ///
-  /// This stores the permission grant in secure storage, making it
-  /// persist across app restarts and device reboots.
+  /// Returns `true` if the settings page was opened successfully,
+  /// `false` otherwise.
+  Future<bool> openSettings() async {
+    return openAppSettings();
+  }
+
+  /// Returns `true` if this is a first-time permission request.
   ///
-  /// Throws [CameraPermissionException] if storing the permission fails.
-  Future<void> grantPermanentPermission() async {
-    try {
-      await _storage.write(
-        key: _permissionStorageKey,
-        value: _grantedValue,
-      );
-      _sessionPermissionGranted = false; // Clear session flag
-      _cachedState = CameraPermissionState.granted;
-    } on Exception catch (e) {
-      throw CameraPermissionException(
-        'Failed to store permanent permission grant',
-        cause: e,
-      );
+  /// A first-time request means the app has never requested camera permission
+  /// from the user, so the native Android permission dialog should be shown.
+  ///
+  /// This method uses Android's `shouldShowRequestRationale` to distinguish
+  /// between a fresh install (never requested) and a previous denial:
+  ///
+  /// - Fresh install: status is `denied`, rationale is `false`
+  /// - User denied once: status is `denied`, rationale is `true`
+  /// - User selected "Don't ask again": status is `permanentlyDenied`
+  ///
+  /// Use this method to determine whether to show the native permission dialog
+  /// (first-time) or the Yes/No settings redirect dialog (subsequent requests).
+  ///
+  /// ## Example
+  /// ```dart
+  /// final permissionService = ref.read(cameraPermissionServiceProvider);
+  ///
+  /// if (await permissionService.isFirstTimeRequest()) {
+  ///   // Show native Android permission dialog
+  ///   await permissionService.requestSystemPermission();
+  /// } else if (await permissionService.isPermissionBlocked()) {
+  ///   // Show Yes/No dialog to redirect to settings
+  ///   await showCameraSettingsDialog(context);
+  /// }
+  /// ```
+  ///
+  /// ## Platform Notes
+  /// - On Android, this uses `shouldShowRequestRationale` from the permission system
+  /// - On iOS, the behavior may differ as iOS uses a different permission model
+  Future<bool> isFirstTimeRequest() async {
+    final status = await _permission.status;
+
+    // If permission is already granted or permanently denied, it's not first-time
+    if (status == PermissionStatus.granted ||
+        status == PermissionStatus.permanentlyDenied ||
+        status == PermissionStatus.restricted ||
+        status == PermissionStatus.limited ||
+        status == PermissionStatus.provisional) {
+      return false;
     }
+
+    // For denied status, check if rationale should be shown
+    // On Android:
+    // - First-time request: shouldShowRequestRationale returns false
+    // - After denial (without "Don't ask again"): returns true
+    // This allows us to distinguish between never-requested and previously-denied
+    final shouldShowRationale = await _permission.shouldShowRequestRationale;
+    return !shouldShowRationale;
   }
 
-  /// Grants camera permission for the current session only.
+  /// Clears the session permission state.
   ///
-  /// This stores the permission in memory, so it will be reset when
-  /// the app process terminates. Does not persist to storage.
-  void grantSessionPermission() {
-    _sessionPermissionGranted = true;
-    _cachedState = CameraPermissionState.sessionOnly;
-  }
-
-  /// Records that the user denied camera permission.
+  /// Call this method on app startup to reset the temporary permission state.
+  /// This ensures that "Only this time" permissions from a previous session
+  /// are treated as blocked, requiring the user to grant permission again.
   ///
-  /// This stores the denial in secure storage. The user will need
-  /// to be re-prompted if they want to grant permission later.
+  /// ## Usage
+  /// ```dart
+  /// void main() async {
+  ///   WidgetsFlutterBinding.ensureInitialized();
   ///
-  /// Throws [CameraPermissionException] if storing the denial fails.
-  Future<void> denyPermission() async {
-    try {
-      await _storage.write(
-        key: _permissionStorageKey,
-        value: _deniedValue,
-      );
-      _sessionPermissionGranted = false;
-      _cachedState = CameraPermissionState.denied;
-    } on Exception catch (e) {
-      throw CameraPermissionException(
-        'Failed to store permission denial',
-        cause: e,
-      );
-    }
-  }
-
-  /// Clears the session-only permission flag.
+  ///   final container = ProviderContainer();
+  ///   final permissionService = container.read(cameraPermissionServiceProvider);
+  ///   permissionService.clearSessionPermission();
   ///
-  /// Call this method on app startup to ensure session permissions
-  /// from the previous run are not carried over.
-  ///
-  /// This method does NOT clear permanent permissions - only the
-  /// in-memory session flag.
+  ///   runApp(const MyApp());
+  /// }
+  /// ```
   void clearSessionPermission() {
     _sessionPermissionGranted = false;
-    // Invalidate cache to force re-check
     _cachedState = null;
   }
 
-  /// Clears all permission state, including permanent grants.
+  /// Clears the cached permission state.
   ///
-  /// This resets the permission state to [CameraPermissionState.unknown].
-  /// Use this when the user wants to reset their permission choice.
+  /// Call this method to force a fresh permission check on the next call
+  /// to [checkPermission]. Useful when returning from system settings.
+  void clearCache() {
+    _cachedState = null;
+  }
+
+  /// Clears all permission-related state including session and cache.
   ///
-  /// Throws [CameraPermissionException] if clearing fails.
-  Future<void> clearAllPermissions() async {
-    try {
-      await _storage.delete(key: _permissionStorageKey);
-      _sessionPermissionGranted = false;
-      _cachedState = CameraPermissionState.unknown;
-    } on Exception catch (e) {
-      throw CameraPermissionException(
-        'Failed to clear permission state',
-        cause: e,
-      );
+  /// This is equivalent to calling both [clearSessionPermission] and [clearCache].
+  void clearAllPermissions() {
+    _sessionPermissionGranted = false;
+    _cachedState = null;
+  }
+
+  /// Maps the system [PermissionStatus] to our [CameraPermissionState].
+  CameraPermissionState _mapSystemStatus(PermissionStatus status) {
+    switch (status) {
+      case PermissionStatus.granted:
+        return _sessionPermissionGranted
+            ? CameraPermissionState.sessionOnly
+            : CameraPermissionState.granted;
+      case PermissionStatus.denied:
+        return CameraPermissionState.denied;
+      case PermissionStatus.restricted:
+        return CameraPermissionState.restricted;
+      case PermissionStatus.limited:
+        // Limited access is treated as granted for camera
+        return CameraPermissionState.granted;
+      case PermissionStatus.permanentlyDenied:
+        return CameraPermissionState.permanentlyDenied;
+      case PermissionStatus.provisional:
+        // Provisional is iOS-specific, treat as granted
+        return CameraPermissionState.granted;
     }
   }
 
-  /// Whether camera access is currently allowed.
+  /// Returns whether session permission is currently granted.
   ///
-  /// Returns `true` if the permission state is either [CameraPermissionState.granted]
-  /// or [CameraPermissionState.sessionOnly].
-  ///
-  /// **Note**: This uses the cached state if available. Call [checkPermission]
-  /// first to ensure the cache is up to date.
-  bool get isAccessAllowed {
-    final state = _cachedState;
-    return state == CameraPermissionState.granted ||
-        state == CameraPermissionState.sessionOnly;
-  }
-
-  /// Whether the user needs to grant permission.
-  ///
-  /// Returns `true` if the permission state is [CameraPermissionState.unknown],
-  /// indicating the user has not yet made a choice.
-  ///
-  /// **Note**: This uses the cached state if available. Call [checkPermission]
-  /// first to ensure the cache is up to date.
-  bool get needsPermission {
-    final state = _cachedState;
-    return state == null || state == CameraPermissionState.unknown;
-  }
-
-  /// Whether the system permission requires opening settings.
-  ///
-  /// Returns `true` if the permission state is [CameraPermissionState.permanentlyDenied]
-  /// or [CameraPermissionState.restricted], meaning the user must change
-  /// the permission in device settings.
-  ///
-  /// **Note**: This uses the cached state if available. Call [checkPermission]
-  /// first to ensure the cache is up to date.
-  bool get requiresSettingsChange {
-    final state = _cachedState;
-    return state == CameraPermissionState.permanentlyDenied ||
-        state == CameraPermissionState.restricted;
-  }
-
-  /// Opens the app settings page for the user to change permissions.
-  ///
-  /// Use this when [requiresSettingsChange] is `true` to guide the user
-  /// to manually enable camera permission.
-  ///
-  /// Returns `true` if the settings page was opened successfully.
-  Future<bool> openSettings() async {
-    return await openAppSettings();
-  }
-
-  /// Gets the current cached permission state.
-  ///
-  /// Returns `null` if no check has been performed yet.
-  /// Use [checkPermission] to get an up-to-date state.
-  CameraPermissionState? get currentState => _cachedState;
+  /// This is primarily for testing purposes.
+  bool get isSessionPermissionGranted => _sessionPermissionGranted;
 }

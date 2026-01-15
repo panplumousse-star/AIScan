@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/permissions/camera_permission_service.dart';
 import '../../../core/permissions/permission_dialog.dart';
 import '../../documents/domain/document_model.dart';
+import '../../sharing/domain/document_share_service.dart';
 import '../domain/scanner_service.dart';
 
 /// Scanner screen state notifier for managing scan workflow.
@@ -424,11 +425,17 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(state.hasResult ? 'Preview' : 'Scan Document'),
+        title: Text(state.hasSavedDocument
+            ? 'Saved'
+            : (state.hasResult ? 'Preview' : 'Scan Document')),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () async {
-            if (state.hasResult) {
+            if (state.hasSavedDocument) {
+              // Already saved, just go to documents
+              _navigateToDocuments(context);
+            } else if (state.hasResult) {
+              // Not saved, ask to discard
               final shouldDiscard = await _showDiscardDialog(context);
               if (shouldDiscard == true) {
                 await notifier.discardScan();
@@ -442,7 +449,8 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
           },
         ),
         actions: [
-          if (state.hasResult) ...[
+          // Only show "add more pages" if not yet saved
+          if (state.hasResult && !state.hasSavedDocument) ...[
             IconButton(
               icon: const Icon(Icons.add_a_photo_outlined),
               tooltip: 'Add more pages',
@@ -494,6 +502,33 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     if (state.isLoading) return null;
 
     if (state.hasResult) {
+      final theme = Theme.of(context);
+
+      // After save: show Share and Done buttons
+      if (state.hasSavedDocument) {
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            FloatingActionButton.extended(
+              heroTag: 'share',
+              onPressed: () => _handleShare(context, state),
+              icon: const Icon(Icons.share_outlined),
+              label: const Text('Share'),
+            ),
+            const SizedBox(width: 16),
+            FloatingActionButton.extended(
+              heroTag: 'done',
+              onPressed: () => _navigateToDocuments(context),
+              backgroundColor: theme.colorScheme.primaryContainer,
+              foregroundColor: theme.colorScheme.onPrimaryContainer,
+              icon: const Icon(Icons.check),
+              label: const Text('Done'),
+            ),
+          ],
+        );
+      }
+
+      // Before save: show Discard and Save buttons
       return Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -505,8 +540,8 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                 await notifier.discardScan();
               }
             },
-            backgroundColor: Theme.of(context).colorScheme.errorContainer,
-            foregroundColor: Theme.of(context).colorScheme.onErrorContainer,
+            backgroundColor: theme.colorScheme.errorContainer,
+            foregroundColor: theme.colorScheme.onErrorContainer,
             icon: const Icon(Icons.delete_outline),
             label: const Text('Discard'),
           ),
@@ -522,6 +557,32 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     }
 
     return null;
+  }
+
+  Future<void> _handleShare(BuildContext context, ScannerScreenState state) async {
+    if (state.savedDocument == null) return;
+
+    final shareService = ref.read(documentShareServiceProvider);
+
+    try {
+      final result = await shareService.shareDocuments([state.savedDocument!]);
+      await shareService.cleanupTempFiles(result.tempFilePaths);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to share: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
+
+  void _navigateToDocuments(BuildContext context) {
+    // Pop back to root and navigate to documents screen
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    // The home screen should show documents - handled by app.dart
   }
 
   Future<void> _handleSave(
@@ -555,9 +616,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
               duration: const Duration(seconds: 2),
             ),
           );
-
-          // Return the saved document
-          Navigator.of(context).pop(savedDocument);
+          // Stay on screen to allow sharing - don't pop
         }
       }
     } catch (e) {

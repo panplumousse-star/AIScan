@@ -295,6 +295,31 @@ class ScannerScreen extends ConsumerStatefulWidget {
 }
 
 class _ScannerScreenState extends ConsumerState<ScannerScreen> {
+  bool _autoScanStarted = false;
+  bool _scanWasActive = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Launch scanner automatically when screen opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _autoStartScan();
+    });
+  }
+
+  Future<void> _autoStartScan() async {
+    _autoScanStarted = true;
+    final hasPermission = await _checkAndRequestPermission();
+    if (!hasPermission && mounted) {
+      // Permission denied, go back
+      Navigator.of(context).pop();
+      return;
+    }
+    if (hasPermission && mounted) {
+      ref.read(scannerScreenProvider.notifier).multiPageScan();
+    }
+  }
+
   /// Checks camera permission and shows dialog if needed.
   ///
   /// Returns `true` if permission is granted (permanent or session),
@@ -362,8 +387,25 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     final notifier = ref.read(scannerScreenProvider.notifier);
     final theme = Theme.of(context);
 
-    // Listen for errors and show snackbar
+    // Listen for state changes
     ref.listen<ScannerScreenState>(scannerScreenProvider, (previous, next) {
+      // Track when scan is active
+      if (next.isScanning) {
+        _scanWasActive = true;
+      }
+
+      // If scan was cancelled (was active, now not active, no result) and
+      // was auto-started, go back to previous screen
+      if (_autoScanStarted &&
+          _scanWasActive &&
+          !next.isScanning &&
+          !next.hasResult &&
+          previous?.isScanning == true) {
+        Navigator.of(context).pop();
+        return;
+      }
+
+      // Show error snackbar
       if (next.error != null && previous?.error != next.error) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

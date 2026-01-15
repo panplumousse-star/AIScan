@@ -6,9 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mlkit_document_scanner/google_mlkit_document_scanner.dart';
 import 'package:image/image.dart' as img;
 import 'package:intl/intl.dart';
+import 'package:path/path.dart' as path;
 
 import '../../../core/storage/document_repository.dart';
 import '../../documents/domain/document_model.dart';
+import '../../export/domain/pdf_generator.dart';
 
 /// Riverpod provider for [ScannerService].
 ///
@@ -20,11 +22,15 @@ final scannerServiceProvider = Provider<ScannerService>((ref) {
 
 /// Riverpod provider for [ScannerStorageService].
 ///
-/// This provider includes the document repository dependency for
-/// saving scanned documents to encrypted storage.
+/// This provider includes the document repository and PDF generator
+/// dependencies for saving scanned documents to encrypted storage.
 final scannerStorageServiceProvider = Provider<ScannerStorageService>((ref) {
   final documentRepository = ref.watch(documentRepositoryProvider);
-  return ScannerStorageService(documentRepository: documentRepository);
+  final pdfGenerator = ref.watch(pdfGeneratorProvider);
+  return ScannerStorageService(
+    documentRepository: documentRepository,
+    pdfGenerator: pdfGenerator,
+  );
 });
 
 /// Exception thrown when scanning operations fail.
@@ -697,10 +703,15 @@ class ScannerStorageService {
   /// Creates a [ScannerStorageService] with the required dependencies.
   ScannerStorageService({
     required DocumentRepository documentRepository,
-  }) : _documentRepository = documentRepository;
+    required PDFGenerator pdfGenerator,
+  })  : _documentRepository = documentRepository,
+        _pdfGenerator = pdfGenerator;
 
   /// The document repository for encrypted storage operations.
   final DocumentRepository _documentRepository;
+
+  /// The PDF generator for combining multiple pages.
+  final PDFGenerator _pdfGenerator;
 
   /// Default thumbnail width in pixels.
   static const int _thumbnailWidth = 300;
@@ -764,18 +775,56 @@ class ScannerStorageService {
       );
     }
 
-    try {
-      // Use the first page as the primary document source
-      final primaryPage = validPages.first;
-      final sourceFilePath = primaryPage.imagePath;
+    String? generatedPdfPath;
 
+    try {
       // Generate title if not provided
       final documentTitle = title ?? _generateDefaultTitle();
+
+      // Use the first page for thumbnail
+      final primaryPage = validPages.first;
 
       // Generate thumbnail if requested
       String? thumbnailPath;
       if (generateThumbnail) {
         thumbnailPath = await _generateThumbnail(primaryPage);
+      }
+
+      // Determine the source file path
+      String sourceFilePath;
+
+      if (validPages.length == 1) {
+        // Single page: use the image directly
+        sourceFilePath = primaryPage.imagePath;
+      } else {
+        // Multiple pages: generate a PDF containing all pages
+        final imageBytesList = <Uint8List>[];
+        for (final page in validPages) {
+          final bytes = await page.readBytes();
+          imageBytesList.add(bytes);
+        }
+
+        final pdfResult = await _pdfGenerator.generateFromBytes(
+          imageBytesList: imageBytesList,
+          options: PDFGeneratorOptions(
+            title: documentTitle,
+            imageQuality: 95,
+            pageSize: PDFPageSize.a4,
+            orientation: PDFOrientation.auto,
+            imageFit: PDFImageFit.contain,
+          ),
+        );
+
+        // Save PDF to temp file
+        final tempDir = Directory.systemTemp;
+        generatedPdfPath = path.join(
+          tempDir.path,
+          'scan_${DateTime.now().millisecondsSinceEpoch}.pdf',
+        );
+        final pdfFile = File(generatedPdfPath);
+        await pdfFile.writeAsBytes(pdfResult.bytes);
+
+        sourceFilePath = generatedPdfPath;
       }
 
       // Create the document in encrypted storage
@@ -796,6 +845,10 @@ class ScannerStorageService {
         if (thumbnailPath != null) {
           await _deleteTempFile(thumbnailPath);
         }
+        // Clean up generated PDF temp file
+        if (generatedPdfPath != null) {
+          await _deleteTempFile(generatedPdfPath);
+        }
       }
 
       return SavedScanResult(
@@ -804,6 +857,10 @@ class ScannerStorageService {
         thumbnailGenerated: thumbnailPath != null,
       );
     } catch (e) {
+      // Clean up generated PDF on error
+      if (generatedPdfPath != null) {
+        await _deleteTempFile(generatedPdfPath);
+      }
       if (e is ScannerException) {
         rethrow;
       }

@@ -1,32 +1,25 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path/path.dart' as path;
-import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/permissions/storage_permission_service.dart';
 import '../../../core/storage/document_repository.dart';
 import '../../documents/domain/document_model.dart';
-import '../../export/domain/pdf_generator.dart';
 
 /// Riverpod provider for [DocumentShareService].
 ///
 /// Provides a singleton instance of the document share service for
 /// dependency injection throughout the application.
-/// Depends on [StoragePermissionService] for permission checks,
-/// [DocumentRepository] for document decryption, and
-/// [PDFGenerator] for PDF conversion.
+/// Depends on [StoragePermissionService] for permission checks and
+/// [DocumentRepository] for document decryption.
 final documentShareServiceProvider = Provider<DocumentShareService>((ref) {
   final permissionService = ref.read(storagePermissionServiceProvider);
   final documentRepository = ref.read(documentRepositoryProvider);
-  final pdfGenerator = ref.read(pdfGeneratorProvider);
   return DocumentShareService(
     permissionService: permissionService,
     documentRepository: documentRepository,
-    pdfGenerator: pdfGenerator,
   );
 });
 
@@ -132,19 +125,14 @@ class DocumentShareService {
   DocumentShareService({
     required StoragePermissionService permissionService,
     required DocumentRepository documentRepository,
-    required PDFGenerator pdfGenerator,
   })  : _permissionService = permissionService,
-        _documentRepository = documentRepository,
-        _pdfGenerator = pdfGenerator;
+        _documentRepository = documentRepository;
 
   /// The storage permission service for permission checks.
   final StoragePermissionService _permissionService;
 
   /// The document repository for file operations.
   final DocumentRepository _documentRepository;
-
-  /// The PDF generator for converting images to PDF.
-  final PDFGenerator _pdfGenerator;
 
   /// MIME type for PDF documents.
   static const String _pdfMimeType = 'application/pdf';
@@ -341,38 +329,16 @@ class DocumentShareService {
     final xFiles = <XFile>[];
 
     try {
-      // Get temp directory for PDF files
-      final tempDir = await getTemporaryDirectory();
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-
-      // Process each document: decrypt image and convert to PDF
+      // Documents are already stored as PDFs, just decrypt and share
       for (final document in documents) {
-        // Get decrypted image bytes
-        final imageBytes = await _getDecryptedImageBytes(document);
-
-        // Generate PDF from image
-        final pdfResult = await _pdfGenerator.generateFromBytes(
-          imageBytesList: [imageBytes],
-          options: PDFGeneratorOptions(
-            title: document.title,
-            imageQuality: 95,
-            pageSize: PDFPageSize.a4,
-            orientation: PDFOrientation.auto,
-            imageFit: PDFImageFit.contain,
-          ),
-        );
-
-        // Save PDF to temp file
-        final fileName = _getShareFileName(document);
-        final pdfPath = path.join(tempDir.path, '${timestamp}_$fileName');
-        final pdfFile = File(pdfPath);
-        await pdfFile.writeAsBytes(pdfResult.bytes);
-
-        tempFilePaths.add(pdfPath);
+        // Get decrypted file path (already a PDF)
+        final decryptedPath = await _getDecryptedFilePath(document);
+        tempFilePaths.add(decryptedPath);
 
         // Create XFile with PDF mime type
+        final fileName = _getShareFileName(document);
         final xFile = XFile(
-          pdfPath,
+          decryptedPath,
           mimeType: _pdfMimeType,
           name: fileName,
         );
@@ -517,28 +483,6 @@ class DocumentShareService {
   Future<String> _getDecryptedFilePath(Document document) async {
     try {
       return await _documentRepository.getDecryptedFilePath(document);
-    } on DocumentRepositoryException catch (e) {
-      if (e.message.contains('not found')) {
-        throw DocumentShareException(
-          'Document file not found: ${document.title}',
-          cause: e,
-        );
-      }
-      throw DocumentShareException(
-        'Failed to prepare document for sharing: ${document.title}',
-        cause: e,
-      );
-    }
-  }
-
-  /// Gets the decrypted image bytes for a document.
-  ///
-  /// Throws [DocumentShareException] if the document cannot be decrypted.
-  Future<Uint8List> _getDecryptedImageBytes(Document document) async {
-    try {
-      final decryptedPath = await _documentRepository.getDecryptedFilePath(document);
-      final file = File(decryptedPath);
-      return await file.readAsBytes();
     } on DocumentRepositoryException catch (e) {
       if (e.message.contains('not found')) {
         throw DocumentShareException(

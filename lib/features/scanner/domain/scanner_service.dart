@@ -790,42 +790,34 @@ class ScannerStorageService {
         thumbnailPath = await _generateThumbnail(primaryPage);
       }
 
-      // Determine the source file path
-      String sourceFilePath;
-
-      if (validPages.length == 1) {
-        // Single page: use the image directly
-        sourceFilePath = primaryPage.imagePath;
-      } else {
-        // Multiple pages: generate a PDF containing all pages
-        final imageBytesList = <Uint8List>[];
-        for (final page in validPages) {
-          final bytes = await page.readBytes();
-          imageBytesList.add(bytes);
-        }
-
-        final pdfResult = await _pdfGenerator.generateFromBytes(
-          imageBytesList: imageBytesList,
-          options: PDFGeneratorOptions(
-            title: documentTitle,
-            imageQuality: 95,
-            pageSize: PDFPageSize.a4,
-            orientation: PDFOrientation.auto,
-            imageFit: PDFImageFit.contain,
-          ),
-        );
-
-        // Save PDF to temp file
-        final tempDir = Directory.systemTemp;
-        generatedPdfPath = path.join(
-          tempDir.path,
-          'scan_${DateTime.now().millisecondsSinceEpoch}.pdf',
-        );
-        final pdfFile = File(generatedPdfPath);
-        await pdfFile.writeAsBytes(pdfResult.bytes);
-
-        sourceFilePath = generatedPdfPath;
+      // Always generate a PDF (even for single page) for consistent format
+      final imageBytesList = <Uint8List>[];
+      for (final page in validPages) {
+        final bytes = await page.readBytes();
+        imageBytesList.add(bytes);
       }
+
+      final pdfResult = await _pdfGenerator.generateFromBytes(
+        imageBytesList: imageBytesList,
+        options: PDFGeneratorOptions(
+          title: documentTitle,
+          imageQuality: 95,
+          pageSize: PDFPageSize.a4,
+          orientation: PDFOrientation.auto,
+          imageFit: PDFImageFit.contain,
+        ),
+      );
+
+      // Save PDF to temp file
+      final tempDir = Directory.systemTemp;
+      generatedPdfPath = path.join(
+        tempDir.path,
+        'scan_${DateTime.now().millisecondsSinceEpoch}.pdf',
+      );
+      final pdfFile = File(generatedPdfPath);
+      await pdfFile.writeAsBytes(pdfResult.bytes);
+
+      final sourceFilePath = generatedPdfPath;
 
       // Create the document in encrypted storage
       final document = await _documentRepository.createDocument(

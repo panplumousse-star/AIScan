@@ -363,8 +363,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
       if (shouldLoadFolders) {
         // Load root folders (those with no parent)
         final allFolders = await _folderService.getAllFolders();
-        folders = allFolders.where((f) => f.parentId == null).toList();
-        folders.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+        folders = allFolders.roots.sortedByName();
       }
 
       // Load documents based on current context
@@ -378,8 +377,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
         );
         // Also load subfolders
         final allFolders = await _folderService.getAllFolders();
-        folders = allFolders.where((f) => f.parentId == state.currentFolderId).toList();
-        folders.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+        folders = allFolders.childrenOf(state.currentFolderId!).sortedByName();
       } else if (filter.folderId != null) {
         documents = await _repository.getDocumentsInFolder(
           filter.folderId,

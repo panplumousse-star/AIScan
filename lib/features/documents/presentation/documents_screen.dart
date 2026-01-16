@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -2442,17 +2443,35 @@ class _FoldersSectionState extends State<_FoldersSection> {
           ),
         ),
         SizedBox(
-          height: 100,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            itemCount: widget.folders.length,
-            itemBuilder: (context, index) {
-              final folder = widget.folders[index];
-              return _FolderCard(
-                folder: folder,
-                onTap: () => widget.onFolderTap(folder),
-                theme: widget.theme,
+          height: 200,
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: (widget.folders.length / 8).ceil(),
+            itemBuilder: (context, pageIndex) {
+              final startIndex = pageIndex * 8;
+              final endIndex = min(startIndex + 8, widget.folders.length);
+              final pageFolders = widget.folders.sublist(startIndex, endIndex);
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: GridView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 4,
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8,
+                    childAspectRatio: 0.85,
+                  ),
+                  itemCount: pageFolders.length,
+                  itemBuilder: (context, index) {
+                    final folder = pageFolders[index];
+                    return _FolderCard(
+                      folder: folder,
+                      onTap: () => widget.onFolderTap(folder),
+                      theme: widget.theme,
+                    );
+                  },
+                ),
               );
             },
           ),

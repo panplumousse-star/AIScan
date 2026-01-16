@@ -171,7 +171,10 @@ class _PlaceholderHomeScreen extends ConsumerWidget {
         MaterialPageRoute(
           builder: (_) => const ScannerScreen(),
         ),
-      );
+      ).then((_) {
+        // Refresh hasDocuments check when returning from scanner
+        ref.invalidate(hasDocumentsProvider);
+      });
     }
   }
 
@@ -250,7 +253,10 @@ class _PlaceholderHomeScreen extends ConsumerWidget {
                                       _navigateToScanner(navContext, ref),
                                 ),
                               ),
-                            );
+                            ).then((_) {
+                              // Refresh hasDocuments check when returning
+                              ref.invalidate(hasDocumentsProvider);
+                            });
                           },
                           child: OutlinedButton.icon(
                             onPressed: null, // Handled by TapScaleFeedback

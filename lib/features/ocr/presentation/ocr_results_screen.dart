@@ -246,16 +246,18 @@ class OcrResultsScreenNotifier extends StateNotifier<OcrResultsScreenState> {
     try {
       OcrResult result;
 
-      if (state.sourceImagePath != null) {
-        // Process from file path
-        result = await _ocrService.extractTextFromFile(
-          state.sourceImagePath!,
-          options: state.options,
-        );
-      } else if (state.sourceImageBytes != null) {
-        // Process from bytes
+      // Prefer bytes over file path since documents are encrypted at rest
+      // and bytes are already decrypted
+      if (state.sourceImageBytes != null) {
+        // Process from bytes (preferred for encrypted documents)
         result = await _ocrService.extractTextFromBytes(
           state.sourceImageBytes!,
+          options: state.options,
+        );
+      } else if (state.sourceImagePath != null) {
+        // Process from file path (for unencrypted images)
+        result = await _ocrService.extractTextFromFile(
+          state.sourceImagePath!,
           options: state.options,
         );
       } else {
@@ -1266,7 +1268,13 @@ class _OcrOptionsSheetState extends State<_OcrOptionsSheet> {
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               ),
-              items: OcrLanguage.values
+              items: const [
+                OcrLanguage.latin,
+                OcrLanguage.chinese,
+                OcrLanguage.japanese,
+                OcrLanguage.korean,
+                OcrLanguage.devanagari,
+              ]
                   .map((lang) => DropdownMenuItem(
                         value: lang,
                         child: Text(lang.displayName),

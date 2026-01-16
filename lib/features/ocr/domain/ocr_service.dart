@@ -2,9 +2,8 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_tesseract_ocr/flutter_tesseract_ocr.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 
@@ -52,6 +51,7 @@ class OcrResult {
     this.processingTimeMs,
     this.wordCount,
     this.lineCount,
+    this.blocks,
   });
 
   /// The extracted text from the image.
@@ -73,6 +73,9 @@ class OcrResult {
 
   /// Number of lines extracted.
   final int? lineCount;
+
+  /// Text blocks with position information.
+  final List<OcrTextBlock>? blocks;
 
   /// Whether any text was extracted.
   bool get hasText => text.trim().isNotEmpty;
@@ -103,6 +106,7 @@ class OcrResult {
     int? processingTimeMs,
     int? wordCount,
     int? lineCount,
+    List<OcrTextBlock>? blocks,
   }) {
     return OcrResult(
       text: text ?? this.text,
@@ -111,6 +115,7 @@ class OcrResult {
       processingTimeMs: processingTimeMs ?? this.processingTimeMs,
       wordCount: wordCount ?? this.wordCount,
       lineCount: lineCount ?? this.lineCount,
+      blocks: blocks ?? this.blocks,
     );
   }
 
@@ -145,59 +150,125 @@ class OcrResult {
       'lines: $lineCount)';
 }
 
-/// Supported OCR languages.
+/// A block of text recognized by OCR with position information.
+@immutable
+class OcrTextBlock {
+  const OcrTextBlock({
+    required this.text,
+    required this.boundingBox,
+    this.lines = const [],
+  });
+
+  final String text;
+  final Rect boundingBox;
+  final List<OcrTextLine> lines;
+}
+
+/// A line of text within a block.
+@immutable
+class OcrTextLine {
+  const OcrTextLine({
+    required this.text,
+    required this.boundingBox,
+  });
+
+  final String text;
+  final Rect boundingBox;
+}
+
+/// Simple rectangle class for bounding boxes.
+@immutable
+class Rect {
+  const Rect({
+    required this.left,
+    required this.top,
+    required this.right,
+    required this.bottom,
+  });
+
+  final double left;
+  final double top;
+  final double right;
+  final double bottom;
+
+  double get width => right - left;
+  double get height => bottom - top;
+}
+
+/// Supported OCR languages/scripts.
 ///
-/// Each language requires the corresponding traineddata file
-/// to be present in the assets/tessdata directory.
+/// ML Kit supports different scripts rather than specific languages.
 enum OcrLanguage {
-  /// English language.
-  english('eng'),
+  /// Latin script (English, French, German, Spanish, etc.)
+  latin('latin'),
 
-  /// German language.
-  german('deu'),
+  /// Chinese script
+  chinese('chinese'),
 
-  /// French language.
-  french('fra'),
+  /// Devanagari script (Hindi, Sanskrit, etc.)
+  devanagari('devanagari'),
 
-  /// Spanish language.
-  spanish('spa'),
+  /// Japanese script
+  japanese('japanese'),
 
-  /// Italian language.
-  italian('ita'),
+  /// Korean script
+  korean('korean'),
 
-  /// Portuguese language.
-  portuguese('por'),
+  // Legacy codes for backward compatibility
+  /// English language (uses Latin script).
+  english('latin'),
 
-  /// Dutch language.
-  dutch('nld'),
+  /// German language (uses Latin script).
+  german('latin'),
 
-  /// Chinese Simplified.
-  chineseSimplified('chi_sim'),
+  /// French language (uses Latin script).
+  french('latin'),
 
-  /// Chinese Traditional.
-  chineseTraditional('chi_tra'),
+  /// Spanish language (uses Latin script).
+  spanish('latin'),
 
-  /// Japanese language.
-  japanese('jpn'),
+  /// Italian language (uses Latin script).
+  italian('latin'),
 
-  /// Korean language.
-  korean('kor'),
+  /// Portuguese language (uses Latin script).
+  portuguese('latin');
 
-  /// Arabic language.
-  arabic('ara'),
-
-  /// Russian language.
-  russian('rus');
-
-  /// Creates an [OcrLanguage] with its Tesseract code.
+  /// Creates an [OcrLanguage] with its script code.
   const OcrLanguage(this.code);
 
-  /// The Tesseract language code.
+  /// The script code.
   final String code;
+
+  /// Gets the ML Kit TextRecognitionScript for this language.
+  TextRecognitionScript get mlKitScript {
+    switch (code) {
+      case 'chinese':
+        return TextRecognitionScript.chinese;
+      case 'devanagari':
+        return TextRecognitionScript.devanagiri;
+      case 'japanese':
+        return TextRecognitionScript.japanese;
+      case 'korean':
+        return TextRecognitionScript.korean;
+      case 'latin':
+      default:
+        return TextRecognitionScript.latin;
+    }
+  }
 
   /// Gets the display name for the language.
   String get displayName {
     switch (this) {
+      case OcrLanguage.latin:
+        return 'Latin (EN, FR, DE, ES...)';
+      case OcrLanguage.chinese:
+        return 'Chinese';
+      case OcrLanguage.devanagari:
+        return 'Devanagari';
+      case OcrLanguage.japanese:
+        return 'Japanese';
+      case OcrLanguage.korean:
+        return 'Korean';
       case OcrLanguage.english:
         return 'English';
       case OcrLanguage.german:
@@ -210,107 +281,68 @@ enum OcrLanguage {
         return 'Italian';
       case OcrLanguage.portuguese:
         return 'Portuguese';
-      case OcrLanguage.dutch:
-        return 'Dutch';
-      case OcrLanguage.chineseSimplified:
-        return 'Chinese (Simplified)';
-      case OcrLanguage.chineseTraditional:
-        return 'Chinese (Traditional)';
-      case OcrLanguage.japanese:
-        return 'Japanese';
-      case OcrLanguage.korean:
-        return 'Korean';
-      case OcrLanguage.arabic:
-        return 'Arabic';
-      case OcrLanguage.russian:
-        return 'Russian';
     }
   }
 }
 
-/// Page segmentation mode for Tesseract OCR.
+/// Page segmentation mode for OCR.
 ///
-/// Controls how Tesseract segments the image for text recognition.
-/// Different modes are optimized for different document layouts.
+/// Note: ML Kit handles this automatically, but we keep this for API compatibility.
 enum OcrPageSegmentationMode {
-  /// Automatic page segmentation with OSD (Orientation and Script Detection).
-  ///
-  /// Best for general documents with unknown layout.
+  /// Automatic page segmentation.
   auto(3),
 
-  /// Assume a single column of text of variable sizes.
-  ///
-  /// Good for documents with a single column of text.
+  /// Single column of text.
   singleColumn(4),
 
-  /// Assume a single uniform block of vertically aligned text.
-  ///
-  /// Good for paragraphs of text.
+  /// Single block of text.
   singleBlock(6),
 
-  /// Treat the image as a single text line.
-  ///
-  /// Best for single-line text like license plates.
+  /// Single text line.
   singleLine(7),
 
-  /// Treat the image as a single word.
+  /// Single word.
   singleWord(8),
 
-  /// Treat the image as a single character.
+  /// Single character.
   singleChar(10),
 
-  /// Sparse text - find as much text as possible in no particular order.
-  ///
-  /// Good for images with scattered text.
+  /// Sparse text.
   sparseText(11),
 
   /// Sparse text with OSD.
   sparseTextOsd(12);
 
-  /// Creates an [OcrPageSegmentationMode] with its Tesseract value.
   const OcrPageSegmentationMode(this.value);
-
-  /// The Tesseract PSM value.
   final int value;
 }
 
-/// OCR engine mode for Tesseract.
+/// OCR engine mode.
 ///
-/// Controls which OCR engine(s) to use for recognition.
+/// Note: ML Kit uses neural networks by default, but we keep this for API compatibility.
 enum OcrEngineMode {
-  /// Legacy Tesseract engine only.
-  ///
-  /// Faster but less accurate.
+  /// Legacy engine only.
   legacyOnly(0),
 
   /// LSTM neural network engine only.
-  ///
-  /// More accurate for most use cases.
   lstmOnly(1),
 
-  /// Legacy engine + LSTM combined.
-  ///
-  /// May provide better results for some documents.
+  /// Combined engines.
   combined(2),
 
-  /// Default mode based on available data.
+  /// Default mode.
   defaultMode(3);
 
-  /// Creates an [OcrEngineMode] with its Tesseract value.
   const OcrEngineMode(this.value);
-
-  /// The Tesseract OEM value.
   final int value;
 }
 
 /// Configuration options for OCR operations.
-///
-/// Provides fine-grained control over Tesseract OCR parameters.
 @immutable
 class OcrOptions {
   /// Creates [OcrOptions] with specified parameters.
   const OcrOptions({
-    this.language = OcrLanguage.english,
+    this.language = OcrLanguage.latin,
     this.pageSegmentationMode = OcrPageSegmentationMode.auto,
     this.engineMode = OcrEngineMode.lstmOnly,
     this.preserveInterwordSpaces = true,
@@ -320,13 +352,8 @@ class OcrOptions {
   });
 
   /// Creates [OcrOptions] optimized for document scanning.
-  ///
-  /// Uses settings that work well for scanned documents:
-  /// - Auto page segmentation
-  /// - LSTM engine for better accuracy
-  /// - Preserve spacing between words
   const OcrOptions.document({
-    OcrLanguage language = OcrLanguage.english,
+    OcrLanguage language = OcrLanguage.latin,
   })  : language = language,
         pageSegmentationMode = OcrPageSegmentationMode.auto,
         engineMode = OcrEngineMode.lstmOnly,
@@ -336,13 +363,8 @@ class OcrOptions {
         characterBlacklist = null;
 
   /// Creates [OcrOptions] optimized for single-line text.
-  ///
-  /// Good for:
-  /// - License plates
-  /// - Serial numbers
-  /// - Single line of text
   const OcrOptions.singleLine({
-    OcrLanguage language = OcrLanguage.english,
+    OcrLanguage language = OcrLanguage.latin,
   })  : language = language,
         pageSegmentationMode = OcrPageSegmentationMode.singleLine,
         engineMode = OcrEngineMode.lstmOnly,
@@ -352,13 +374,8 @@ class OcrOptions {
         characterBlacklist = null;
 
   /// Creates [OcrOptions] optimized for sparse text.
-  ///
-  /// Good for images with scattered text like:
-  /// - Business cards
-  /// - Receipts with varying layouts
-  /// - Forms with fields
   const OcrOptions.sparse({
-    OcrLanguage language = OcrLanguage.english,
+    OcrLanguage language = OcrLanguage.latin,
   })  : language = language,
         pageSegmentationMode = OcrPageSegmentationMode.sparseText,
         engineMode = OcrEngineMode.lstmOnly,
@@ -368,13 +385,8 @@ class OcrOptions {
         characterBlacklist = null;
 
   /// Creates [OcrOptions] for numeric content only.
-  ///
-  /// Restricts recognition to digits, useful for:
-  /// - Invoice numbers
-  /// - Phone numbers
-  /// - Numeric codes
   const OcrOptions.numericOnly({
-    OcrLanguage language = OcrLanguage.english,
+    OcrLanguage language = OcrLanguage.latin,
   })  : language = language,
         pageSegmentationMode = OcrPageSegmentationMode.auto,
         engineMode = OcrEngineMode.lstmOnly,
@@ -383,35 +395,25 @@ class OcrOptions {
         characterWhitelist = '0123456789',
         characterBlacklist = null;
 
-  /// The language to use for recognition.
+  /// The language/script to use for recognition.
   final OcrLanguage language;
 
-  /// Page segmentation mode controlling document layout analysis.
+  /// Page segmentation mode (kept for API compatibility).
   final OcrPageSegmentationMode pageSegmentationMode;
 
-  /// OCR engine mode.
+  /// OCR engine mode (kept for API compatibility).
   final OcrEngineMode engineMode;
 
   /// Whether to preserve spaces between words.
-  ///
-  /// When true, maintains original spacing.
-  /// When false, may collapse multiple spaces.
   final bool preserveInterwordSpaces;
 
   /// Whether to apply automatic deskewing.
-  ///
-  /// Attempts to straighten tilted text before recognition.
   final bool enableDeskew;
 
   /// Whitelist of characters to recognize.
-  ///
-  /// If set, only these characters will be recognized.
-  /// Example: '0123456789' for digits only.
   final String? characterWhitelist;
 
   /// Blacklist of characters to never recognize.
-  ///
-  /// These characters will be excluded from results.
   final String? characterBlacklist;
 
   /// Default options for document OCR.
@@ -437,28 +439,6 @@ class OcrOptions {
       characterWhitelist: characterWhitelist ?? this.characterWhitelist,
       characterBlacklist: characterBlacklist ?? this.characterBlacklist,
     );
-  }
-
-  /// Generates Tesseract arguments map from these options.
-  Map<String, String> toTesseractArgs() {
-    final args = <String, String>{
-      'psm': pageSegmentationMode.value.toString(),
-      'oem': engineMode.value.toString(),
-    };
-
-    if (preserveInterwordSpaces) {
-      args['preserve_interword_spaces'] = '1';
-    }
-
-    if (characterWhitelist != null && characterWhitelist!.isNotEmpty) {
-      args['tessedit_char_whitelist'] = characterWhitelist!;
-    }
-
-    if (characterBlacklist != null && characterBlacklist!.isNotEmpty) {
-      args['tessedit_char_blacklist'] = characterBlacklist!;
-    }
-
-    return args;
   }
 
   @override
@@ -487,43 +467,27 @@ class OcrOptions {
 
   @override
   String toString() => 'OcrOptions('
-      'language: ${language.code}, '
-      'psm: ${pageSegmentationMode.value}, '
-      'oem: ${engineMode.value})';
+      'language: ${language.displayName}, '
+      'script: ${language.mlKitScript})';
 }
 
-/// Service for offline OCR using Tesseract.
+/// Service for offline OCR using Google ML Kit.
 ///
-/// Provides high-quality offline text recognition using the Tesseract OCR
-/// engine. All processing is done locally on the device - no internet
-/// connection is required and no data is sent to external servers.
+/// Provides high-quality offline text recognition using Google's ML Kit
+/// Text Recognition API. All processing is done locally on the device.
 ///
 /// ## Key Features
-/// - **Offline Processing**: Works completely offline
-/// - **Multi-Language Support**: Supports multiple languages (requires traineddata files)
-/// - **Configurable**: Fine-grained control over recognition parameters
-/// - **Privacy-First**: No data leaves the device
-///
-/// ## Setup Requirements
-/// The Tesseract traineddata files must be:
-/// 1. Included in assets/tessdata/ in your Flutter project
-/// 2. Listed in pubspec.yaml under assets
-/// 3. Copied to the device's documents directory on first use
-///
-/// Example assets directory structure:
-/// ```
-/// assets/
-///   tessdata/
-///     eng.traineddata    # English (required)
-///     deu.traineddata    # German (optional)
-///     fra.traineddata    # French (optional)
-/// ```
+/// - **Fast Processing**: Typically under 200ms per image
+/// - **High Accuracy**: Neural network based recognition
+/// - **Multi-Script Support**: Latin, Chinese, Japanese, Korean, Devanagari
+/// - **Offline Processing**: No internet required
+/// - **Privacy-First**: All data stays on device
 ///
 /// ## Usage
 /// ```dart
 /// final ocr = ref.read(ocrServiceProvider);
 ///
-/// // Initialize (must be called before first use)
+/// // Initialize (optional, but recommended)
 /// await ocr.initialize();
 ///
 /// // Extract text from an image file
@@ -532,215 +496,85 @@ class OcrOptions {
 ///   print('Extracted: ${result.text}');
 /// }
 ///
-/// // Extract text with custom options
-/// final customResult = await ocr.extractTextFromFile(
-///   '/path/to/image.jpg',
-///   options: OcrOptions.sparse(language: OcrLanguage.german),
-/// );
-///
 /// // Extract text from bytes
-/// final bytesResult = await ocr.extractTextFromBytes(
-///   imageBytes,
-///   options: const OcrOptions.document(),
-/// );
+/// final bytesResult = await ocr.extractTextFromBytes(imageBytes);
 /// ```
-///
-/// ## Error Handling
-/// The service throws [OcrException] for all error cases.
-/// Always wrap calls in try-catch:
-/// ```dart
-/// try {
-///   final result = await ocr.extractTextFromFile(path);
-///   // Use result...
-/// } on OcrException catch (e) {
-///   print('OCR failed: ${e.message}');
-/// }
-/// ```
-///
-/// ## Performance Notes
-/// - First initialization may take a few seconds as traineddata is copied
-/// - LSTM engine provides best accuracy for most documents
-/// - Larger images take longer to process
-/// - Consider preprocessing (enhance contrast, sharpen) for better results
 class OcrService {
   /// Creates an [OcrService] instance.
   OcrService();
 
+  /// Cached text recognizers by script.
+  final Map<TextRecognitionScript, TextRecognizer> _recognizers = {};
+
   /// Whether the service has been initialized.
   bool _isInitialized = false;
 
-  /// Path to the tessdata directory on the device.
-  String? _tessdataPath;
-
-  /// Available languages that have been initialized.
-  final Set<OcrLanguage> _availableLanguages = {};
+  /// Whether the service is ready for use.
+  bool get isReady => true; // ML Kit is always ready
 
   /// Default language for OCR.
-  static const OcrLanguage defaultLanguage = OcrLanguage.english;
+  static const OcrLanguage defaultLanguage = OcrLanguage.latin;
 
-  /// Asset path for tessdata files.
-  static const String _tessdataAssetPath = 'assets/tessdata';
-
-  /// Whether the service has been initialized and is ready for use.
-  bool get isReady => _isInitialized && _tessdataPath != null;
-
-  /// Gets the list of available languages.
-  List<OcrLanguage> get availableLanguages => _availableLanguages.toList();
+  /// Gets or creates a text recognizer for the given script.
+  TextRecognizer _getRecognizer(TextRecognitionScript script) {
+    return _recognizers.putIfAbsent(
+      script,
+      () => TextRecognizer(script: script),
+    );
+  }
 
   /// Initializes the OCR service.
   ///
-  /// This must be called before any OCR operations. It:
-  /// 1. Creates the tessdata directory in app documents
-  /// 2. Copies traineddata files from assets
-  /// 3. Verifies the default language is available
-  ///
-  /// The [languages] parameter specifies which language files to initialize.
-  /// If not specified, only English is initialized.
-  ///
-  /// Returns true if initialization was successful.
-  ///
-  /// Throws [OcrException] if initialization fails.
-  ///
-  /// Example:
-  /// ```dart
-  /// final ocr = ref.read(ocrServiceProvider);
-  ///
-  /// // Initialize with default language (English)
-  /// await ocr.initialize();
-  ///
-  /// // Initialize with multiple languages
-  /// await ocr.initialize(languages: [
-  ///   OcrLanguage.english,
-  ///   OcrLanguage.german,
-  ///   OcrLanguage.french,
-  /// ]);
-  /// ```
+  /// This is optional for ML Kit but kept for API compatibility.
+  /// ML Kit initializes lazily when first used.
   Future<bool> initialize({
-    List<OcrLanguage> languages = const [OcrLanguage.english],
+    List<OcrLanguage> languages = const [OcrLanguage.latin],
   }) async {
-    if (_isInitialized) {
-      // Already initialized - just verify requested languages
-      await _ensureLanguagesAvailable(languages);
-      return true;
-    }
+    if (_isInitialized) return true;
 
     try {
-      // Get the app documents directory
-      final appDir = await getApplicationDocumentsDirectory();
-      final tessdataDir = Directory(p.join(appDir.path, 'tessdata'));
-
-      // Create tessdata directory if it doesn't exist
-      if (!await tessdataDir.exists()) {
-        await tessdataDir.create(recursive: true);
-      }
-
-      _tessdataPath = tessdataDir.path;
-
-      // Copy traineddata files for requested languages
+      // Pre-create recognizers for requested languages
       for (final language in languages) {
-        await _copyTrainedData(language);
+        _getRecognizer(language.mlKitScript);
       }
 
       _isInitialized = true;
-
-      debugPrint(
-        'OCR Service initialized with languages: '
-        '${_availableLanguages.map((l) => l.code).join(", ")}',
-      );
-
+      debugPrint('OCR Service initialized with ML Kit');
       return true;
     } catch (e) {
-      throw OcrException(
-        'Failed to initialize OCR service',
-        cause: e,
-      );
-    }
-  }
-
-  /// Copies a traineddata file from assets to the device.
-  Future<void> _copyTrainedData(OcrLanguage language) async {
-    if (_tessdataPath == null) {
-      throw const OcrException('OCR service not initialized');
-    }
-
-    final filename = '${language.code}.traineddata';
-    final destFile = File(p.join(_tessdataPath!, filename));
-
-    // Skip if already exists
-    if (await destFile.exists()) {
-      _availableLanguages.add(language);
-      return;
-    }
-
-    try {
-      // Load from assets
-      final assetPath = '$_tessdataAssetPath/$filename';
-      final data = await rootBundle.load(assetPath);
-      final bytes = data.buffer.asUint8List();
-
-      // Write to device storage
-      await destFile.writeAsBytes(bytes);
-      _availableLanguages.add(language);
-
-      debugPrint('Copied traineddata for ${language.displayName}');
-    } catch (e) {
-      // Don't throw - just log that this language is not available
-      debugPrint(
-        'Warning: Could not load traineddata for ${language.displayName}: $e',
-      );
-    }
-  }
-
-  /// Ensures the specified languages are available.
-  Future<void> _ensureLanguagesAvailable(List<OcrLanguage> languages) async {
-    for (final language in languages) {
-      if (!_availableLanguages.contains(language)) {
-        await _copyTrainedData(language);
-      }
+      throw OcrException('Failed to initialize OCR service', cause: e);
     }
   }
 
   /// Checks if a specific language is available for OCR.
   ///
-  /// Returns true if the language's traineddata file has been initialized.
+  /// ML Kit supports all configured scripts, so this always returns true
+  /// for the supported scripts.
   bool isLanguageAvailable(OcrLanguage language) {
-    return _availableLanguages.contains(language);
+    return true; // ML Kit handles all supported scripts
   }
+
+  /// Gets the list of available languages.
+  List<OcrLanguage> get availableLanguages => [
+        OcrLanguage.latin,
+        OcrLanguage.chinese,
+        OcrLanguage.japanese,
+        OcrLanguage.korean,
+        OcrLanguage.devanagari,
+      ];
 
   /// Extracts text from an image file.
   ///
   /// The [imagePath] must be an absolute path to a valid image file.
-  /// Supported formats: JPEG, PNG, TIFF, BMP, WebP.
-  ///
-  /// The [options] parameter allows customizing the recognition process.
-  /// If not specified, [OcrOptions.defaultDocument] is used.
+  /// Supported formats: JPEG, PNG, BMP, WebP.
   ///
   /// Returns an [OcrResult] containing the extracted text and metadata.
   ///
-  /// Throws [OcrException] if:
-  /// - The service is not initialized
-  /// - The image file doesn't exist
-  /// - The requested language is not available
-  /// - Text extraction fails
-  ///
-  /// Example:
-  /// ```dart
-  /// final result = await ocr.extractTextFromFile(
-  ///   '/path/to/document.jpg',
-  ///   options: const OcrOptions.document(),
-  /// );
-  /// print('Extracted text: ${result.text}');
-  /// ```
+  /// Throws [OcrException] if text extraction fails.
   Future<OcrResult> extractTextFromFile(
     String imagePath, {
     OcrOptions options = OcrOptions.defaultDocument,
   }) async {
-    if (!isReady) {
-      throw const OcrException(
-        'OCR service not initialized. Call initialize() first.',
-      );
-    }
-
     if (imagePath.isEmpty) {
       throw const OcrException('Image path cannot be empty');
     }
@@ -751,33 +585,22 @@ class OcrService {
       throw OcrException('Image file not found: $imagePath');
     }
 
-    // Verify language is available
-    if (!isLanguageAvailable(options.language)) {
-      // Try to initialize the language
-      await _copyTrainedData(options.language);
-
-      if (!isLanguageAvailable(options.language)) {
-        throw OcrException(
-          'Language ${options.language.displayName} (${options.language.code}) '
-          'is not available. Ensure ${options.language.code}.traineddata '
-          'is in assets/tessdata/',
-        );
-      }
-    }
-
     try {
       final stopwatch = Stopwatch()..start();
 
-      // Extract text using Tesseract
-      final text = await FlutterTesseractOcr.extractText(
-        imagePath,
-        language: options.language.code,
-        args: options.toTesseractArgs(),
-      );
+      // Create InputImage from file
+      final inputImage = InputImage.fromFilePath(imagePath);
+
+      // Get the recognizer for the requested script
+      final recognizer = _getRecognizer(options.language.mlKitScript);
+
+      // Process the image
+      final recognizedText = await recognizer.processImage(inputImage);
 
       stopwatch.stop();
 
-      // Calculate word and line counts
+      // Extract text and calculate statistics
+      final text = recognizedText.text;
       final trimmedText = text.trim();
       final wordCount = trimmedText.isEmpty
           ? 0
@@ -786,21 +609,51 @@ class OcrService {
           ? 0
           : trimmedText.split('\n').length;
 
+      // Convert blocks to our format
+      final blocks = recognizedText.blocks.map((block) {
+        return OcrTextBlock(
+          text: block.text,
+          boundingBox: Rect(
+            left: block.boundingBox.left,
+            top: block.boundingBox.top,
+            right: block.boundingBox.right,
+            bottom: block.boundingBox.bottom,
+          ),
+          lines: block.lines.map((line) {
+            return OcrTextLine(
+              text: line.text,
+              boundingBox: Rect(
+                left: line.boundingBox.left,
+                top: line.boundingBox.top,
+                right: line.boundingBox.right,
+                bottom: line.boundingBox.bottom,
+              ),
+            );
+          }).toList(),
+        );
+      }).toList();
+
+      // Apply character whitelist filter if specified
+      String filteredText = text;
+      if (options.characterWhitelist != null &&
+          options.characterWhitelist!.isNotEmpty) {
+        final whitelist = options.characterWhitelist!;
+        filteredText = text.split('').where((char) {
+          return whitelist.contains(char) || char == ' ' || char == '\n';
+        }).join();
+      }
+
       return OcrResult(
-        text: text,
-        language: options.language.code,
+        text: filteredText,
+        language: options.language.displayName,
         processingTimeMs: stopwatch.elapsedMilliseconds,
         wordCount: wordCount,
         lineCount: lineCount,
+        blocks: blocks,
       );
     } catch (e) {
-      if (e is OcrException) {
-        rethrow;
-      }
-      throw OcrException(
-        'Failed to extract text from image',
-        cause: e,
-      );
+      if (e is OcrException) rethrow;
+      throw OcrException('Failed to extract text from image', cause: e);
     }
   }
 
@@ -810,30 +663,11 @@ class OcrService {
   /// This method writes the bytes to a temporary file, performs OCR,
   /// and then cleans up the temporary file.
   ///
-  /// The [options] parameter allows customizing the recognition process.
-  ///
   /// Returns an [OcrResult] containing the extracted text and metadata.
-  ///
-  /// Throws [OcrException] if text extraction fails.
-  ///
-  /// Example:
-  /// ```dart
-  /// final imageBytes = await file.readAsBytes();
-  /// final result = await ocr.extractTextFromBytes(
-  ///   imageBytes,
-  ///   options: const OcrOptions.document(),
-  /// );
-  /// ```
   Future<OcrResult> extractTextFromBytes(
     Uint8List bytes, {
     OcrOptions options = OcrOptions.defaultDocument,
   }) async {
-    if (!isReady) {
-      throw const OcrException(
-        'OCR service not initialized. Call initialize() first.',
-      );
-    }
-
     if (bytes.isEmpty) {
       throw const OcrException('Image bytes cannot be empty');
     }
@@ -864,21 +698,7 @@ class OcrService {
   /// Processes each image in the [imagePaths] list and combines
   /// the extracted text, separated by the [separator] string.
   ///
-  /// This is useful for multi-page documents where each page
-  /// is a separate image file.
-  ///
   /// Returns an [OcrResult] with the combined text from all images.
-  /// The [wordCount] and [lineCount] reflect the totals across all pages.
-  ///
-  /// Throws [OcrException] if any image fails to process.
-  ///
-  /// Example:
-  /// ```dart
-  /// final result = await ocr.extractTextFromMultipleFiles(
-  ///   ['/path/to/page1.jpg', '/path/to/page2.jpg'],
-  ///   separator: '\n\n--- Page Break ---\n\n',
-  /// );
-  /// ```
   Future<OcrResult> extractTextFromMultipleFiles(
     List<String> imagePaths, {
     OcrOptions options = OcrOptions.defaultDocument,
@@ -916,7 +736,7 @@ class OcrService {
 
     return OcrResult(
       text: textParts.join(separator),
-      language: options.language.code,
+      language: options.language.displayName,
       processingTimeMs: stopwatch.elapsedMilliseconds,
       wordCount: totalWords,
       lineCount: totalLines,
@@ -927,23 +747,6 @@ class OcrService {
   ///
   /// Similar to [extractTextFromMultipleFiles] but reports progress
   /// after each page is processed.
-  ///
-  /// The [onProgress] callback receives:
-  /// - [currentPage]: The 0-based index of the page just processed
-  /// - [totalPages]: The total number of pages to process
-  /// - [partialResult]: The [OcrResult] for just that page
-  ///
-  /// Returns the combined [OcrResult] from all pages.
-  ///
-  /// Example:
-  /// ```dart
-  /// final result = await ocr.extractTextWithProgress(
-  ///   imagePaths,
-  ///   onProgress: (current, total, partial) {
-  ///     print('Processed page ${current + 1} of $total');
-  ///   },
-  /// );
-  /// ```
   Future<OcrResult> extractTextWithProgress(
     List<String> imagePaths, {
     OcrOptions options = OcrOptions.defaultDocument,
@@ -978,7 +781,7 @@ class OcrService {
 
     return OcrResult(
       text: textParts.join(separator),
-      language: options.language.code,
+      language: options.language.displayName,
       processingTimeMs: stopwatch.elapsedMilliseconds,
       wordCount: totalWords,
       lineCount: totalLines,
@@ -987,25 +790,15 @@ class OcrService {
 
   /// Quickly checks if an image contains text.
   ///
-  /// This is a faster check than full text extraction, useful for
-  /// filtering images that likely contain text before doing full OCR.
-  ///
   /// Returns true if the image appears to contain text.
-  ///
-  /// Note: This may have false positives/negatives. For reliable
-  /// text detection, use [extractTextFromFile] and check [OcrResult.hasText].
   Future<bool> containsText(
     String imagePath, {
-    OcrLanguage language = OcrLanguage.english,
+    OcrLanguage language = OcrLanguage.latin,
   }) async {
     try {
       final result = await extractTextFromFile(
         imagePath,
-        options: OcrOptions(
-          language: language,
-          pageSegmentationMode: OcrPageSegmentationMode.sparseText,
-          engineMode: OcrEngineMode.lstmOnly,
-        ),
+        options: OcrOptions(language: language),
       );
       return result.hasText;
     } catch (_) {
@@ -1013,64 +806,28 @@ class OcrService {
     }
   }
 
-  /// Clears the tessdata directory cache.
+  /// Clears cached recognizers.
   ///
-  /// This removes all traineddata files from the device.
-  /// Call [initialize] again after clearing to re-copy files.
-  ///
-  /// Use this to free up storage space or to force re-downloading
-  /// of language files.
+  /// Call this to free up memory when OCR is no longer needed.
   Future<void> clearCache() async {
-    if (_tessdataPath == null) return;
-
-    try {
-      final tessdataDir = Directory(_tessdataPath!);
-      if (await tessdataDir.exists()) {
-        await tessdataDir.delete(recursive: true);
-      }
-      _availableLanguages.clear();
-      _isInitialized = false;
-      _tessdataPath = null;
-
-      debugPrint('OCR cache cleared');
-    } catch (e) {
-      throw OcrException('Failed to clear OCR cache', cause: e);
+    for (final recognizer in _recognizers.values) {
+      await recognizer.close();
     }
+    _recognizers.clear();
+    _isInitialized = false;
+    debugPrint('OCR cache cleared');
   }
 
-  /// Gets the storage size used by tessdata files.
-  ///
-  /// Returns the total size in bytes of all traineddata files.
-  Future<int> getCacheSize() async {
-    if (_tessdataPath == null) return 0;
-
-    try {
-      final tessdataDir = Directory(_tessdataPath!);
-      if (!await tessdataDir.exists()) return 0;
-
-      var totalSize = 0;
-      await for (final entity in tessdataDir.list()) {
-        if (entity is File) {
-          totalSize += await entity.length();
-        }
-      }
-      return totalSize;
-    } catch (_) {
-      return 0;
-    }
-  }
+  /// Gets the storage size used (always 0 for ML Kit as it uses system libraries).
+  Future<int> getCacheSize() async => 0;
 
   /// Gets a formatted string of the cache size.
+  Future<String> getCacheSizeFormatted() async => '0 B';
+
+  /// Closes all recognizers and releases resources.
   ///
-  /// Returns a human-readable string like "4.2 MB".
-  Future<String> getCacheSizeFormatted() async {
-    final size = await getCacheSize();
-    if (size < 1024) {
-      return '$size B';
-    } else if (size < 1024 * 1024) {
-      return '${(size / 1024).toStringAsFixed(1)} KB';
-    } else {
-      return '${(size / (1024 * 1024)).toStringAsFixed(1)} MB';
-    }
+  /// Call this when the service is no longer needed.
+  Future<void> dispose() async {
+    await clearCache();
   }
 }

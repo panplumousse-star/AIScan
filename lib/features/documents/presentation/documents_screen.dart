@@ -134,6 +134,7 @@ class DocumentsScreenState {
     this.isInitialized = false,
     this.error,
     this.selectedDocumentIds = const {},
+    this.selectedFolderIds = const {},
     this.isSelectionMode = false,
     this.decryptedThumbnails = const {},
   });
@@ -176,6 +177,9 @@ class DocumentsScreenState {
 
   /// Set of selected document IDs for multi-select mode.
   final Set<String> selectedDocumentIds;
+
+  /// Set of selected folder IDs for multi-select mode.
+  final Set<String> selectedFolderIds;
 
   /// Whether multi-select mode is active.
   final bool isSelectionMode;
@@ -224,11 +228,24 @@ class DocumentsScreenState {
   int get documentCount => documents.length;
 
   /// The count of selected documents.
-  int get selectedCount => selectedDocumentIds.length;
+  int get selectedDocumentCount => selectedDocumentIds.length;
+
+  /// The count of selected folders.
+  int get selectedFolderCount => selectedFolderIds.length;
+
+  /// Total count of selected items (documents + folders).
+  int get selectedCount => selectedDocumentIds.length + selectedFolderIds.length;
 
   /// Whether all documents are selected.
-  bool get allSelected =>
+  bool get allDocumentsSelected =>
       documents.isNotEmpty && selectedDocumentIds.length == documents.length;
+
+  /// Whether all folders are selected.
+  bool get allFoldersSelected =>
+      folders.isNotEmpty && selectedFolderIds.length == folders.length;
+
+  /// Whether all items (documents + folders) are selected.
+  bool get allSelected => allDocumentsSelected && allFoldersSelected;
 
   /// Creates a copy with updated values.
   DocumentsScreenState copyWith({
@@ -245,6 +262,7 @@ class DocumentsScreenState {
     bool? isInitialized,
     String? error,
     Set<String>? selectedDocumentIds,
+    Set<String>? selectedFolderIds,
     bool? isSelectionMode,
     Map<String, String>? decryptedThumbnails,
     bool clearError = false,
@@ -267,6 +285,9 @@ class DocumentsScreenState {
       selectedDocumentIds: clearSelection
           ? const {}
           : (selectedDocumentIds ?? this.selectedDocumentIds),
+      selectedFolderIds: clearSelection
+          ? const {}
+          : (selectedFolderIds ?? this.selectedFolderIds),
       isSelectionMode: clearSelection
           ? false
           : (isSelectionMode ?? this.isSelectionMode),
@@ -740,6 +761,170 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
     }
   }
 
+  // ============================================================
+  // Folder Selection and Management Methods
+  // ============================================================
+
+  /// Toggles selection of a folder.
+  void toggleFolderSelection(String folderId) {
+    final selected = Set<String>.from(state.selectedFolderIds);
+    if (selected.contains(folderId)) {
+      selected.remove(folderId);
+    } else {
+      selected.add(folderId);
+    }
+
+    final hasSelection = selected.isNotEmpty || state.selectedDocumentIds.isNotEmpty;
+    state = state.copyWith(
+      selectedFolderIds: selected,
+      isSelectionMode: hasSelection,
+    );
+  }
+
+  /// Selects all folders.
+  void selectAllFolders() {
+    state = state.copyWith(
+      selectedFolderIds: state.folders.map((f) => f.id).toSet(),
+      isSelectionMode: true,
+    );
+  }
+
+  /// Selects all items (documents and folders).
+  void selectAllItems() {
+    state = state.copyWith(
+      selectedDocumentIds: state.documents.map((d) => d.id).toSet(),
+      selectedFolderIds: state.folders.map((f) => f.id).toSet(),
+      isSelectionMode: true,
+    );
+  }
+
+  /// Deletes selected folders.
+  Future<void> deleteSelectedFolders() async {
+    if (state.selectedFolderIds.isEmpty) return;
+
+    state = state.copyWith(isLoading: true, clearError: true);
+
+    try {
+      await _folderService.deleteFolders(state.selectedFolderIds.toList());
+      state = state.copyWith(
+        selectedFolderIds: const {},
+        isSelectionMode: state.selectedDocumentIds.isNotEmpty,
+      );
+      await loadDocuments();
+    } on FolderServiceException catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Failed to delete folders: ${e.message}',
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Failed to delete folders: $e',
+      );
+    }
+  }
+
+  /// Deletes all selected items (documents and folders).
+  /// Documents in deleted folders are moved to root level.
+  Future<void> deleteAllSelected() async {
+    if (state.selectedDocumentIds.isEmpty && state.selectedFolderIds.isEmpty) return;
+
+    state = state.copyWith(isLoading: true, clearError: true);
+
+    try {
+      // Delete folders first (documents inside become root-level)
+      if (state.selectedFolderIds.isNotEmpty) {
+        await _folderService.deleteFolders(state.selectedFolderIds.toList());
+      }
+      // Then delete selected documents
+      if (state.selectedDocumentIds.isNotEmpty) {
+        await _repository.deleteDocuments(state.selectedDocumentIds.toList());
+      }
+      state = state.copyWith(clearSelection: true);
+      await loadDocuments();
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Failed to delete selected items: $e',
+      );
+    }
+  }
+
+  /// Deletes all selected folders AND documents inside them.
+  Future<void> deleteAllSelectedWithDocuments() async {
+    if (state.selectedDocumentIds.isEmpty && state.selectedFolderIds.isEmpty) return;
+
+    state = state.copyWith(isLoading: true, clearError: true);
+
+    try {
+      // Collect all document IDs from folders being deleted
+      final documentIdsToDelete = <String>{...state.selectedDocumentIds};
+      for (final folderId in state.selectedFolderIds) {
+        final docsInFolder = await _repository.getDocumentsInFolder(folderId);
+        for (final doc in docsInFolder) {
+          documentIdsToDelete.add(doc.id);
+        }
+      }
+
+      // Delete folders first
+      if (state.selectedFolderIds.isNotEmpty) {
+        await _folderService.deleteFolders(state.selectedFolderIds.toList());
+      }
+
+      // Then delete all documents (including those that were in folders)
+      if (documentIdsToDelete.isNotEmpty) {
+        await _repository.deleteDocuments(documentIdsToDelete.toList());
+      }
+
+      state = state.copyWith(clearSelection: true);
+      await loadDocuments();
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Failed to delete selected items: $e',
+      );
+    }
+  }
+
+  /// Updates a folder (name, color, icon).
+  Future<void> updateFolder({
+    required String folderId,
+    String? name,
+    String? color,
+    String? icon,
+    bool clearColor = false,
+    bool clearIcon = false,
+  }) async {
+    try {
+      // Find the folder - it might be the current folder or in the folders list
+      Folder folder;
+      if (state.currentFolderId == folderId && state.currentFolder != null) {
+        folder = state.currentFolder!;
+      } else {
+        try {
+          folder = state.folders.firstWhere((f) => f.id == folderId);
+        } catch (_) {
+          throw StateError('Folder not found');
+        }
+      }
+
+      final updatedFolder = folder.copyWith(
+        name: name ?? folder.name,
+        color: color,
+        clearColor: clearColor,
+        icon: icon,
+        clearIcon: clearIcon,
+        updatedAt: DateTime.now(),
+      );
+      await _folderService.updateFolder(updatedFolder);
+      await loadDocuments();
+    } on FolderServiceException catch (e) {
+      state = state.copyWith(error: 'Failed to update folder: ${e.message}');
+    } catch (e) {
+      state = state.copyWith(error: 'Failed to update folder: $e');
+    }
+  }
+
   /// Clears the current error.
   void clearError() {
     state = state.copyWith(clearError: true);
@@ -845,13 +1030,20 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
 
   Future<void> _initializeScreen() async {
     final notifier = ref.read(documentsScreenProvider.notifier);
+    final wasInitialized = ref.read(documentsScreenProvider).isInitialized;
 
     // Set initial folder filter if provided
     if (widget.initialFolderId != null) {
       notifier.setFilter(DocumentsFilter(folderId: widget.initialFolderId));
     }
 
+    // Initialize if not already done
     await notifier.initialize();
+
+    // If already initialized, force reload to catch any new data (e.g., after saving a new document)
+    if (wasInitialized) {
+      await notifier.loadDocuments();
+    }
   }
 
   @override
@@ -889,6 +1081,9 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     ThemeData theme,
   ) {
     if (state.isSelectionMode) {
+      // Check if documents are selected (to show share/move buttons)
+      final hasDocuments = state.selectedDocumentCount > 0;
+
       return AppBar(
         leading: IconButton(
           icon: const Icon(Icons.close),
@@ -901,23 +1096,24 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
             icon: Icon(state.allSelected ? Icons.deselect : Icons.select_all),
             onPressed: state.allSelected
                 ? notifier.clearSelection
-                : notifier.selectAll,
+                : notifier.selectAllItems,
             tooltip: state.allSelected ? 'Deselect all' : 'Select all',
           ),
-          IconButton(
-            icon: const Icon(Icons.share),
-            onPressed: state.selectedCount > 0
-                ? () => _handleShareSelected(context, state)
-                : null,
-            tooltip: 'Share selected',
-          ),
-          IconButton(
-            icon: const Icon(Icons.drive_file_move_outlined),
-            onPressed: state.selectedCount > 0
-                ? () => _showMoveSelectedToFolderDialog(context, state, notifier)
-                : null,
-            tooltip: 'Move to folder',
-          ),
+          // Share - only for documents
+          if (hasDocuments)
+            IconButton(
+              icon: const Icon(Icons.share),
+              onPressed: () => _handleShareSelected(context, state),
+              tooltip: 'Share selected',
+            ),
+          // Move to folder - only for documents
+          if (hasDocuments)
+            IconButton(
+              icon: const Icon(Icons.drive_file_move_outlined),
+              onPressed: () => _showMoveSelectedToFolderDialog(context, state, notifier),
+              tooltip: 'Move to folder',
+            ),
+          // Delete - always available
           IconButton(
             icon: const Icon(Icons.delete_outline),
             onPressed: state.selectedCount > 0
@@ -992,6 +1188,20 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
               ? 'Show all documents'
               : 'Show favorites only',
         ),
+        // Create new folder button (only at root level)
+        if (state.isAtRoot)
+          IconButton(
+            icon: const Icon(Icons.create_new_folder_outlined),
+            onPressed: () => _showCreateNewFolderDialog(context, notifier),
+            tooltip: 'Create new folder',
+          ),
+        // Edit folder button (only when inside a folder)
+        if (!state.isAtRoot && state.currentFolder != null)
+          IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: () => _showFolderEditDialog(context, state.currentFolder!, notifier),
+            tooltip: 'Edit folder',
+          ),
       ],
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(56),
@@ -1105,33 +1315,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
           ),
         // Document list/grid
         Expanded(
-          child: state.filteredDocuments.isEmpty && state.hasSearch
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.search_off,
-                        size: 64,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'No results for "${state.searchQuery}"',
-                        style: theme.textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      TextButton(
-                        onPressed: () {
-                          _searchController.clear();
-                          notifier.clearSearch();
-                        },
-                        child: const Text('Clear search'),
-                      ),
-                    ],
-                  ),
-                )
-              : RefreshIndicator(
+          child: RefreshIndicator(
                   onRefresh: notifier.refresh,
                   child: CustomScrollView(
                     slivers: [
@@ -1140,7 +1324,10 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                         SliverToBoxAdapter(
                           child: _FoldersSection(
                             folders: state.folders,
-                            onFolderTap: notifier.enterFolder,
+                            selectedFolderIds: state.selectedFolderIds,
+                            isSelectionMode: state.isSelectionMode,
+                            onFolderTap: (folder) => _handleFolderTap(folder, state, notifier),
+                            onFolderLongPress: (folder) => _handleFolderLongPress(folder, notifier),
                             theme: theme,
                           ),
                         ),
@@ -1260,7 +1447,12 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
           onOcr: (doc, imageBytes) => _navigateToOcr(navContext, doc, imageBytes),
         ),
       ),
-    );
+    ).then((_) {
+      // Refresh documents when returning from detail screen
+      if (mounted) {
+        ref.read(documentsScreenProvider.notifier).loadDocuments();
+      }
+    });
   }
 
   void _navigateToOcr(BuildContext context, Document document, Uint8List imageBytes) {
@@ -1270,6 +1462,22 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
           document: document,
           imageBytes: imageBytes,
           autoRunOcr: true,
+          onOcrComplete: (result) async {
+            // Save OCR text to the document
+            if (result.hasText) {
+              try {
+                final repository = ref.read(documentRepositoryProvider);
+                await repository.updateDocumentOcr(
+                  document.id,
+                  result.text,
+                );
+                // Refresh the documents list
+                ref.read(documentsScreenProvider.notifier).loadDocuments();
+              } catch (e) {
+                debugPrint('Failed to save OCR text: $e');
+              }
+            }
+          },
         ),
       ),
     );
@@ -1283,18 +1491,50 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     notifier.toggleDocumentSelection(document.id);
   }
 
-  void _showFilterSheet(
-    BuildContext context,
+  // ============================================================
+  // Folder Handlers
+  // ============================================================
+
+  void _handleFolderTap(
+    Folder folder,
     DocumentsScreenState state,
     DocumentsScreenNotifier notifier,
   ) {
-    showFilterSheet(
+    if (state.isSelectionMode) {
+      notifier.toggleFolderSelection(folder.id);
+    } else {
+      notifier.enterFolder(folder);
+    }
+  }
+
+  void _handleFolderLongPress(
+    Folder folder,
+    DocumentsScreenNotifier notifier,
+  ) {
+    notifier.enterSelectionMode();
+    notifier.toggleFolderSelection(folder.id);
+  }
+
+  Future<void> _showFolderEditDialog(
+    BuildContext context,
+    Folder folder,
+    DocumentsScreenNotifier notifier,
+  ) async {
+    final result = await showDialog<_FolderEditResult>(
       context: context,
-      currentSortBy: state.sortBy,
-      currentFilter: state.filter,
-      onSortByChanged: notifier.setSortBy,
-      onFilterChanged: notifier.setFilter,
+      builder: (context) => _FolderEditDialog(folder: folder),
     );
+
+    if (result != null && mounted) {
+      await notifier.updateFolder(
+        folderId: folder.id,
+        name: result.name,
+        color: result.color,
+        icon: result.icon,
+        clearColor: result.clearColor,
+        clearIcon: result.clearIcon,
+      );
+    }
   }
 
   Future<void> _showDeleteConfirmation(
@@ -1302,15 +1542,85 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     DocumentsScreenState state,
     DocumentsScreenNotifier notifier,
   ) async {
+    final folderCount = state.selectedFolderCount;
+    final docCount = state.selectedDocumentCount;
+
+    // If folders are selected, check if they contain documents
+    int documentsInFoldersCount = 0;
+    if (folderCount > 0) {
+      final repository = ref.read(documentRepositoryProvider);
+      for (final folderId in state.selectedFolderIds) {
+        final docsInFolder = await repository.getDocumentsInFolder(folderId);
+        documentsInFoldersCount += docsInFolder.length;
+      }
+    }
+
+    if (!context.mounted) return;
+
+    // If folders contain documents, show special dialog with options
+    if (documentsInFoldersCount > 0) {
+      final result = await showDialog<String>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Delete folders'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'The selected ${folderCount == 1 ? 'folder contains' : 'folders contain'} '
+                '$documentsInFoldersCount ${documentsInFoldersCount == 1 ? 'document' : 'documents'}.',
+              ),
+              const SizedBox(height: 12),
+              const Text('What would you like to do?'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop('cancel'),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop('keep'),
+              child: const Text('Keep documents'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop('delete_all'),
+              style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.error,
+              ),
+              child: const Text('Delete all'),
+            ),
+          ],
+        ),
+      );
+
+      if (result == 'delete_all' && mounted) {
+        // Delete folders and their documents
+        await notifier.deleteAllSelectedWithDocuments();
+      } else if (result == 'keep' && mounted) {
+        // Delete folders only, documents become root-level
+        await notifier.deleteAllSelected();
+      }
+      return;
+    }
+
+    // Standard confirmation for documents only or empty folders
+    String message;
+    if (folderCount > 0 && docCount > 0) {
+      message = 'Delete $folderCount ${folderCount == 1 ? 'folder' : 'folders'} and '
+                '$docCount ${docCount == 1 ? 'document' : 'documents'}?';
+    } else if (folderCount > 0) {
+      message = 'Delete $folderCount ${folderCount == 1 ? 'folder' : 'folders'}?';
+    } else {
+      message = 'Delete $docCount ${docCount == 1 ? 'document' : 'documents'}?';
+    }
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete documents?'),
-        content: Text(
-          'Are you sure you want to delete ${state.selectedCount} '
-          '${state.selectedCount == 1 ? 'document' : 'documents'}? '
-          'This action cannot be undone.',
-        ),
+        title: const Text('Confirm deletion'),
+        content: Text('$message\n\nThis action cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -1327,9 +1637,23 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
       ),
     );
 
-    if (confirmed == true) {
-      await notifier.deleteSelected();
+    if (confirmed == true && mounted) {
+      await notifier.deleteAllSelected();
     }
+  }
+
+  void _showFilterSheet(
+    BuildContext context,
+    DocumentsScreenState state,
+    DocumentsScreenNotifier notifier,
+  ) {
+    showFilterSheet(
+      context: context,
+      currentSortBy: state.sortBy,
+      currentFilter: state.filter,
+      onSortByChanged: notifier.setSortBy,
+      onFilterChanged: notifier.setFilter,
+    );
   }
 
   /// Shows dialog to move selected documents to a folder.
@@ -1393,6 +1717,39 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
       context: context,
       builder: (context) => const _CreateFolderForMoveDialog(),
     );
+  }
+
+  /// Shows dialog to create a new folder with color picker.
+  Future<void> _showCreateNewFolderDialog(
+    BuildContext context,
+    DocumentsScreenNotifier notifier,
+  ) async {
+    final result = await showDialog<_CreateFolderDialogResult>(
+      context: context,
+      builder: (context) => const _CreateFolderForMoveDialog(showColorPicker: true),
+    );
+
+    if (result != null && result.name.isNotEmpty && mounted) {
+      final folderService = ref.read(folderServiceProvider);
+      try {
+        await folderService.createFolder(
+          name: result.name,
+          color: result.color,
+        );
+        await notifier.loadDocuments();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Folder "${result.name}" created')),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to create folder: $e')),
+          );
+        }
+      }
+    }
   }
 
   /// Handles sharing selected documents.
@@ -2388,12 +2745,18 @@ class _QuickScanFab extends StatelessWidget {
 class _FoldersSection extends StatelessWidget {
   const _FoldersSection({
     required this.folders,
+    required this.selectedFolderIds,
+    required this.isSelectionMode,
     required this.onFolderTap,
+    required this.onFolderLongPress,
     required this.theme,
   });
 
   final List<Folder> folders;
+  final Set<String> selectedFolderIds;
+  final bool isSelectionMode;
   final void Function(Folder) onFolderTap;
+  final void Function(Folder) onFolderLongPress;
   final ThemeData theme;
 
   @override
@@ -2418,9 +2781,13 @@ class _FoldersSection extends StatelessWidget {
             itemCount: folders.length,
             itemBuilder: (context, index) {
               final folder = folders[index];
+              final isSelected = selectedFolderIds.contains(folder.id);
               return _FolderCard(
                 folder: folder,
+                isSelected: isSelected,
+                isSelectionMode: isSelectionMode,
                 onTap: () => onFolderTap(folder),
+                onLongPress: () => onFolderLongPress(folder),
                 theme: theme,
               );
             },
@@ -2445,12 +2812,18 @@ class _FoldersSection extends StatelessWidget {
 class _FolderCard extends StatelessWidget {
   const _FolderCard({
     required this.folder,
+    required this.isSelected,
+    required this.isSelectionMode,
     required this.onTap,
+    required this.onLongPress,
     required this.theme,
   });
 
   final Folder folder;
+  final bool isSelected;
+  final bool isSelectionMode;
   final VoidCallback onTap;
+  final VoidCallback onLongPress;
   final ThemeData theme;
 
   Color _parseColor(String? hexColor) {
@@ -2466,13 +2839,18 @@ class _FolderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final folderColor = _parseColor(folder.color);
+    final colorScheme = theme.colorScheme;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Material(
-        color: Colors.transparent,
+        color: isSelected
+            ? colorScheme.primaryContainer.withValues(alpha: 0.3)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
         child: InkWell(
           onTap: onTap,
+          onLongPress: onLongPress,
           borderRadius: BorderRadius.circular(12),
           child: Container(
             width: 90,
@@ -2480,23 +2858,62 @@ class _FolderCard extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: folderColor.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.folder,
-                    color: folderColor,
-                    size: 28,
-                  ),
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: folderColor.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                        border: isSelected
+                            ? Border.all(color: colorScheme.primary, width: 2)
+                            : null,
+                      ),
+                      child: Icon(
+                        Icons.folder,
+                        color: folderColor,
+                        size: 28,
+                      ),
+                    ),
+                    // Selection indicator (only in selection mode)
+                    if (isSelectionMode)
+                      Positioned(
+                        top: -4,
+                        right: -4,
+                        child: Container(
+                          width: 20,
+                          height: 20,
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? colorScheme.primary
+                                : colorScheme.surfaceContainerHighest,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isSelected
+                                  ? colorScheme.primary
+                                  : colorScheme.outline,
+                              width: 1.5,
+                            ),
+                          ),
+                          child: isSelected
+                              ? Icon(
+                                  Icons.check,
+                                  size: 14,
+                                  color: colorScheme.onPrimary,
+                                )
+                              : null,
+                        ),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 6),
                 Text(
                   folder.name,
-                  style: theme.textTheme.bodySmall,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontWeight: isSelected ? FontWeight.w600 : null,
+                  ),
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -2679,8 +3096,21 @@ class _MoveToFolderDialog extends StatelessWidget {
 ///
 /// Uses StatefulWidget to properly manage the TextEditingController lifecycle
 /// and check mounted state before navigation.
+/// Result from folder creation dialog.
+class _CreateFolderDialogResult {
+  const _CreateFolderDialogResult({
+    required this.name,
+    this.color,
+  });
+
+  final String name;
+  final String? color;
+}
+
 class _CreateFolderForMoveDialog extends StatefulWidget {
-  const _CreateFolderForMoveDialog();
+  const _CreateFolderForMoveDialog({this.showColorPicker = false});
+
+  final bool showColorPicker;
 
   @override
   State<_CreateFolderForMoveDialog> createState() => _CreateFolderForMoveDialogState();
@@ -2688,7 +3118,29 @@ class _CreateFolderForMoveDialog extends StatefulWidget {
 
 class _CreateFolderForMoveDialogState extends State<_CreateFolderForMoveDialog> {
   late final TextEditingController _controller;
+  String? _selectedColor;
   String? _error;
+
+  static const List<String> _folderColors = [
+    '#F44336', // Red
+    '#E91E63', // Pink
+    '#9C27B0', // Purple
+    '#673AB7', // Deep Purple
+    '#3F51B5', // Indigo
+    '#2196F3', // Blue
+    '#03A9F4', // Light Blue
+    '#00BCD4', // Cyan
+    '#009688', // Teal
+    '#4CAF50', // Green
+    '#8BC34A', // Light Green
+    '#CDDC39', // Lime
+    '#FFEB3B', // Yellow
+    '#FFC107', // Amber
+    '#FF9800', // Orange
+    '#FF5722', // Deep Orange
+    '#795548', // Brown
+    '#607D8B', // Blue Grey
+  ];
 
   @override
   void initState() {
@@ -2711,27 +3163,111 @@ class _CreateFolderForMoveDialogState extends State<_CreateFolderForMoveDialog> 
 
     // Unfocus to dismiss keyboard before popping to avoid _dependents.isEmpty
     FocusScope.of(context).unfocus();
-    Navigator.of(context).pop(name);
+
+    if (widget.showColorPicker) {
+      Navigator.of(context).pop(_CreateFolderDialogResult(
+        name: name,
+        color: _selectedColor,
+      ));
+    } else {
+      Navigator.of(context).pop(name);
+    }
+  }
+
+  Color _parseColor(String hexColor) {
+    try {
+      final hex = hexColor.replaceFirst('#', '');
+      return Color(int.parse('FF$hex', radix: 16));
+    } catch (_) {
+      return Colors.grey;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return AlertDialog(
       title: const Text('New Folder'),
-      content: TextField(
-        controller: _controller,
-        autofocus: true,
-        decoration: InputDecoration(
-          labelText: 'Folder name',
-          errorText: _error,
-          border: const OutlineInputBorder(),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: _controller,
+              autofocus: true,
+              decoration: InputDecoration(
+                labelText: 'Folder name',
+                errorText: _error,
+                border: const OutlineInputBorder(),
+              ),
+              onChanged: (_) {
+                if (_error != null) {
+                  setState(() => _error = null);
+                }
+              },
+              onSubmitted: (_) => _submit(),
+            ),
+            if (widget.showColorPicker) ...[
+              const SizedBox(height: 16),
+              Text(
+                'Color (optional)',
+                style: theme.textTheme.titleSmall,
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  // No color option
+                  GestureDetector(
+                    onTap: () => setState(() => _selectedColor = null),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest,
+                        shape: BoxShape.circle,
+                        border: _selectedColor == null
+                            ? Border.all(color: theme.colorScheme.primary, width: 2)
+                            : null,
+                      ),
+                      child: Icon(
+                        Icons.folder_outlined,
+                        size: 20,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                  // Color options
+                  for (final color in _folderColors)
+                    GestureDetector(
+                      onTap: () => setState(() => _selectedColor = color),
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: _parseColor(color),
+                          shape: BoxShape.circle,
+                          border: _selectedColor == color
+                              ? Border.all(color: theme.colorScheme.primary, width: 2)
+                              : null,
+                        ),
+                        child: _selectedColor == color
+                            ? const Icon(
+                                Icons.check,
+                                size: 20,
+                                color: Colors.white,
+                              )
+                            : null,
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ],
         ),
-        onChanged: (_) {
-          if (_error != null) {
-            setState(() => _error = null);
-          }
-        },
-        onSubmitted: (_) => _submit(),
       ),
       actions: [
         TextButton(
@@ -2741,6 +3277,199 @@ class _CreateFolderForMoveDialogState extends State<_CreateFolderForMoveDialog> 
         FilledButton(
           onPressed: _submit,
           child: const Text('Create'),
+        ),
+      ],
+    );
+  }
+}
+
+/// Result from folder edit dialog.
+class _FolderEditResult {
+  const _FolderEditResult({
+    required this.name,
+    this.color,
+    this.icon,
+    this.clearColor = false,
+    this.clearIcon = false,
+  });
+
+  final String name;
+  final String? color;
+  final String? icon;
+  final bool clearColor;
+  final bool clearIcon;
+}
+
+/// Dialog for editing folder name, color, and icon.
+class _FolderEditDialog extends StatefulWidget {
+  const _FolderEditDialog({required this.folder});
+
+  final Folder folder;
+
+  @override
+  State<_FolderEditDialog> createState() => _FolderEditDialogState();
+}
+
+class _FolderEditDialogState extends State<_FolderEditDialog> {
+  late final TextEditingController _nameController;
+  String? _selectedColor;
+  String? _error;
+
+  static const List<String> _folderColors = [
+    '#F44336', // Red
+    '#E91E63', // Pink
+    '#9C27B0', // Purple
+    '#673AB7', // Deep Purple
+    '#3F51B5', // Indigo
+    '#2196F3', // Blue
+    '#03A9F4', // Light Blue
+    '#00BCD4', // Cyan
+    '#009688', // Teal
+    '#4CAF50', // Green
+    '#8BC34A', // Light Green
+    '#CDDC39', // Lime
+    '#FFEB3B', // Yellow
+    '#FFC107', // Amber
+    '#FF9800', // Orange
+    '#FF5722', // Deep Orange
+    '#795548', // Brown
+    '#607D8B', // Blue Grey
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.folder.name);
+    _selectedColor = widget.folder.color;
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) {
+      setState(() => _error = 'Folder name cannot be empty');
+      return;
+    }
+
+    // Determine if we need to clear the color (user selected "no color")
+    final clearColor = _selectedColor == null && widget.folder.color != null;
+
+    FocusScope.of(context).unfocus();
+    Navigator.of(context).pop(_FolderEditResult(
+      name: name,
+      color: _selectedColor,
+      clearColor: clearColor,
+    ));
+  }
+
+  Color _parseColor(String hexColor) {
+    try {
+      final hex = hexColor.replaceFirst('#', '');
+      return Color(int.parse('FF$hex', radix: 16));
+    } catch (_) {
+      return Colors.grey;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return AlertDialog(
+      title: const Text('Edit Folder'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Name field
+            TextField(
+              controller: _nameController,
+              autofocus: true,
+              decoration: InputDecoration(
+                labelText: 'Folder name',
+                errorText: _error,
+                border: const OutlineInputBorder(),
+              ),
+              onChanged: (_) {
+                if (_error != null) {
+                  setState(() => _error = null);
+                }
+              },
+              onSubmitted: (_) => _submit(),
+            ),
+            const SizedBox(height: 16),
+            // Color picker
+            Text(
+              'Color',
+              style: theme.textTheme.titleSmall,
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                // No color option
+                GestureDetector(
+                  onTap: () => setState(() => _selectedColor = null),
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      shape: BoxShape.circle,
+                      border: _selectedColor == null
+                          ? Border.all(color: theme.colorScheme.primary, width: 2)
+                          : null,
+                    ),
+                    child: Icon(
+                      Icons.block,
+                      size: 20,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+                // Color options
+                for (final color in _folderColors)
+                  GestureDetector(
+                    onTap: () => setState(() => _selectedColor = color),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: _parseColor(color),
+                        shape: BoxShape.circle,
+                        border: _selectedColor == color
+                            ? Border.all(color: theme.colorScheme.primary, width: 2)
+                            : null,
+                      ),
+                      child: _selectedColor == color
+                          ? Icon(
+                              Icons.check,
+                              size: 20,
+                              color: Colors.white,
+                            )
+                          : null,
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: _submit,
+          child: const Text('Save'),
         ),
       ],
     );

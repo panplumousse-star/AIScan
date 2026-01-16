@@ -751,10 +751,13 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
       builder: (context) => _FolderSelectionDialog(
         folders: folders,
         onCreateFolder: () async {
-          final newFolderName = await _showCreateFolderDialog(context);
-          if (newFolderName != null && newFolderName.isNotEmpty) {
+          final result = await _showCreateFolderDialog(context);
+          if (result != null && result.name.isNotEmpty) {
             try {
-              final newFolder = await folderService.createFolder(name: newFolderName);
+              final newFolder = await folderService.createFolder(
+                name: result.name,
+                color: result.color,
+              );
               if (context.mounted) {
                 Navigator.of(context).pop(newFolder.id);
               }
@@ -771,43 +774,11 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     );
   }
 
-  /// Shows a dialog to create a new folder.
-  Future<String?> _showCreateFolderDialog(BuildContext context) async {
-    final controller = TextEditingController();
-    return showDialog<String>(
+  /// Shows a dialog to create a new folder with name and color.
+  Future<_CreateFolderResult?> _showCreateFolderDialog(BuildContext context) async {
+    return showDialog<_CreateFolderResult>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('New Folder'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(
-            labelText: 'Folder name',
-            border: OutlineInputBorder(),
-            hintText: 'Enter folder name',
-          ),
-          onSubmitted: (value) {
-            if (value.trim().isNotEmpty) {
-              Navigator.of(context).pop(value.trim());
-            }
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              final name = controller.text.trim();
-              if (name.isNotEmpty) {
-                Navigator.of(context).pop(name);
-              }
-            },
-            child: const Text('Create'),
-          ),
-        ],
-      ),
+      builder: (context) => const _CreateFolderWithColorDialog(),
     );
   }
 
@@ -1234,5 +1205,186 @@ class _FolderSelectionDialog extends StatelessWidget {
     } catch (_) {
       return Colors.grey;
     }
+  }
+}
+
+/// Result from folder creation dialog.
+class _CreateFolderResult {
+  const _CreateFolderResult({
+    required this.name,
+    this.color,
+  });
+
+  final String name;
+  final String? color;
+}
+
+/// Dialog for creating a new folder with name and color.
+class _CreateFolderWithColorDialog extends StatefulWidget {
+  const _CreateFolderWithColorDialog();
+
+  @override
+  State<_CreateFolderWithColorDialog> createState() => _CreateFolderWithColorDialogState();
+}
+
+class _CreateFolderWithColorDialogState extends State<_CreateFolderWithColorDialog> {
+  late final TextEditingController _nameController;
+  String? _selectedColor;
+  String? _error;
+
+  static const List<String> _folderColors = [
+    '#F44336', // Red
+    '#E91E63', // Pink
+    '#9C27B0', // Purple
+    '#673AB7', // Deep Purple
+    '#3F51B5', // Indigo
+    '#2196F3', // Blue
+    '#03A9F4', // Light Blue
+    '#00BCD4', // Cyan
+    '#009688', // Teal
+    '#4CAF50', // Green
+    '#8BC34A', // Light Green
+    '#CDDC39', // Lime
+    '#FFEB3B', // Yellow
+    '#FFC107', // Amber
+    '#FF9800', // Orange
+    '#FF5722', // Deep Orange
+    '#795548', // Brown
+    '#607D8B', // Blue Grey
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) {
+      setState(() => _error = 'Folder name cannot be empty');
+      return;
+    }
+
+    FocusScope.of(context).unfocus();
+    Navigator.of(context).pop(_CreateFolderResult(
+      name: name,
+      color: _selectedColor,
+    ));
+  }
+
+  Color _parseColor(String hexColor) {
+    try {
+      final hex = hexColor.replaceFirst('#', '');
+      return Color(int.parse('FF$hex', radix: 16));
+    } catch (_) {
+      return Colors.grey;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return AlertDialog(
+      title: const Text('New Folder'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Name field
+            TextField(
+              controller: _nameController,
+              autofocus: true,
+              decoration: InputDecoration(
+                labelText: 'Folder name',
+                errorText: _error,
+                border: const OutlineInputBorder(),
+                hintText: 'Enter folder name',
+              ),
+              onChanged: (_) {
+                if (_error != null) {
+                  setState(() => _error = null);
+                }
+              },
+              onSubmitted: (_) => _submit(),
+            ),
+            const SizedBox(height: 16),
+            // Color picker
+            Text(
+              'Color (optional)',
+              style: theme.textTheme.titleSmall,
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                // No color option
+                GestureDetector(
+                  onTap: () => setState(() => _selectedColor = null),
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      shape: BoxShape.circle,
+                      border: _selectedColor == null
+                          ? Border.all(color: theme.colorScheme.primary, width: 2)
+                          : null,
+                    ),
+                    child: Icon(
+                      Icons.folder_outlined,
+                      size: 20,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+                // Color options
+                for (final color in _folderColors)
+                  GestureDetector(
+                    onTap: () => setState(() => _selectedColor = color),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: _parseColor(color),
+                        shape: BoxShape.circle,
+                        border: _selectedColor == color
+                            ? Border.all(color: theme.colorScheme.primary, width: 2)
+                            : null,
+                      ),
+                      child: _selectedColor == color
+                          ? const Icon(
+                              Icons.check,
+                              size: 20,
+                              color: Colors.white,
+                            )
+                          : null,
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: _submit,
+          child: const Text('Create'),
+        ),
+      ],
+    );
   }
 }

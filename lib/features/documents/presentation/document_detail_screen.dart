@@ -1032,10 +1032,13 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
         folders: folders,
         currentFolderId: state.document!.folderId,
         onCreateFolder: () async {
-          final newFolderName = await _showCreateFolderDialog(context);
-          if (newFolderName != null && newFolderName.isNotEmpty) {
+          final result = await _showCreateFolderDialog(context);
+          if (result != null && result.name.isNotEmpty) {
             try {
-              final newFolder = await folderService.createFolder(name: newFolderName);
+              final newFolder = await folderService.createFolder(
+                name: result.name,
+                color: result.color,
+              );
               if (context.mounted) {
                 Navigator.of(context).pop(newFolder.id);
               }
@@ -1078,8 +1081,8 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
     }
   }
 
-  Future<String?> _showCreateFolderDialog(BuildContext context) async {
-    return showDialog<String>(
+  Future<_CreateFolderResult?> _showCreateFolderDialog(BuildContext context) async {
+    return showDialog<_CreateFolderResult>(
       context: context,
       builder: (context) => const _CreateFolderDialog(),
     );
@@ -1899,6 +1902,17 @@ class _MoveToFolderDialog extends StatelessWidget {
 ///
 /// Uses StatefulWidget to properly manage the TextEditingController lifecycle
 /// and check mounted state before navigation.
+/// Result from folder creation dialog.
+class _CreateFolderResult {
+  const _CreateFolderResult({
+    required this.name,
+    this.color,
+  });
+
+  final String name;
+  final String? color;
+}
+
 class _CreateFolderDialog extends StatefulWidget {
   const _CreateFolderDialog();
 
@@ -1908,7 +1922,29 @@ class _CreateFolderDialog extends StatefulWidget {
 
 class _CreateFolderDialogState extends State<_CreateFolderDialog> {
   late final TextEditingController _controller;
+  String? _selectedColor;
   String? _error;
+
+  static const List<String> _folderColors = [
+    '#F44336', // Red
+    '#E91E63', // Pink
+    '#9C27B0', // Purple
+    '#673AB7', // Deep Purple
+    '#3F51B5', // Indigo
+    '#2196F3', // Blue
+    '#03A9F4', // Light Blue
+    '#00BCD4', // Cyan
+    '#009688', // Teal
+    '#4CAF50', // Green
+    '#8BC34A', // Light Green
+    '#CDDC39', // Lime
+    '#FFEB3B', // Yellow
+    '#FFC107', // Amber
+    '#FF9800', // Orange
+    '#FF5722', // Deep Orange
+    '#795548', // Brown
+    '#607D8B', // Blue Grey
+  ];
 
   @override
   void initState() {
@@ -1931,27 +1967,104 @@ class _CreateFolderDialogState extends State<_CreateFolderDialog> {
 
     // Unfocus to dismiss keyboard before popping to avoid _dependents.isEmpty
     FocusScope.of(context).unfocus();
-    Navigator.of(context).pop(name);
+    Navigator.of(context).pop(_CreateFolderResult(
+      name: name,
+      color: _selectedColor,
+    ));
+  }
+
+  Color _parseColor(String hexColor) {
+    try {
+      final hex = hexColor.replaceFirst('#', '');
+      return Color(int.parse('FF$hex', radix: 16));
+    } catch (_) {
+      return Colors.grey;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return AlertDialog(
       title: const Text('New Folder'),
-      content: TextField(
-        controller: _controller,
-        autofocus: true,
-        decoration: InputDecoration(
-          labelText: 'Folder name',
-          errorText: _error,
-          border: const OutlineInputBorder(),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: _controller,
+              autofocus: true,
+              decoration: InputDecoration(
+                labelText: 'Folder name',
+                errorText: _error,
+                border: const OutlineInputBorder(),
+              ),
+              onChanged: (_) {
+                if (_error != null) {
+                  setState(() => _error = null);
+                }
+              },
+              onSubmitted: (_) => _submit(),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Color (optional)',
+              style: theme.textTheme.titleSmall,
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                // No color option
+                GestureDetector(
+                  onTap: () => setState(() => _selectedColor = null),
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      shape: BoxShape.circle,
+                      border: _selectedColor == null
+                          ? Border.all(color: theme.colorScheme.primary, width: 2)
+                          : null,
+                    ),
+                    child: Icon(
+                      Icons.folder_outlined,
+                      size: 20,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+                // Color options
+                for (final color in _folderColors)
+                  GestureDetector(
+                    onTap: () => setState(() => _selectedColor = color),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: _parseColor(color),
+                        shape: BoxShape.circle,
+                        border: _selectedColor == color
+                            ? Border.all(color: theme.colorScheme.primary, width: 2)
+                            : null,
+                      ),
+                      child: _selectedColor == color
+                          ? const Icon(
+                              Icons.check,
+                              size: 20,
+                              color: Colors.white,
+                            )
+                          : null,
+                    ),
+                  ),
+              ],
+            ),
+          ],
         ),
-        onChanged: (_) {
-          if (_error != null) {
-            setState(() => _error = null);
-          }
-        },
-        onSubmitted: (_) => _submit(),
       ),
       actions: [
         TextButton(

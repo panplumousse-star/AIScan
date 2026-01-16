@@ -29,6 +29,7 @@ migrate_working_dir/
 .pub/
 /build/
 build/
+**/build/
 
 # Symbolication related
 app.*.symbols
@@ -49,6 +50,7 @@ android/.idea/
 android/*.iml
 android/app/build/
 android/build/
+**/android/**/build/
 
 # iOS/XCode related
 **/ios/**/*.mode1v3

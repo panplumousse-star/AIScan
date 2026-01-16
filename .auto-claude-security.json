@@ -178,6 +178,7 @@
       "java",
       "kotlin",
       "c",
+      "cpp",
       "dart"
     ],
     "package_managers": [
@@ -199,7 +200,8 @@
     "cargo_aliases": [],
     "shell_scripts": []
   },
-  "project_dir": "/home/plum_-/AIscan/aiscan/.auto-claude/worktrees/tasks/009-share-docs",
-  "created_at": "2026-01-12T17:11:56.028446",
-  "project_hash": "03b3be27698a3afc8f0b09945c554ccb"
+  "project_dir": "/home/plum_-/AIscan/aiscan",
+  "created_at": "2026-01-16T11:14:05.256033",
+  "project_hash": "b44883a579e9c461e8d2df6b8d939df7",
+  "inherited_from": "/home/plum_-/AIscan/aiscan"
 }

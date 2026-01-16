@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -383,8 +384,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
       if (shouldLoadFolders) {
         // Load root folders (those with no parent)
         final allFolders = await _folderService.getAllFolders();
-        folders = allFolders.where((f) => f.parentId == null).toList();
-        folders.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+        folders = allFolders.roots.sortedByName();
       }
 
       // Load documents based on current context
@@ -398,8 +398,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
         );
         // Also load subfolders
         final allFolders = await _folderService.getAllFolders();
-        folders = allFolders.where((f) => f.parentId == state.currentFolderId).toList();
-        folders.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+        folders = allFolders.childrenOf(state.currentFolderId!).sortedByName();
       } else if (filter.folderId != null) {
         documents = await _repository.getDocumentsInFolder(
           filter.folderId,
@@ -2741,8 +2740,8 @@ class _QuickScanFab extends StatelessWidget {
   }
 }
 
-/// Section displaying folders in a horizontal scrollable list.
-class _FoldersSection extends StatelessWidget {
+/// Section displaying folders in a paginated 2x4 grid layout.
+class _FoldersSection extends StatefulWidget {
   const _FoldersSection({
     required this.folders,
     required this.selectedFolderIds,
@@ -2760,6 +2759,37 @@ class _FoldersSection extends StatelessWidget {
   final ThemeData theme;
 
   @override
+  State<_FoldersSection> createState() => _FoldersSectionState();
+}
+
+class _FoldersSectionState extends State<_FoldersSection> {
+  late final PageController _pageController;
+  int _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+    _pageController.addListener(_onPageChanged);
+  }
+
+  @override
+  void dispose() {
+    _pageController.removeListener(_onPageChanged);
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _onPageChanged() {
+    final page = _pageController.page?.round() ?? 0;
+    if (page != _currentPage) {
+      setState(() {
+        _currentPage = page;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2768,38 +2798,63 @@ class _FoldersSection extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
           child: Text(
             'Folders',
-            style: theme.textTheme.titleSmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+            style: widget.theme.textTheme.titleSmall?.copyWith(
+              color: widget.theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ),
         SizedBox(
-          height: 100,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            itemCount: folders.length,
-            itemBuilder: (context, index) {
-              final folder = folders[index];
-              final isSelected = selectedFolderIds.contains(folder.id);
-              return _FolderCard(
-                folder: folder,
-                isSelected: isSelected,
-                isSelectionMode: isSelectionMode,
-                onTap: () => onFolderTap(folder),
-                onLongPress: () => onFolderLongPress(folder),
-                theme: theme,
+          height: 200,
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: (widget.folders.length / 8).ceil(),
+            itemBuilder: (context, pageIndex) {
+              final startIndex = pageIndex * 8;
+              final endIndex = min(startIndex + 8, widget.folders.length);
+              final pageFolders = widget.folders.sublist(startIndex, endIndex);
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: GridView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 4,
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8,
+                    childAspectRatio: 0.85,
+                  ),
+                  itemCount: pageFolders.length,
+                  itemBuilder: (context, index) {
+                    final folder = pageFolders[index];
+                    final isSelected = widget.selectedFolderIds.contains(folder.id);
+                    return _FolderCard(
+                      folder: folder,
+                      isSelected: isSelected,
+                      isSelectionMode: widget.isSelectionMode,
+                      onTap: () => widget.onFolderTap(folder),
+                      onLongPress: () => widget.onFolderLongPress(folder),
+                      theme: widget.theme,
+                    );
+                  },
+                ),
               );
             },
           ),
         ),
+        // Page indicator dots (only show if multiple pages)
+        if ((widget.folders.length / 8).ceil() > 1)
+          _PageIndicatorDots(
+            totalPages: (widget.folders.length / 8).ceil(),
+            currentPage: _currentPage,
+            theme: widget.theme,
+          ),
         const Divider(height: 16),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
           child: Text(
             'Documents',
-            style: theme.textTheme.titleSmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+            style: widget.theme.textTheme.titleSmall?.copyWith(
+              color: widget.theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ),
@@ -2841,84 +2896,118 @@ class _FolderCard extends StatelessWidget {
     final folderColor = _parseColor(folder.color);
     final colorScheme = theme.colorScheme;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Material(
-        color: isSelected
-            ? colorScheme.primaryContainer.withValues(alpha: 0.3)
-            : Colors.transparent,
+    return Material(
+      color: isSelected
+          ? colorScheme.primaryContainer.withValues(alpha: 0.3)
+          : Colors.transparent,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        onLongPress: onLongPress,
         borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          onTap: onTap,
-          onLongPress: onLongPress,
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            width: 90,
-            padding: const EdgeInsets.all(8),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: folderColor.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(12),
-                        border: isSelected
-                            ? Border.all(color: colorScheme.primary, width: 2)
-                            : null,
-                      ),
-                      child: Icon(
-                        Icons.folder,
-                        color: folderColor,
-                        size: 28,
-                      ),
+        child: Padding(
+          padding: const EdgeInsets.all(4),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: folderColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                      border: isSelected
+                          ? Border.all(color: colorScheme.primary, width: 2)
+                          : null,
                     ),
-                    // Selection indicator (only in selection mode)
-                    if (isSelectionMode)
-                      Positioned(
-                        top: -4,
-                        right: -4,
-                        child: Container(
-                          width: 20,
-                          height: 20,
-                          decoration: BoxDecoration(
+                    child: Icon(
+                      Icons.folder,
+                      color: folderColor,
+                      size: 28,
+                    ),
+                  ),
+                  // Selection indicator (only in selection mode)
+                  if (isSelectionMode)
+                    Positioned(
+                      top: -4,
+                      right: -4,
+                      child: Container(
+                        width: 20,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? colorScheme.primary
+                              : colorScheme.surfaceContainerHighest,
+                          shape: BoxShape.circle,
+                          border: Border.all(
                             color: isSelected
                                 ? colorScheme.primary
-                                : colorScheme.surfaceContainerHighest,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: isSelected
-                                  ? colorScheme.primary
-                                  : colorScheme.outline,
-                              width: 1.5,
-                            ),
+                                : colorScheme.outline,
+                            width: 1.5,
                           ),
-                          child: isSelected
-                              ? Icon(
-                                  Icons.check,
-                                  size: 14,
-                                  color: colorScheme.onPrimary,
-                                )
-                              : null,
                         ),
+                        child: isSelected
+                            ? Icon(
+                                Icons.check,
+                                size: 14,
+                                color: colorScheme.onPrimary,
+                              )
+                            : null,
                       ),
-                  ],
+                    ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                folder.name,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontWeight: isSelected ? FontWeight.w600 : null,
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  folder.name,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontWeight: isSelected ? FontWeight.w600 : null,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Page indicator dots for multi-page navigation feedback.
+class _PageIndicatorDots extends StatelessWidget {
+  const _PageIndicatorDots({
+    required this.totalPages,
+    required this.currentPage,
+    required this.theme,
+  });
+
+  final int totalPages;
+  final int currentPage;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(
+          totalPages,
+          (index) => AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            width: index == currentPage ? 16 : 8,
+            height: 8,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(4),
+              color: index == currentPage
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
             ),
           ),
         ),

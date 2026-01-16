@@ -44,6 +44,11 @@ android/.gradle/
 android/gradle/wrapper/gradle-wrapper.jar
 android/gradlew
 android/gradlew.bat
+android/local.properties
+android/.idea/
+android/*.iml
+android/app/build/
+android/build/
 
 # iOS/XCode related
 **/ios/**/*.mode1v3
@@ -87,9 +92,43 @@ coverage/
 .auto-claude/
 
 # Documentation (auto-generated)
-docs/
+# Note: Keep important docs like LLD files, but ignore generated docs
+# docs/  # Commented out - keep docs/ for now
 
 # Temporary files
 tmp*/
 *.tmp
 tmpclaude*
+*.bat
+*.ps1
+INSTRUCTIONS_*.md
+
+# Windows temporary files
+*~RF*
+*Zone.Identifier
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS temporary files
+.AppleDouble
+.LSOverride
+._*
+
+# Linux temporary files
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# Test generated files
+test/**/*.mocks.dart
+*.g.dart
+*.freezed.dart
+
+# Environment files
+.env
+.env.local
+.env.*.local

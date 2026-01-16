@@ -18,7 +18,7 @@ final themeModeProvider = StateProvider<ThemeMode>((ref) {
 // App Colors
 // ============================================================================
 
-/// Defines the color palette for the AIScan application.
+/// Defines the color palette for the Scanaï application.
 ///
 /// Colors are designed to follow Material Design 3 guidelines while
 /// maintaining a professional, trustworthy appearance appropriate
@@ -233,7 +233,7 @@ abstract final class AppDuration {
 // App Theme
 // ============================================================================
 
-/// Central theme configuration for the AIScan application.
+/// Central theme configuration for the Scanaï application.
 ///
 /// Provides consistent theming following Material Design 3 guidelines.
 /// Supports both light and dark themes with system preference detection.
@@ -302,7 +302,7 @@ abstract final class AppTheme {
       ),
 
       // Scaffold Background
-      scaffoldBackgroundColor: colorScheme.surface,
+      scaffoldBackgroundColor: const Color(0xFFF6F8FB),
 
       // Card Theme
       cardTheme: CardThemeData(
@@ -727,7 +727,7 @@ abstract final class AppTheme {
       ),
 
       // Scaffold Background
-      scaffoldBackgroundColor: colorScheme.surface,
+      scaffoldBackgroundColor: const Color(0xFFF6F8FB),
 
       // Card Theme
       cardTheme: CardThemeData(

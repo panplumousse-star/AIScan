@@ -30,6 +30,7 @@ class DatabaseHelper {
 
   // Table names
   static const String tableDocuments = 'documents';
+  static const String tableDocumentPages = 'document_pages';
   static const String tableDocumentsFts = 'documents_fts';
   static const String tableFolders = 'folders';
   static const String tableTags = 'tags';
@@ -45,13 +46,15 @@ class DatabaseHelper {
   static const String columnUpdatedAt = 'updated_at';
   static const String columnFolderId = 'folder_id';
   static const String columnIsFavorite = 'is_favorite';
-  static const String columnFilePath = 'file_path';
   static const String columnThumbnailPath = 'thumbnail_path';
   static const String columnFileSize = 'file_size';
-  static const String columnPageCount = 'page_count';
+
+  // Column names for document_pages table
+  static const String columnDocumentId = 'document_id';
+  static const String columnPageNumber = 'page_number';
+  static const String columnFilePath = 'file_path';
 
   // Column names for document_tags table
-  static const String columnDocumentId = 'document_id';
   static const String columnTagId = 'tag_id';
 
   // Column names for folders table
@@ -103,21 +106,22 @@ class DatabaseHelper {
         $columnId TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         parent_id TEXT,
+        color TEXT,
+        icon TEXT,
         $columnCreatedAt TEXT NOT NULL,
         $columnUpdatedAt TEXT NOT NULL
       )
     ''');
 
     // Create main documents table
+    // Note: page files are stored in document_pages table (multi-page support)
     await db.execute('''
       CREATE TABLE $tableDocuments (
         $columnId TEXT PRIMARY KEY,
         $columnTitle TEXT NOT NULL,
         $columnDescription TEXT,
-        $columnFilePath TEXT NOT NULL,
         $columnThumbnailPath TEXT,
         original_file_name TEXT,
-        $columnPageCount INTEGER NOT NULL DEFAULT 1,
         $columnFileSize INTEGER NOT NULL DEFAULT 0,
         mime_type TEXT,
         $columnOcrText TEXT,
@@ -127,6 +131,18 @@ class DatabaseHelper {
         $columnFolderId TEXT,
         $columnIsFavorite INTEGER NOT NULL DEFAULT 0,
         FOREIGN KEY ($columnFolderId) REFERENCES $tableFolders($columnId) ON DELETE SET NULL
+      )
+    ''');
+
+    // Create document_pages table for multi-page support
+    // Each page is stored as a separate encrypted PNG file
+    await db.execute('''
+      CREATE TABLE $tableDocumentPages (
+        $columnId INTEGER PRIMARY KEY AUTOINCREMENT,
+        $columnDocumentId TEXT NOT NULL,
+        $columnPageNumber INTEGER NOT NULL,
+        $columnFilePath TEXT NOT NULL,
+        FOREIGN KEY ($columnDocumentId) REFERENCES $tableDocuments($columnId) ON DELETE CASCADE
       )
     ''');
 
@@ -165,6 +181,8 @@ class DatabaseHelper {
     await db.execute('CREATE INDEX idx_documents_folder ON $tableDocuments($columnFolderId)');
     await db.execute('CREATE INDEX idx_documents_favorite ON $tableDocuments($columnIsFavorite)');
     await db.execute('CREATE INDEX idx_documents_created ON $tableDocuments($columnCreatedAt)');
+    await db.execute('CREATE INDEX idx_document_pages_document ON $tableDocumentPages($columnDocumentId)');
+    await db.execute('CREATE UNIQUE INDEX idx_document_pages_order ON $tableDocumentPages($columnDocumentId, $columnPageNumber)');
 
     // Initialize FTS tables and triggers with automatic fallback
     await _initializeFts(db);
@@ -823,5 +841,107 @@ class DatabaseHelper {
       tableFolders,
       orderBy: orderBy ?? '$columnName ASC',
     );
+  }
+
+  // ============================================================
+  // Document Pages CRUD Methods
+  // ============================================================
+
+  /// Gets all pages for a document, ordered by page number.
+  Future<List<Map<String, dynamic>>> getDocumentPages(String documentId) async {
+    final db = await database;
+    return await db.query(
+      tableDocumentPages,
+      where: '$columnDocumentId = ?',
+      whereArgs: [documentId],
+      orderBy: '$columnPageNumber ASC',
+    );
+  }
+
+  /// Gets the file paths for all pages of a document, ordered by page number.
+  Future<List<String>> getDocumentPagePaths(String documentId) async {
+    final pages = await getDocumentPages(documentId);
+    return pages.map((p) => p[columnFilePath] as String).toList();
+  }
+
+  /// Gets a single page by document ID and page number.
+  Future<Map<String, dynamic>?> getDocumentPage(
+    String documentId,
+    int pageNumber,
+  ) async {
+    final db = await database;
+    final results = await db.query(
+      tableDocumentPages,
+      where: '$columnDocumentId = ? AND $columnPageNumber = ?',
+      whereArgs: [documentId, pageNumber],
+      limit: 1,
+    );
+    return results.isNotEmpty ? results.first : null;
+  }
+
+  /// Inserts a page for a document.
+  Future<int> insertDocumentPage({
+    required String documentId,
+    required int pageNumber,
+    required String filePath,
+  }) async {
+    final db = await database;
+    return await db.insert(tableDocumentPages, {
+      columnDocumentId: documentId,
+      columnPageNumber: pageNumber,
+      columnFilePath: filePath,
+    });
+  }
+
+  /// Inserts multiple pages for a document in a transaction.
+  Future<void> insertDocumentPages(
+    String documentId,
+    List<String> filePaths,
+  ) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      for (var i = 0; i < filePaths.length; i++) {
+        await txn.insert(tableDocumentPages, {
+          columnDocumentId: documentId,
+          columnPageNumber: i,
+          columnFilePath: filePaths[i],
+        });
+      }
+    });
+  }
+
+  /// Deletes all pages for a document.
+  Future<int> deleteDocumentPages(String documentId) async {
+    final db = await database;
+    return await db.delete(
+      tableDocumentPages,
+      where: '$columnDocumentId = ?',
+      whereArgs: [documentId],
+    );
+  }
+
+  /// Updates a page's file path.
+  Future<int> updateDocumentPagePath({
+    required String documentId,
+    required int pageNumber,
+    required String newFilePath,
+  }) async {
+    final db = await database;
+    return await db.update(
+      tableDocumentPages,
+      {columnFilePath: newFilePath},
+      where: '$columnDocumentId = ? AND $columnPageNumber = ?',
+      whereArgs: [documentId, pageNumber],
+    );
+  }
+
+  /// Gets the page count for a document.
+  Future<int> getDocumentPageCount(String documentId) async {
+    final db = await database;
+    final result = await db.rawQuery(
+      'SELECT COUNT(*) as count FROM $tableDocumentPages WHERE $columnDocumentId = ?',
+      [documentId],
+    );
+    return Sqflite.firstIntValue(result) ?? 0;
   }
 }

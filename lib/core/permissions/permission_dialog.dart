@@ -81,7 +81,7 @@ class _CameraPermissionDialog extends StatelessWidget {
       ),
       title: const Text('Camera Permission'),
       content: const Text(
-        'AIScan needs camera access to scan documents. '
+        'Scanaï needs camera access to scan documents. '
         'Please choose how you would like to grant permission.',
       ),
       actions: [

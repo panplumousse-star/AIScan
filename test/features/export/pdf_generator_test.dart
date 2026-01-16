@@ -255,8 +255,8 @@ void main() {
       expect(options.author, isNull);
       expect(options.subject, isNull);
       expect(options.keywords, isNull);
-      expect(options.producer, 'AIScan');
-      expect(options.creator, 'AIScan Document Scanner');
+      expect(options.producer, 'Scanaï');
+      expect(options.creator, 'Scanaï Document Scanner');
       expect(options.imageQuality, 85);
       expect(options.compressImages, true);
     });

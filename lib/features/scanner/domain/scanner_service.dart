@@ -723,9 +723,16 @@ class ScannerStorageService {
   ///
   /// This method:
   /// 1. Validates the scan result
-  /// 2. Generates a thumbnail from the first page
-  /// 3. Creates the document with encrypted storage
-  /// 4. Cleans up temporary scan files
+  /// 2. Converts each page to PNG format
+  /// 3. Generates a thumbnail from the first page
+  /// 4. Creates the document with encrypted page storage
+  /// 5. Cleans up temporary scan files
+  ///
+  /// Pages are stored as individual PNG images (not PDF) for:
+  /// - Better memory efficiency (no PDF parsing needed)
+  /// - Native image display with Image.memory()
+  /// - Lossless quality for OCR processing
+  /// - PDF can be generated on-demand for export/sharing
   ///
   /// Parameters:
   /// - [scanResult]: The scan result to save
@@ -775,7 +782,7 @@ class ScannerStorageService {
       );
     }
 
-    String? generatedPdfPath;
+    final pngTempPaths = <String>[];
 
     try {
       // Generate title if not provided
@@ -790,42 +797,20 @@ class ScannerStorageService {
         thumbnailPath = await _generateThumbnail(primaryPage);
       }
 
-      // Always generate a PDF (even for single page) for consistent format
-      final imageBytesList = <Uint8List>[];
-      for (final page in validPages) {
-        final bytes = await page.readBytes();
-        imageBytesList.add(bytes);
+      // Convert each page to PNG format (lossless for OCR quality)
+      final tempDir = Directory.systemTemp;
+      for (var i = 0; i < validPages.length; i++) {
+        final page = validPages[i];
+        final pngPath = await _convertToPng(page, tempDir, i);
+        pngTempPaths.add(pngPath);
       }
 
-      final pdfResult = await _pdfGenerator.generateFromBytes(
-        imageBytesList: imageBytesList,
-        options: PDFGeneratorOptions(
-          title: documentTitle,
-          imageQuality: 95,
-          pageSize: PDFPageSize.a4,
-          orientation: PDFOrientation.auto,
-          imageFit: PDFImageFit.contain,
-        ),
-      );
-
-      // Save PDF to temp file
-      final tempDir = Directory.systemTemp;
-      generatedPdfPath = path.join(
-        tempDir.path,
-        'scan_${DateTime.now().millisecondsSinceEpoch}.pdf',
-      );
-      final pdfFile = File(generatedPdfPath);
-      await pdfFile.writeAsBytes(pdfResult.bytes);
-
-      final sourceFilePath = generatedPdfPath;
-
-      // Create the document in encrypted storage
-      final document = await _documentRepository.createDocument(
+      // Create the document in encrypted storage with multiple pages
+      final document = await _documentRepository.createDocumentWithPages(
         title: documentTitle,
-        sourceFilePath: sourceFilePath,
+        sourceImagePaths: pngTempPaths,
         description: description,
         thumbnailSourcePath: thumbnailPath,
-        pageCount: validPages.length,
         folderId: folderId,
         isFavorite: isFavorite,
       );
@@ -833,13 +818,13 @@ class ScannerStorageService {
       // Clean up temporary files if requested
       if (cleanupAfterSave) {
         await _cleanupScanFiles(scanResult);
+        // Clean up temporary PNG files
+        for (final pngPath in pngTempPaths) {
+          await _deleteTempFile(pngPath);
+        }
         // Also clean up temporary thumbnail if generated
         if (thumbnailPath != null) {
           await _deleteTempFile(thumbnailPath);
-        }
-        // Clean up generated PDF temp file
-        if (generatedPdfPath != null) {
-          await _deleteTempFile(generatedPdfPath);
         }
       }
 
@@ -849,15 +834,59 @@ class ScannerStorageService {
         thumbnailGenerated: thumbnailPath != null,
       );
     } catch (e) {
-      // Clean up generated PDF on error
-      if (generatedPdfPath != null) {
-        await _deleteTempFile(generatedPdfPath);
+      // Clean up temporary PNG files on error
+      for (final pngPath in pngTempPaths) {
+        await _deleteTempFile(pngPath);
       }
       if (e is ScannerException) {
         rethrow;
       }
       throw ScannerException(
         'Failed to save scan result to encrypted storage',
+        cause: e,
+      );
+    }
+  }
+
+  /// Converts a scanned page (JPEG) to PNG format for lossless storage.
+  ///
+  /// PNG is preferred for:
+  /// - Lossless compression (better OCR accuracy)
+  /// - No further quality degradation on re-encoding
+  /// - Better for text documents
+  ///
+  /// Returns the path to the generated PNG file.
+  Future<String> _convertToPng(
+    ScannedPage page,
+    Directory tempDir,
+    int pageIndex,
+  ) async {
+    try {
+      final sourceBytes = await page.readBytes();
+      final image = img.decodeImage(sourceBytes);
+
+      if (image == null) {
+        throw ScannerException(
+          'Failed to decode scanned image: page $pageIndex',
+        );
+      }
+
+      // Encode as PNG (lossless)
+      final pngBytes = img.encodePng(image);
+
+      // Save to temp file
+      final pngPath = path.join(
+        tempDir.path,
+        'page_${pageIndex}_${DateTime.now().millisecondsSinceEpoch}.png',
+      );
+      final pngFile = File(pngPath);
+      await pngFile.writeAsBytes(pngBytes);
+
+      return pngPath;
+    } catch (e) {
+      if (e is ScannerException) rethrow;
+      throw ScannerException(
+        'Failed to convert page $pageIndex to PNG',
         cause: e,
       );
     }

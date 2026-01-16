@@ -3,10 +3,10 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // ============================================================================
-// Accessibility Configuration for AIScan
+// Accessibility Configuration for Scanaï
 // ============================================================================
 
-/// Accessibility configuration for the AIScan application.
+/// Accessibility configuration for the Scanaï application.
 ///
 /// Provides comprehensive accessibility support including:
 /// - Semantic labels for screen readers (TalkBack/VoiceOver)

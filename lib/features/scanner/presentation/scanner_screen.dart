@@ -5,7 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/permissions/camera_permission_service.dart';
 import '../../../core/permissions/permission_dialog.dart';
+import '../../../core/permissions/storage_permission_service.dart';
 import '../../documents/domain/document_model.dart';
+import '../../documents/presentation/documents_screen.dart';
+import '../../folders/domain/folder_model.dart';
+import '../../folders/domain/folder_service.dart';
 import '../../sharing/domain/document_share_service.dart';
 import '../domain/scanner_service.dart';
 
@@ -126,9 +130,20 @@ class ScannerScreenNotifier extends StateNotifier<ScannerScreenState> {
   }
 
   /// Performs a multi-page scan.
-  Future<void> multiPageScan({int maxPages = 100}) async {
+  ///
+  /// [allowGalleryImport] controls whether the gallery import button is shown.
+  /// Set to false if storage permission is not granted.
+  Future<void> multiPageScan({
+    int maxPages = 100,
+    bool allowGalleryImport = true,
+  }) async {
     await startScan(
-      options: ScannerOptions.multiPage(maxPages: maxPages),
+      options: ScannerOptions(
+        documentFormat: ScanDocumentFormat.jpeg,
+        scannerMode: ScanMode.full,
+        pageLimit: maxPages,
+        allowGalleryImport: allowGalleryImport,
+      ),
     );
   }
 
@@ -317,7 +332,17 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
       return;
     }
     if (hasPermission && mounted) {
-      ref.read(scannerScreenProvider.notifier).multiPageScan();
+      // Check storage permission to determine if gallery import should be enabled
+      final storageService = ref.read(storagePermissionServiceProvider);
+      final storageState = await storageService.checkPermission();
+      final hasStoragePermission =
+          storageState == StoragePermissionState.granted ||
+          storageState == StoragePermissionState.sessionOnly;
+
+      // Only enable gallery import if storage permission is granted
+      ref.read(scannerScreenProvider.notifier).multiPageScan(
+        allowGalleryImport: hasStoragePermission,
+      );
     }
   }
 
@@ -489,9 +514,13 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
       );
     }
 
-    return _EmptyView(
-      onScan: _startMultiPageScanWithPermissionCheck,
-    );
+    // After save: show saved confirmation
+    if (state.hasSavedDocument) {
+      return _SavedView(documentTitle: state.savedDocument!.title);
+    }
+
+    // Fallback: show loading while auto-scan starts
+    return const _LoadingView(message: 'Starting scanner...');
   }
 
   Widget? _buildFab(
@@ -501,34 +530,34 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
   ) {
     if (state.isLoading) return null;
 
+    final theme = Theme.of(context);
+
+    // After save: show Share and Done buttons
+    if (state.hasSavedDocument) {
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          FloatingActionButton.extended(
+            heroTag: 'share',
+            onPressed: () => _handleShare(context, state),
+            icon: const Icon(Icons.share_outlined),
+            label: const Text('Share'),
+          ),
+          const SizedBox(width: 16),
+          FloatingActionButton.extended(
+            heroTag: 'done',
+            onPressed: () => _navigateToDocuments(context),
+            backgroundColor: theme.colorScheme.primaryContainer,
+            foregroundColor: theme.colorScheme.onPrimaryContainer,
+            icon: const Icon(Icons.check),
+            label: const Text('Done'),
+          ),
+        ],
+      );
+    }
+
+    // Before save: show Discard and Save buttons (only if we have a scan result)
     if (state.hasResult) {
-      final theme = Theme.of(context);
-
-      // After save: show Share and Done buttons
-      if (state.hasSavedDocument) {
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            FloatingActionButton.extended(
-              heroTag: 'share',
-              onPressed: () => _handleShare(context, state),
-              icon: const Icon(Icons.share_outlined),
-              label: const Text('Share'),
-            ),
-            const SizedBox(width: 16),
-            FloatingActionButton.extended(
-              heroTag: 'done',
-              onPressed: () => _navigateToDocuments(context),
-              backgroundColor: theme.colorScheme.primaryContainer,
-              foregroundColor: theme.colorScheme.onPrimaryContainer,
-              icon: const Icon(Icons.check),
-              label: const Text('Done'),
-            ),
-          ],
-        );
-      }
-
-      // Before save: show Discard and Save buttons
       return Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -538,6 +567,9 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
               final shouldDiscard = await _showDiscardDialog(context);
               if (shouldDiscard == true) {
                 await notifier.discardScan();
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                }
               }
             },
             backgroundColor: theme.colorScheme.errorContainer,
@@ -567,6 +599,10 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     try {
       final result = await shareService.shareDocuments([state.savedDocument!]);
       await shareService.cleanupTempFiles(result.tempFilePaths);
+      // Navigate to documents after sharing
+      if (context.mounted) {
+        _navigateToDocuments(context);
+      }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -580,9 +616,21 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
   }
 
   void _navigateToDocuments(BuildContext context) {
-    // Pop back to root and navigate to documents screen
-    Navigator.of(context).popUntil((route) => route.isFirst);
-    // The home screen should show documents - handled by app.dart
+    // Replace scanner screen with documents screen
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (navContext) => DocumentsScreen(
+          onScanPressed: () {
+            // Navigate to scanner when scan button is pressed
+            Navigator.of(navContext).push(
+              MaterialPageRoute(
+                builder: (_) => const ScannerScreen(),
+              ),
+            );
+          },
+        ),
+      ),
+    );
   }
 
   Future<void> _handleSave(
@@ -592,11 +640,27 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
   ) async {
     if (state.scanResult == null) return;
 
+    // Show rename dialog before saving
+    final documentTitle = await _showSaveRenameDialog(
+      context,
+      widget.documentTitle ?? 'Scan ${DateTime.now().toString().substring(0, 16)}',
+    );
+
+    // User cancelled the dialog
+    if (documentTitle == null) return;
+
+    // Show folder selection dialog
+    if (!context.mounted) return;
+    final selectedFolderId = await _showFolderSelectionDialog(context);
+
+    // User cancelled the folder selection
+    if (selectedFolderId == '_cancelled_') return;
+
     try {
-      // Save to encrypted storage
+      // Save to encrypted storage with selected folder
       final savedDocument = await notifier.saveToStorage(
-        title: widget.documentTitle,
-        folderId: widget.folderId,
+        title: documentTitle,
+        folderId: selectedFolderId ?? widget.folderId,
       );
 
       if (savedDocument != null) {
@@ -631,6 +695,122 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     }
   }
 
+  Future<String?> _showSaveRenameDialog(
+    BuildContext context,
+    String defaultTitle,
+  ) async {
+    final controller = TextEditingController(text: defaultTitle);
+    return showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Save Document'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'Document name',
+            border: OutlineInputBorder(),
+          ),
+          onSubmitted: (value) {
+            if (value.isNotEmpty) {
+              Navigator.of(context).pop(value);
+            }
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final title = controller.text.trim();
+              if (title.isNotEmpty) {
+                Navigator.of(context).pop(title);
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Shows a dialog to select a folder for saving the document.
+  ///
+  /// Returns the selected folder ID, or null for root.
+  /// Returns a special value '_cancelled_' if the user cancelled.
+  Future<String?> _showFolderSelectionDialog(BuildContext context) async {
+    final folderService = ref.read(folderServiceProvider);
+    final folders = await folderService.getAllFolders();
+
+    if (!context.mounted) return '_cancelled_';
+
+    return showDialog<String>(
+      context: context,
+      builder: (context) => _FolderSelectionDialog(
+        folders: folders,
+        onCreateFolder: () async {
+          final newFolderName = await _showCreateFolderDialog(context);
+          if (newFolderName != null && newFolderName.isNotEmpty) {
+            try {
+              final newFolder = await folderService.createFolder(name: newFolderName);
+              if (context.mounted) {
+                Navigator.of(context).pop(newFolder.id);
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Failed to create folder: $e')),
+                );
+              }
+            }
+          }
+        },
+      ),
+    );
+  }
+
+  /// Shows a dialog to create a new folder.
+  Future<String?> _showCreateFolderDialog(BuildContext context) async {
+    final controller = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('New Folder'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'Folder name',
+            border: OutlineInputBorder(),
+            hintText: 'Enter folder name',
+          ),
+          onSubmitted: (value) {
+            if (value.trim().isNotEmpty) {
+              Navigator.of(context).pop(value.trim());
+            }
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final name = controller.text.trim();
+              if (name.isNotEmpty) {
+                Navigator.of(context).pop(name);
+              }
+            },
+            child: const Text('Create'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<bool?> _showDiscardDialog(BuildContext context) {
     return showDialog<bool>(
       context: context,
@@ -657,13 +837,11 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
   }
 }
 
-/// Empty state view with scan action.
-class _EmptyView extends StatelessWidget {
-  const _EmptyView({
-    required this.onScan,
-  });
+/// View shown after document is saved.
+class _SavedView extends StatelessWidget {
+  const _SavedView({required this.documentTitle});
 
-  final VoidCallback onScan;
+  final String documentTitle;
 
   @override
   Widget build(BuildContext context) {
@@ -676,33 +854,32 @@ class _EmptyView extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.document_scanner_outlined,
+              Icons.check_circle_outline,
               size: 80,
               color: theme.colorScheme.primary,
             ),
             const SizedBox(height: 24),
             Text(
-              'Ready to Scan',
+              'Document Saved',
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Position your document and tap to start scanning',
+              documentTitle,
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 48),
-            FilledButton.icon(
-              onPressed: onScan,
-              icon: const Icon(Icons.document_scanner_outlined),
-              label: const Text('Start Scanning'),
-              style: FilledButton.styleFrom(
-                minimumSize: const Size(200, 56),
+            const SizedBox(height: 16),
+            Text(
+              'Use the buttons below to share or finish',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
               ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -809,6 +986,8 @@ class _PreviewView extends StatelessWidget {
 }
 
 /// Single page preview image.
+///
+/// Uses cacheWidth to limit memory usage while still allowing zoom.
 class _PagePreview extends StatelessWidget {
   const _PagePreview({required this.imagePath});
 
@@ -817,6 +996,9 @@ class _PagePreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final file = File(imagePath);
+    // Cache at 2x screen width for good quality when zooming
+    final screenWidth = MediaQuery.of(context).size.width;
+    final cacheWidth = (screenWidth * 2).toInt();
 
     return FutureBuilder<bool>(
       future: file.exists(),
@@ -835,6 +1017,7 @@ class _PagePreview extends StatelessWidget {
           child: Image.file(
             file,
             fit: BoxFit.contain,
+            cacheWidth: cacheWidth,
             errorBuilder: (context, error, stackTrace) {
               return _buildErrorPlaceholder(context);
             },
@@ -917,6 +1100,9 @@ class _PageThumbnailStrip extends StatelessWidget {
                     child: Image.file(
                       File(page.imagePath),
                       fit: BoxFit.cover,
+                      // Thumbnails are 56px wide, cache at 2x for retina displays
+                      cacheWidth: 112,
+                      cacheHeight: 160,
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
                           color: theme.colorScheme.surfaceContainerHighest,
@@ -954,5 +1140,99 @@ class _PageThumbnailStrip extends StatelessWidget {
         );
       },
     );
+  }
+}
+
+/// Dialog for selecting a folder when saving a document.
+class _FolderSelectionDialog extends StatelessWidget {
+  const _FolderSelectionDialog({
+    required this.folders,
+    required this.onCreateFolder,
+  });
+
+  final List<Folder> folders;
+  final VoidCallback onCreateFolder;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return AlertDialog(
+      title: const Text('Save to folder'),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Root folder option (no folder)
+            ListTile(
+              leading: Icon(
+                Icons.home_outlined,
+                color: theme.colorScheme.primary,
+              ),
+              title: const Text('My Documents'),
+              subtitle: const Text('Save without folder'),
+              onTap: () => Navigator.of(context).pop(null),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            if (folders.isNotEmpty) ...[
+              const Divider(),
+              // Existing folders list
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 250),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: folders.length,
+                  itemBuilder: (context, index) {
+                    final folder = folders[index];
+                    return ListTile(
+                      leading: Icon(
+                        Icons.folder_outlined,
+                        color: folder.color != null
+                            ? _parseColor(folder.color!)
+                            : theme.colorScheme.secondary,
+                      ),
+                      title: Text(folder.name),
+                      onTap: () => Navigator.of(context).pop(folder.id),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+            const SizedBox(height: 8),
+            // Create new folder button
+            OutlinedButton.icon(
+              onPressed: onCreateFolder,
+              icon: const Icon(Icons.create_new_folder_outlined),
+              label: const Text('Create new folder'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 48),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop('_cancelled_'),
+          child: const Text('Cancel'),
+        ),
+      ],
+    );
+  }
+
+  /// Parses a hex color string to a Color.
+  Color _parseColor(String hexColor) {
+    try {
+      final hex = hexColor.replaceFirst('#', '');
+      return Color(int.parse('FF$hex', radix: 16));
+    } catch (_) {
+      return Colors.grey;
+    }
   }
 }

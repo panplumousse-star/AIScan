@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  FileProvider path configuration for AIScan.
+  FileProvider path configuration for Scanaï.
   Defines which directories can be shared via FileProvider URIs.
   Used for secure PDF document sharing via the native share sheet.
 -->

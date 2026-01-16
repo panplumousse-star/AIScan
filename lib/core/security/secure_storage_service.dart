@@ -103,7 +103,7 @@ class SecureStorageService {
       // Use kSecAttrAccessibleWhenUnlockedThisDeviceOnly for maximum security
       accessibility: KeychainAccessibility.unlocked_this_device,
       // Store in app-specific keychain group
-      accountName: 'AIScan',
+      accountName: 'Scanaï',
     );
 
     const linuxOptions = LinuxOptions();

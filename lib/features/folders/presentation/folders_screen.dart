@@ -1442,9 +1442,9 @@ class _FolderDialogState extends State<_FolderDialog> {
       return;
     }
 
-    Navigator.of(
-      context,
-    ).pop(_FolderDialogResult(name: name, color: _selectedColor));
+    // Unfocus to dismiss keyboard before popping to avoid _dependents.isEmpty
+    FocusScope.of(context).unfocus();
+    Navigator.of(context).pop(_FolderDialogResult(name: name, color: _selectedColor));
   }
 }
 

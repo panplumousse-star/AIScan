@@ -8,7 +8,7 @@ import 'features/settings/presentation/settings_screen.dart';
 
 /// Application entry point.
 ///
-/// Initializes core services and launches the AIScan application.
+/// Initializes core services and launches the Scanaï application.
 /// All document processing happens locally on-device for maximum privacy.
 void main() async {
   // Ensure Flutter bindings are initialized before async operations

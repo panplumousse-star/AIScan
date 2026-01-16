@@ -3,12 +3,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/permissions/camera_permission_service.dart';
 import 'core/permissions/permission_dialog.dart';
+import 'core/storage/document_repository.dart';
 import 'core/theme/app_theme.dart';
 import 'core/widgets/animated_widgets.dart';
 import 'features/documents/presentation/documents_screen.dart';
 import 'features/scanner/presentation/scanner_screen.dart';
 
-/// The root widget of the AIScan application.
+/// Provider that checks if there are any documents in storage.
+/// Uses autoDispose to refresh when the home screen is revisited.
+final hasDocumentsProvider = FutureProvider.autoDispose<bool>((ref) async {
+  final repository = ref.read(documentRepositoryProvider);
+  final documents = await repository.getAllDocuments();
+  return documents.isNotEmpty;
+});
+
+/// The root widget of the Scanaï application.
 ///
 /// Configures MaterialApp with theming, routing, and global settings.
 /// Supports both light and dark themes with system preference detection.
@@ -64,7 +73,7 @@ class AIScanApp extends ConsumerWidget {
     );
 
     return MaterialApp(
-      title: 'AIScan',
+      title: 'Scanaï',
       debugShowCheckedModeBanner: false,
 
       // Theme configuration using centralized AppTheme with page transitions
@@ -173,7 +182,7 @@ class _PlaceholderHomeScreen extends ConsumerWidget {
     final textTheme = context.textTheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('AIScan')),
+      appBar: AppBar(),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.lg),
@@ -184,24 +193,14 @@ class _PlaceholderHomeScreen extends ConsumerWidget {
               AnimatedScaleIn(
                 duration: AppDuration.long,
                 curve: Curves.elasticOut,
-                child: Icon(
-                  Icons.document_scanner_outlined,
-                  size: 80,
-                  color: colorScheme.primary,
+                child: Image.asset(
+                  'assets/icons/icone_scanai_say_hello.png',
+                  width: 180,
+                  height: 180,
+                  fit: BoxFit.contain,
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
-              // Animated title with fade-in
-              AnimatedFadeIn(
-                delay: const Duration(milliseconds: 200),
-                child: Text(
-                  'AIScan',
-                  style: textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
               // Animated subtitle with slide-in
               AnimatedSlideIn(
                 delay: const Duration(milliseconds: 300),
@@ -231,26 +230,40 @@ class _PlaceholderHomeScreen extends ConsumerWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: AppSpacing.md),
-              // My Documents button with slide-in animation
-              AnimatedSlideIn(
-                delay: const Duration(milliseconds: 500),
-                direction: SlideDirection.up,
-                child: TapScaleFeedback(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const DocumentsScreen(),
+              // My Documents button - only show if documents exist
+              ref.watch(hasDocumentsProvider).when(
+                data: (hasDocuments) {
+                  if (!hasDocuments) return const SizedBox.shrink();
+                  return Column(
+                    children: [
+                      const SizedBox(height: AppSpacing.md),
+                      AnimatedSlideIn(
+                        delay: const Duration(milliseconds: 500),
+                        direction: SlideDirection.up,
+                        child: TapScaleFeedback(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (navContext) => DocumentsScreen(
+                                  onScanPressed: () =>
+                                      _navigateToScanner(navContext, ref),
+                                ),
+                              ),
+                            );
+                          },
+                          child: OutlinedButton.icon(
+                            onPressed: null, // Handled by TapScaleFeedback
+                            icon: const Icon(Icons.folder_outlined),
+                            label: const Text('My Documents'),
+                          ),
+                        ),
                       ),
-                    );
-                  },
-                  child: OutlinedButton.icon(
-                    onPressed: null, // Handled by TapScaleFeedback
-                    icon: const Icon(Icons.folder_outlined),
-                    label: const Text('My Documents'),
-                  ),
-                ),
+                    ],
+                  );
+                },
+                loading: () => const SizedBox.shrink(),
+                error: (_, __) => const SizedBox.shrink(),
               ),
             ],
           ),

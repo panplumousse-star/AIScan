@@ -32,7 +32,7 @@ Future<bool> showStorageSettingsDialog(BuildContext context) async {
       ),
       title: const Text('Storage Permission Required'),
       content: const Text(
-        'To share documents, AIScan needs access to storage. '
+        'To share documents, Scanaï needs access to storage. '
         'Please enable storage permission in Settings.\n\n'
         'Would you like to open Settings now?',
       ),

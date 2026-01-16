@@ -168,16 +168,6 @@ class DocumentRepository {
     return aiscanTempDir;
   }
 
-  /// Generates an encrypted file path for a document.
-  Future<String> _generateEncryptedFilePath(
-    String documentId,
-    String originalExtension,
-  ) async {
-    final documentsDir = await _getDocumentsDirectory();
-    final fileName = '$documentId$originalExtension$_encryptedExtension';
-    return path.join(documentsDir.path, fileName);
-  }
-
   /// Generates an encrypted thumbnail path for a document.
   Future<String> _generateThumbnailPath(String documentId) async {
     final thumbnailsDir = await _getThumbnailsDirectory();
@@ -189,59 +179,66 @@ class DocumentRepository {
   // Create Operations
   // ============================================================
 
-  /// Creates a new document from a source file.
+  /// Creates a new document from multiple PNG source images.
   ///
   /// This method:
   /// 1. Generates a unique ID for the document
-  /// 2. Encrypts the source file and stores it
+  /// 2. Encrypts each source image and stores it as a page
   /// 3. Optionally encrypts and stores a thumbnail
   /// 4. Creates the database record with metadata
+  /// 5. Creates page records in document_pages table
   ///
   /// Parameters:
   /// - [title]: Display title for the document
-  /// - [sourceFilePath]: Path to the unencrypted source file
+  /// - [sourceImagePaths]: List of paths to unencrypted PNG source images
   /// - [description]: Optional description
   /// - [thumbnailSourcePath]: Optional path to thumbnail image
-  /// - [pageCount]: Number of pages (default 1)
   /// - [folderId]: Optional folder ID for organization
   /// - [isFavorite]: Whether to mark as favorite
   ///
   /// Returns the created [Document] with all metadata.
   ///
   /// Throws [DocumentRepositoryException] if creation fails.
-  Future<Document> createDocument({
+  Future<Document> createDocumentWithPages({
     required String title,
-    required String sourceFilePath,
+    required List<String> sourceImagePaths,
     String? description,
     String? thumbnailSourcePath,
-    int pageCount = 1,
     String? folderId,
     bool isFavorite = false,
   }) async {
+    if (sourceImagePaths.isEmpty) {
+      throw const DocumentRepositoryException(
+        'At least one source image is required',
+      );
+    }
+
     final id = _uuid.v4();
     final now = DateTime.now();
 
     try {
-      // Validate source file exists
-      final sourceFile = File(sourceFilePath);
-      if (!await sourceFile.exists()) {
-        throw const DocumentRepositoryException(
-          'Source file does not exist',
-        );
+      // Validate all source files exist
+      int totalFileSize = 0;
+      for (final sourcePath in sourceImagePaths) {
+        final sourceFile = File(sourcePath);
+        if (!await sourceFile.exists()) {
+          throw DocumentRepositoryException(
+            'Source file does not exist: $sourcePath',
+          );
+        }
+        totalFileSize += await sourceFile.length();
       }
 
-      // Get file info
-      final fileSize = await sourceFile.length();
-      final originalFileName = path.basename(sourceFilePath);
-      final fileExtension = path.extension(sourceFilePath);
-      final mimeType = _getMimeType(fileExtension);
+      // Get file info from first page
+      final originalFileName = path.basename(sourceImagePaths.first);
 
-      // Encrypt and store the document file
-      final encryptedFilePath = await _generateEncryptedFilePath(
-        id,
-        fileExtension,
-      );
-      await _encryption.encryptFile(sourceFilePath, encryptedFilePath);
+      // Encrypt and store each page
+      final encryptedPagePaths = <String>[];
+      for (var i = 0; i < sourceImagePaths.length; i++) {
+        final encryptedPath = await _generatePageFilePath(id, i);
+        await _encryption.encryptFile(sourceImagePaths[i], encryptedPath);
+        encryptedPagePaths.add(encryptedPath);
+      }
 
       // Encrypt and store thumbnail if provided
       String? encryptedThumbnailPath;
@@ -261,12 +258,11 @@ class DocumentRepository {
         id: id,
         title: title,
         description: description,
-        filePath: encryptedFilePath,
+        pagesPaths: encryptedPagePaths,
         thumbnailPath: encryptedThumbnailPath,
         originalFileName: originalFileName,
-        pageCount: pageCount,
-        fileSize: fileSize,
-        mimeType: mimeType,
+        fileSize: totalFileSize,
+        mimeType: 'image/png',
         ocrStatus: OcrStatus.pending,
         createdAt: now,
         updatedAt: now,
@@ -274,11 +270,14 @@ class DocumentRepository {
         isFavorite: isFavorite,
       );
 
-      // Save to database
+      // Save document to database
       await _database.insert(
         DatabaseHelper.tableDocuments,
         document.toMap(),
       );
+
+      // Save pages to document_pages table
+      await _database.insertDocumentPages(id, encryptedPagePaths);
 
       return document;
     } catch (e) {
@@ -293,6 +292,13 @@ class DocumentRepository {
         cause: e,
       );
     }
+  }
+
+  /// Generates an encrypted file path for a document page.
+  Future<String> _generatePageFilePath(String documentId, int pageNumber) async {
+    final documentsDir = await _getDocumentsDirectory();
+    final fileName = '${documentId}_page_$pageNumber.png$_encryptedExtension';
+    return path.join(documentsDir.path, fileName);
   }
 
   /// Cleans up any partially created files during a failed create operation.
@@ -342,12 +348,15 @@ class DocumentRepository {
         return null;
       }
 
+      // Load page paths from document_pages table
+      final pagesPaths = await _database.getDocumentPagePaths(id);
+
       List<String>? tags;
       if (includeTags) {
         tags = await getDocumentTags(id);
       }
 
-      return Document.fromMap(result, tags: tags);
+      return Document.fromMap(result, pagesPaths: pagesPaths, tags: tags);
     } catch (e) {
       if (e is DocumentRepositoryException) {
         rethrow;
@@ -386,11 +395,13 @@ class DocumentRepository {
 
       final documents = <Document>[];
       for (final result in results) {
+        final docId = result[DatabaseHelper.columnId] as String;
+        final pagesPaths = await _database.getDocumentPagePaths(docId);
         List<String>? tags;
         if (includeTags) {
-          tags = await getDocumentTags(result[DatabaseHelper.columnId] as String);
+          tags = await getDocumentTags(docId);
         }
-        documents.add(Document.fromMap(result, tags: tags));
+        documents.add(Document.fromMap(result, pagesPaths: pagesPaths, tags: tags));
       }
 
       return documents;
@@ -427,11 +438,13 @@ class DocumentRepository {
 
       final documents = <Document>[];
       for (final result in results) {
+        final docId = result[DatabaseHelper.columnId] as String;
+        final pagesPaths = await _database.getDocumentPagePaths(docId);
         List<String>? tags;
         if (includeTags) {
-          tags = await getDocumentTags(result[DatabaseHelper.columnId] as String);
+          tags = await getDocumentTags(docId);
         }
-        documents.add(Document.fromMap(result, tags: tags));
+        documents.add(Document.fromMap(result, pagesPaths: pagesPaths, tags: tags));
       }
 
       return documents;
@@ -459,11 +472,13 @@ class DocumentRepository {
 
       final documents = <Document>[];
       for (final result in results) {
+        final docId = result[DatabaseHelper.columnId] as String;
+        final pagesPaths = await _database.getDocumentPagePaths(docId);
         List<String>? tags;
         if (includeTags) {
-          tags = await getDocumentTags(result[DatabaseHelper.columnId] as String);
+          tags = await getDocumentTags(docId);
         }
-        documents.add(Document.fromMap(result, tags: tags));
+        documents.add(Document.fromMap(result, pagesPaths: pagesPaths, tags: tags));
       }
 
       return documents;
@@ -489,32 +504,40 @@ class DocumentRepository {
     }
   }
 
-  /// Decrypts a document file to a temporary location for viewing.
+  /// Decrypts a specific page of a document to a temporary location for viewing.
   ///
   /// **Important**: The caller is responsible for deleting the returned
   /// file after use to avoid leaving unencrypted data on disk.
   ///
-  /// Returns the path to the decrypted file.
+  /// Parameters:
+  /// - [document]: The document containing the page
+  /// - [pageIndex]: Zero-based index of the page to decrypt (default: 0)
+  ///
+  /// Returns the path to the decrypted page image.
   ///
   /// Throws [DocumentRepositoryException] if decryption fails.
-  Future<String> getDecryptedFilePath(Document document) async {
+  Future<String> getDecryptedPagePath(Document document, {int pageIndex = 0}) async {
     try {
-      final encryptedFile = File(document.filePath);
+      if (pageIndex < 0 || pageIndex >= document.pageCount) {
+        throw DocumentRepositoryException(
+          'Invalid page index: $pageIndex (document has ${document.pageCount} pages)',
+        );
+      }
+
+      final encryptedPath = document.pagesPaths[pageIndex];
+      final encryptedFile = File(encryptedPath);
       if (!await encryptedFile.exists()) {
         throw const DocumentRepositoryException(
-          'Encrypted document file not found',
+          'Encrypted document page file not found',
         );
       }
 
       final tempDir = await _getTempDirectory();
-      final originalExtension = document.originalFileName != null
-          ? path.extension(document.originalFileName!)
-          : '.jpg';
       final decryptedFileName =
-          '${document.id}_${DateTime.now().millisecondsSinceEpoch}$originalExtension';
+          '${document.id}_page_${pageIndex}_${DateTime.now().millisecondsSinceEpoch}.png';
       final decryptedPath = path.join(tempDir.path, decryptedFileName);
 
-      await _encryption.decryptFile(document.filePath, decryptedPath);
+      await _encryption.decryptFile(encryptedPath, decryptedPath);
 
       return decryptedPath;
     } catch (e) {
@@ -522,7 +545,107 @@ class DocumentRepository {
         rethrow;
       }
       throw DocumentRepositoryException(
-        'Failed to decrypt document: ${document.id}',
+        'Failed to decrypt document page: ${document.id} page $pageIndex',
+        cause: e,
+      );
+    }
+  }
+
+  /// Decrypts all pages of a document to temporary locations.
+  ///
+  /// **Important**: The caller is responsible for deleting all returned
+  /// files after use to avoid leaving unencrypted data on disk.
+  ///
+  /// Returns a list of paths to the decrypted page images, in order.
+  ///
+  /// Throws [DocumentRepositoryException] if decryption fails.
+  Future<List<String>> getDecryptedAllPages(Document document) async {
+    try {
+      final decryptedPaths = <String>[];
+      final tempDir = await _getTempDirectory();
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+
+      for (var i = 0; i < document.pagesPaths.length; i++) {
+        final encryptedPath = document.pagesPaths[i];
+        final encryptedFile = File(encryptedPath);
+        if (!await encryptedFile.exists()) {
+          throw DocumentRepositoryException(
+            'Encrypted document page file not found: page $i',
+          );
+        }
+
+        final decryptedFileName = '${document.id}_page_${i}_$timestamp.png';
+        final decryptedPath = path.join(tempDir.path, decryptedFileName);
+
+        await _encryption.decryptFile(encryptedPath, decryptedPath);
+        decryptedPaths.add(decryptedPath);
+      }
+
+      return decryptedPaths;
+    } catch (e) {
+      if (e is DocumentRepositoryException) {
+        rethrow;
+      }
+      throw DocumentRepositoryException(
+        'Failed to decrypt document pages: ${document.id}',
+        cause: e,
+      );
+    }
+  }
+
+  /// Decrypts a document page and returns the raw bytes.
+  ///
+  /// Decrypts the file to a temporary location, reads the bytes, then cleans up.
+  ///
+  /// Parameters:
+  /// - [document]: The document containing the page
+  /// - [pageIndex]: Zero-based index of the page (default: 0)
+  ///
+  /// Returns the decrypted image bytes.
+  ///
+  /// Throws [DocumentRepositoryException] if decryption fails.
+  Future<List<int>> getDecryptedPageBytes(Document document, {int pageIndex = 0}) async {
+    try {
+      if (pageIndex < 0 || pageIndex >= document.pageCount) {
+        throw DocumentRepositoryException(
+          'Invalid page index: $pageIndex (document has ${document.pageCount} pages)',
+        );
+      }
+
+      final encryptedPath = document.pagesPaths[pageIndex];
+      final encryptedFile = File(encryptedPath);
+      if (!await encryptedFile.exists()) {
+        throw const DocumentRepositoryException(
+          'Encrypted document page file not found',
+        );
+      }
+
+      // Decrypt to temp file (encryptFile uses native AES-CTR, not in-memory AES-CBC)
+      final tempDir = await _getTempDirectory();
+      final decryptedFileName =
+          '${document.id}_page_${pageIndex}_${DateTime.now().millisecondsSinceEpoch}.png';
+      final decryptedPath = path.join(tempDir.path, decryptedFileName);
+
+      await _encryption.decryptFile(encryptedPath, decryptedPath);
+
+      // Read bytes from decrypted file
+      final decryptedFile = File(decryptedPath);
+      final bytes = await decryptedFile.readAsBytes();
+
+      // Clean up temp file immediately
+      try {
+        await decryptedFile.delete();
+      } catch (_) {
+        // Ignore cleanup errors
+      }
+
+      return bytes.toList();
+    } catch (e) {
+      if (e is DocumentRepositoryException) {
+        rethrow;
+      }
+      throw DocumentRepositoryException(
+        'Failed to decrypt document page bytes: ${document.id} page $pageIndex',
         cause: e,
       );
     }
@@ -602,83 +725,6 @@ class DocumentRepository {
       }
       throw DocumentRepositoryException(
         'Failed to update document: ${document.id}',
-        cause: e,
-      );
-    }
-  }
-
-  /// Updates a document's file with a new source file.
-  ///
-  /// This method:
-  /// 1. Encrypts the new source file
-  /// 2. Deletes the old encrypted file
-  /// 3. Updates the database record with the new file info
-  ///
-  /// Parameters:
-  /// - [document]: The document to update
-  /// - [newSourceFilePath]: Path to the new unencrypted source file
-  ///
-  /// Returns the updated [Document].
-  ///
-  /// Throws [DocumentRepositoryException] if the update fails.
-  Future<Document> updateDocumentFile(
-    Document document,
-    String newSourceFilePath,
-  ) async {
-    try {
-      final sourceFile = File(newSourceFilePath);
-      if (!await sourceFile.exists()) {
-        throw const DocumentRepositoryException(
-          'New source file does not exist',
-        );
-      }
-
-      // Get new file info
-      final fileSize = await sourceFile.length();
-      final originalFileName = path.basename(newSourceFilePath);
-      final fileExtension = path.extension(newSourceFilePath);
-      final mimeType = _getMimeType(fileExtension);
-
-      // Generate new encrypted file path
-      final newEncryptedPath = await _generateEncryptedFilePath(
-        document.id,
-        fileExtension,
-      );
-
-      // Encrypt new file
-      await _encryption.encryptFile(newSourceFilePath, newEncryptedPath);
-
-      // Delete old encrypted file (if different path)
-      if (document.filePath != newEncryptedPath) {
-        final oldFile = File(document.filePath);
-        if (await oldFile.exists()) {
-          await oldFile.delete();
-        }
-      }
-
-      // Update document
-      final updatedDocument = document.copyWith(
-        filePath: newEncryptedPath,
-        originalFileName: originalFileName,
-        fileSize: fileSize,
-        mimeType: mimeType,
-        updatedAt: DateTime.now(),
-      );
-
-      await _database.update(
-        DatabaseHelper.tableDocuments,
-        updatedDocument.toMap(),
-        where: '${DatabaseHelper.columnId} = ?',
-        whereArgs: [document.id],
-      );
-
-      return updatedDocument;
-    } catch (e) {
-      if (e is DocumentRepositoryException) {
-        rethrow;
-      }
-      throw DocumentRepositoryException(
-        'Failed to update document file: ${document.id}',
         cause: e,
       );
     }
@@ -865,10 +911,11 @@ class DocumentRepository {
   /// Deletes a document and its associated files.
   ///
   /// This method:
-  /// 1. Deletes the encrypted document file
+  /// 1. Deletes all encrypted page files
   /// 2. Deletes the encrypted thumbnail (if exists)
   /// 3. Removes all tag associations
-  /// 4. Deletes the database record
+  /// 4. Removes all page records
+  /// 5. Deletes the database record
   ///
   /// Throws [DocumentRepositoryException] if deletion fails.
   Future<void> deleteDocument(String documentId) async {
@@ -881,10 +928,12 @@ class DocumentRepository {
         );
       }
 
-      // Delete encrypted document file
-      final encryptedFile = File(document.filePath);
-      if (await encryptedFile.exists()) {
-        await encryptedFile.delete();
+      // Delete all encrypted page files
+      for (final pagePath in document.pagesPaths) {
+        final pageFile = File(pagePath);
+        if (await pageFile.exists()) {
+          await pageFile.delete();
+        }
       }
 
       // Delete encrypted thumbnail
@@ -895,8 +944,10 @@ class DocumentRepository {
         }
       }
 
-      // Delete tag associations (handled by CASCADE in database)
-      // Delete database record
+      // Delete page records (handled by CASCADE, but explicit for safety)
+      await _database.deleteDocumentPages(documentId);
+
+      // Delete tag associations and database record (CASCADE handles tags)
       await _database.delete(
         DatabaseHelper.tableDocuments,
         where: '${DatabaseHelper.columnId} = ?',
@@ -927,29 +978,6 @@ class DocumentRepository {
       }
       throw DocumentRepositoryException(
         'Failed to delete documents',
-        cause: e,
-      );
-    }
-  }
-
-  /// Cleans up temporary decrypted files.
-  ///
-  /// This should be called periodically or when the app goes to background.
-  ///
-  /// Throws [DocumentRepositoryException] if cleanup fails.
-  Future<void> cleanupTempFiles() async {
-    try {
-      final tempDir = await _getTempDirectory();
-      if (await tempDir.exists()) {
-        await for (final entity in tempDir.list()) {
-          if (entity is File) {
-            await entity.delete();
-          }
-        }
-      }
-    } catch (e) {
-      throw DocumentRepositoryException(
-        'Failed to cleanup temp files',
         cause: e,
       );
     }
@@ -1046,11 +1074,13 @@ class DocumentRepository {
 
       final documents = <Document>[];
       for (final result in results) {
+        final docId = result[DatabaseHelper.columnId] as String;
+        final pagesPaths = await _database.getDocumentPagePaths(docId);
         List<String>? tags;
         if (includeTags) {
-          tags = await getDocumentTags(result[DatabaseHelper.columnId] as String);
+          tags = await getDocumentTags(docId);
         }
-        documents.add(Document.fromMap(result, tags: tags));
+        documents.add(Document.fromMap(result, pagesPaths: pagesPaths, tags: tags));
       }
 
       return documents;
@@ -1119,6 +1149,27 @@ class DocumentRepository {
         return 'image/heic';
       default:
         return 'application/octet-stream';
+    }
+  }
+
+  /// Cleans up temporary decrypted files from the temp directory.
+  ///
+  /// Call this periodically to free up disk space from temporary files.
+  Future<void> cleanupTempFiles() async {
+    try {
+      final tempDir = await _getTempDirectory();
+      final tempFiles = await tempDir.list().toList();
+      for (final entity in tempFiles) {
+        if (entity is File) {
+          try {
+            await entity.delete();
+          } catch (_) {
+            // Ignore individual file deletion errors
+          }
+        }
+      }
+    } catch (_) {
+      // Ignore cleanup errors
     }
   }
 

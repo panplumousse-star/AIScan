@@ -204,8 +204,8 @@ class PDFGeneratorOptions {
     this.author,
     this.subject,
     this.keywords,
-    this.producer = 'AIScan',
-    this.creator = 'AIScan Document Scanner',
+    this.producer = 'Scanaï',
+    this.creator = 'Scanaï Document Scanner',
     this.imageQuality = 85,
     this.compressImages = true,
   });

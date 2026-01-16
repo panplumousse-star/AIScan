@@ -1,27 +1,46 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as path;
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/permissions/storage_permission_service.dart';
 import '../../../core/storage/document_repository.dart';
 import '../../documents/domain/document_model.dart';
+import '../../export/domain/pdf_generator.dart';
 
 /// Riverpod provider for [DocumentShareService].
 ///
 /// Provides a singleton instance of the document share service for
 /// dependency injection throughout the application.
-/// Depends on [StoragePermissionService] for permission checks and
-/// [DocumentRepository] for document decryption.
+/// Depends on [StoragePermissionService] for permission checks,
+/// [DocumentRepository] for document decryption, and
+/// [PDFGenerator] for PDF generation on-demand.
 final documentShareServiceProvider = Provider<DocumentShareService>((ref) {
   final permissionService = ref.read(storagePermissionServiceProvider);
   final documentRepository = ref.read(documentRepositoryProvider);
+  final pdfGenerator = ref.read(pdfGeneratorProvider);
   return DocumentShareService(
     permissionService: permissionService,
     documentRepository: documentRepository,
+    pdfGenerator: pdfGenerator,
   );
 });
+
+/// Format for sharing documents.
+enum ShareFormat {
+  /// Share as original PNG images.
+  ///
+  /// Each page is shared as a separate PNG file.
+  images,
+
+  /// Share as a single PDF document.
+  ///
+  /// All pages are combined into one PDF file.
+  pdf,
+}
 
 /// Result of a share permission check.
 ///
@@ -125,8 +144,10 @@ class DocumentShareService {
   DocumentShareService({
     required StoragePermissionService permissionService,
     required DocumentRepository documentRepository,
+    required PDFGenerator pdfGenerator,
   })  : _permissionService = permissionService,
-        _documentRepository = documentRepository;
+        _documentRepository = documentRepository,
+        _pdfGenerator = pdfGenerator;
 
   /// The storage permission service for permission checks.
   final StoragePermissionService _permissionService;
@@ -134,8 +155,14 @@ class DocumentShareService {
   /// The document repository for file operations.
   final DocumentRepository _documentRepository;
 
+  /// The PDF generator for creating PDFs on-demand.
+  final PDFGenerator _pdfGenerator;
+
   /// MIME type for PDF documents.
   static const String _pdfMimeType = 'application/pdf';
+
+  /// MIME type for PNG images.
+  static const String _pngMimeType = 'image/png';
 
   // ============================================================
   // Permission Checking
@@ -246,8 +273,8 @@ class DocumentShareService {
   /// Shares a single document via the native share sheet.
   ///
   /// This method:
-  /// 1. Decrypts the document to a temporary file
-  /// 2. Creates an XFile with PDF mime type
+  /// 1. Decrypts the document pages to temporary files
+  /// 2. Optionally generates a PDF from the pages
   /// 3. Opens the native share sheet
   ///
   /// **Important**: Call [cleanupTempFiles] with the returned paths
@@ -255,6 +282,7 @@ class DocumentShareService {
   ///
   /// Parameters:
   /// - [document]: The document to share
+  /// - [format]: The format to share in (images or PDF, default: PDF)
   /// - [subject]: Optional subject line for email sharing
   ///
   /// Returns a [ShareResult] with sharing details and cleanup paths.
@@ -264,10 +292,15 @@ class DocumentShareService {
   /// ## Example
   /// ```dart
   /// try {
+  ///   // Share as PDF (default)
+  ///   final result = await shareService.shareDocument(document);
+  ///
+  ///   // Or share as images
   ///   final result = await shareService.shareDocument(
   ///     document,
-  ///     subject: 'Document: ${document.title}',
+  ///     format: ShareFormat.images,
   ///   );
+  ///
   ///   // Clean up temp files
   ///   await shareService.cleanupTempFiles(result.tempFilePaths);
   /// } on DocumentShareException catch (e) {
@@ -276,16 +309,17 @@ class DocumentShareService {
   /// ```
   Future<ShareResult> shareDocument(
     Document document, {
+    ShareFormat format = ShareFormat.pdf,
     String? subject,
   }) async {
-    return shareDocuments([document], subject: subject);
+    return shareDocuments([document], format: format, subject: subject);
   }
 
   /// Shares multiple documents via the native share sheet.
   ///
   /// This method:
-  /// 1. Decrypts all documents to temporary files
-  /// 2. Creates XFile instances with PDF mime type
+  /// 1. Decrypts all document pages to temporary files
+  /// 2. Optionally generates PDFs from the pages
   /// 3. Opens the native share sheet with all files
   ///
   /// **Important**: Call [cleanupTempFiles] with the returned paths
@@ -293,6 +327,7 @@ class DocumentShareService {
   ///
   /// Parameters:
   /// - [documents]: List of documents to share
+  /// - [format]: The format to share in (images or PDF, default: PDF)
   /// - [subject]: Optional subject line for email sharing
   ///
   /// Returns a [ShareResult] with sharing details and cleanup paths.
@@ -306,12 +341,18 @@ class DocumentShareService {
   /// ## Example
   /// ```dart
   /// try {
+  ///   // Share as PDF (each document becomes one PDF)
   ///   final result = await shareService.shareDocuments(
   ///     selectedDocuments,
-  ///     subject: 'Shared Documents',
+  ///     format: ShareFormat.pdf,
   ///   );
-  ///   print('Shared ${result.sharedCount} documents');
-  ///   // Clean up temp files
+  ///
+  ///   // Or share as images (all pages as separate PNGs)
+  ///   final result = await shareService.shareDocuments(
+  ///     selectedDocuments,
+  ///     format: ShareFormat.images,
+  ///   );
+  ///
   ///   await shareService.cleanupTempFiles(result.tempFilePaths);
   /// } on DocumentShareException catch (e) {
   ///   showShareErrorSnackbar(context, e.message);
@@ -319,6 +360,7 @@ class DocumentShareService {
   /// ```
   Future<ShareResult> shareDocuments(
     List<Document> documents, {
+    ShareFormat format = ShareFormat.pdf,
     String? subject,
   }) async {
     if (documents.isEmpty) {
@@ -329,20 +371,38 @@ class DocumentShareService {
     final xFiles = <XFile>[];
 
     try {
-      // Documents are already stored as PDFs, just decrypt and share
       for (final document in documents) {
-        // Get decrypted file path (already a PDF)
-        final decryptedPath = await _getDecryptedFilePath(document);
-        tempFilePaths.add(decryptedPath);
+        // Get decrypted page paths
+        final pagePaths = await _getDecryptedPagePaths(document);
+        tempFilePaths.addAll(pagePaths);
 
-        // Create XFile with PDF mime type
-        final fileName = _getShareFileName(document);
-        final xFile = XFile(
-          decryptedPath,
-          mimeType: _pdfMimeType,
-          name: fileName,
-        );
-        xFiles.add(xFile);
+        if (format == ShareFormat.pdf) {
+          // Generate PDF from pages
+          final pdfPath = await _generatePdfFromPages(document, pagePaths);
+          tempFilePaths.add(pdfPath);
+
+          final xFile = XFile(
+            pdfPath,
+            mimeType: _pdfMimeType,
+            name: _getShareFileName(document, extension: 'pdf'),
+          );
+          xFiles.add(xFile);
+        } else {
+          // Share as individual images
+          for (var i = 0; i < pagePaths.length; i++) {
+            final pagePath = pagePaths[i];
+            final fileName = document.pageCount > 1
+                ? '${_getShareFileName(document, extension: 'png').replaceAll('.png', '')}_page_${i + 1}.png'
+                : _getShareFileName(document, extension: 'png');
+
+            final xFile = XFile(
+              pagePath,
+              mimeType: _pngMimeType,
+              name: fileName,
+            );
+            xFiles.add(xFile);
+          }
+        }
       }
 
       // Generate subject if not provided
@@ -477,12 +537,12 @@ class DocumentShareService {
   // Private Helper Methods
   // ============================================================
 
-  /// Gets the decrypted file path for a document.
+  /// Gets all decrypted page paths for a document.
   ///
   /// Throws [DocumentShareException] if the document cannot be decrypted.
-  Future<String> _getDecryptedFilePath(Document document) async {
+  Future<List<String>> _getDecryptedPagePaths(Document document) async {
     try {
-      return await _documentRepository.getDecryptedFilePath(document);
+      return await _documentRepository.getDecryptedAllPages(document);
     } on DocumentRepositoryException catch (e) {
       if (e.message.contains('not found')) {
         throw DocumentShareException(
@@ -497,17 +557,61 @@ class DocumentShareService {
     }
   }
 
+  /// Generates a PDF from decrypted page images.
+  ///
+  /// Returns the path to the generated PDF file.
+  Future<String> _generatePdfFromPages(
+    Document document,
+    List<String> pagePaths,
+  ) async {
+    try {
+      // Read page images
+      final imageBytesList = <Uint8List>[];
+      for (final pagePath in pagePaths) {
+        final file = File(pagePath);
+        final bytes = await file.readAsBytes();
+        imageBytesList.add(bytes);
+      }
+
+      // Generate PDF
+      final pdfResult = await _pdfGenerator.generateFromBytes(
+        imageBytesList: imageBytesList,
+        options: PDFGeneratorOptions(
+          title: document.title,
+          imageQuality: 95,
+          pageSize: PDFPageSize.a4,
+          orientation: PDFOrientation.auto,
+          imageFit: PDFImageFit.contain,
+        ),
+      );
+
+      // Save PDF to temp file
+      final tempDir = Directory.systemTemp;
+      final pdfFileName = _getShareFileName(document, extension: 'pdf');
+      final pdfPath = path.join(tempDir.path, pdfFileName);
+      final pdfFile = File(pdfPath);
+      await pdfFile.writeAsBytes(pdfResult.bytes);
+
+      return pdfPath;
+    } catch (e) {
+      throw DocumentShareException(
+        'Failed to generate PDF: ${document.title}',
+        cause: e,
+      );
+    }
+  }
+
   /// Generates a file name for sharing.
   ///
-  /// Uses the document title with .pdf extension, sanitized for file system.
-  String _getShareFileName(Document document) {
+  /// Uses the document title with the specified extension, sanitized for file system.
+  String _getShareFileName(Document document, {required String extension}) {
     final title = document.title.isNotEmpty ? document.title : 'Document';
     final sanitized = title
         .replaceAll(RegExp(r'[<>:"/\\|?*]'), '_')
         .replaceAll(RegExp(r'\s+'), '_')
         .replaceAll(RegExp(r'_+'), '_')
         .trim();
-    return '$sanitized.pdf';
+    return '$sanitized.$extension';
   }
 
   /// Generates a subject line for sharing multiple documents.

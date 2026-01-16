@@ -322,7 +322,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   children: [
                     _SettingsInfoTile(
                       icon: Icons.info_outline,
-                      title: 'AIScan',
+                      title: 'Scanaï',
                       subtitle: 'Version 1.0.0',
                       theme: theme,
                     ),

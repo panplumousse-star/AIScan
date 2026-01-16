@@ -1,4 +1,4 @@
-# Analysis options for AIScan Flutter project.
+# Analysis options for Scanaï Flutter project.
 # This file configures the analyzer to use the flutter_lints package.
 
 include: package:flutter_lints/flutter.yaml

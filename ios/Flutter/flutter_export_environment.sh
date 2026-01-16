@@ -1,7 +1,7 @@
 #!/bin/sh
 # This is a generated file; do not edit or check into version control.
-export "FLUTTER_ROOT=/home/plum_-/snap/flutter/common/flutter"
-export "FLUTTER_APPLICATION_PATH=/home/plum_-/AIscan/aiscan/.auto-claude/worktrees/tasks/001-plan"
+export "FLUTTER_ROOT=/mnt/c/Users/PluM_/flutter"
+export "FLUTTER_APPLICATION_PATH=/home/plum_-/AIscan/aiscan"
 export "COCOAPODS_PARALLEL_CODE_SIGN=true"
 export "FLUTTER_TARGET=lib/main.dart"
 export "FLUTTER_BUILD_DIR=build"

@@ -286,25 +286,32 @@ enum OcrStatus {
 /// a scanned file with associated metadata, OCR text, and organizational
 /// properties.
 ///
+/// ## Multi-Page Support
+/// Documents can contain multiple pages, each stored as a separate encrypted
+/// PNG image. The [pagesPaths] field contains the ordered list of encrypted
+/// page file paths. Use [filePath] getter for backward compatibility (returns
+/// first page path).
+///
 /// ## Database Schema Alignment
 /// This model aligns with the `documents` table in SQLite:
 /// - Primary key: [id] (UUID string)
-/// - Required fields: [title], [filePath], [createdAt], [updatedAt]
+/// - Required fields: [title], [createdAt], [updatedAt]
 /// - Optional fields: All other properties
+/// - Pages are stored in the separate `document_pages` table
 ///
 /// ## Security Considerations
-/// - [filePath] points to an encrypted file on disk
+/// - [pagesPaths] points to encrypted PNG files on disk
 /// - [thumbnailPath] points to an encrypted thumbnail
 /// - [ocrText] contains encrypted OCR results (encrypted in database)
 /// - Never store or log unencrypted document content
 ///
 /// ## Usage
 /// ```dart
-/// // Create a new document
+/// // Create a new document with multiple pages
 /// final doc = Document(
 ///   id: uuid.v4(),
 ///   title: 'My Document',
-///   filePath: '/path/to/encrypted/file.enc',
+///   pagesPaths: ['/path/to/page1.enc', '/path/to/page2.enc'],
 ///   createdAt: DateTime.now(),
 ///   updatedAt: DateTime.now(),
 /// );
@@ -313,8 +320,8 @@ enum OcrStatus {
 /// final map = doc.toMap();
 /// await database.insert('documents', map);
 ///
-/// // Create from database result
-/// final doc = Document.fromMap(queryResult);
+/// // Create from database result (pages loaded separately)
+/// final doc = Document.fromMap(queryResult, pagesPaths: pagePaths);
 ///
 /// // Update with copyWith
 /// final updated = doc.copyWith(title: 'New Title');
@@ -326,19 +333,18 @@ class Document {
   /// Required parameters:
   /// - [id]: Unique identifier (UUID string)
   /// - [title]: Display title of the document
-  /// - [filePath]: Path to the encrypted document file
+  /// - [pagesPaths]: List of paths to encrypted page images (PNG)
   /// - [createdAt]: Creation timestamp
   /// - [updatedAt]: Last modification timestamp
   const Document({
     required this.id,
     required this.title,
-    required this.filePath,
+    required this.pagesPaths,
     required this.createdAt,
     required this.updatedAt,
     this.description,
     this.thumbnailPath,
     this.originalFileName,
-    this.pageCount = 1,
     this.fileSize = 0,
     this.mimeType,
     this.ocrText,
@@ -362,11 +368,22 @@ class Document {
   /// Optional description or notes about the document.
   final String? description;
 
-  /// Path to the encrypted document file on disk.
+  /// List of paths to encrypted page images.
   ///
-  /// This file is encrypted using AES-256 and should only be accessed
-  /// through the EncryptionService.
-  final String filePath;
+  /// Each page is stored as a separate encrypted PNG file.
+  /// The list is ordered by page number (first element = page 1).
+  /// This field is populated from the `document_pages` table.
+  final List<String> pagesPaths;
+
+  /// Path to the first page (for backward compatibility).
+  ///
+  /// Returns empty string if no pages exist.
+  String get filePath => pagesPaths.isNotEmpty ? pagesPaths.first : '';
+
+  /// Number of pages in the document.
+  ///
+  /// Computed from [pagesPaths] length.
+  int get pageCount => pagesPaths.length;
 
   /// Path to the encrypted thumbnail image.
   ///
@@ -378,17 +395,12 @@ class Document {
   /// Preserved for export functionality to restore the original name.
   final String? originalFileName;
 
-  /// Number of pages in the document.
-  ///
-  /// Defaults to 1 for single-page scans.
-  final int pageCount;
-
-  /// File size in bytes (of the encrypted file).
+  /// Total file size in bytes (sum of all encrypted pages).
   final int fileSize;
 
-  /// MIME type of the original document.
+  /// MIME type of the document pages.
   ///
-  /// Common values: 'image/jpeg', 'image/png', 'application/pdf'
+  /// For PNG storage: 'image/png'
   final String? mimeType;
 
   /// OCR-extracted text content.
@@ -428,17 +440,23 @@ class Document {
   /// The [map] should contain keys matching the database column names.
   /// Missing optional fields will use their default values.
   ///
+  /// Required parameters:
+  /// - [pagesPaths]: List of page file paths (loaded from document_pages table)
+  ///
   /// Optionally accepts a [tags] list to populate the tags field,
   /// since tags come from a separate junction table query.
-  factory Document.fromMap(Map<String, dynamic> map, {List<String>? tags}) {
+  factory Document.fromMap(
+    Map<String, dynamic> map, {
+    required List<String> pagesPaths,
+    List<String>? tags,
+  }) {
     return Document(
       id: map['id'] as String,
       title: map['title'] as String,
       description: map['description'] as String?,
-      filePath: map['file_path'] as String,
+      pagesPaths: pagesPaths,
       thumbnailPath: map['thumbnail_path'] as String?,
       originalFileName: map['original_file_name'] as String?,
-      pageCount: map['page_count'] as int? ?? 1,
       fileSize: map['file_size'] as int? ?? 0,
       mimeType: map['mime_type'] as String?,
       ocrText: map['ocr_text'] as String?,
@@ -454,7 +472,8 @@ class Document {
   /// Converts this document to a map suitable for database insertion.
   ///
   /// The returned map uses database column names as keys.
-  /// The [tags] field is not included as it's stored in a separate table.
+  /// Note: [tags] and [pagesPaths] are not included as they're stored
+  /// in separate tables (document_tags and document_pages).
   ///
   /// Example:
   /// ```dart
@@ -466,10 +485,8 @@ class Document {
       'id': id,
       'title': title,
       'description': description,
-      'file_path': filePath,
       'thumbnail_path': thumbnailPath,
       'original_file_name': originalFileName,
-      'page_count': pageCount,
       'file_size': fileSize,
       'mime_type': mimeType,
       'ocr_text': ocrText,
@@ -497,10 +514,9 @@ class Document {
     String? id,
     String? title,
     String? description,
-    String? filePath,
+    List<String>? pagesPaths,
     String? thumbnailPath,
     String? originalFileName,
-    int? pageCount,
     int? fileSize,
     String? mimeType,
     String? ocrText,
@@ -522,14 +538,13 @@ class Document {
       id: id ?? this.id,
       title: title ?? this.title,
       description: clearDescription ? null : (description ?? this.description),
-      filePath: filePath ?? this.filePath,
+      pagesPaths: pagesPaths ?? this.pagesPaths,
       thumbnailPath: clearThumbnailPath
           ? null
           : (thumbnailPath ?? this.thumbnailPath),
       originalFileName: clearOriginalFileName
           ? null
           : (originalFileName ?? this.originalFileName),
-      pageCount: pageCount ?? this.pageCount,
       fileSize: fileSize ?? this.fileSize,
       mimeType: clearMimeType ? null : (mimeType ?? this.mimeType),
       ocrText: clearOcrText ? null : (ocrText ?? this.ocrText),
@@ -605,10 +620,9 @@ class Document {
         other.id == id &&
         other.title == title &&
         other.description == description &&
-        other.filePath == filePath &&
+        listEquals(other.pagesPaths, pagesPaths) &&
         other.thumbnailPath == thumbnailPath &&
         other.originalFileName == originalFileName &&
-        other.pageCount == pageCount &&
         other.fileSize == fileSize &&
         other.mimeType == mimeType &&
         other.ocrText == ocrText &&
@@ -626,10 +640,9 @@ class Document {
       id,
       title,
       description,
-      filePath,
+      Object.hashAll(pagesPaths),
       thumbnailPath,
       originalFileName,
-      pageCount,
       fileSize,
       mimeType,
       ocrText,

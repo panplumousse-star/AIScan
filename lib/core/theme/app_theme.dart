@@ -727,7 +727,7 @@ abstract final class AppTheme {
       ),
 
       // Scaffold Background
-      scaffoldBackgroundColor: const Color(0xFFF6F8FB),
+      scaffoldBackgroundColor: AppColors.surfaceDark,
 
       // Card Theme
       cardTheme: CardThemeData(

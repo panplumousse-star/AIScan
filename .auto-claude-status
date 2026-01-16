@@ -1,17 +1,17 @@
 {
   "active": true,
-  "spec": "009-share-docs",
+  "spec": "011-grid-folder",
   "state": "building",
   "subtasks": {
     "completed": 2,
-    "total": 11,
+    "total": 8,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Storage Permission Service",
+    "current": "Grid Folder Display Implementation",
     "id": null,
-    "total": 2
+    "total": 5
   },
   "workers": {
     "active": 0,
@@ -19,7 +19,7 @@
   },
   "session": {
     "number": 3,
-    "started_at": "2026-01-12T17:11:39.209576"
+    "started_at": "2026-01-16T11:24:02.063005"
   },
-  "last_update": "2026-01-12T17:13:44.103157"
+  "last_update": "2026-01-16T11:28:50.112351"
 }

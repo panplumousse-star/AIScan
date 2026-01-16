@@ -2384,8 +2384,8 @@ class _QuickScanFab extends StatelessWidget {
   }
 }
 
-/// Section displaying folders in a horizontal scrollable list.
-class _FoldersSection extends StatelessWidget {
+/// Section displaying folders in a paginated 2x4 grid layout.
+class _FoldersSection extends StatefulWidget {
   const _FoldersSection({
     required this.folders,
     required this.onFolderTap,
@@ -2397,6 +2397,37 @@ class _FoldersSection extends StatelessWidget {
   final ThemeData theme;
 
   @override
+  State<_FoldersSection> createState() => _FoldersSectionState();
+}
+
+class _FoldersSectionState extends State<_FoldersSection> {
+  late final PageController _pageController;
+  int _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+    _pageController.addListener(_onPageChanged);
+  }
+
+  @override
+  void dispose() {
+    _pageController.removeListener(_onPageChanged);
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _onPageChanged() {
+    final page = _pageController.page?.round() ?? 0;
+    if (page != _currentPage) {
+      setState(() {
+        _currentPage = page;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2405,8 +2436,8 @@ class _FoldersSection extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
           child: Text(
             'Folders',
-            style: theme.textTheme.titleSmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+            style: widget.theme.textTheme.titleSmall?.copyWith(
+              color: widget.theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ),
@@ -2415,13 +2446,13 @@ class _FoldersSection extends StatelessWidget {
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12),
-            itemCount: folders.length,
+            itemCount: widget.folders.length,
             itemBuilder: (context, index) {
-              final folder = folders[index];
+              final folder = widget.folders[index];
               return _FolderCard(
                 folder: folder,
-                onTap: () => onFolderTap(folder),
-                theme: theme,
+                onTap: () => widget.onFolderTap(folder),
+                theme: widget.theme,
               );
             },
           ),
@@ -2431,8 +2462,8 @@ class _FoldersSection extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
           child: Text(
             'Documents',
-            style: theme.textTheme.titleSmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+            style: widget.theme.textTheme.titleSmall?.copyWith(
+              color: widget.theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ),

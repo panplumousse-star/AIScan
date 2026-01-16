@@ -2476,6 +2476,13 @@ class _FoldersSectionState extends State<_FoldersSection> {
             },
           ),
         ),
+        // Page indicator dots (only show if multiple pages)
+        if ((widget.folders.length / 8).ceil() > 1)
+          _PageIndicatorDots(
+            totalPages: (widget.folders.length / 8).ceil(),
+            currentPage: _currentPage,
+            theme: widget.theme,
+          ),
         const Divider(height: 16),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
@@ -2549,6 +2556,44 @@ class _FolderCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Page indicator dots for multi-page navigation feedback.
+class _PageIndicatorDots extends StatelessWidget {
+  const _PageIndicatorDots({
+    required this.totalPages,
+    required this.currentPage,
+    required this.theme,
+  });
+
+  final int totalPages;
+  final int currentPage;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(
+          totalPages,
+          (index) => AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            width: index == currentPage ? 16 : 8,
+            height: 8,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(4),
+              color: index == currentPage
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+            ),
           ),
         ),
       ),

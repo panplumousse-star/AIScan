@@ -4,118 +4,26 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../../../core/storage/document_repository.dart';
 import '../../folders/domain/folder_model.dart';
 import '../../folders/domain/folder_service.dart';
 import '../../ocr/presentation/ocr_results_screen.dart';
+import '../../settings/presentation/settings_screen.dart';
 import '../../sharing/domain/document_share_service.dart';
 import '../domain/document_model.dart';
 import 'document_detail_screen.dart';
+import 'models/documents_ui_models.dart';
+import 'widgets/bento_documents_widgets.dart';
 import 'widgets/filter_sheet.dart';
+import '../../../core/widgets/bento_background.dart';
+import '../../../core/widgets/bento_card.dart';
+import '../../../core/widgets/bento_mascot.dart';
 
-/// View mode for the documents list.
-enum DocumentsViewMode {
-  /// Display documents in a grid layout with large thumbnails.
-  grid,
-
-  /// Display documents in a list layout with smaller thumbnails.
-  list,
-}
-
-/// Sort options for documents.
-enum DocumentsSortBy {
-  /// Sort by creation date (newest first).
-  createdDesc('Recent', Icons.schedule),
-
-  /// Sort by creation date (oldest first).
-  createdAsc('Oldest', Icons.history),
-
-  /// Sort by title (alphabetically).
-  title('Title', Icons.sort_by_alpha),
-
-  /// Sort by file size (largest first).
-  size('Size', Icons.storage),
-
-  /// Sort by last modified date.
-  updatedDesc('Modified', Icons.update);
-
-  const DocumentsSortBy(this.label, this.icon);
-
-  /// Display label for this sort option.
-  final String label;
-
-  /// Icon for this sort option.
-  final IconData icon;
-}
-
-/// Filter options for documents.
-@immutable
-class DocumentsFilter {
-  /// Creates a [DocumentsFilter] with default values.
-  const DocumentsFilter({
-    this.folderId,
-    this.favoritesOnly = false,
-    this.hasOcrOnly = false,
-    this.tagIds = const [],
-  });
-
-  /// Filter to a specific folder. Null means all documents.
-  final String? folderId;
-
-  /// Show only favorite documents.
-  final bool favoritesOnly;
-
-  /// Show only documents with OCR text.
-  final bool hasOcrOnly;
-
-  /// Filter to documents with specific tags.
-  final List<String> tagIds;
-
-  /// Whether any filter is active.
-  bool get hasActiveFilters =>
-      folderId != null || favoritesOnly || hasOcrOnly || tagIds.isNotEmpty;
-
-  /// Creates a copy with updated values.
-  DocumentsFilter copyWith({
-    String? folderId,
-    bool? favoritesOnly,
-    bool? hasOcrOnly,
-    List<String>? tagIds,
-    bool clearFolderId = false,
-    bool clearTags = false,
-  }) {
-    return DocumentsFilter(
-      folderId: clearFolderId ? null : (folderId ?? this.folderId),
-      favoritesOnly: favoritesOnly ?? this.favoritesOnly,
-      hasOcrOnly: hasOcrOnly ?? this.hasOcrOnly,
-      tagIds: clearTags ? const [] : (tagIds ?? this.tagIds),
-    );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    if (other is! DocumentsFilter) return false;
-    return folderId == other.folderId &&
-        favoritesOnly == other.favoritesOnly &&
-        hasOcrOnly == other.hasOcrOnly &&
-        _listEquals(tagIds, other.tagIds);
-  }
-
-  @override
-  int get hashCode =>
-      Object.hash(folderId, favoritesOnly, hasOcrOnly, Object.hashAll(tagIds));
-
-  bool _listEquals(List<String> a, List<String> b) {
-    if (a.length != b.length) return false;
-    for (int i = 0; i < a.length; i++) {
-      if (a[i] != b[i]) return false;
-    }
-    return true;
-  }
-}
+// View models have been moved to models/documents_ui_models.dart
 
 /// State for the documents screen.
 @immutable
@@ -332,11 +240,15 @@ class DocumentsScreenState {
 /// Manages document loading, filtering, sorting, and selection.
 class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
   /// Creates a [DocumentsScreenNotifier] with the given repository and folder service.
-  DocumentsScreenNotifier(this._repository, this._folderService)
-    : super(const DocumentsScreenState());
+  DocumentsScreenNotifier(
+    this._repository, 
+    this._folderService,
+    this._shareService,
+  ) : super(const DocumentsScreenState());
 
   final DocumentRepository _repository;
   final FolderService _folderService;
+  final DocumentShareService _shareService;
 
   /// Initializes the screen and loads documents.
   Future<void> initialize() async {
@@ -760,6 +672,44 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
     }
   }
 
+  /// Toggles favorite status for all selected documents.
+  Future<void> toggleFavoriteSelected() async {
+    if (state.selectedDocumentIds.isEmpty) return;
+    
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      for (final id in state.selectedDocumentIds) {
+        await _repository.toggleFavorite(id);
+      }
+      state = state.copyWith(clearSelection: true);
+      await loadDocuments();
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Échec de la mise à jour des favoris : $e',
+      );
+    }
+  }
+
+  /// Shares all selected documents.
+  Future<void> shareSelected() async {
+    if (state.selectedDocumentIds.isEmpty) return;
+    
+    try {
+      final documents = <Document>[];
+      for (final id in state.selectedDocumentIds) {
+        final doc = await _repository.getDocument(id);
+        if (doc != null) documents.add(doc);
+      }
+      
+      if (documents.isNotEmpty) {
+        await _shareService.shareDocuments(documents);
+      }
+    } catch (e) {
+      state = state.copyWith(error: 'Échec du partage : $e');
+    }
+  }
+
   // ============================================================
   // Folder Selection and Management Methods
   // ============================================================
@@ -958,7 +908,8 @@ final documentsScreenProvider =
     >((ref) {
       final repository = ref.watch(documentRepositoryProvider);
       final folderService = ref.watch(folderServiceProvider);
-      return DocumentsScreenNotifier(repository, folderService);
+      final shareService = ref.watch(documentShareServiceProvider);
+      return DocumentsScreenNotifier(repository, folderService, shareService);
     });
 
 /// Main documents library screen.
@@ -1067,170 +1018,130 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     });
 
     return Scaffold(
-      appBar: _buildAppBar(context, state, notifier, theme),
+      backgroundColor: Colors.transparent,
       body: _buildBody(context, state, notifier, theme),
       floatingActionButton: _buildFab(context, state),
     );
   }
 
-  PreferredSizeWidget _buildAppBar(
+  Widget _buildTopAppBar(BuildContext context, ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
+    
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+      child: Row(
+        children: [
+          BentoBouncingWidget(
+            child: Container(
+              decoration: BoxDecoration(
+                color: isDark 
+                    ? Colors.white.withValues(alpha: 0.1) 
+                    : Colors.white.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark 
+                      ? Colors.white.withValues(alpha: 0.1) 
+                      : const Color(0xFFE2E8F0),
+                ),
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back_rounded),
+                color: isDark ? Colors.white : const Color(0xFF1E1B4B),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+          ),
+          const Spacer(),
+          Text(
+            'Mes Documents',
+            style: GoogleFonts.outfit(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
+            ),
+          ),
+          const Spacer(),
+          const SizedBox(width: 48), // Balance spacing
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBentoHeader(
     BuildContext context,
     DocumentsScreenState state,
     DocumentsScreenNotifier notifier,
     ThemeData theme,
   ) {
-    if (state.isSelectionMode) {
-      // Check if documents are selected (to show share/move buttons)
-      final hasDocuments = state.selectedDocumentCount > 0;
-
-      return AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: notifier.exitSelectionMode,
-          tooltip: 'Cancel selection',
-        ),
-        title: Text('${state.selectedCount} selected'),
-        actions: [
-          IconButton(
-            icon: Icon(state.allSelected ? Icons.deselect : Icons.select_all),
-            onPressed: state.allSelected
-                ? notifier.clearSelection
-                : notifier.selectAllItems,
-            tooltip: state.allSelected ? 'Deselect all' : 'Select all',
-          ),
-          // Share - only for documents
-          if (hasDocuments)
-            IconButton(
-              icon: const Icon(Icons.share),
-              onPressed: () => _handleShareSelected(context, state),
-              tooltip: 'Share selected',
-            ),
-          // Move to folder - only for documents
-          if (hasDocuments)
-            IconButton(
-              icon: const Icon(Icons.drive_file_move_outlined),
-              onPressed: () => _showMoveSelectedToFolderDialog(context, state, notifier),
-              tooltip: 'Move to folder',
-            ),
-          // Delete - always available
-          IconButton(
-            icon: const Icon(Icons.delete_outline),
-            onPressed: state.selectedCount > 0
-                ? () => _showDeleteConfirmation(context, state, notifier)
-                : null,
-            tooltip: 'Delete selected',
-          ),
-        ],
-      );
-    }
-
-    return AppBar(
-      leading: state.isAtRoot
-          ? null
-          : IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: notifier.exitFolder,
-              tooltip: 'Back',
-            ),
-      title: Text(state.currentFolder?.name ?? 'My Documents'),
-      actions: [
-        // View mode toggle
-        IconButton(
-          icon: Icon(
-            state.viewMode == DocumentsViewMode.grid
-                ? Icons.view_list_outlined
-                : Icons.grid_view_outlined,
-          ),
-          onPressed: notifier.toggleViewMode,
-          tooltip: state.viewMode == DocumentsViewMode.grid
-              ? 'Switch to list view'
-              : 'Switch to grid view',
-        ),
-        // Filter button with badge indicator
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            IconButton(
-              icon: const Icon(Icons.tune),
-              onPressed: () => _showFilterSheet(context, state, notifier),
-              tooltip: 'Sort & Filter',
-            ),
-            // Active filter indicator
-            if (state.filter.hasActiveFilters ||
-                state.sortBy != DocumentsSortBy.createdDesc)
-              Positioned(
-                top: 8,
-                right: 8,
-                child: Container(
-                  width: 10,
-                  height: 10,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: theme.colorScheme.surface,
-                      width: 1.5,
+    final isDark = theme.brightness == Brightness.dark;
+    
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          // Speech Bubble (Left)
+          Expanded(
+            flex: 5,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                BentoCard(
+                  height: 64,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  backgroundColor: isDark 
+                      ? const Color(0xFF1E293B).withValues(alpha: 0.6) 
+                      : const Color(0xFFF1F5F9).withValues(alpha: 0.8),
+                  borderRadius: 20,
+                  child: Center(
+                    child: Text(
+                      'Que cherches-tu ?',
+                      style: GoogleFonts.outfit(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: theme.colorScheme.onSurface,
+                        letterSpacing: -0.5,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                 ),
-              ),
-          ],
-        ),
-        // Quick favorites filter toggle
-        IconButton(
-          icon: Icon(
-            state.filter.favoritesOnly ? Icons.favorite : Icons.favorite_border,
-            color: state.filter.favoritesOnly ? theme.colorScheme.error : null,
-          ),
-          onPressed: notifier.toggleFavoritesFilter,
-          tooltip: state.filter.favoritesOnly
-              ? 'Show all documents'
-              : 'Show favorites only',
-        ),
-        // Create new folder button (only at root level)
-        if (state.isAtRoot)
-          IconButton(
-            icon: const Icon(Icons.create_new_folder_outlined),
-            onPressed: () => _showCreateNewFolderDialog(context, notifier),
-            tooltip: 'Create new folder',
-          ),
-        // Edit folder button (only when inside a folder)
-        if (!state.isAtRoot && state.currentFolder != null)
-          IconButton(
-            icon: const Icon(Icons.edit_outlined),
-            onPressed: () => _showFolderEditDialog(context, state.currentFolder!, notifier),
-            tooltip: 'Edit folder',
-          ),
-      ],
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(56),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-          child: TextField(
-            controller: _searchController,
-            onChanged: notifier.setSearchQuery,
-            decoration: InputDecoration(
-              hintText: 'Search by name or OCR text...',
-              prefixIcon: const Icon(Icons.search),
-              suffixIcon: state.hasSearch
-                  ? IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        _searchController.clear();
-                        notifier.clearSearch();
-                      },
-                    )
-                  : null,
-              filled: true,
-              fillColor: theme.colorScheme.surfaceContainerHighest,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(28),
-                borderSide: BorderSide.none,
-              ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                // The Bubble Tail (Pointing Right to Mascot)
+                Positioned(
+                  right: -9, 
+                  top: 12,
+                  child: CustomPaint(
+                    size: const Size(12, 16),
+                    painter: _BubbleTailPainter(
+                      color: isDark 
+                          ? const Color(0xFF1E293B).withValues(alpha: 0.6) 
+                          : const Color(0xFFF1F5F9).withValues(alpha: 0.8),
+                      borderColor: isDark 
+                          ? const Color(0xFFFFFFFF).withValues(alpha: 0.1) 
+                          : const Color(0xFFE2E8F0),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
+          const SizedBox(width: 16),
+          // Mascot Tile (Right)
+          Expanded(
+            flex: 5,
+            child: BentoCard(
+              height: 110,
+              padding: const EdgeInsets.all(8),
+              backgroundColor: isDark 
+                  ? const Color(0xFF000000).withValues(alpha: 0.6) 
+                  : Colors.white.withValues(alpha: 0.6),
+              borderRadius: 20,
+              child: const Center(
+                child: WavingMascot(height: 90),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1241,6 +1152,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     DocumentsScreenNotifier notifier,
     ThemeData theme,
   ) {
+    final isDark = theme.brightness == Brightness.dark;
     // Show loading while initializing (before first load completes)
     if (!state.isInitialized) {
       return const Center(
@@ -1268,33 +1180,102 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
 
     // Empty folder message
     if (!state.hasDocuments && !state.hasFolders && !state.isAtRoot) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.folder_open_outlined,
-              size: 64,
-              color: theme.colorScheme.onSurfaceVariant,
+      return Stack(
+        children: [
+          const BentoBackground(),
+          Center(
+            child: BentoCard(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
+              backgroundColor: isDark 
+                  ? Colors.white.withValues(alpha: 0.05) 
+                  : Colors.white.withValues(alpha: 0.7),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.folder_open_rounded,
+                      size: 48,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Ce dossier est vide',
+                    style: GoogleFonts.outfit(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Ajoutez vos premiers documents !',
+                    style: GoogleFonts.outfit(
+                      fontSize: 14,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  FilledButton.icon(
+                    onPressed: () => notifier.exitFolder(),
+                    icon: const Icon(Icons.arrow_back),
+                    label: const Text('Retour'),
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
-            Text(
-              'This folder is empty',
-              style: theme.textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            TextButton.icon(
-              onPressed: () => notifier.exitFolder(),
-              icon: const Icon(Icons.arrow_back),
-              label: const Text('Go back'),
-            ),
-          ],
-        ),
+          ),
+        ],
       );
     }
 
-    return Column(
+    return Stack(
       children: [
+        const BentoBackground(),
+        SafeArea(
+          child: Column(
+            children: [
+              _buildTopAppBar(context, theme),
+              _buildBentoHeader(context, state, notifier, theme),
+              // Integrated Search Bar with Controls & Selection Flip
+              SizedBox(
+                height: 72,
+                child: BentoSearchBar(
+                  controller: _searchController,
+                  onChanged: notifier.setSearchQuery,
+                  onClear: () {
+                    _searchController.clear();
+                    notifier.clearSearch();
+                  },
+                  hasText: state.hasSearch,
+                  onToggleViewMode: notifier.toggleViewMode,
+                  onShowFilters: () => _showFilterSheet(context, state, notifier),
+                  onToggleFavorites: () => notifier.setFilter(
+                    state.filter.copyWith(favoritesOnly: !state.filter.favoritesOnly),
+                  ),
+                  viewMode: state.viewMode,
+                  isFavoritesOnly: state.filter.favoritesOnly,
+                  hasActiveFilters: state.filter.hasActiveFilters,
+                  // Selection
+                  isSelectionMode: state.isSelectionMode,
+                  selectedCount: state.selectedCount,
+                  selectedDocumentCount: state.selectedDocumentCount,
+                  selectedFolderCount: state.selectedFolderCount,
+                  hasDocumentsSelected: state.selectedDocumentCount > 0,
+                  onDeleteSelected: () => _showDeleteConfirmation(context, state, notifier),
+                  onFavoriteSelected: notifier.toggleFavoriteSelected,
+                  onShareSelected: notifier.shareSelected,
+                ),
+              ),
         // Active filters indicator
         if (state.filter.hasActiveFilters ||
             state.sortBy != DocumentsSortBy.createdDesc)
@@ -1383,9 +1364,13 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                                 const SizedBox(height: 16),
                                 Text(
                                   state.hasSearch
-                                      ? 'No results for "${state.searchQuery}"'
-                                      : 'No matching documents',
-                                  style: theme.textTheme.titleMedium,
+                                      ? 'Aucun résultat pour "${state.searchQuery}"'
+                                      : 'Aucun document correspondant',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: theme.colorScheme.onSurface,
+                                  ),
                                 ),
                                 const SizedBox(height: 8),
                                 TextButton(
@@ -1396,7 +1381,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                                     }
                                     notifier.clearFilters();
                                   },
-                                  child: Text(state.hasSearch ? 'Clear search' : 'Clear filters'),
+                                  child: const Text('Effacer les filtres'),
                                 ),
                               ],
                             ),
@@ -1405,6 +1390,9 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                     ],
                   ),
                 ),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -1413,7 +1401,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
   Widget? _buildFab(BuildContext context, DocumentsScreenState state) {
     if (state.isSelectionMode) return null;
 
-    return _QuickScanFab(
+    return BentoScanFab(
       onPressed: widget.onScanPressed,
     );
   }
@@ -2208,164 +2196,158 @@ class _DocumentListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
-    return Material(
-      color: isSelected
-          ? colorScheme.primaryContainer.withOpacity(0.3)
-          : Colors.transparent,
-      child: InkWell(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: BentoCard(
+        padding: const EdgeInsets.all(12),
+        blur: 8,
+        backgroundColor: isSelected
+            ? colorScheme.primary.withValues(alpha: 0.1)
+            : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.7)),
         onTap: onTap,
         onLongPress: onLongPress,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            children: [
-              // Selection checkbox
-              if (isSelectionMode)
-                Padding(
-                  padding: const EdgeInsets.only(right: 12),
-                  child: Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? colorScheme.primary
-                          : Colors.transparent,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isSelected
-                            ? colorScheme.primary
-                            : colorScheme.outline,
-                        width: 2,
-                      ),
+        child: Row(
+          children: [
+            // Selection checkbox
+            if (isSelectionMode)
+              Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: isSelected ? colorScheme.primary : Colors.transparent,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected ? colorScheme.primary : colorScheme.outline,
+                      width: 2,
                     ),
-                    child: isSelected
-                        ? Icon(
-                            Icons.check,
-                            size: 16,
-                            color: colorScheme.onPrimary,
-                          )
-                        : null,
                   ),
-                ),
-
-              // Thumbnail
-              Container(
-                width: 56,
-                height: 72,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  color: colorScheme.surfaceContainerHighest,
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: _DocumentThumbnail(
-                  thumbnailPath: thumbnailPath,
-                  theme: theme,
-                ),
-              ),
-              const SizedBox(width: 16),
-
-              // Title and info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      document.title,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Text(
-                          document.fileSizeFormatted,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        if (document.pageCount > 1) ...[
-                          const SizedBox(width: 8),
-                          Icon(
-                            Icons.layers_outlined,
-                            size: 14,
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                          const SizedBox(width: 2),
-                          Text(
-                            '${document.pageCount} pages',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Text(
-                          _formatDate(document.createdAt),
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        if (document.hasOcrText) ...[
-                          const SizedBox(width: 12),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: colorScheme.secondaryContainer,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              'OCR',
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: colorScheme.onSecondaryContainer,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ],
+                  child: isSelected
+                      ? Icon(Icons.check, size: 16, color: colorScheme.onPrimary)
+                      : null,
                 ),
               ),
 
-              // Action buttons
-              if (!isSelectionMode) ...[
-                IconButton(
-                  icon: Icon(
-                    Icons.edit_outlined,
-                    color: colorScheme.onSurfaceVariant,
+            // Thumbnail
+            Container(
+              width: 56,
+              height: 72,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: colorScheme.surfaceContainerHighest,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
                   ),
-                  onPressed: onRename,
-                  tooltip: 'Rename',
-                ),
-                IconButton(
-                  icon: Icon(
-                    document.isFavorite
-                        ? Icons.favorite
-                        : Icons.favorite_border,
-                    color: document.isFavorite
-                        ? colorScheme.error
-                        : colorScheme.onSurfaceVariant,
+                ],
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: _DocumentThumbnail(
+                thumbnailPath: thumbnailPath,
+                theme: theme,
+              ),
+            ),
+            const SizedBox(width: 16),
+
+            // Title and info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    document.title,
+                    style: GoogleFonts.outfit(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurface,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  onPressed: onFavoriteToggle,
-                  tooltip: document.isFavorite
-                      ? 'Remove from favorites'
-                      : 'Add to favorites',
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Text(
+                        document.fileSizeFormatted,
+                        style: GoogleFonts.outfit(
+                          fontSize: 13,
+                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                        ),
+                      ),
+                      if (document.pageCount > 1) ...[
+                        const SizedBox(width: 8),
+                        Icon(
+                          Icons.layers_outlined,
+                          size: 14,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          '${document.pageCount} pages',
+                          style: GoogleFonts.outfit(
+                            fontSize: 13,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Text(
+                        _formatDate(document.createdAt),
+                        style: GoogleFonts.outfit(
+                          fontSize: 12,
+                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                        ),
+                      ),
+                      if (document.hasOcrText) ...[
+                        const SizedBox(width: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: colorScheme.secondaryContainer.withValues(alpha: 0.5),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'OCR',
+                            style: GoogleFonts.outfit(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: colorScheme.onSecondaryContainer,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // Action buttons
+            if (!isSelectionMode) ...[
+              IconButton(
+                icon: Icon(Icons.edit_rounded, size: 20),
+                onPressed: onRename,
+                color: colorScheme.onSurfaceVariant,
+              ),
+              IconButton(
+                icon: Icon(
+                  document.isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                  size: 20,
                 ),
-              ],
+                onPressed: onFavoriteToggle,
+                color: document.isFavorite ? colorScheme.error : colorScheme.onSurfaceVariant,
+              ),
             ],
-          ),
+          ],
         ),
       ),
     );
@@ -2376,11 +2358,11 @@ class _DocumentListItem extends StatelessWidget {
     final difference = now.difference(date);
 
     if (difference.inDays == 0) {
-      return 'Today';
+      return "Aujourd'hui";
     } else if (difference.inDays == 1) {
-      return 'Yesterday';
+      return 'Hier';
     } else if (difference.inDays < 7) {
-      return '${difference.inDays} days ago';
+      return 'Il y a ${difference.inDays} jours';
     } else {
       return '${date.day}/${date.month}/${date.year}';
     }
@@ -2795,16 +2777,18 @@ class _FoldersSectionState extends State<_FoldersSection> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
           child: Text(
-            'Folders',
-            style: widget.theme.textTheme.titleSmall?.copyWith(
-              color: widget.theme.colorScheme.onSurfaceVariant,
+            'Dossiers',
+            style: GoogleFonts.outfit(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: widget.theme.colorScheme.onSurface,
             ),
           ),
         ),
         SizedBox(
-          height: 200,
+          height: 180,
           child: PageView.builder(
             controller: _pageController,
             itemCount: (widget.folders.length / 8).ceil(),
@@ -2848,13 +2832,15 @@ class _FoldersSectionState extends State<_FoldersSection> {
             currentPage: _currentPage,
             theme: widget.theme,
           ),
-        const Divider(height: 16),
+        const SizedBox(height: 12),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
           child: Text(
             'Documents',
-            style: widget.theme.textTheme.titleSmall?.copyWith(
-              color: widget.theme.colorScheme.onSurfaceVariant,
+            style: GoogleFonts.outfit(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: widget.theme.colorScheme.onSurface,
             ),
           ),
         ),
@@ -3563,4 +3549,39 @@ class _FolderEditDialogState extends State<_FolderEditDialog> {
       ],
     );
   }
+}
+
+class _BubbleTailPainter extends CustomPainter {
+  final Color color;
+  final Color borderColor;
+
+  _BubbleTailPainter({required this.color, required this.borderColor});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    final path = Path();
+    path.moveTo(0, 0);                 
+    path.quadraticBezierTo(size.width * 1.2, size.height / 2, 0, size.height);
+    path.close();
+
+    final shadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.03)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+    canvas.drawPath(path.shift(const Offset(2, 4)), shadowPaint);
+
+    canvas.drawPath(path, paint);
+
+    final borderPaint = Paint()
+      ..color = borderColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    canvas.drawPath(path, borderPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

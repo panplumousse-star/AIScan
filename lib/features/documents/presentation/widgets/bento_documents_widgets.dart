@@ -1,0 +1,876 @@
+import 'dart:io';
+import 'dart:ui';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+import '../models/documents_ui_models.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/bento_card.dart';
+
+/// Bento-style header card showing document statistics.
+class BentoStatsHeader extends StatelessWidget {
+  const BentoStatsHeader({
+    super.key,
+    required this.documentCount,
+    required this.folderCount,
+    this.lastUpdated,
+  });
+
+  final int documentCount;
+  final int folderCount;
+  final DateTime? lastUpdated;
+
+  String _formatLastUpdated() {
+    if (lastUpdated == null) return '';
+    final now = DateTime.now();
+    final diff = now.difference(lastUpdated!);
+
+    if (diff.inMinutes < 1) return 'À l\'instant';
+    if (diff.inMinutes < 60) return 'Il y a ${diff.inMinutes} min';
+    if (diff.inHours < 24) return 'Il y a ${diff.inHours}h';
+    if (diff.inDays < 7) return 'Il y a ${diff.inDays} jours';
+    return '${lastUpdated!.day}/${lastUpdated!.month}/${lastUpdated!.year}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return BentoCard(
+      blur: 10,
+      backgroundColor: isDark 
+          ? const Color(0xFF000000).withValues(alpha: 0.4) 
+          : Colors.white.withValues(alpha: 0.4),
+      padding: const EdgeInsets.all(20),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    _StatChip(
+                      icon: Icons.description_outlined,
+                      label: '$documentCount documents',
+                      color: isDark ? const Color(0xFF93C5FD) : AppColors.bentoButtonBlue,
+                      isDark: isDark,
+                    ),
+                    const SizedBox(width: 8),
+                    _StatChip(
+                      icon: Icons.folder_outlined,
+                      label: '$folderCount dossiers',
+                      color: isDark ? const Color(0xFFFDBA74) : Colors.orange[700]!,
+                      isDark: isDark,
+                    ),
+                  ],
+                ),
+                if (lastUpdated != null) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    'Dernière mise à jour: ${_formatLastUpdated()}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: (isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05)),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(
+              Icons.analytics_outlined,
+              size: 28,
+              color: isDark ? const Color(0xFF93C5FD) : AppColors.bentoButtonBlue,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final bool isDark;
+
+  const _StatChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white.withValues(alpha: 0.05) : color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? Colors.white10 : color.withValues(alpha: 0.1),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: GoogleFonts.outfit(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Bento-style search bar with pastel background.
+/// Bento-style search bar with animated controls.
+class BentoSearchBar extends StatefulWidget {
+  const BentoSearchBar({
+    super.key,
+    required this.controller,
+    required this.onChanged,
+    required this.onClear,
+    required this.onToggleViewMode,
+    required this.onShowFilters,
+    required this.onToggleFavorites,
+    required this.viewMode,
+    required this.isFavoritesOnly,
+    required this.hasActiveFilters,
+    required this.isSelectionMode,
+    required this.selectedCount,
+    required this.selectedDocumentCount,
+    required this.selectedFolderCount,
+    required this.hasDocumentsSelected,
+    required this.onDeleteSelected,
+    required this.onFavoriteSelected,
+    required this.onShareSelected,
+    this.hasText = false,
+  });
+
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onClear;
+  final VoidCallback onToggleViewMode;
+  final VoidCallback onShowFilters;
+  final VoidCallback onToggleFavorites;
+  final DocumentsViewMode viewMode;
+  final bool isFavoritesOnly;
+  final bool hasActiveFilters;
+  final bool hasText;
+
+  // Selection props
+  final bool isSelectionMode;
+  final int selectedCount;
+  final int selectedDocumentCount;
+  final int selectedFolderCount;
+  final bool hasDocumentsSelected;
+  final VoidCallback onDeleteSelected;
+  final VoidCallback onFavoriteSelected;
+  final VoidCallback onShareSelected;
+
+  @override
+  State<BentoSearchBar> createState() => _BentoSearchBarState();
+}
+
+class _BentoSearchBarState extends State<BentoSearchBar> with SingleTickerProviderStateMixin {
+  late FocusNode _focusNode;
+  bool _isFocused = false;
+  late AnimationController _flipController;
+  late Animation<double> _flipAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode();
+    _focusNode.addListener(() {
+      setState(() {
+        _isFocused = _focusNode.hasFocus;
+      });
+    });
+
+    _flipController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _flipAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _flipController, curve: Curves.easeInOutBack),
+    );
+
+    if (widget.isSelectionMode) {
+      _flipController.value = 1;
+    }
+  }
+
+  @override
+  void didUpdateWidget(BentoSearchBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isSelectionMode != oldWidget.isSelectionMode) {
+      if (widget.isSelectionMode) {
+        _flipController.forward();
+      } else {
+        _flipController.reverse();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    _flipController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8), 
+      child: AnimatedBuilder(
+        animation: _flipAnimation,
+        builder: (context, child) {
+          final angle = _flipAnimation.value * 3.141592653589793;
+          final isBack = angle > 3.141592653589793 / 2;
+
+          return Transform(
+            alignment: Alignment.center,
+            transform: Matrix4.identity()
+              ..setEntry(3, 2, 0.001)
+              ..rotateX(angle),
+            child: Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.identity()
+                ..rotateX(isBack ? 3.141592653589793 : 0),
+              child: isBack 
+                  ? _buildSelectionSide(isDark, theme) 
+                  : _buildSearchSide(isDark, theme),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSearchSide(bool isDark, ThemeData theme) {
+    return BentoCard(
+      height: 56,
+      blur: 15,
+      borderRadius: 20,
+      padding: EdgeInsets.zero,
+      backgroundColor: isDark
+          ? const Color(0xFF1E293B).withValues(alpha: 0.6)
+          : const Color(0xFFF1F5F9).withValues(alpha: 0.8),
+      child: Row(
+        children: [
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextField(
+              controller: widget.controller,
+              focusNode: _focusNode,
+              onChanged: widget.onChanged,
+              style: GoogleFonts.outfit(
+                color: isDark ? Colors.white : Colors.black87,
+                fontSize: 15,
+              ),
+              decoration: InputDecoration(
+                hintText: 'Rechercher...',
+                hintStyle: GoogleFonts.outfit(
+                  color: isDark ? Colors.white38 : Colors.grey[500],
+                  fontSize: 15,
+                ),
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  color: isDark ? Colors.white38 : Colors.grey[400],
+                ),
+                suffixIcon: widget.hasText
+                    ? IconButton(
+                        icon: Icon(
+                          Icons.close_rounded,
+                          color: isDark ? Colors.white38 : Colors.grey[400],
+                        ),
+                        onPressed: widget.onClear,
+                      )
+                    : null,
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+              ),
+            ),
+          ),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            width: _isFocused ? 0 : 130,
+            clipBehavior: Clip.hardEdge,
+            decoration: const BoxDecoration(),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const NeverScrollableScrollPhysics(),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _ControlIcon(
+                    icon: widget.viewMode == DocumentsViewMode.grid
+                        ? Icons.view_list_rounded
+                        : Icons.grid_view_rounded,
+                    onPressed: widget.onToggleViewMode,
+                  ),
+                  _ControlIcon(
+                    icon: Icons.tune_rounded,
+                    color: widget.hasActiveFilters ? theme.colorScheme.primary : null,
+                    onPressed: widget.onShowFilters,
+                  ),
+                  _ControlIcon(
+                    icon: widget.isFavoritesOnly
+                        ? Icons.favorite_rounded
+                        : Icons.favorite_border_rounded,
+                    color: widget.isFavoritesOnly ? Colors.redAccent : null,
+                    onPressed: widget.onToggleFavorites,
+                  ),
+                  const SizedBox(width: 8),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+    );
+  }
+
+  String _buildSelectionText() {
+    final docs = widget.selectedDocumentCount;
+    final folders = widget.selectedFolderCount;
+
+    if (folders > 0 && docs > 0) {
+      // Les deux types sélectionnés
+      final folderText = folders == 1 ? '1 dossier' : '$folders dossiers';
+      final docText = docs == 1 ? '1 document' : '$docs documents';
+      return '$folderText, $docText';
+    } else if (folders > 0) {
+      // Seulement des dossiers
+      return folders == 1 ? '1 dossier sélectionné' : '$folders dossiers sélectionnés';
+    } else {
+      // Seulement des documents
+      return docs == 1 ? '1 document sélectionné' : '$docs documents sélectionnés';
+    }
+  }
+
+  Widget _buildSelectionSide(bool isDark, ThemeData theme) {
+    return BentoCard(
+      height: 56,
+      blur: 15,
+      borderRadius: 20,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      backgroundColor: theme.colorScheme.primaryContainer.withValues(alpha: isDark ? 0.3 : 0.8),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              '${widget.selectedCount}',
+              style: GoogleFonts.outfit(
+                fontWeight: FontWeight.w700,
+                color: theme.colorScheme.primary,
+                fontSize: 14,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Flexible(
+            child: Text(
+              _buildSelectionText(),
+              style: GoogleFonts.outfit(
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                color: isDark ? theme.colorScheme.onSurface : theme.colorScheme.onPrimaryContainer,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const Spacer(),
+          if (widget.hasDocumentsSelected) ...[
+            _ControlIcon(
+              icon: Icons.favorite_border_rounded,
+              onPressed: widget.onFavoriteSelected,
+              color: isDark ? theme.colorScheme.onSurface : theme.colorScheme.onPrimaryContainer,
+            ),
+            _ControlIcon(
+              icon: Icons.share_rounded,
+              onPressed: widget.onShareSelected,
+              color: isDark ? theme.colorScheme.onSurface : theme.colorScheme.onPrimaryContainer,
+            ),
+          ],
+          _ControlIcon(
+            icon: Icons.delete_outline_rounded,
+            onPressed: widget.onDeleteSelected,
+            color: theme.colorScheme.error,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ControlIcon extends StatelessWidget {
+  const _ControlIcon({
+    required this.icon,
+    required this.onPressed,
+    this.color,
+  });
+
+  final IconData icon;
+  final VoidCallback onPressed;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      icon: Icon(icon, size: 20, color: color),
+      onPressed: onPressed,
+      visualDensity: VisualDensity.compact,
+    );
+  }
+}
+
+/// Bento-style folder card with pastel color.
+class BentoFolderCard extends StatefulWidget {
+  const BentoFolderCard({
+    super.key,
+    required this.name,
+    required this.color,
+    required this.documentCount,
+    required this.onTap,
+    required this.onLongPress,
+    this.isSelected = false,
+    this.isSelectionMode = false,
+  });
+
+  final String name;
+  final Color color;
+  final int documentCount;
+  final VoidCallback onTap;
+  final VoidCallback onLongPress;
+  final bool isSelected;
+  final bool isSelectionMode;
+
+  @override
+  State<BentoFolderCard> createState() => _BentoFolderCardState();
+}
+
+class _BentoFolderCardState extends State<BentoFolderCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 150),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Color _getPastelColor() {
+    // Convert folder color to pastel version
+    final hsl = HSLColor.fromColor(widget.color);
+    return hsl.withLightness(0.9).withSaturation(0.4).toColor();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final pastelBg = _getPastelColor();
+
+    return BentoCard(
+      onTap: widget.onTap,
+      onLongPress: widget.onLongPress,
+      padding: EdgeInsets.zero,
+      blur: 10,
+      backgroundColor: widget.isSelected
+          ? widget.color.withValues(alpha: 0.2)
+          : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.7)),
+      child: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: pastelBg,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(
+                    Icons.folder_rounded,
+                    size: 28,
+                    color: widget.color,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  widget.name,
+                  style: GoogleFonts.outfit(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : Colors.grey[800],
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${widget.documentCount} docs',
+                  style: GoogleFonts.outfit(
+                    fontSize: 12,
+                    color: isDark ? Colors.white38 : Colors.grey[500],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Selection indicator
+          if (widget.isSelectionMode)
+            Positioned(
+              top: 8,
+              right: 8,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: widget.isSelected ? widget.color : Colors.transparent,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: widget.isSelected ? Colors.transparent : (isDark ? Colors.white24 : Colors.black12),
+                    width: 1.5,
+                  ),
+                ),
+                child: Icon(
+                  widget.isSelected ? Icons.check : Icons.circle_outlined,
+                  size: 14,
+                  color: widget.isSelected ? Colors.white : (isDark ? Colors.white24 : Colors.black12),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Bento-style document card with rounded thumbnail.
+class BentoDocumentCard extends StatefulWidget {
+  const BentoDocumentCard({
+    super.key,
+    required this.title,
+    required this.subtitle,
+    required this.thumbnailPath,
+    required this.onTap,
+    required this.onLongPress,
+    required this.onFavoriteToggle,
+    this.isFavorite = false,
+    this.isSelected = false,
+    this.isSelectionMode = false,
+    this.pageCount = 1,
+  });
+
+  final String title;
+  final String subtitle;
+  final String? thumbnailPath;
+  final VoidCallback onTap;
+  final VoidCallback onLongPress;
+  final VoidCallback onFavoriteToggle;
+  final bool isFavorite;
+  final bool isSelected;
+  final bool isSelectionMode;
+  final int pageCount;
+
+  @override
+  State<BentoDocumentCard> createState() => _BentoDocumentCardState();
+}
+
+class _BentoDocumentCardState extends State<BentoDocumentCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 150),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.98).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: BentoCard(
+        onTap: widget.onTap,
+        onLongPress: widget.onLongPress,
+        padding: const EdgeInsets.all(12),
+        blur: 8,
+        backgroundColor: widget.isSelected
+            ? AppColors.bentoButtonBlue.withValues(alpha: 0.15)
+            : (isDark ? Colors.white.withValues(alpha: 0.03) : Colors.white.withValues(alpha: 0.6)),
+        child: Row(
+          children: [
+            // Thumbnail
+            Container(
+              width: 64,
+              height: 76,
+              decoration: BoxDecoration(
+                color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[100],
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
+                ),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: widget.thumbnailPath != null
+                  ? Image.file(
+                      File(widget.thumbnailPath!),
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _buildPlaceholder(),
+                    )
+                  : _buildPlaceholder(),
+            ),
+            const SizedBox(width: 14),
+            // Content
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.title,
+                    style: GoogleFonts.outfit(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white : Colors.grey[800],
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    widget.subtitle,
+                    style: GoogleFonts.outfit(
+                      fontSize: 13,
+                      color: isDark ? Colors.white38 : Colors.grey[500],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '${widget.pageCount} page${widget.pageCount > 1 ? 's' : ''}',
+                          style: GoogleFonts.outfit(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: isDark ? Colors.white54 : Colors.grey[600],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            // Actions
+            Column(
+              children: [
+                if (widget.isSelectionMode)
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: widget.isSelected
+                          ? AppColors.bentoButtonBlue
+                          : Colors.transparent,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: widget.isSelected ? Colors.transparent : (isDark ? Colors.white24 : Colors.black12),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Icon(
+                      widget.isSelected ? Icons.check : Icons.circle_outlined,
+                      size: 18,
+                      color: widget.isSelected ? Colors.white : (isDark ? Colors.white24 : Colors.black12),
+                    ),
+                  )
+                else
+                  IconButton(
+                    onPressed: widget.onFavoriteToggle,
+                    icon: Icon(
+                      widget.isFavorite
+                          ? Icons.favorite_rounded
+                          : Icons.favorite_border_rounded,
+                      color: widget.isFavorite
+                          ? Colors.red[400]
+                          : (isDark ? Colors.white24 : Colors.grey[400]),
+                      size: 22,
+                    ),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 36,
+                      minHeight: 36,
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlaceholder() {
+    return Center(
+      child: Icon(
+        Icons.description_outlined,
+        size: 28,
+        color: Colors.grey[400],
+      ),
+    );
+  }
+}
+
+/// Bento-style FAB for scanning.
+class BentoScanFab extends StatefulWidget {
+  const BentoScanFab({
+    super.key,
+    required this.onPressed,
+  });
+
+  final VoidCallback? onPressed;
+
+  @override
+  State<BentoScanFab> createState() => _BentoScanFabState();
+}
+
+class _BentoScanFabState extends State<BentoScanFab>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.08).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _pulseAnimation,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _pulseAnimation.value,
+          child: child,
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.bentoButtonBlue.withValues(alpha: 0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: FloatingActionButton.extended(
+          onPressed: widget.onPressed,
+          backgroundColor: AppColors.bentoButtonBlue,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          icon: const Icon(Icons.document_scanner_rounded),
+          label: Text(
+            'Scanner',
+            style: GoogleFonts.outfit(
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
+              letterSpacing: 0.2,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+

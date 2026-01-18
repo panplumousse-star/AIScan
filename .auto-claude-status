@@ -1,17 +1,17 @@
 {
   "active": true,
-  "spec": "011-grid-folder",
+  "spec": "012-biometric-app-lock",
   "state": "building",
   "subtasks": {
-    "completed": 7,
-    "total": 8,
+    "completed": 6,
+    "total": 10,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Integration and Verification",
+    "current": "Settings Screen Integration",
     "id": null,
-    "total": 3
+    "total": 1
   },
   "workers": {
     "active": 0,
@@ -19,7 +19,7 @@
   },
   "session": {
     "number": 8,
-    "started_at": "2026-01-16T11:24:02.063005"
+    "started_at": "2026-01-16T16:11:39.037070"
   },
-  "last_update": "2026-01-16T11:48:03.861053"
+  "last_update": "2026-01-16T16:29:53.618252"
 }

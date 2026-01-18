@@ -10,6 +10,10 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # Audio
+  audioplayers: ^5.2.1
+  native_camera_sound: ^0.0.4
+
   # Document Scanning
   google_mlkit_document_scanner: ^0.4.0
 
@@ -32,12 +36,15 @@ dependencies:
   flutter_secure_storage: ^9.0.0
   encrypt: ^5.0.3
   aes_encrypt_file: ^0.0.4
+  local_auth: ^2.1.8
 
   # State Management
   flutter_riverpod: ^2.4.0
 
   # UI Components
   flutter_svg: ^2.0.0
+  lottie: ^3.0.0
+  google_fonts: ^6.1.0
 
   # Signature Capture
   hand_signature: ^3.0.0
@@ -48,6 +55,9 @@ dependencies:
   intl: ^0.18.0
   permission_handler: ^11.1.0
   share_plus: ^7.2.0
+
+  # Contacts
+  flutter_contacts: ^1.1.7+1
 
 dev_dependencies:
   flutter_test:
@@ -61,6 +71,6 @@ flutter:
 
   assets:
     - assets/tessdata/
-    - assets/tessdata_config.json
     - assets/images/
     - assets/icons/
+    - assets/audio/

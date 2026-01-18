@@ -1,8 +1,16 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../app_lock/domain/app_lock_service.dart';
+import '../../../core/widgets/bento_background.dart';
+import '../../../core/widgets/bento_card.dart';
+import '../../../core/widgets/scanai_loader.dart';
+import '../../../core/widgets/bento_mascot.dart';
 
 // ============================================================================
 // Theme Persistence Service
@@ -85,6 +93,9 @@ class SettingsScreenState {
     this.isLoading = false,
     this.isInitialized = false,
     this.error,
+    this.biometricLockEnabled = false,
+    this.biometricLockTimeout = AppLockTimeout.immediate,
+    this.isBiometricAvailable = false,
   });
 
   /// Current theme mode setting.
@@ -99,6 +110,15 @@ class SettingsScreenState {
   /// Error message, if any.
   final String? error;
 
+  /// Whether biometric app lock is enabled.
+  final bool biometricLockEnabled;
+
+  /// Timeout setting for biometric lock.
+  final AppLockTimeout biometricLockTimeout;
+
+  /// Whether biometric authentication is available on this device.
+  final bool isBiometricAvailable;
+
   /// Creates a copy with updated values.
   SettingsScreenState copyWith({
     ThemeMode? themeMode,
@@ -106,12 +126,18 @@ class SettingsScreenState {
     bool? isInitialized,
     String? error,
     bool clearError = false,
+    bool? biometricLockEnabled,
+    AppLockTimeout? biometricLockTimeout,
+    bool? isBiometricAvailable,
   }) {
     return SettingsScreenState(
       themeMode: themeMode ?? this.themeMode,
       isLoading: isLoading ?? this.isLoading,
       isInitialized: isInitialized ?? this.isInitialized,
       error: clearError ? null : (error ?? this.error),
+      biometricLockEnabled: biometricLockEnabled ?? this.biometricLockEnabled,
+      biometricLockTimeout: biometricLockTimeout ?? this.biometricLockTimeout,
+      isBiometricAvailable: isBiometricAvailable ?? this.isBiometricAvailable,
     );
   }
 
@@ -122,11 +148,22 @@ class SettingsScreenState {
         other.themeMode == themeMode &&
         other.isLoading == isLoading &&
         other.isInitialized == isInitialized &&
-        other.error == error;
+        other.error == error &&
+        other.biometricLockEnabled == biometricLockEnabled &&
+        other.biometricLockTimeout == biometricLockTimeout &&
+        other.isBiometricAvailable == isBiometricAvailable;
   }
 
   @override
-  int get hashCode => Object.hash(themeMode, isLoading, isInitialized, error);
+  int get hashCode => Object.hash(
+        themeMode,
+        isLoading,
+        isInitialized,
+        error,
+        biometricLockEnabled,
+        biometricLockTimeout,
+        isBiometricAvailable,
+      );
 }
 
 // ============================================================================
@@ -135,16 +172,18 @@ class SettingsScreenState {
 
 /// State notifier for the settings screen.
 ///
-/// Manages theme mode selection and persistence.
+/// Manages theme mode selection and persistence, and biometric lock settings.
 class SettingsScreenNotifier extends StateNotifier<SettingsScreenState> {
   /// Creates a [SettingsScreenNotifier] with the given dependencies.
   SettingsScreenNotifier(
     this._persistenceService,
     this._themeModeNotifier,
+    this._appLockService,
   ) : super(const SettingsScreenState());
 
   final ThemePersistenceService _persistenceService;
   final StateController<ThemeMode> _themeModeNotifier;
+  final AppLockService _appLockService;
 
   /// Initializes settings by loading saved preferences.
   Future<void> initialize() async {
@@ -153,13 +192,21 @@ class SettingsScreenNotifier extends StateNotifier<SettingsScreenState> {
     state = state.copyWith(isLoading: true, clearError: true);
 
     try {
+      // Load theme mode
       final savedThemeMode = await _persistenceService.loadThemeMode();
-
-      // Update both local state and global theme provider
       _themeModeNotifier.state = savedThemeMode;
+
+      // Initialize and load app lock settings
+      await _appLockService.initialize();
+      final biometricEnabled = _appLockService.isEnabled();
+      final biometricTimeout = _appLockService.getTimeout();
+      final isBiometricAvailable = await _appLockService.isBiometricAvailable();
 
       state = state.copyWith(
         themeMode: savedThemeMode,
+        biometricLockEnabled: biometricEnabled,
+        biometricLockTimeout: biometricTimeout,
+        isBiometricAvailable: isBiometricAvailable,
         isLoading: false,
         isInitialized: true,
       );
@@ -192,6 +239,46 @@ class SettingsScreenNotifier extends StateNotifier<SettingsScreenState> {
   void clearError() {
     state = state.copyWith(clearError: true);
   }
+
+  /// Toggles biometric lock enabled state.
+  Future<void> setBiometricLockEnabled(bool enabled) async {
+    if (enabled == state.biometricLockEnabled) return;
+
+    // Optimistically update UI
+    state = state.copyWith(
+      biometricLockEnabled: enabled,
+      clearError: true,
+    );
+
+    try {
+      await _appLockService.setEnabled(enabled);
+    } catch (e) {
+      // Revert on error
+      state = state.copyWith(
+        biometricLockEnabled: !enabled,
+        error: 'Failed to ${enabled ? 'enable' : 'disable'} biometric lock: $e',
+      );
+    }
+  }
+
+  /// Sets the biometric lock timeout duration.
+  Future<void> setBiometricLockTimeout(AppLockTimeout timeout) async {
+    if (timeout == state.biometricLockTimeout) return;
+
+    // Optimistically update UI
+    state = state.copyWith(
+      biometricLockTimeout: timeout,
+      clearError: true,
+    );
+
+    try {
+      await _appLockService.setTimeout(timeout);
+    } catch (e) {
+      state = state.copyWith(
+        error: 'Failed to update timeout setting',
+      );
+    }
+  }
 }
 
 /// Riverpod provider for the settings screen state.
@@ -200,7 +287,12 @@ final settingsScreenProvider =
   (ref) {
     final persistenceService = ref.watch(themePersistenceServiceProvider);
     final themeModeNotifier = ref.watch(themeModeProvider.notifier);
-    return SettingsScreenNotifier(persistenceService, themeModeNotifier);
+    final appLockService = ref.watch(appLockServiceProvider);
+    return SettingsScreenNotifier(
+      persistenceService,
+      themeModeNotifier,
+      appLockService,
+    );
   },
 );
 
@@ -235,8 +327,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   void initState() {
     super.initState();
-
-    // Initialize settings after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(settingsScreenProvider.notifier).initialize();
     });
@@ -247,8 +337,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final state = ref.watch(settingsScreenProvider);
     final notifier = ref.read(settingsScreenProvider.notifier);
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
-    // Listen for errors and show snackbar
     ref.listen<SettingsScreenState>(settingsScreenProvider, (previous, next) {
       if (next.error != null && previous?.error != next.error) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -264,354 +354,877 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     });
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Settings'),
+      backgroundColor: Colors.transparent, // Let BentoBackground show
+      body: Stack(
+        children: [
+          // 1. Unified Background
+          const BentoBackground(),
+
+          Positioned.fill(
+            child: SafeArea(
+              child: Column(
+                children: [
+                  // 2. Custom Header
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                    child: Row(
+                      children: [
+                        _BouncingWidget(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: isDark 
+                                  ? Colors.white.withValues(alpha: 0.1) 
+                                  : Colors.white.withValues(alpha: 0.5),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: isDark 
+                                    ? Colors.white.withValues(alpha: 0.1) 
+                                    : Colors.white.withValues(alpha: 0.2),
+                              ),
+                            ),
+                            child: IconButton(
+                              icon: const Icon(Icons.arrow_back_rounded),
+                              color: isDark ? Colors.white : const Color(0xFF1E1B4B),
+                              onPressed: () => Navigator.pop(context),
+                            ),
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          'Réglages',
+                          style: GoogleFonts.outfit(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
+                          ),
+                        ),
+                        const Spacer(),
+                        const SizedBox(width: 48), // Balance spacing
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // 3. Greeting Row (Bento Layout)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Speech Bubble Tile
+                        Expanded(
+                          flex: 5,
+                          child: BentoAnimatedEntry(
+                            delay: const Duration(milliseconds: 100),
+                            child: _buildSpeechBubbleCard(isDark),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        // Mascot Tile
+                        Expanded(
+                          flex: 5,
+                          child: BentoAnimatedEntry(
+                            delay: const Duration(milliseconds: 200),
+                            child: _buildMascotCard(isDark),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 24),
+
+                  // 4. Bento Grid Scrollable
+                  Expanded(
+                    child: state.isLoading && !state.isInitialized
+                        ? const Center(child: ScanaiLoader(size: 40))
+                        : SingleChildScrollView(
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                // Apparence (Theme) - Large Card
+                                BentoAnimatedEntry(
+                                  delay: const Duration(milliseconds: 100),
+                                  child: _buildThemeCard(state.themeMode, notifier.setThemeMode, isDark),
+                                ),
+
+                                const SizedBox(height: 16),
+
+                                // Security & Info Row
+                                SizedBox(
+                                  height: 196, // Increased from 180 to prevent overflow
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: [
+                                      // Security Card
+                                      Expanded(
+                                        child: BentoAnimatedEntry(
+                                          delay: const Duration(milliseconds: 200),
+                                          child: _buildSecurityCard(
+                                            enabled: state.biometricLockEnabled,
+                                            available: state.isBiometricAvailable,
+                                            timeout: state.biometricLockTimeout,
+                                            onTimeoutChanged: notifier.setBiometricLockTimeout,
+                                            isDark: isDark,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      // About Card
+                                      Expanded(
+                                        child: BentoAnimatedEntry(
+                                          delay: const Duration(milliseconds: 300),
+                                          child: _buildAboutCard(isDark),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                
+                                const SizedBox(height: 40),
+                              ],
+                            ),
+                          ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
-      body: state.isLoading && !state.isInitialized
-          ? const Center(child: CircularProgressIndicator())
-          : ListView(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-              children: [
-                // Appearance section
-                _SettingsSection(
-                  title: 'Appearance',
-                  theme: theme,
-                  children: [
-                    _ThemeModeSelector(
-                      selectedMode: state.themeMode,
-                      onModeChanged: notifier.setThemeMode,
-                      theme: theme,
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: AppSpacing.lg),
-
-                // Privacy section
-                _SettingsSection(
-                  title: 'Privacy & Security',
-                  theme: theme,
-                  children: [
-                    _SettingsInfoTile(
-                      icon: Icons.security_outlined,
-                      title: 'Encryption',
-                      subtitle: 'AES-256 encryption for all documents',
-                      theme: theme,
-                    ),
-                    _SettingsInfoTile(
-                      icon: Icons.wifi_off_outlined,
-                      title: 'Offline Processing',
-                      subtitle: 'All data stays on your device',
-                      theme: theme,
-                    ),
-                    _SettingsInfoTile(
-                      icon: Icons.analytics_outlined,
-                      title: 'No Tracking',
-                      subtitle: 'No analytics or third-party trackers',
-                      theme: theme,
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: AppSpacing.lg),
-
-                // About section
-                _SettingsSection(
-                  title: 'About',
-                  theme: theme,
-                  children: [
-                    _SettingsInfoTile(
-                      icon: Icons.info_outline,
-                      title: 'Scanaï',
-                      subtitle: 'Version 1.0.0',
-                      theme: theme,
-                    ),
-                    _SettingsInfoTile(
-                      icon: Icons.description_outlined,
-                      title: 'Privacy-First Scanner',
-                      subtitle: 'Secure document scanning with local processing',
-                      theme: theme,
-                    ),
-                  ],
-                ),
-              ],
-            ),
     );
   }
-}
 
-// ============================================================================
-// Settings Section Widget
-// ============================================================================
-
-/// Section container for grouped settings.
-class _SettingsSection extends StatelessWidget {
-  const _SettingsSection({
-    required this.title,
-    required this.children,
-    required this.theme,
-  });
-
-  final String title;
-  final List<Widget> children;
-  final ThemeData theme;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.sm,
-          ),
-          child: Text(
-            title,
-            style: theme.textTheme.titleSmall?.copyWith(
-              color: theme.colorScheme.primary,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ),
-        ...children,
-      ],
-    );
-  }
-}
-
-// ============================================================================
-// Theme Mode Selector Widget
-// ============================================================================
-
-/// Theme mode selection widget with visual indicators.
-class _ThemeModeSelector extends StatelessWidget {
-  const _ThemeModeSelector({
-    required this.selectedMode,
-    required this.onModeChanged,
-    required this.theme,
-  });
-
-  final ThemeMode selectedMode;
-  final ValueChanged<ThemeMode> onModeChanged;
-  final ThemeData theme;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.sm,
-          ),
-          child: Text(
-            'Theme',
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: theme.colorScheme.onSurface,
-            ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-          child: Row(
+  Widget _buildSpeechBubbleCard(bool isDark) {
+    return _BentoInteractiveWrapper(
+      onTap: () {
+        HapticFeedback.lightImpact();
+      },
+      child: SizedBox(
+        height: 140, // Match mascot card height
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: Stack(
+            clipBehavior: Clip.none,
             children: [
-              Expanded(
-                child: _ThemeModeOption(
-                  mode: ThemeMode.light,
-                  icon: Icons.light_mode_outlined,
-                  label: 'Light',
-                  isSelected: selectedMode == ThemeMode.light,
-                  onTap: () => onModeChanged(ThemeMode.light),
-                  theme: theme,
+              // The Bubble Body
+              Container(
+                height: 85,
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDark 
+                        ? const Color(0xFFFFFFFF).withValues(alpha: 0.1) 
+                        : const Color(0xFFE2E8F0),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'On peaufine',
+                        style: GoogleFonts.outfit(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E293B),
+                          letterSpacing: -0.5,
+                          height: 1.1,
+                        ),
+                      ),
+                      Text(
+                        'notre application',
+                        style: GoogleFonts.outfit(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E293B),
+                          letterSpacing: -0.5,
+                          height: 1.1,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: _ThemeModeOption(
-                  mode: ThemeMode.dark,
-                  icon: Icons.dark_mode_outlined,
-                  label: 'Dark',
-                  isSelected: selectedMode == ThemeMode.dark,
-                  onTap: () => onModeChanged(ThemeMode.dark),
-                  theme: theme,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: _ThemeModeOption(
-                  mode: ThemeMode.system,
-                  icon: Icons.settings_brightness_outlined,
-                  label: 'System',
-                  isSelected: selectedMode == ThemeMode.system,
-                  onTap: () => onModeChanged(ThemeMode.system),
-                  theme: theme,
+              
+              // The Bubble Tail (Pointing Right to Mascot)
+              Positioned(
+                right: -10, 
+                top: 12,
+                child: CustomPaint(
+                  size: const Size(12, 16),
+                  painter: _BubbleTailPainter(
+                    color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : Colors.white,
+                    borderColor: isDark 
+                        ? const Color(0xFFFFFFFF).withValues(alpha: 0.1) 
+                        : const Color(0xFFE2E8F0),
+                  ),
                 ),
               ),
             ],
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.sm,
+      ),
+    );
+  }
+
+  Widget _buildMascotCard(bool isDark) {
+    return _BentoInteractiveWrapper(
+      onTap: () {
+        HapticFeedback.mediumImpact();
+      },
+      child: Container(
+        height: 140,
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : const Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(32),
+          border: Border.all(
+            color: isDark 
+                ? const Color(0xFFFFFFFF).withValues(alpha: 0.1) 
+                : const Color(0xFFE2E8F0),
+            width: 1.5,
           ),
-          child: Text(
-            _getThemeDescription(selectedMode),
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
             ),
+          ],
+        ),
+        child: Center(
+          child: BentoMascot(
+            height: 110,
+            variant: BentoMascotVariant.settings,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThemeCard(ThemeMode selectedMode, ValueChanged<ThemeMode> onModeChanged, bool isDark) {
+    return BentoCard(
+      borderRadius: 32,
+      padding: const EdgeInsets.all(24),
+      backgroundColor: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+           Row(
+             children: [
+               Container(
+                 padding: const EdgeInsets.all(10),
+                 decoration: BoxDecoration(
+                   color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEEF2FF),
+                   borderRadius: BorderRadius.circular(12),
+                 ),
+                 child: Icon(
+                   Icons.palette_rounded,
+                   color: isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1),
+                   size: 20,
+                 ),
+               ),
+               const SizedBox(width: 12),
+               Text(
+                 'Apparence',
+                 style: GoogleFonts.outfit(
+                   fontSize: 18,
+                   fontWeight: FontWeight.w700,
+                   color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
+                 ),
+               ),
+             ],
+           ),
+           const SizedBox(height: 24),
+           Row(
+             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+             children: [
+               _buildThemeOption(
+                 mode: ThemeMode.light,
+                 icon: Icons.light_mode_rounded,
+                 label: 'Clair',
+                 isSelected: selectedMode == ThemeMode.light,
+                 onTap: () => onModeChanged(ThemeMode.light),
+                 isDark: isDark,
+               ),
+               _buildThemeOption(
+                 mode: ThemeMode.dark,
+                 icon: Icons.dark_mode_rounded,
+                 label: 'Sombre',
+                 isSelected: selectedMode == ThemeMode.dark,
+                 onTap: () => onModeChanged(ThemeMode.dark),
+                 isDark: isDark,
+               ),
+               _buildThemeOption(
+                 mode: ThemeMode.system,
+                 icon: Icons.settings_brightness_rounded,
+                 label: 'Auto',
+                 isSelected: selectedMode == ThemeMode.system,
+                 onTap: () => onModeChanged(ThemeMode.system),
+                 isDark: isDark,
+               ),
+             ],
+           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildThemeOption({
+    required ThemeMode mode,
+    required IconData icon,
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+    required bool isDark,
+  }) {
+    final selectedColor = isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1);
+    final unselectedBg = isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC);
+    
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Column(
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: isSelected ? selectedColor.withValues(alpha: 0.15) : unselectedBg,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isSelected ? selectedColor : Colors.transparent,
+                  width: 2,
+                ),
+              ),
+              child: Icon(
+                icon,
+                color: isSelected ? selectedColor : (isDark ? Colors.grey : Colors.grey[600]),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: GoogleFonts.outfit(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                color: isSelected ? selectedColor : (isDark ? Colors.grey : Colors.grey[600]),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleSecurityToggle(bool currentEnabled) async {
+    if (!currentEnabled) {
+      // Activating - Show confirmation
+      final confirmed = await showAdaptiveDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog.adaptive(
+          title: Text(
+            'Activer le verrouillage ?',
+            style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+          ),
+          content: Text(
+            'Souhaitez-vous sécuriser l\'accès à vos documents avec votre empreinte digitale ?',
+            style: GoogleFonts.outfit(),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(
+                'Annuler',
+                style: GoogleFonts.outfit(color: Colors.grey),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(
+                'Activer',
+                style: GoogleFonts.outfit(
+                  color: const Color(0xFF6366F1),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed == true) {
+        await ref.read(settingsScreenProvider.notifier).setBiometricLockEnabled(true);
+      }
+    } else {
+      // Deactivating - Request biometric scan
+      final authenticated = await ref.read(appLockServiceProvider).authenticateUser();
+      if (authenticated) {
+        await ref.read(settingsScreenProvider.notifier).setBiometricLockEnabled(false);
+      }
+    }
+  }
+
+  Widget _buildSecurityCard({
+    required bool enabled,
+    required bool available,
+    required AppLockTimeout timeout,
+    required ValueChanged<AppLockTimeout> onTimeoutChanged,
+    required bool isDark,
+  }) {
+    final statusColor = enabled 
+        ? (isDark ? const Color(0xFF34D399) : const Color(0xFF10B981))
+        : (isDark ? const Color(0xFFF87171) : const Color(0xFFEF4444));
+    
+    final statusBg = enabled
+        ? (isDark ? const Color(0xFF064E3B) : const Color(0xFFECFDF5))
+        : (isDark ? const Color(0xFF450A0A) : const Color(0xFFFEF2F2));
+
+    return BentoCard(
+      borderRadius: 32,
+      onTap: available ? () => _handleSecurityToggle(enabled) : null,
+      padding: const EdgeInsets.all(20),
+      backgroundColor: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: statusBg,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.fingerprint_rounded,
+                  color: statusColor,
+                  size: 20,
+                ),
+              ),
+              if (enabled)
+                Icon(
+                  Icons.verified_rounded,
+                  color: statusColor.withValues(alpha: 0.5),
+                  size: 16,
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Verrouillage',
+            style: GoogleFonts.outfit(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            enabled ? 'Activé' : 'Désactivé',
+             style: GoogleFonts.outfit(
+              fontSize: 12,
+              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+            ),
+          ),
+          if (enabled) ...[
+            const SizedBox(height: 10),
+            _BentoInteractiveWrapper(
+              child: Container(
+                height: 32,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<AppLockTimeout>(
+                    value: timeout,
+                    isDense: true,
+                    icon: Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: isDark ? Colors.grey : Colors.black54),
+                    dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    style: GoogleFonts.outfit(
+                      fontSize: 12,
+                      color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
+                    ),
+                    onChanged: (newValue) {
+                      if (newValue != null) onTimeoutChanged(newValue);
+                    },
+                    items: AppLockTimeout.values.map((val) {
+                      final label = switch(val) {
+                        AppLockTimeout.immediate => 'Immédiat',
+                        AppLockTimeout.oneMinute => '1 min',
+                        AppLockTimeout.fiveMinutes => '5 min',
+                        AppLockTimeout.thirtyMinutes => '30 min',
+                      };
+                      return DropdownMenuItem(
+                        value: val,
+                        child: Text(label),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAboutCard(bool isDark) {
+    return _BentoFlipCard(
+      isDark: isDark,
+      front: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF312E81) : const Color(0xFFEEF2FF),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.info_outline_rounded,
+                  color: isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1),
+                  size: 20,
+                ),
+              ),
+              Text(
+                'v1.0.0',
+                style: GoogleFonts.outfit(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Scanai',
+            style: GoogleFonts.outfit(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Text(
+                'Développée avec le',
+                style: GoogleFonts.outfit(
+                  fontSize: 12,
+                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                ),
+              ),
+              Icon(
+                Icons.favorite_rounded,
+                size: 12,
+                color: Colors.redAccent.withValues(alpha: 0.8),
+              ),
+            ],
+          ),
+          const Spacer(),
+          Row(
+            children: [
+              Icon(
+                Icons.touch_app_outlined,
+                size: 14,
+                color: isDark ? Colors.white38 : Colors.black26,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Détails sécurité',
+                  style: GoogleFonts.outfit(
+                    fontSize: 10,
+                    color: isDark ? Colors.white38 : Colors.black26,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      back: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Sécurité',
+            style: GoogleFonts.outfit(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1),
+            ),
+          ),
+          const SizedBox(height: 8),
+          _buildAboutInfoItem(
+            Icons.lock_outline,
+            'AES-256',
+            'Chiffrement local',
+            isDark,
+          ),
+          const SizedBox(height: 6),
+          _buildAboutInfoItem(
+            Icons.visibility_off_outlined,
+            'Zero-Knowledge',
+            'Accès exclusif',
+            isDark,
+          ),
+          const SizedBox(height: 6),
+          _buildAboutInfoItem(
+            Icons.cloud_off_outlined,
+            'Hors-ligne',
+            '100% sécurisé',
+            isDark,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAboutInfoItem(IconData icon, String title, String subtitle, bool isDark) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(5),
+          decoration: BoxDecoration(
+            color: (isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1)).withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Icon(
+            icon,
+            size: 12,
+            color: isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.outfit(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
+                ),
+              ),
+              Text(
+                subtitle,
+                style: GoogleFonts.outfit(
+                  fontSize: 9,
+                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                ),
+              ),
+            ],
           ),
         ),
       ],
     );
   }
 
-  String _getThemeDescription(ThemeMode mode) {
-    switch (mode) {
-      case ThemeMode.light:
-        return 'Always use light theme';
-      case ThemeMode.dark:
-        return 'Always use dark theme';
-      case ThemeMode.system:
-        return 'Follow system settings';
-    }
-  }
 }
 
-// ============================================================================
-// Theme Mode Option Widget
-// ============================================================================
+// Bouncing Widget Helper
+class _BouncingWidget extends StatefulWidget {
+  final Widget child;
+  const _BouncingWidget({required this.child});
 
-/// Individual theme mode option button.
-class _ThemeModeOption extends StatelessWidget {
-  const _ThemeModeOption({
-    required this.mode,
-    required this.icon,
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-    required this.theme,
-  });
+  @override
+  State<_BouncingWidget> createState() => _BouncingWidgetState();
+}
 
-  final ThemeMode mode;
-  final IconData icon;
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-  final ThemeData theme;
+class _BouncingWidgetState extends State<_BouncingWidget>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _animation = Tween<double>(begin: 0.92, end: 1.08).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = theme.colorScheme;
+    return ScaleTransition(
+      scale: _animation,
+      child: widget.child,
+    );
+  }
+}
 
-    return Semantics(
-      label: '$label theme',
-      selected: isSelected,
-      button: true,
-      child: Material(
-        color: isSelected
-            ? colorScheme.primaryContainer
-            : colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(AppBorderRadius.lg),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppBorderRadius.lg),
-          child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: AppSpacing.md,
-            ),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppBorderRadius.lg),
-              border: Border.all(
-                color: isSelected
-                    ? colorScheme.primary
-                    : colorScheme.outline.withValues(alpha: 0.3),
-                width: isSelected ? 2 : 1,
-              ),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  icon,
-                  size: 28,
-                  color: isSelected
-                      ? colorScheme.onPrimaryContainer
-                      : colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  label,
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: isSelected
-                        ? colorScheme.onPrimaryContainer
-                        : colorScheme.onSurface,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+
+class _BentoInteractiveWrapper extends StatefulWidget {
+  final Widget child;
+  final VoidCallback? onTap;
+
+  const _BentoInteractiveWrapper({
+    required this.child,
+    this.onTap,
+  });
+
+  @override
+  State<_BentoInteractiveWrapper> createState() => _BentoInteractiveWrapperState();
+}
+
+class _BentoInteractiveWrapperState extends State<_BentoInteractiveWrapper>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  double _rotationX = 0.0;
+  double _rotationY = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 150),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.96).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _handleTapDown(TapDownDetails details) {
+    if (widget.onTap == null) return;
+    _controller.forward();
+    
+    final RenderBox box = context.findRenderObject() as RenderBox;
+    final localPos = details.localPosition;
+    final centerX = box.size.width / 2;
+    final centerY = box.size.height / 2;
+    
+    setState(() {
+      _rotationX = (centerY - localPos.dy) / centerY * 0.08;
+      _rotationY = (localPos.dx - centerX) / centerX * 0.08;
+    });
+    
+    HapticFeedback.lightImpact();
+  }
+
+  void _handleTapUp(TapUpDetails details) {
+    _controller.reverse();
+    setState(() {
+      _rotationX = 0.0;
+      _rotationY = 0.0;
+    });
+  }
+
+  void _handleTapCancel() {
+    _controller.reverse();
+    setState(() {
+      _rotationX = 0.0;
+      _rotationY = 0.0;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: _handleTapDown,
+      onTapUp: _handleTapUp,
+      onTapCancel: _handleTapCancel,
+      onTap: widget.onTap,
+      child: AnimatedBuilder(
+        animation: _scaleAnimation,
+        builder: (context, child) {
+          return Transform(
+            alignment: Alignment.center,
+            transform: Matrix4.identity()
+              ..setEntry(3, 2, 0.001)
+              ..rotateX(_rotationX)
+              ..rotateY(_rotationY)
+              ..scale(_scaleAnimation.value),
+            child: child,
+          );
+        },
+        child: widget.child,
       ),
     );
   }
 }
 
-// ============================================================================
-// Settings Info Tile Widget
-// ============================================================================
+class _BubbleTailPainter extends CustomPainter {
+  final Color color;
+  final Color borderColor;
 
-/// Information tile for displaying read-only settings.
-class _SettingsInfoTile extends StatelessWidget {
-  const _SettingsInfoTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.theme,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final ThemeData theme;
+  _BubbleTailPainter({required this.color, required this.borderColor});
 
   @override
-  Widget build(BuildContext context) {
-    final colorScheme = theme.colorScheme;
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
 
-    return ListTile(
-      leading: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: colorScheme.primaryContainer.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(AppBorderRadius.md),
-        ),
-        child: Icon(
-          icon,
-          size: 20,
-          color: colorScheme.primary,
-        ),
-      ),
-      title: Text(
-        title,
-        style: theme.textTheme.titleMedium?.copyWith(
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: colorScheme.onSurfaceVariant,
-        ),
-      ),
-    );
+    final path = Path();
+    path.moveTo(0, 0);                 
+    path.quadraticBezierTo(size.width * 1.2, size.height / 2, 0, size.height);
+    path.close();
+
+    final shadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.03)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+    canvas.drawPath(path.shift(const Offset(2, 4)), shadowPaint);
+
+    canvas.drawPath(path, paint);
+
+    final borderPaint = Paint()
+      ..color = borderColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    
+    final borderPath = Path();
+    borderPath.moveTo(0, 0);
+    borderPath.quadraticBezierTo(size.width * 1.2, size.height / 2, 0, size.height);
+    canvas.drawPath(borderPath, borderPaint);
   }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 // ============================================================================
@@ -647,5 +1260,89 @@ Future<void> initializeTheme(ProviderContainer container) async {
     container.read(themeModeProvider.notifier).state = savedThemeMode;
   } catch (_) {
     // Silently fall back to system theme if loading fails
+  }
+}
+
+class _BentoFlipCard extends StatefulWidget {
+  final Widget front;
+  final Widget back;
+  final bool isDark;
+
+  const _BentoFlipCard({
+    required this.front,
+    required this.back,
+    required this.isDark,
+  });
+
+  @override
+  State<_BentoFlipCard> createState() => _BentoFlipCardState();
+}
+
+class _BentoFlipCardState extends State<_BentoFlipCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+  bool _isFront = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    _animation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOutBack),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _toggleCard() {
+    if (_controller.isAnimating) return;
+    HapticFeedback.mediumImpact();
+    if (_isFront) {
+      _controller.forward();
+    } else {
+      _controller.reverse();
+    }
+    setState(() => _isFront = !_isFront);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        final angle = _animation.value * 3.141592653589793;
+        final isBack = angle > 3.141592653589793 / 2;
+
+        return Transform(
+          alignment: Alignment.center,
+          transform: Matrix4.identity()
+            ..setEntry(3, 2, 0.001)
+            ..rotateY(angle),
+          child: BentoCard(
+            borderRadius: 32,
+            padding: const EdgeInsets.all(16), // Reduced padding to 16
+            onTap: _toggleCard,
+            animateOnTap: false,
+            backgroundColor: widget.isDark 
+                ? const Color(0xFF000000).withValues(alpha: 0.6) 
+                : Colors.white,
+            child: Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.identity()
+                ..rotateY(isBack ? 3.141592653589793 : 0),
+              child: isBack ? widget.back : widget.front,
+            ),
+          ),
+        );
+      },
+    );
   }
 }

@@ -5,6 +5,7 @@ import '../../../../core/storage/database_helper.dart';
 import '../../../folders/domain/folder_model.dart';
 import '../../../folders/domain/folder_service.dart';
 import '../../domain/document_model.dart';
+import '../models/documents_ui_models.dart';
 import '../documents_screen.dart';
 
 /// A provider for loading folders for the filter sheet.

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
 import 'core/permissions/camera_permission_service.dart';
+import 'features/app_lock/domain/app_lock_service.dart';
 import 'features/settings/presentation/settings_screen.dart';
 
 /// Application entry point.
@@ -35,6 +36,10 @@ void main() async {
   // Clear session-only camera permissions on cold start
   // This ensures "Accept for this session" permissions reset when app restarts
   container.read(cameraPermissionServiceProvider).clearSessionPermission();
+
+  // Initialize app lock service to load biometric lock settings
+  // This must happen before app launches to properly check lock state
+  await container.read(appLockServiceProvider).initialize();
 
   // Initialize theme preference from storage
   await initializeTheme(container);

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 // ============================================================================
 // Theme Mode Provider
@@ -24,74 +25,106 @@ final themeModeProvider = StateProvider<ThemeMode>((ref) {
 /// maintaining a professional, trustworthy appearance appropriate
 /// for a privacy-focused document scanner.
 abstract final class AppColors {
-  // Primary colors - Blue (trust, security, professionalism)
-  static const Color primaryLight = Color(0xFF1976D2);
-  static const Color primaryDark = Color(0xFF64B5F6);
+  // Primary colors - Deep Blue (Trust, Professionalism, Tech)
+  static const Color primaryLight = Color(0xFF2563EB); // Vibrant Royal Blue
+  static const Color primaryDark = Color(0xFF60A5FA);
 
-  // Secondary colors - Teal (fresh, modern, complementary)
-  static const Color secondaryLight = Color(0xFF26A69A);
-  static const Color secondaryDark = Color(0xFF4DB6AC);
+  // Secondary colors - Teal/Cyan (Modern, Fresh)
+  static const Color secondaryLight = Color(0xFF0D9488);
+  static const Color secondaryDark = Color(0xFF2DD4BF);
 
-  // Tertiary colors - Purple (premium, distinctive)
-  static const Color tertiaryLight = Color(0xFF7B1FA2);
-  static const Color tertiaryDark = Color(0xFFBA68C8);
+  // Tertiary colors - Violet (Premium, Creative)
+  static const Color tertiaryLight = Color(0xFF7C3AED);
+  static const Color tertiaryDark = Color(0xFFA78BFA);
 
   // Error colors
-  static const Color errorLight = Color(0xFFB00020);
-  static const Color errorDark = Color(0xFFCF6679);
+  static const Color errorLight = Color(0xFFDC2626);
+  static const Color errorDark = Color(0xFFF87171);
 
   // Success colors
-  static const Color successLight = Color(0xFF4CAF50);
-  static const Color successDark = Color(0xFF81C784);
+  static const Color successLight = Color(0xFF16A34A);
+  static const Color successDark = Color(0xFF4ADE80);
 
   // Warning colors
-  static const Color warningLight = Color(0xFFFFA000);
-  static const Color warningDark = Color(0xFFFFCA28);
+  static const Color warningLight = Color(0xFFD97706);
+  static const Color warningDark = Color(0xFFFBBF24);
 
   // Neutral colors
-  static const Color neutralLight = Color(0xFF757575);
-  static const Color neutralDark = Color(0xFFBDBDBD);
+  static const Color neutralLight = Color(0xFF64748B); // Slate
+  static const Color neutralDark = Color(0xFF94A3B8);
 
   // Surface colors for light theme
-  static const Color surfaceLight = Color(0xFFFAFAFA);
-  static const Color surfaceVariantLight = Color(0xFFEEEEEE);
-  static const Color backgroundLight = Color(0xFFFFFFFF);
+  static const Color surfaceLight = Color(0xFFFFFFFF);
+  static const Color surfaceVariantLight = Color(0xFFF1F5F9); // Slate-100
+  static const Color backgroundLight = Color(0xFFF8FAFC); // Slate-50
 
   // Surface colors for dark theme
-  static const Color surfaceDark = Color(0xFF121212);
-  static const Color surfaceVariantDark = Color(0xFF1E1E1E);
-  static const Color backgroundDark = Color(0xFF000000);
+  static const Color surfaceDark = Color(0xFF0F172A); // Slate-900
+  static const Color surfaceVariantDark = Color(0xFF1E293B); // Slate-800
+  static const Color backgroundDark = Color(0xFF020617); // Slate-950
 
   // Scanner-specific colors
   static const Color scannerOverlayLight = Color(0x80000000);
   static const Color scannerOverlayDark = Color(0x80000000);
-  static const Color scannerBorderLight = Color(0xFF1976D2);
-  static const Color scannerBorderDark = Color(0xFF64B5F6);
+  static const Color scannerBorderLight = Color(0xFF3B82F6);
+  static const Color scannerBorderDark = Color(0xFF60A5FA);
 
   // Document card colors
   static const Color documentCardLight = Color(0xFFFFFFFF);
-  static const Color documentCardDark = Color(0xFF1E1E1E);
+  static const Color documentCardDark = Color(0xFF1E293B);
+
+  // Bento Pastel colors (Refined)
+  static const Color bentoBluePastel = Color(0xFFEFF6FF); // Blue-50
+  static const Color bentoBlueDark = Color(0xFFDBEAFE); // Blue-100
+  static const Color bentoPinkPastel = Color(0xFFFEF2F2); // Red-50
+  static const Color bentoOrangePastel = Color(0xFFFFF7ED); // Orange-50
+  static const Color bentoGreenPastel = Color(0xFFF0FDF4); // Green-50
+  static const Color bentoPurplePastel = Color(0xFFFAF5FF); // Purple-50
+  static const Color bentoButtonBlue = Color(0xFF2563EB);
+  static const Color bentoBackground = Color(0xFFF8FAFC);
+  static const Color bentoCardWhite = Color(0xFFFFFFFF);
 
   // Folder colors for organization
   static const List<Color> folderColors = [
-    Color(0xFFE57373), // Red
-    Color(0xFFFFB74D), // Orange
-    Color(0xFFFFD54F), // Amber
-    Color(0xFFAED581), // Light Green
-    Color(0xFF4DB6AC), // Teal
-    Color(0xFF64B5F6), // Blue
-    Color(0xFF9575CD), // Deep Purple
-    Color(0xFFF06292), // Pink
-    Color(0xFF90A4AE), // Blue Grey
-    Color(0xFF8D6E63), // Brown
-    Color(0xFFBDBDBD), // Grey
+    Color(0xFFEF4444), // Red
+    Color(0xFFF97316), // Orange
+    Color(0xFFF59E0B), // Amber
+    Color(0xFF84CC16), // Lime
+    Color(0xFF10B981), // Emerald
+    Color(0xFF06B6D4), // Cyan
+    Color(0xFF3B82F6), // Blue
+    Color(0xFF6366F1), // Indigo
+    Color(0xFF8B5CF6), // Violet
+    Color(0xFFEC4899), // Pink
+    Color(0xFF64748B), // Slate
   ];
 
   /// Gets a contrasting text color for the given background color.
   static Color getContrastingTextColor(Color background) {
     final luminance = background.computeLuminance();
-    return luminance > 0.5 ? Colors.black87 : Colors.white;
+    return luminance > 0.5 ? const Color(0xFF0F172A) : Colors.white;
   }
+}
+
+/// Defines consistent gradients used throughout the app.
+abstract final class AppGradients {
+  static const LinearGradient primary = LinearGradient(
+    colors: [Color(0xFF2563EB), Color(0xFF4F46E5)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient scanner = LinearGradient(
+    colors: [Color(0xFF3B82F6), Color(0xFF8B5CF6)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient premiumCard = LinearGradient(
+    colors: [Color(0xFFFFFFFF), Color(0xFFF8FAFC)],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
 }
 
 // ============================================================================
@@ -271,10 +304,13 @@ abstract final class AppTheme {
       surfaceContainerHighest: AppColors.surfaceVariantLight,
     );
 
+    final textTheme = GoogleFonts.outfitTextTheme(ThemeData.light().textTheme);
+
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
       colorScheme: colorScheme,
+      textTheme: textTheme,
 
       // App Bar Theme
       appBarTheme: AppBarTheme(
@@ -289,11 +325,11 @@ abstract final class AppTheme {
           systemNavigationBarColor: colorScheme.surface,
           systemNavigationBarIconBrightness: Brightness.dark,
         ),
-        titleTextStyle: TextStyle(
+        titleTextStyle: GoogleFonts.outfit(
           color: colorScheme.onSurface,
           fontSize: 20,
           fontWeight: FontWeight.w600,
-          letterSpacing: 0.15,
+          letterSpacing: -0.5,
         ),
         iconTheme: IconThemeData(
           color: colorScheme.onSurfaceVariant,
@@ -302,7 +338,7 @@ abstract final class AppTheme {
       ),
 
       // Scaffold Background
-      scaffoldBackgroundColor: const Color(0xFFF6F8FB),
+      scaffoldBackgroundColor: AppColors.backgroundLight,
 
       // Card Theme
       cardTheme: CardThemeData(
@@ -326,10 +362,10 @@ abstract final class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: AppBorderRadius.button,
           ),
-          textStyle: const TextStyle(
+          textStyle: GoogleFonts.outfit(
             fontSize: 14,
-            fontWeight: FontWeight.w500,
-            letterSpacing: 0.1,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
           ),
         ),
       ),
@@ -344,10 +380,10 @@ abstract final class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: AppBorderRadius.button,
           ),
-          textStyle: const TextStyle(
+          textStyle: GoogleFonts.outfit(
             fontSize: 14,
-            fontWeight: FontWeight.w500,
-            letterSpacing: 0.1,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
           ),
         ),
       ),
@@ -438,7 +474,7 @@ abstract final class AppTheme {
           horizontal: AppSpacing.md,
           vertical: 14,
         ),
-        hintStyle: TextStyle(
+        hintStyle: GoogleFonts.outfit(
           color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
         ),
         prefixIconColor: colorScheme.onSurfaceVariant,
@@ -450,7 +486,7 @@ abstract final class AppTheme {
         backgroundColor: colorScheme.surfaceContainerHighest,
         selectedColor: colorScheme.secondaryContainer,
         disabledColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-        labelStyle: TextStyle(
+        labelStyle: GoogleFonts.outfit(
           color: colorScheme.onSurfaceVariant,
           fontSize: 13,
           fontWeight: FontWeight.w500,
@@ -470,12 +506,12 @@ abstract final class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: AppBorderRadius.card,
         ),
-        titleTextStyle: TextStyle(
+        titleTextStyle: GoogleFonts.outfit(
           color: colorScheme.onSurface,
           fontSize: 16,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w600,
         ),
-        subtitleTextStyle: TextStyle(
+        subtitleTextStyle: GoogleFonts.outfit(
           color: colorScheme.onSurfaceVariant,
           fontSize: 14,
         ),
@@ -497,12 +533,13 @@ abstract final class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: AppBorderRadius.dialog,
         ),
-        titleTextStyle: TextStyle(
+        titleTextStyle: GoogleFonts.outfit(
           color: colorScheme.onSurface,
           fontSize: 20,
           fontWeight: FontWeight.w600,
+          letterSpacing: -0.5,
         ),
-        contentTextStyle: TextStyle(
+        contentTextStyle: GoogleFonts.outfit(
           color: colorScheme.onSurfaceVariant,
           fontSize: 14,
         ),
@@ -525,7 +562,7 @@ abstract final class AppTheme {
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: colorScheme.inverseSurface,
-        contentTextStyle: TextStyle(
+        contentTextStyle: GoogleFonts.outfit(
           color: colorScheme.onInverseSurface,
           fontSize: 14,
         ),
@@ -549,10 +586,10 @@ abstract final class AppTheme {
         thumbColor: colorScheme.primary,
         overlayColor: colorScheme.primary.withValues(alpha: 0.12),
         valueIndicatorColor: colorScheme.primaryContainer,
-        valueIndicatorTextStyle: TextStyle(
+        valueIndicatorTextStyle: GoogleFonts.outfit(
           color: colorScheme.onPrimaryContainer,
           fontSize: 12,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w600,
         ),
       ),
 
@@ -603,7 +640,7 @@ abstract final class AppTheme {
         indicatorColor: colorScheme.secondaryContainer,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final isSelected = states.contains(WidgetState.selected);
-          return TextStyle(
+          return GoogleFonts.outfit(
             fontSize: 12,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
             color: isSelected ? colorScheme.onSecondaryContainer : colorScheme.onSurfaceVariant,
@@ -626,7 +663,7 @@ abstract final class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: AppBorderRadius.card,
         ),
-        textStyle: TextStyle(
+        textStyle: GoogleFonts.outfit(
           color: colorScheme.onSurface,
           fontSize: 14,
         ),
@@ -639,7 +676,7 @@ abstract final class AppTheme {
           color: colorScheme.inverseSurface,
           borderRadius: AppBorderRadius.chip,
         ),
-        textStyle: TextStyle(
+        textStyle: GoogleFonts.outfit(
           color: colorScheme.onInverseSurface,
           fontSize: 12,
         ),
@@ -649,9 +686,9 @@ abstract final class AppTheme {
       badgeTheme: BadgeThemeData(
         backgroundColor: colorScheme.error,
         textColor: colorScheme.onError,
-        textStyle: const TextStyle(
+        textStyle: GoogleFonts.outfit(
           fontSize: 10,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
         ),
       ),
 
@@ -696,10 +733,13 @@ abstract final class AppTheme {
       surfaceContainerHighest: AppColors.surfaceVariantDark,
     );
 
+    final textTheme = GoogleFonts.outfitTextTheme(ThemeData.dark().textTheme);
+
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
       colorScheme: colorScheme,
+      textTheme: textTheme,
 
       // App Bar Theme
       appBarTheme: AppBarTheme(
@@ -714,11 +754,11 @@ abstract final class AppTheme {
           systemNavigationBarColor: colorScheme.surface,
           systemNavigationBarIconBrightness: Brightness.light,
         ),
-        titleTextStyle: TextStyle(
+        titleTextStyle: GoogleFonts.outfit(
           color: colorScheme.onSurface,
           fontSize: 20,
           fontWeight: FontWeight.w600,
-          letterSpacing: 0.15,
+          letterSpacing: -0.5,
         ),
         iconTheme: IconThemeData(
           color: colorScheme.onSurfaceVariant,
@@ -751,10 +791,10 @@ abstract final class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: AppBorderRadius.button,
           ),
-          textStyle: const TextStyle(
+          textStyle: GoogleFonts.outfit(
             fontSize: 14,
-            fontWeight: FontWeight.w500,
-            letterSpacing: 0.1,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
           ),
         ),
       ),
@@ -769,10 +809,10 @@ abstract final class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: AppBorderRadius.button,
           ),
-          textStyle: const TextStyle(
+          textStyle: GoogleFonts.outfit(
             fontSize: 14,
-            fontWeight: FontWeight.w500,
-            letterSpacing: 0.1,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
           ),
         ),
       ),

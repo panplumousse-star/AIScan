@@ -2,16 +2,19 @@ package com.aiscan.aiscan
 
 import android.content.Intent
 import android.util.Log
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 
 /**
  * Main activity for the Scanaï application.
+ *
+ * Extends FlutterFragmentActivity (instead of FlutterActivity) to support
+ * the local_auth plugin which requires FragmentActivity for biometric authentication.
  *
  * Overrides onActivityResult to handle the case where Android kills the app
  * while the ML Kit document scanner is running. This prevents crashes when
  * the scanner result is delivered to a recreated activity with null MethodChannel.Result.
  */
-class MainActivity: FlutterActivity() {
+class MainActivity: FlutterFragmentActivity() {
     companion object {
         private const val TAG = "AIScanMainActivity"
     }

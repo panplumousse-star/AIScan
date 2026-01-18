@@ -2,16 +2,23 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/permissions/camera_permission_service.dart';
+import '../../../core/permissions/contact_permission_dialog.dart';
 import '../../../core/permissions/permission_dialog.dart';
 import '../../../core/permissions/storage_permission_service.dart';
+import '../../contacts/domain/contact_data_extractor.dart';
+import '../../contacts/presentation/contact_creation_sheet.dart';
 import '../../documents/domain/document_model.dart';
 import '../../documents/presentation/documents_screen.dart';
 import '../../folders/domain/folder_model.dart';
 import '../../folders/domain/folder_service.dart';
+import '../../ocr/domain/ocr_service.dart';
 import '../../sharing/domain/document_share_service.dart';
 import '../domain/scanner_service.dart';
+import '../../../core/widgets/bento_background.dart';
+import '../../home/presentation/bento_home_screen.dart';
 
 /// Scanner screen state notifier for managing scan workflow.
 ///
@@ -486,7 +493,13 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
           ],
         ],
       ),
-      body: _buildBody(context, state, notifier, theme),
+      extendBodyBehindAppBar: true, // Allow background to show behind app bar
+      body: Stack(
+        children: [
+          const BentoBackground(),
+          _buildBody(context, state, notifier, theme),
+        ],
+      ),
       floatingActionButton: _buildFab(context, state, notifier),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
@@ -532,7 +545,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
 
     final theme = Theme.of(context);
 
-    // After save: show Share and Done buttons
+    // After save: show Share, OCR, and Done buttons
     if (state.hasSavedDocument) {
       return Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -543,7 +556,16 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
             icon: const Icon(Icons.share_outlined),
             label: const Text('Share'),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
+          FloatingActionButton.extended(
+            heroTag: 'ocr',
+            onPressed: () => _handleOcr(context, state),
+            backgroundColor: theme.colorScheme.secondaryContainer,
+            foregroundColor: theme.colorScheme.onSecondaryContainer,
+            icon: const Icon(Icons.contact_page_outlined),
+            label: const Text('OCR'),
+          ),
+          const SizedBox(width: 12),
           FloatingActionButton.extended(
             heroTag: 'done',
             onPressed: () => _navigateToDocuments(context),
@@ -601,6 +623,8 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
       await shareService.cleanupTempFiles(result.tempFilePaths);
       // Navigate to documents after sharing
       if (context.mounted) {
+        // Set just scanned state for celebration message
+        ref.read(hasJustScannedProvider.notifier).state = true;
         _navigateToDocuments(context);
       }
     } catch (e) {
@@ -608,6 +632,92 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to share: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Handles OCR extraction and contact creation from scanned document.
+  Future<void> _handleOcr(BuildContext context, ScannerScreenState state) async {
+    if (state.scanResult == null || state.scanResult!.pages.isEmpty) {
+      if (context.mounted) {
+        showNoContactDataFoundSnackbar(context);
+      }
+      return;
+    }
+
+    // Show loading indicator
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              SizedBox(width: 16),
+              Text('Extracting text...'),
+            ],
+          ),
+          duration: Duration(seconds: 30),
+        ),
+      );
+    }
+
+    try {
+      final ocrService = ref.read(ocrServiceProvider);
+      const extractor = ContactDataExtractor();
+
+      // Run OCR on all scanned pages
+      final textParts = <String>[];
+      for (final page in state.scanResult!.pages) {
+        // Read image file and run OCR
+        final imageFile = File(page.imagePath);
+        if (await imageFile.exists()) {
+          final imageBytes = await imageFile.readAsBytes();
+          final result = await ocrService.extractTextFromBytes(imageBytes);
+          if (result.text.isNotEmpty) {
+            textParts.add(result.text);
+          }
+        }
+      }
+
+      // Hide loading snackbar
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      }
+
+      if (!context.mounted) return;
+
+      if (textParts.isEmpty) {
+        showNoContactDataFoundSnackbar(context);
+        return;
+      }
+
+      // Combine all text and extract contact data
+      final combinedText = textParts.join('\n\n');
+      final extractedData = extractor.extractFromText(combinedText);
+
+      if (extractedData.isEmpty) {
+        showNoContactDataFoundSnackbar(context);
+        return;
+      }
+
+      // Show contact creation sheet
+      await showContactCreationSheet(
+        context,
+        extractedData: extractedData,
+      );
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('OCR failed: $e'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -672,6 +782,9 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
         widget.onScanComplete?.call(state.scanResult!);
 
         if (context.mounted) {
+          // Set just scanned state for celebration message
+          ref.read(hasJustScannedProvider.notifier).state = true;
+          
           // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -867,21 +980,14 @@ class _LoadingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const CircularProgressIndicator(),
-          const SizedBox(height: 24),
-          Text(
-            message,
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
+    return const Center(
+      child: SizedBox(
+        width: 32,
+        height: 32,
+        child: CircularProgressIndicator(
+          strokeWidth: 3,
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4F46E5)),
+        ),
       ),
     );
   }

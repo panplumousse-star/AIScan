@@ -1,17 +1,21 @@
 import 'dart:io';
-import 'dart:typed_data';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/storage/document_repository.dart';
+import '../../../core/widgets/bento_background.dart';
+import '../../../core/widgets/bento_card.dart';
+import '../../../core/widgets/bento_mascot.dart';
+import '../../../core/widgets/bento_rename_document_dialog.dart';
+import '../../../core/widgets/bento_share_format_dialog.dart';
 import '../../folders/domain/folder_model.dart';
 import '../../folders/domain/folder_service.dart';
+import '../../folders/presentation/widgets/bento_folder_dialog.dart';
 import '../../sharing/domain/document_share_service.dart';
-// TODO: Re-enable when signature feature is fixed
-// import '../../signature/presentation/widgets/signature_overlay.dart';
 import '../domain/document_model.dart';
 
 /// State for the document detail screen.
@@ -562,101 +566,144 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
     }
 
     return Scaffold(
-      appBar: _buildAppBar(context, state, notifier, theme),
-      body: _buildBody(context, state, notifier, theme),
-      bottomNavigationBar: state.isReady
-          ? _buildActionBar(context, state, theme)
-          : null,
+      extendBodyBehindAppBar: true,
+      body: Stack(
+        children: [
+          const BentoBackground(),
+          Column(
+            children: [
+              Expanded(
+                child: _buildBody(context, state, notifier, theme),
+              ),
+              if (state.isReady)
+                _buildActionBar(context, state, theme),
+            ],
+          ),
+          _buildCustomHeader(context, state, notifier, theme),
+        ],
+      ),
     );
   }
 
-  PreferredSizeWidget _buildAppBar(
+  Widget _buildCustomHeader(
     BuildContext context,
     DocumentDetailScreenState state,
     DocumentDetailScreenNotifier notifier,
     ThemeData theme,
   ) {
-    return AppBar(
-      title: GestureDetector(
-        onTap: state.hasDocument
-            ? () => _showRenameDialog(context, state.document!, notifier)
-            : null,
-        child: Row(
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      child: Container(
+        padding: EdgeInsets.only(
+          top: MediaQuery.of(context).padding.top + 8,
+          bottom: 12,
+          left: 16,
+          right: 16,
+        ),
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Flexible(
-              child: Text(
-                state.document?.title ?? 'Document',
-                overflow: TextOverflow.ellipsis,
-              ),
+            // Top row: back button + action icons
+            Row(
+              children: [
+                // Back button with white background
+                Container(
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.15)
+                        : Colors.white.withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.1)
+                          : const Color(0xFFE2E8F0),
+                    ),
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back_rounded),
+                    color: isDark ? Colors.white : const Color(0xFF1E1B4B),
+                    onPressed: () => Navigator.of(context).pop(),
+                    iconSize: 22,
+                    constraints: const BoxConstraints(
+                      minWidth: 44,
+                      minHeight: 44,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                // Action icons: favorite, info, delete (no background)
+                if (state.hasDocument) ...[
+                  // Favorite button
+                  IconButton(
+                    icon: Icon(
+                      state.document!.isFavorite
+                          ? Icons.favorite_rounded
+                          : Icons.favorite_border_rounded,
+                      color: state.document!.isFavorite
+                          ? Colors.redAccent
+                          : (isDark ? Colors.white : const Color(0xFF1E1B4B)),
+                    ),
+                    onPressed: notifier.toggleFavorite,
+                    iconSize: 24,
+                  ),
+                  // Info button
+                  IconButton(
+                    icon: Icon(
+                      Icons.info_outline_rounded,
+                      color: isDark ? Colors.white : const Color(0xFF1E1B4B),
+                    ),
+                    onPressed: () => _handleMenuAction(context, 'info', state, notifier),
+                    iconSize: 24,
+                  ),
+                  // Delete button
+                  IconButton(
+                    icon: const Icon(
+                      Icons.delete_outline_rounded,
+                      color: Colors.redAccent,
+                    ),
+                    onPressed: () => _handleMenuAction(context, 'delete', state, notifier),
+                    iconSize: 24,
+                  ),
+                ],
+              ],
             ),
+            // Title row below
             if (state.hasDocument) ...[
-              const SizedBox(width: 4),
-              Icon(
-                Icons.edit_outlined,
-                size: 16,
-                color: theme.colorScheme.onSurface.withOpacity(0.5),
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: () => _showRenameDialog(context, state.document!, notifier),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        state.document?.title ?? 'Chargement...',
+                        style: GoogleFonts.outfit(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? Colors.white : const Color(0xFF1E1B4B),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Icon(
+                      Icons.edit_rounded,
+                      size: 14,
+                      color: theme.colorScheme.primary.withValues(alpha: 0.7),
+                    ),
+                  ],
+                ),
               ),
             ],
           ],
         ),
       ),
-      actions: [
-        if (state.hasDocument)
-          IconButton(
-            icon: Icon(
-              state.document!.isFavorite
-                  ? Icons.favorite
-                  : Icons.favorite_border,
-              color: state.document!.isFavorite
-                  ? theme.colorScheme.error
-                  : null,
-            ),
-            onPressed: notifier.toggleFavorite,
-            tooltip: state.document!.isFavorite
-                ? 'Remove from favorites'
-                : 'Add to favorites',
-          ),
-        PopupMenuButton<String>(
-          onSelected: (action) =>
-              _handleMenuAction(context, action, state, notifier),
-          itemBuilder: (context) => [
-            const PopupMenuItem(
-              value: 'share',
-              child: ListTile(
-                leading: Icon(Icons.share_outlined),
-                title: Text('Share'),
-                contentPadding: EdgeInsets.zero,
-              ),
-            ),
-            const PopupMenuItem(
-              value: 'info',
-              child: ListTile(
-                leading: Icon(Icons.info_outline),
-                title: Text('Document info'),
-                contentPadding: EdgeInsets.zero,
-              ),
-            ),
-            const PopupMenuItem(
-              value: 'move',
-              child: ListTile(
-                leading: Icon(Icons.drive_file_move_outlined),
-                title: Text('Move to folder'),
-                contentPadding: EdgeInsets.zero,
-              ),
-            ),
-            const PopupMenuDivider(),
-            const PopupMenuItem(
-              value: 'delete',
-              child: ListTile(
-                leading: Icon(Icons.delete_outline, color: Colors.red),
-                title: Text('Delete', style: TextStyle(color: Colors.red)),
-                contentPadding: EdgeInsets.zero,
-              ),
-            ),
-          ],
-        ),
-      ],
     );
   }
 
@@ -691,32 +738,126 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
 
     return Column(
       children: [
+        SizedBox(height: MediaQuery.of(context).padding.top + 100),
         // Document preview
         Expanded(
-          child: GestureDetector(
-            onDoubleTap: notifier.toggleFullScreen,
-            child: _DocumentPreview(
-              imageBytes: state.imageBytes!,
-              transformationController: _transformationController,
-              theme: theme,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: BentoCard(
+              padding: EdgeInsets.zero,
+              borderRadius: 24,
+              backgroundColor: theme.brightness == Brightness.dark 
+                  ? Colors.white.withValues(alpha: 0.05) 
+                  : Colors.white.withValues(alpha: 0.8),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: GestureDetector(
+                  onDoubleTap: notifier.toggleFullScreen,
+                  child: _DocumentPreview(
+                    imageBytes: state.imageBytes!,
+                    transformationController: _transformationController,
+                    theme: theme,
+                  ),
+                ),
+              ),
             ),
           ),
         ),
 
+        const SizedBox(height: 16),
+
         // Document info panel
-        _DocumentInfoPanel(
-          document: state.document!,
-          currentPage: state.currentPage,
-          onPageChanged: (page) => notifier.goToPage(page),
-          onPreviousPage: () => notifier.previousPage(),
-          onNextPage: () => notifier.nextPage(),
-          isLoading: state.isDecrypting,
-          theme: theme,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: _DocumentInfoPanel(
+            document: state.document!,
+            currentPage: state.currentPage,
+            onPageChanged: (page) => notifier.goToPage(page),
+            onPreviousPage: () => notifier.previousPage(),
+            onNextPage: () => notifier.nextPage(),
+            isLoading: state.isDecrypting,
+            theme: theme,
+          ),
         ),
 
         // OCR text panel (if available)
         if (state.document!.hasOcrText)
-          _OcrTextPanel(ocrText: state.document!.ocrText!, theme: theme),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+            child: _OcrTextPanel(ocrText: state.document!.ocrText!, theme: theme),
+          ),
+        
+        const SizedBox(height: 12),
+
+        // Mascot interaction with speech bubble
+        Builder(
+          builder: (context) {
+            final isDark = theme.brightness == Brightness.dark;
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 20),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(16),
+                              topRight: Radius.circular(16),
+                              bottomLeft: Radius.circular(16),
+                              bottomRight: Radius.circular(4),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            'Besoin d\'aide ?',
+                            style: GoogleFonts.outfit(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white : const Color(0xFF1E1B4B),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: -8,
+                          right: 8,
+                          child: CustomPaint(
+                            size: const Size(12, 12),
+                            painter: _BubbleTailPainterRight(
+                              color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  BentoLevitationWidget(
+                    child: BentoMascot(
+                      height: 50,
+                      variant: BentoMascotVariant.waving,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+
+        const SizedBox(height: 8),
       ],
     );
   }
@@ -726,57 +867,62 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
     DocumentDetailScreenState state,
     ThemeData theme,
   ) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(
-        8,
-        8,
-        8,
-        8 + MediaQuery.of(context).padding.bottom,
-      ),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border(
-          top: BorderSide(
-            color: theme.colorScheme.outlineVariant.withOpacity(0.5),
+    final isDark = theme.brightness == Brightness.dark;
+    
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: Container(
+          padding: EdgeInsets.fromLTRB(
+            16,
+            12,
+            16,
+            12 + MediaQuery.of(context).padding.bottom,
+          ),
+          decoration: BoxDecoration(
+            color: isDark 
+                ? Colors.black.withValues(alpha: 0.4) 
+                : Colors.white.withValues(alpha: 0.4),
+            border: Border(
+              top: BorderSide(
+                color: isDark 
+                    ? Colors.white.withValues(alpha: 0.05) 
+                    : Colors.black.withValues(alpha: 0.05),
+              ),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _BentoActionButton(
+                icon: Icons.share_rounded,
+                label: 'Partager',
+                onPressed: () => _handleShare(context, state),
+                theme: theme,
+              ),
+              _BentoActionButton(
+                icon: Icons.drive_file_move_rounded,
+                label: 'Déplacer',
+                onPressed: () => _showMoveToFolderDialog(context, state),
+                theme: theme,
+              ),
+              _BentoActionButton(
+                icon: Icons.text_snippet_rounded,
+                label: 'OCR',
+                onPressed: () => _handleOcr(context, state),
+                badge: state.document!.hasOcrText ? null : '!',
+                theme: theme,
+              ),
+              _BentoActionButton(
+                icon: Icons.auto_fix_high_rounded,
+                label: 'Magie',
+                onPressed: () => _handleEnhance(context, state),
+                theme: theme,
+                isPrimary: true,
+              ),
+            ],
           ),
         ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _ActionButton(
-            icon: Icons.share_outlined,
-            label: 'Share',
-            onPressed: () => _handleShare(context, state),
-            theme: theme,
-          ),
-          _ActionButton(
-            icon: Icons.drive_file_move_outlined,
-            label: 'Move',
-            onPressed: () => _showMoveToFolderDialog(context, state),
-            theme: theme,
-          ),
-          _ActionButton(
-            icon: Icons.text_fields,
-            label: 'OCR',
-            onPressed: () => _handleOcr(context, state),
-            badge: state.document!.hasOcrText ? null : '!',
-            theme: theme,
-          ),
-          _ActionButton(
-            icon: Icons.auto_fix_high_outlined,
-            label: 'Enhance',
-            onPressed: () => _handleEnhance(context, state),
-            theme: theme,
-          ),
-          // TODO: Re-enable when signature feature is fixed
-          // _ActionButton(
-          //   icon: Icons.draw_outlined,
-          //   label: 'Sign',
-          //   onPressed: () => _handleSign(context, state),
-          //   theme: theme,
-          // ),
-        ],
       ),
     );
   }
@@ -810,7 +956,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
     if (state.document == null) return;
 
     // Show format selection dialog
-    final format = await _showShareFormatDialog(context);
+    final format = await showBentoShareFormatDialog(context);
     if (format == null) return; // User cancelled
 
     try {
@@ -829,48 +975,6 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
           context,
         ).showSnackBar(SnackBar(content: Text('Failed to share: $e')));
       }
-    }
-  }
-
-  Future<ShareFormat?> _showShareFormatDialog(BuildContext context) {
-    final theme = Theme.of(context);
-    return showDialog<ShareFormat>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Share as'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: Icon(Icons.picture_as_pdf, color: theme.colorScheme.error),
-              title: const Text('PDF'),
-              subtitle: const Text('Single document file'),
-              onTap: () => Navigator.pop(context, ShareFormat.pdf),
-            ),
-            ListTile(
-              leading: Icon(Icons.image, color: theme.colorScheme.primary),
-              title: const Text('Images (PNG)'),
-              subtitle: const Text('Original quality'),
-              onTap: () => Navigator.pop(context, ShareFormat.images),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _handleExport(BuildContext context, DocumentDetailScreenState state) async {
-    if (state.document == null) return;
-    final notifier = ref.read(documentDetailScreenProvider.notifier);
-    final bytes = await notifier.loadImageBytes();
-    if (bytes != null && mounted) {
-      widget.onExport?.call(state.document!, bytes);
     }
   }
 
@@ -941,67 +1045,101 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
     Document document,
     DocumentDetailScreenNotifier notifier,
   ) async {
-    final controller = TextEditingController(text: document.title);
-    final theme = Theme.of(context);
-
-    final newTitle = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Rename document'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'Title',
-            border: OutlineInputBorder(),
-          ),
-          autofocus: true,
-          textCapitalization: TextCapitalization.sentences,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(controller.text.trim()),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
+    final newTitle = await showBentoRenameDocumentDialog(
+      context,
+      currentTitle: document.title,
     );
 
     if (newTitle != null && newTitle.isNotEmpty && newTitle != document.title) {
       await notifier.updateTitle(newTitle);
     }
-
-    controller.dispose();
   }
 
   Future<void> _showDeleteConfirmation(
     BuildContext context,
     DocumentDetailScreenNotifier notifier,
   ) async {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete document?'),
-        content: const Text(
-          'This action cannot be undone. The document and all associated '
-          'data will be permanently deleted.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Material(
+              color: Colors.transparent,
+              child: BentoCard(
+                padding: const EdgeInsets.all(24),
+                backgroundColor: isDark 
+                    ? Colors.white.withValues(alpha: 0.1) 
+                    : Colors.white.withValues(alpha: 0.9),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const BentoLevitationWidget(
+                      child: Icon(Icons.delete_forever_rounded, color: Colors.redAccent, size: 48),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Supprimer le document ?',
+                      style: GoogleFonts.outfit(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Cette action est irréversible. Le document sera définitivement supprimé.',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.outfit(
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            child: Text('Annuler', style: GoogleFonts.outfit()),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => Navigator.of(context).pop(true),
+                            borderRadius: BorderRadius.circular(16),
+                            child: Container(
+                              height: 50,
+                              decoration: BoxDecoration(
+                                color: Colors.redAccent.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: Colors.redAccent.withValues(alpha: 0.3)),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  'Supprimer',
+                                  style: GoogleFonts.outfit(
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.redAccent,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
-            child: const Text('Delete'),
           ),
-        ],
+        ),
       ),
     );
 
@@ -1028,27 +1166,23 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
 
     final selectedFolderId = await showDialog<String>(
       context: context,
-      builder: (context) => _MoveToFolderDialog(
+      builder: (dialogContext) => _MoveToFolderDialog(
         folders: folders,
         currentFolderId: state.document!.folderId,
-        onCreateFolder: () async {
-          final result = await _showCreateFolderDialog(context);
-          if (result != null && result.name.isNotEmpty) {
-            try {
-              final newFolder = await folderService.createFolder(
-                name: result.name,
-                color: result.color,
+        onCreateFolder: (name, color) async {
+          try {
+            final newFolder = await folderService.createFolder(
+              name: name,
+              color: color,
+            );
+            return newFolder;
+          } catch (e) {
+            if (dialogContext.mounted) {
+              ScaffoldMessenger.of(dialogContext).showSnackBar(
+                SnackBar(content: Text('Erreur lors de la création du dossier: $e')),
               );
-              if (context.mounted) {
-                Navigator.of(context).pop(newFolder.id);
-              }
-            } catch (e) {
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Failed to create folder: $e')),
-                );
-              }
             }
+            return null;
           }
         },
       ),
@@ -1079,13 +1213,6 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
         );
       }
     }
-  }
-
-  Future<_CreateFolderResult?> _showCreateFolderDialog(BuildContext context) async {
-    return showDialog<_CreateFolderResult>(
-      context: context,
-      builder: (context) => const _CreateFolderDialog(),
-    );
   }
 
   void _showDocumentInfo(
@@ -1127,12 +1254,16 @@ class _LoadingView extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const CircularProgressIndicator(),
+          const CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4F46E5)),
+            strokeWidth: 3,
+          ),
           const SizedBox(height: 16),
           Text(
             message,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+            style: GoogleFonts.outfit(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -1158,32 +1289,47 @@ class _ErrorView extends StatelessWidget {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 64, color: theme.colorScheme.error),
-            const SizedBox(height: 16),
-            Text(
-              'Something went wrong',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
+        child: BentoCard(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              BentoMascot(
+                height: 80,
+                variant: BentoMascotVariant.waving,
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              message,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              const SizedBox(height: 24),
+              Text(
+                'Oups ! Quelque chose a mal tourné',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.outfit(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: theme.colorScheme.onSurface,
+                ),
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
-            ),
-          ],
+              const SizedBox(height: 12),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.outfit(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
+              ),
+              const SizedBox(height: 32),
+              ElevatedButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh_rounded),
+                label: Text('Réessayer', style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4F46E5),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1314,62 +1460,49 @@ class _DocumentInfoPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final isDark = theme.brightness == Brightness.dark;
+
+    return BentoCard(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border(
-          top: BorderSide(
-            color: theme.colorScheme.outlineVariant.withOpacity(0.5),
-          ),
-        ),
-      ),
+      backgroundColor: isDark 
+          ? Colors.white.withValues(alpha: 0.05) 
+          : Colors.white.withValues(alpha: 0.8),
       child: Row(
         children: [
           // Page navigation for multi-page documents
           if (document.isMultiPage) ...[
-            // Previous page button
             IconButton(
-              icon: const Icon(Icons.chevron_left),
-              onPressed: currentPage > 0 && !isLoading
-                  ? onPreviousPage
-                  : null,
-              tooltip: 'Previous page',
+              icon: const Icon(Icons.chevron_left_rounded),
+              onPressed: currentPage > 0 && !isLoading ? onPreviousPage : null,
               visualDensity: VisualDensity.compact,
             ),
-            // Page indicator
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(16),
+                color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: isLoading
-                  ? SizedBox(
-                      width: 16,
-                      height: 16,
+                  ? const SizedBox(
+                      width: 14,
+                      height: 14,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          theme.colorScheme.onPrimaryContainer,
-                        ),
+                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4F46E5)),
                       ),
                     )
                   : Text(
-                      'Page ${currentPage + 1} of ${document.pageCount}',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: theme.colorScheme.onPrimaryContainer,
-                        fontWeight: FontWeight.w500,
+                      '${currentPage + 1} / ${document.pageCount}',
+                      style: GoogleFonts.outfit(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: theme.colorScheme.primary,
                       ),
                     ),
             ),
-            // Next page button
             IconButton(
-              icon: const Icon(Icons.chevron_right),
-              onPressed: currentPage < document.pageCount - 1 && !isLoading
-                  ? onNextPage
-                  : null,
-              tooltip: 'Next page',
+              icon: const Icon(Icons.chevron_right_rounded),
+              onPressed: currentPage < document.pageCount - 1 && !isLoading ? onNextPage : null,
               visualDensity: VisualDensity.compact,
             ),
             const SizedBox(width: 8),
@@ -1383,14 +1516,18 @@ class _DocumentInfoPanel extends StatelessWidget {
               children: [
                 Text(
                   document.fileSizeFormatted,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                  style: GoogleFonts.outfit(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
                 ),
                 Text(
                   _formatDate(document.createdAt),
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                  style: GoogleFonts.outfit(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                   ),
                 ),
               ],
@@ -1403,20 +1540,21 @@ class _DocumentInfoPanel extends StatelessWidget {
               margin: const EdgeInsets.only(right: 8),
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: theme.colorScheme.secondaryContainer,
-                borderRadius: BorderRadius.circular(4),
+                color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
                 'OCR',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSecondaryContainer,
-                  fontWeight: FontWeight.w500,
+                style: GoogleFonts.outfit(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF10B981),
                 ),
               ),
             ),
 
           if (document.isFavorite)
-            Icon(Icons.favorite, size: 16, color: theme.colorScheme.error),
+            const Icon(Icons.favorite_rounded, size: 18, color: Colors.redAccent),
         ],
       ),
     );
@@ -1460,48 +1598,49 @@ class _OcrTextPanelState extends State<_OcrTextPanel> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: widget.theme.colorScheme.surfaceContainerHighest,
-        border: Border(
-          top: BorderSide(
-            color: widget.theme.colorScheme.outlineVariant.withOpacity(0.5),
-          ),
-        ),
-      ),
+    final isDark = widget.theme.brightness == Brightness.dark;
+
+    return BentoCard(
+      padding: EdgeInsets.zero,
+      backgroundColor: isDark 
+          ? Colors.white.withValues(alpha: 0.05) 
+          : Colors.white.withValues(alpha: 0.8),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           // Header
           InkWell(
             onTap: () => setState(() => _isExpanded = !_isExpanded),
+            borderRadius: BorderRadius.circular(20),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.text_fields,
-                    size: 18,
-                    color: widget.theme.colorScheme.onSurfaceVariant,
+                  const Icon(
+                    Icons.text_snippet_rounded,
+                    size: 20,
+                    color: Color(0xFF10B981),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'OCR Text',
-                      style: widget.theme.textTheme.titleSmall?.copyWith(
+                      'Texte OCR',
+                      style: GoogleFonts.outfit(
+                        fontWeight: FontWeight.w700,
                         color: widget.theme.colorScheme.onSurface,
                       ),
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.copy, size: 18),
+                    icon: const Icon(Icons.copy_all_rounded, size: 20),
                     onPressed: _copyText,
-                    tooltip: 'Copy text',
                     visualDensity: VisualDensity.compact,
                   ),
                   Icon(
-                    _isExpanded ? Icons.expand_less : Icons.expand_more,
-                    color: widget.theme.colorScheme.onSurfaceVariant,
+                    _isExpanded 
+                        ? Icons.keyboard_arrow_up_rounded 
+                        : Icons.keyboard_arrow_down_rounded,
+                    color: widget.theme.colorScheme.onSurface.withValues(alpha: 0.3),
                   ),
                 ],
               ),
@@ -1517,8 +1656,9 @@ class _OcrTextPanelState extends State<_OcrTextPanel> {
               child: SingleChildScrollView(
                 child: SelectableText(
                   widget.ocrText,
-                  style: widget.theme.textTheme.bodySmall?.copyWith(
-                    color: widget.theme.colorScheme.onSurface,
+                  style: GoogleFonts.outfit(
+                    fontSize: 13,
+                    color: widget.theme.colorScheme.onSurface.withValues(alpha: 0.7),
                     height: 1.5,
                   ),
                 ),
@@ -1527,7 +1667,7 @@ class _OcrTextPanelState extends State<_OcrTextPanel> {
             crossFadeState: _isExpanded
                 ? CrossFadeState.showSecond
                 : CrossFadeState.showFirst,
-            duration: const Duration(milliseconds: 200),
+            duration: const Duration(milliseconds: 300),
           ),
         ],
       ),
@@ -1546,13 +1686,15 @@ class _OcrTextPanelState extends State<_OcrTextPanel> {
 }
 
 /// Action button for bottom bar.
-class _ActionButton extends StatelessWidget {
-  const _ActionButton({
+/// Action button for bottom bar.
+class _BentoActionButton extends StatelessWidget {
+  const _BentoActionButton({
     required this.icon,
     required this.label,
     required this.onPressed,
     required this.theme,
     this.badge,
+    this.isPrimary = false,
   });
 
   final IconData icon;
@@ -1560,54 +1702,89 @@ class _ActionButton extends StatelessWidget {
   final VoidCallback onPressed;
   final ThemeData theme;
   final String? badge;
+  final bool isPrimary;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onPressed,
-      borderRadius: BorderRadius.circular(8),
+    final isDark = theme.brightness == Brightness.dark;
+    
+    return Expanded(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Stack(
-              clipBehavior: Clip.none,
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            decoration: isPrimary ? BoxDecoration(
+              gradient: LinearGradient(
+                colors: isDark 
+                    ? [const Color(0xFF312E81), const Color(0xFF3730A3)] 
+                    : [const Color(0xFF6366F1), const Color(0xFF4F46E5)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: (isDark ? Colors.black : const Color(0xFF4F46E5)).withValues(alpha: 0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ) : null,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icon, size: 24, color: theme.colorScheme.onSurfaceVariant),
-                if (badge != null)
-                  Positioned(
-                    top: -4,
-                    right: -4,
-                    child: Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.error,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          badge!,
-                          style: TextStyle(
-                            color: theme.colorScheme.onError,
-                            fontSize: 8,
-                            fontWeight: FontWeight.bold,
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Icon(
+                      icon, 
+                      size: 24, 
+                      color: isPrimary 
+                          ? Colors.white 
+                          : theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                    ),
+                    if (badge != null)
+                      Positioned(
+                        top: -4,
+                        right: -4,
+                        child: Container(
+                          width: 14,
+                          height: 14,
+                          decoration: const BoxDecoration(
+                            color: Colors.redAccent,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text(
+                              badge!,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  style: GoogleFonts.outfit(
+                    fontSize: 11,
+                    fontWeight: isPrimary ? FontWeight.w700 : FontWeight.w600,
+                    color: isPrimary 
+                        ? Colors.white 
+                        : theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
+                ),
               ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -1628,10 +1805,12 @@ class _DocumentInfoSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = theme.brightness == Brightness.dark;
+    
     return Container(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        color: isDark ? Colors.black : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
       ),
       child: Column(
         children: [
@@ -1641,22 +1820,26 @@ class _DocumentInfoSheet extends StatelessWidget {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: theme.colorScheme.onSurfaceVariant.withOpacity(0.4),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
 
           // Title
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
             child: Row(
               children: [
-                Icon(Icons.info_outline, color: theme.colorScheme.primary),
-                const SizedBox(width: 12),
+                const BentoLevitationWidget(
+                  child: Icon(Icons.info_rounded, color: Color(0xFF4F46E5), size: 28),
+                ),
+                const SizedBox(width: 16),
                 Text(
-                  'Document Information',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+                  'Informations Document',
+                  style: GoogleFonts.outfit(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
               ],
@@ -1669,57 +1852,59 @@ class _DocumentInfoSheet extends StatelessWidget {
           Expanded(
             child: ListView(
               controller: scrollController,
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
               children: [
-                _InfoRow(label: 'Title', value: document.title, theme: theme),
-                _InfoRow(
-                  label: 'File size',
+                _BentoInfoRow(icon: Icons.title_rounded, label: 'Titre', value: document.title, theme: theme),
+                _BentoInfoRow(
+                  icon: Icons.straighten_rounded,
+                  label: 'Taille du fichier',
                   value: document.fileSizeFormatted,
                   theme: theme,
                 ),
-                _InfoRow(
+                _BentoInfoRow(
+                  icon: Icons.pages_rounded,
                   label: 'Pages',
                   value: '${document.pageCount}',
                   theme: theme,
                 ),
-                _InfoRow(
-                  label: 'Created',
+                _BentoInfoRow(
+                  icon: Icons.calendar_today_rounded,
+                  label: 'Créé le',
                   value: _formatFullDate(document.createdAt),
                   theme: theme,
                 ),
-                _InfoRow(
-                  label: 'Modified',
+                _BentoInfoRow(
+                  icon: Icons.history_rounded,
+                  label: 'Modifié le',
                   value: _formatFullDate(document.updatedAt),
                   theme: theme,
                 ),
                 if (document.mimeType != null)
-                  _InfoRow(
-                    label: 'Type',
+                  _BentoInfoRow(
+                    icon: Icons.code_rounded,
+                    label: 'Format',
                     value: document.mimeType!,
                     theme: theme,
                   ),
-                _InfoRow(
-                  label: 'OCR Status',
+                _BentoInfoRow(
+                  icon: Icons.font_download_rounded,
+                  label: 'Statut OCR',
                   value: document.ocrStatus.value.toUpperCase(),
                   theme: theme,
                 ),
                 if (document.folderId != null)
-                  _InfoRow(
-                    label: 'Folder',
+                  _BentoInfoRow(
+                    icon: Icons.folder_rounded,
+                    label: 'Dossier',
                     value: document.folderId!,
                     theme: theme,
                   ),
-                _InfoRow(
-                  label: 'Favorite',
-                  value: document.isFavorite ? 'Yes' : 'No',
+                _BentoInfoRow(
+                  icon: document.isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                  label: 'Favori',
+                  value: document.isFavorite ? 'Oui' : 'Non',
                   theme: theme,
                 ),
-                if (document.tags.isNotEmpty)
-                  _InfoRow(
-                    label: 'Tags',
-                    value: '${document.tags.length} tags',
-                    theme: theme,
-                  ),
               ],
             ),
           ),
@@ -1749,14 +1934,15 @@ class _DocumentInfoSheet extends StatelessWidget {
   }
 }
 
-/// Single info row in the document info sheet.
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({
+class _BentoInfoRow extends StatelessWidget {
+  const _BentoInfoRow({
+    required this.icon,
     required this.label,
     required this.value,
     required this.theme,
   });
 
+  final IconData icon;
   final String label;
   final String value;
   final ThemeData theme;
@@ -1764,36 +1950,53 @@ class _InfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 100,
-            child: Text(
-              label,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+      padding: const EdgeInsets.only(bottom: 12),
+      child: BentoCard(
+        padding: const EdgeInsets.all(16),
+        backgroundColor: theme.brightness == Brightness.dark 
+            ? Colors.white.withValues(alpha: 0.05) 
+            : Colors.black.withValues(alpha: 0.02),
+        child: Row(
+          children: [
+            Icon(
+              icon, 
+              size: 20, 
+              color: theme.colorScheme.primary.withValues(alpha: 0.6),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: GoogleFonts.outfit(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    value,
+                    style: GoogleFonts.outfit(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
 /// Dialog for moving a document to a different folder.
-class _MoveToFolderDialog extends StatelessWidget {
+class _MoveToFolderDialog extends StatefulWidget {
   const _MoveToFolderDialog({
     required this.folders,
     required this.currentFolderId,
@@ -1802,280 +2005,361 @@ class _MoveToFolderDialog extends StatelessWidget {
 
   final List<Folder> folders;
   final String? currentFolderId;
-  final VoidCallback onCreateFolder;
-
-  Color _parseColor(String? hexColor, ThemeData theme) {
-    if (hexColor == null) return theme.colorScheme.secondary;
-    try {
-      final hex = hexColor.replaceFirst('#', '');
-      return Color(int.parse('FF$hex', radix: 16));
-    } catch (_) {
-      return theme.colorScheme.secondary;
-    }
-  }
+  final Future<Folder?> Function(String name, String? color) onCreateFolder;
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return AlertDialog(
-      title: const Text('Move to folder'),
-      content: SizedBox(
-        width: double.maxFinite,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Root folder option (no folder)
-            ListTile(
-              leading: Icon(
-                Icons.home_outlined,
-                color: currentFolderId == null
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.onSurfaceVariant,
-              ),
-              title: const Text('My Documents'),
-              subtitle: const Text('Root level (no folder)'),
-              selected: currentFolderId == null,
-              onTap: currentFolderId == null
-                  ? null
-                  : () => Navigator.of(context).pop(null),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            if (folders.isNotEmpty) ...[
-              const Divider(),
-              // Existing folders list
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 250),
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: folders.length,
-                  itemBuilder: (context, index) {
-                    final folder = folders[index];
-                    final isCurrentFolder = folder.id == currentFolderId;
-                    return ListTile(
-                      leading: Icon(
-                        Icons.folder,
-                        color: isCurrentFolder
-                            ? theme.colorScheme.primary
-                            : _parseColor(folder.color, theme),
-                      ),
-                      title: Text(folder.name),
-                      selected: isCurrentFolder,
-                      enabled: !isCurrentFolder,
-                      onTap: isCurrentFolder
-                          ? null
-                          : () => Navigator.of(context).pop(folder.id),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-            const SizedBox(height: 8),
-            // Create new folder button
-            OutlinedButton.icon(
-              onPressed: onCreateFolder,
-              icon: const Icon(Icons.create_new_folder_outlined),
-              label: const Text('Create new folder'),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 48),
-              ),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop('_cancelled_'),
-          child: const Text('Cancel'),
-        ),
-      ],
-    );
-  }
+  State<_MoveToFolderDialog> createState() => _MoveToFolderDialogState();
 }
 
-/// Dialog for creating a new folder.
-///
-/// Uses StatefulWidget to properly manage the TextEditingController lifecycle
-/// and check mounted state before navigation.
-/// Result from folder creation dialog.
-class _CreateFolderResult {
-  const _CreateFolderResult({
-    required this.name,
-    this.color,
-  });
-
-  final String name;
-  final String? color;
-}
-
-class _CreateFolderDialog extends StatefulWidget {
-  const _CreateFolderDialog();
-
-  @override
-  State<_CreateFolderDialog> createState() => _CreateFolderDialogState();
-}
-
-class _CreateFolderDialogState extends State<_CreateFolderDialog> {
-  late final TextEditingController _controller;
-  String? _selectedColor;
-  String? _error;
-
-  static const List<String> _folderColors = [
-    '#F44336', // Red
-    '#E91E63', // Pink
-    '#9C27B0', // Purple
-    '#673AB7', // Deep Purple
-    '#3F51B5', // Indigo
-    '#2196F3', // Blue
-    '#03A9F4', // Light Blue
-    '#00BCD4', // Cyan
-    '#009688', // Teal
-    '#4CAF50', // Green
-    '#8BC34A', // Light Green
-    '#CDDC39', // Lime
-    '#FFEB3B', // Yellow
-    '#FFC107', // Amber
-    '#FF9800', // Orange
-    '#FF5722', // Deep Orange
-    '#795548', // Brown
-    '#607D8B', // Blue Grey
-  ];
+class _MoveToFolderDialogState extends State<_MoveToFolderDialog> {
+  late String? _selectedFolderId;
 
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController();
+    _selectedFolderId = widget.currentFolderId;
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    final name = _controller.text.trim();
-    if (name.isEmpty) {
-      setState(() => _error = 'Folder name cannot be empty');
-      return;
+  Future<void> _showCreateFolderDialog() async {
+    final result = await showBentoFolderDialog(context);
+    if (result != null && result.name.isNotEmpty && mounted) {
+      final newFolder = await widget.onCreateFolder(result.name, result.color);
+      if (newFolder != null && mounted) {
+        setState(() => _selectedFolderId = newFolder.id);
+      }
     }
-
-    // Unfocus to dismiss keyboard before popping to avoid _dependents.isEmpty
-    FocusScope.of(context).unfocus();
-    Navigator.of(context).pop(_CreateFolderResult(
-      name: name,
-      color: _selectedColor,
-    ));
   }
 
-  Color _parseColor(String hexColor) {
+  void _save() {
+    Navigator.of(context).pop(_selectedFolderId);
+  }
+
+  Color _parseColor(String? hexColor) {
+    if (hexColor == null) return const Color(0xFF4F46E5);
     try {
       final hex = hexColor.replaceFirst('#', '');
       return Color(int.parse('FF$hex', radix: 16));
     } catch (_) {
-      return Colors.grey;
+      return const Color(0xFF4F46E5);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
-    return AlertDialog(
-      title: const Text('New Folder'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextField(
-              controller: _controller,
-              autofocus: true,
-              decoration: InputDecoration(
-                labelText: 'Folder name',
-                errorText: _error,
-                border: const OutlineInputBorder(),
-              ),
-              onChanged: (_) {
-                if (_error != null) {
-                  setState(() => _error = null);
-                }
-              },
-              onSubmitted: (_) => _submit(),
+    return BackdropFilter(
+      filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
+      child: Center(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+              left: 24,
+              right: 24,
+              top: 24,
             ),
-            const SizedBox(height: 16),
-            Text(
-              'Color (optional)',
-              style: theme.textTheme.titleSmall,
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                // No color option
-                GestureDetector(
-                  onTap: () => setState(() => _selectedColor = null),
-                  child: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      shape: BoxShape.circle,
-                      border: _selectedColor == null
-                          ? Border.all(color: theme.colorScheme.primary, width: 2)
-                          : null,
+            child: Material(
+              color: Colors.transparent,
+              child: BentoCard(
+                elevation: 6,
+                padding: const EdgeInsets.all(24),
+                backgroundColor: isDark
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : Colors.white.withValues(alpha: 0.9),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Header with title and mascot
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Title on left
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Enregistrer sous...',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                  color: theme.colorScheme.onSurface,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Choisis un dossier de destination',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 12,
+                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        // Mascot on right with speech bubble
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            BentoLevitationWidget(
+                              child: BentoMascot(
+                                height: 70,
+                                variant: BentoMascotVariant.folderEdit,
+                              ),
+                            ),
+                            // Speech bubble positioned above
+                            Positioned(
+                              top: -8,
+                              right: 60,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: isDark ? Colors.white.withValues(alpha: 0.15) : const Color(0xFFEEF2FF),
+                                  borderRadius: const BorderRadius.only(
+                                    topLeft: Radius.circular(12),
+                                    topRight: Radius.circular(12),
+                                    bottomLeft: Radius.circular(12),
+                                    bottomRight: Radius.circular(4),
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.05),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Text(
+                                  'Je range !',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark ? Colors.white : const Color(0xFF1E1B4B),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                    child: Icon(
-                      Icons.folder_outlined,
-                      size: 20,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-                // Color options
-                for (final color in _folderColors)
-                  GestureDetector(
-                    onTap: () => setState(() => _selectedColor = color),
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: _parseColor(color),
-                        shape: BoxShape.circle,
-                        border: _selectedColor == color
-                            ? Border.all(color: theme.colorScheme.primary, width: 2)
-                            : null,
+                    const SizedBox(height: 20),
+
+                    // Folder list
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.of(context).size.height * 0.35,
                       ),
-                      child: _selectedColor == color
-                          ? const Icon(
-                              Icons.check,
-                              size: 20,
-                              color: Colors.white,
-                            )
-                          : null,
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // "My Documents" option
+                            _FolderOptionTile(
+                              onTap: () => setState(() => _selectedFolderId = null),
+                              icon: Icons.description_rounded,
+                              title: 'Mes Documents',
+                              color: const Color(0xFF4F46E5),
+                              isSelected: _selectedFolderId == null,
+                              theme: theme,
+                            ),
+                            const SizedBox(height: 8),
+                            // Specific folders
+                            ...widget.folders.map((folder) => Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: _FolderOptionTile(
+                                onTap: () => setState(() => _selectedFolderId = folder.id),
+                                icon: Icons.folder_rounded,
+                                title: folder.name,
+                                color: _parseColor(folder.color),
+                                isSelected: _selectedFolderId == folder.id,
+                                theme: theme,
+                              ),
+                            )),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-              ],
+                    const SizedBox(height: 12),
+
+                    // Create new folder button
+                    InkWell(
+                      onTap: _showCreateFolderDialog,
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.add_circle_outline_rounded,
+                              size: 24,
+                              color: theme.colorScheme.primary.withValues(alpha: 0.6),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Nouveau Dossier',
+                                style: GoogleFonts.outfit(
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.colorScheme.primary.withValues(alpha: 0.7),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Action buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () => Navigator.of(context).pop('_cancelled_'),
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            ),
+                            child: Text(
+                              'Annuler',
+                              style: GoogleFonts.outfit(
+                                fontWeight: FontWeight.w600,
+                                color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Container(
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary,
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: _save,
+                                borderRadius: BorderRadius.circular(14),
+                                child: Center(
+                                  child: Text(
+                                    'Enregistrer',
+                                    style: GoogleFonts.outfit(
+                                      fontWeight: FontWeight.w700,
+                                      color: theme.colorScheme.onPrimary,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FolderOptionTile extends StatelessWidget {
+  const _FolderOptionTile({
+    required this.onTap,
+    required this.icon,
+    required this.title,
+    required this.color,
+    required this.isSelected,
+    required this.theme,
+  });
+
+  final VoidCallback onTap;
+  final IconData icon;
+  final String title;
+  final Color color;
+  final bool isSelected;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isSelected 
+              ? color.withValues(alpha: 0.1) 
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected 
+                ? color.withValues(alpha: 0.3) 
+                : theme.colorScheme.onSurface.withValues(alpha: 0.05),
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 24),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: GoogleFonts.outfit(
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+            ),
+            if (isSelected)
+              Icon(Icons.check_circle_rounded, color: color, size: 20),
           ],
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: _submit,
-          child: const Text('Create'),
-        ),
-      ],
     );
   }
+}
+
+/// Painter for speech bubble tail pointing to the right (toward mascot).
+class _BubbleTailPainterRight extends CustomPainter {
+  final Color color;
+
+  _BubbleTailPainterRight({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    // Draw tail pointing down-right (toward mascot on the right)
+    final path = Path();
+    path.moveTo(0, 0); // Top left (connected to bubble)
+    path.lineTo(size.width, size.height); // Bottom right (pointing to mascot)
+    path.lineTo(0, size.height * 0.6); // Left side
+    path.close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

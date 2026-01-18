@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,9 +10,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/storage/document_repository.dart';
+import '../../../core/services/audio_service.dart';
 import '../../folders/domain/folder_model.dart';
 import '../../folders/domain/folder_service.dart';
+import '../../folders/presentation/widgets/bento_folder_dialog.dart';
+import '../../scanner/presentation/scanner_screen.dart';
 import '../../ocr/presentation/ocr_results_screen.dart';
+import '../../enhancement/presentation/enhancement_screen.dart';
 import '../../settings/presentation/settings_screen.dart';
 import '../../sharing/domain/document_share_service.dart';
 import '../domain/document_model.dart';
@@ -22,6 +27,8 @@ import 'widgets/filter_sheet.dart';
 import '../../../core/widgets/bento_background.dart';
 import '../../../core/widgets/bento_card.dart';
 import '../../../core/widgets/bento_mascot.dart';
+import '../../../core/widgets/bento_rename_document_dialog.dart';
+import '../../../core/widgets/bento_share_format_dialog.dart';
 
 // View models have been moved to models/documents_ui_models.dart
 
@@ -128,6 +135,26 @@ class DocumentsScreenState {
       if (doc.ocrText?.toLowerCase().contains(query) ?? false) return true;
       return false;
     }).toList();
+  }
+
+  /// Folders filtered by favorites and search query.
+  List<Folder> get filteredFolders {
+    var result = folders;
+
+    // Apply favorites filter
+    if (filter.favoritesOnly) {
+      result = result.where((folder) => folder.isFavorite).toList();
+    }
+
+    // Apply search filter
+    if (searchQuery.isNotEmpty) {
+      final query = searchQuery.toLowerCase();
+      result = result.where((folder) =>
+        folder.name.toLowerCase().contains(query)
+      ).toList();
+    }
+
+    return result;
   }
 
   /// Whether there's an error.
@@ -302,15 +329,23 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
       // Load documents based on current context
       if (filter.favoritesOnly) {
         documents = await _repository.getFavoriteDocuments(includeTags: true);
+        // Also load favorite folders
+        final allFolders = await _folderService.getAllFolders();
+        folders = allFolders.favorites.sortedByName();
       } else if (state.currentFolderId != null) {
         // Inside a folder - load folder's documents
         documents = await _repository.getDocumentsInFolder(
           state.currentFolderId,
           includeTags: true,
         );
-        // Also load subfolders
+        // Also load subfolders and refresh current folder
         final allFolders = await _folderService.getAllFolders();
         folders = allFolders.childrenOf(state.currentFolderId!).sortedByName();
+        // Refresh current folder to get updated favorite status
+        final refreshedFolder = await _folderService.getFolder(state.currentFolderId!);
+        if (refreshedFolder != null) {
+          state = state.copyWith(currentFolder: refreshedFolder);
+        }
       } else if (filter.folderId != null) {
         documents = await _repository.getDocumentsInFolder(
           filter.folderId,
@@ -561,6 +596,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
   }
 
   /// Toggles selection of a document.
+  /// Clears folder selection when selecting documents (mutually exclusive).
   void toggleDocumentSelection(String documentId) {
     final selected = Set<String>.from(state.selectedDocumentIds);
     if (selected.contains(documentId)) {
@@ -571,14 +607,17 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
 
     state = state.copyWith(
       selectedDocumentIds: selected,
+      selectedFolderIds: {}, // Clear folder selection
       isSelectionMode: selected.isNotEmpty,
     );
   }
 
   /// Selects all documents.
+  /// Clears folder selection (mutually exclusive).
   void selectAll() {
     state = state.copyWith(
       selectedDocumentIds: state.documents.map((d) => d.id).toSet(),
+      selectedFolderIds: {}, // Clear folder selection
       isSelectionMode: true,
     );
   }
@@ -674,12 +713,17 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
 
   /// Toggles favorite status for all selected documents.
   Future<void> toggleFavoriteSelected() async {
-    if (state.selectedDocumentIds.isEmpty) return;
-    
+    if (state.selectedDocumentIds.isEmpty && state.selectedFolderIds.isEmpty) return;
+
     state = state.copyWith(isLoading: true, clearError: true);
     try {
+      // Toggle favorites for selected documents
       for (final id in state.selectedDocumentIds) {
         await _repository.toggleFavorite(id);
+      }
+      // Toggle favorites for selected folders
+      for (final id in state.selectedFolderIds) {
+        await _folderService.toggleFavorite(id);
       }
       state = state.copyWith(clearSelection: true);
       await loadDocuments();
@@ -715,6 +759,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
   // ============================================================
 
   /// Toggles selection of a folder.
+  /// Clears document selection when selecting folders (mutually exclusive).
   void toggleFolderSelection(String folderId) {
     final selected = Set<String>.from(state.selectedFolderIds);
     if (selected.contains(folderId)) {
@@ -723,26 +768,28 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
       selected.add(folderId);
     }
 
-    final hasSelection = selected.isNotEmpty || state.selectedDocumentIds.isNotEmpty;
     state = state.copyWith(
       selectedFolderIds: selected,
-      isSelectionMode: hasSelection,
+      selectedDocumentIds: {}, // Clear document selection
+      isSelectionMode: selected.isNotEmpty,
     );
   }
 
   /// Selects all folders.
+  /// Clears document selection (mutually exclusive).
   void selectAllFolders() {
     state = state.copyWith(
       selectedFolderIds: state.folders.map((f) => f.id).toSet(),
+      selectedDocumentIds: {}, // Clear document selection
       isSelectionMode: true,
     );
   }
 
-  /// Selects all items (documents and folders).
+  /// Selects all items (documents only since selection is mutually exclusive).
   void selectAllItems() {
     state = state.copyWith(
       selectedDocumentIds: state.documents.map((d) => d.id).toSet(),
-      selectedFolderIds: state.folders.map((f) => f.id).toSet(),
+      selectedFolderIds: {},
       isSelectionMode: true,
     );
   }
@@ -961,6 +1008,7 @@ class DocumentsScreen extends ConsumerStatefulWidget {
 
 class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
   final _searchController = TextEditingController();
+  final _searchFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -975,6 +1023,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -1017,41 +1066,58 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
       }
     });
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: _buildBody(context, state, notifier, theme),
-      floatingActionButton: _buildFab(context, state),
+    return GestureDetector(
+      onTap: () => _searchFocusNode.unfocus(),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: _buildBody(context, state, notifier, theme),
+        floatingActionButton: _buildFab(context, state),
+      ),
     );
   }
 
-  Widget _buildTopAppBar(BuildContext context, ThemeData theme) {
+  Widget _buildTopAppBar(
+    BuildContext context,
+    DocumentsScreenState state,
+    DocumentsScreenNotifier notifier,
+    ThemeData theme,
+  ) {
     final isDark = theme.brightness == Brightness.dark;
-    
+    final isInFolder = !state.isAtRoot && state.currentFolder != null;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
       child: Row(
         children: [
+          // Bouton retour
           BentoBouncingWidget(
             child: Container(
               decoration: BoxDecoration(
-                color: isDark 
-                    ? Colors.white.withValues(alpha: 0.1) 
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.1)
                     : Colors.white.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: isDark 
-                      ? Colors.white.withValues(alpha: 0.1) 
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.1)
                       : const Color(0xFFE2E8F0),
                 ),
               ),
               child: IconButton(
                 icon: const Icon(Icons.arrow_back_rounded),
                 color: isDark ? Colors.white : const Color(0xFF1E1B4B),
-                onPressed: () => Navigator.pop(context),
+                onPressed: () {
+                  if (isInFolder) {
+                    notifier.exitFolder();
+                  } else {
+                    Navigator.pop(context);
+                  }
+                },
               ),
             ),
           ),
           const Spacer(),
+          // Titre toujours "Mes Documents"
           Text(
             'Mes Documents',
             style: GoogleFonts.outfit(
@@ -1137,8 +1203,97 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                   : Colors.white.withValues(alpha: 0.6),
               borderRadius: 20,
               child: const Center(
-                child: WavingMascot(height: 90),
+                child: BentoMascot(
+                  height: 90,
+                  variant: BentoMascotVariant.documents,
+                ),
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Builds the folder header card when inside a folder.
+  Widget _buildFolderHeader(
+    BuildContext context,
+    Folder folder,
+    DocumentsScreenNotifier notifier,
+    ThemeData theme,
+  ) {
+    final folderColor = _parseHexColor(folder.color, theme);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: folderColor.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              Icons.folder_rounded,
+              color: folderColor,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  folder.name,
+                  style: GoogleFonts.outfit(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  'Dossier actuel',
+                  style: GoogleFonts.outfit(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: Icon(
+              folder.isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+              size: 18,
+            ),
+            onPressed: () async {
+              await ref.read(folderServiceProvider).toggleFavorite(folder.id);
+              notifier.loadDocuments();
+            },
+            style: IconButton.styleFrom(
+              backgroundColor: folder.isFavorite
+                  ? theme.colorScheme.error.withValues(alpha: 0.1)
+                  : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+              padding: const EdgeInsets.all(8),
+              foregroundColor: folder.isFavorite
+                  ? theme.colorScheme.error
+                  : theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(width: 4),
+          IconButton(
+            icon: const Icon(Icons.edit_rounded, size: 18),
+            onPressed: () => _showEditFolderDialog(context, folder, notifier),
+            style: IconButton.styleFrom(
+              backgroundColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+              padding: const EdgeInsets.all(8),
+              foregroundColor: folderColor,
             ),
           ),
         ],
@@ -1164,9 +1319,10 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
       return _ErrorView(message: state.error!, onRetry: notifier.initialize);
     }
 
-    // If no documents and no folders at root, and not loading, go back
+    // If no documents and no folders at root, and not loading, and no active filters, go back
     // (shouldn't happen since we check before showing button)
-    if (!state.hasDocuments && !state.hasFolders && !state.isLoading && state.isAtRoot) {
+    // Don't pop when filters are active - show empty state instead
+    if (!state.hasDocuments && !state.hasFolders && !state.isLoading && state.isAtRoot && !state.filter.hasActiveFilters) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) Navigator.of(context).pop();
       });
@@ -1178,79 +1334,20 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    // Empty folder message
-    if (!state.hasDocuments && !state.hasFolders && !state.isAtRoot) {
-      return Stack(
-        children: [
-          const BentoBackground(),
-          Center(
-            child: BentoCard(
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
-              backgroundColor: isDark 
-                  ? Colors.white.withValues(alpha: 0.05) 
-                  : Colors.white.withValues(alpha: 0.7),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.folder_open_rounded,
-                      size: 48,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Ce dossier est vide',
-                    style: GoogleFonts.outfit(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.onSurface,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Ajoutez vos premiers documents !',
-                    style: GoogleFonts.outfit(
-                      fontSize: 14,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  FilledButton.icon(
-                    onPressed: () => notifier.exitFolder(),
-                    icon: const Icon(Icons.arrow_back),
-                    label: const Text('Retour'),
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      );
-    }
-
     return Stack(
       children: [
         const BentoBackground(),
         SafeArea(
           child: Column(
             children: [
-              _buildTopAppBar(context, theme),
+              _buildTopAppBar(context, state, notifier, theme),
               _buildBentoHeader(context, state, notifier, theme),
               // Integrated Search Bar with Controls & Selection Flip
               SizedBox(
                 height: 72,
                 child: BentoSearchBar(
                   controller: _searchController,
+                  focusNode: _searchFocusNode,
                   onChanged: notifier.setSearchQuery,
                   onClear: () {
                     _searchController.clear();
@@ -1271,125 +1368,54 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                   selectedDocumentCount: state.selectedDocumentCount,
                   selectedFolderCount: state.selectedFolderCount,
                   hasDocumentsSelected: state.selectedDocumentCount > 0,
-                  onDeleteSelected: () => _showDeleteConfirmation(context, state, notifier),
+                  onDeleteSelected: () =>
+                      _showDeleteConfirmation(context, state, notifier),
                   onFavoriteSelected: notifier.toggleFavoriteSelected,
-                  onShareSelected: notifier.shareSelected,
+                  onShareSelected: () => _handleShareSelected(context, state),
                 ),
               ),
-        // Active filters indicator
-        if (state.filter.hasActiveFilters ||
-            state.sortBy != DocumentsSortBy.createdDesc)
-          _ActiveFiltersBar(
-            filter: state.filter,
-            sortBy: state.sortBy,
-            onClearAll: notifier.clearFilters,
-            onClearSort: () => notifier.setSortBy(DocumentsSortBy.createdDesc),
-            onClearFavorites: () =>
-                notifier.setFilter(state.filter.copyWith(favoritesOnly: false)),
-            onClearOcr: () =>
-                notifier.setFilter(state.filter.copyWith(hasOcrOnly: false)),
-            onClearFolder: () =>
-                notifier.setFilter(state.filter.copyWith(clearFolderId: true)),
-            onClearTags: () =>
-                notifier.setFilter(state.filter.copyWith(clearTags: true)),
-          ),
-        // Document list/grid
-        Expanded(
-          child: RefreshIndicator(
-                  onRefresh: notifier.refresh,
-                  child: CustomScrollView(
-                    slivers: [
-                      // Folders section (if any)
-                      if (state.hasFolders)
-                        SliverToBoxAdapter(
-                          child: _FoldersSection(
-                            folders: state.folders,
-                            selectedFolderIds: state.selectedFolderIds,
-                            isSelectionMode: state.isSelectionMode,
-                            onFolderTap: (folder) => _handleFolderTap(folder, state, notifier),
-                            onFolderLongPress: (folder) => _handleFolderLongPress(folder, notifier),
-                            theme: theme,
-                          ),
-                        ),
-                      // Documents section
-                      if (state.filteredDocuments.isNotEmpty)
-                        state.viewMode == DocumentsViewMode.grid
-                            ? SliverPadding(
-                                padding: const EdgeInsets.all(8),
-                                sliver: _DocumentsGridSliver(
-                                  documents: state.filteredDocuments,
-                                  thumbnails: state.decryptedThumbnails,
-                                  selectedIds: state.selectedDocumentIds,
-                                  isSelectionMode: state.isSelectionMode,
-                                  onDocumentTap: (doc) => _handleDocumentTap(doc, state, notifier),
-                                  onDocumentLongPress: (doc) =>
-                                      _handleDocumentLongPress(doc, notifier),
-                                  onFavoriteToggle: notifier.toggleFavorite,
-                                  onRename: (id, title) => _showRenameDialog(context, id, title, notifier),
-                                  theme: theme,
-                                ),
-                              )
-                            : SliverList(
-                                delegate: SliverChildBuilderDelegate(
-                                  (context, index) {
-                                    final doc = state.filteredDocuments[index];
-                                    return _DocumentListItem(
-                                      document: doc,
-                                      thumbnailPath: state.decryptedThumbnails[doc.id],
-                                      isSelected: state.selectedDocumentIds.contains(doc.id),
-                                      isSelectionMode: state.isSelectionMode,
-                                      onTap: () => _handleDocumentTap(doc, state, notifier),
-                                      onLongPress: () => _handleDocumentLongPress(doc, notifier),
-                                      onFavoriteToggle: () => notifier.toggleFavorite(doc.id),
-                                      onRename: () => _showRenameDialog(context, doc.id, doc.title, notifier),
-                                      theme: theme,
-                                    );
-                                  },
-                                  childCount: state.filteredDocuments.length,
-                                ),
-                              ),
-                      // Empty documents message when filters are active
-                      if (state.filteredDocuments.isEmpty && (state.filter.hasActiveFilters || state.hasSearch))
-                        SliverFillRemaining(
-                          hasScrollBody: false,
-                          child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.filter_list_off,
-                                  size: 64,
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  state.hasSearch
-                                      ? 'Aucun résultat pour "${state.searchQuery}"'
-                                      : 'Aucun document correspondant',
-                                  style: GoogleFonts.outfit(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: theme.colorScheme.onSurface,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                TextButton(
-                                  onPressed: () {
-                                    if (state.hasSearch) {
-                                      _searchController.clear();
-                                      notifier.clearSearch();
-                                    }
-                                    notifier.clearFilters();
-                                  },
-                                  child: const Text('Effacer les filtres'),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
+              // Active filters indicator
+              if (state.filter.hasActiveFilters ||
+                  state.sortBy != DocumentsSortBy.createdDesc)
+                _ActiveFiltersBar(
+                  filter: state.filter,
+                  sortBy: state.sortBy,
+                  onClearAll: notifier.clearFilters,
+                  onClearSort: () => notifier.setSortBy(DocumentsSortBy.createdDesc),
+                  onClearFavorites: () =>
+                      notifier.setFilter(state.filter.copyWith(favoritesOnly: false)),
+                  onClearOcr: () =>
+                      notifier.setFilter(state.filter.copyWith(hasOcrOnly: false)),
+                  onClearFolder: () =>
+                      notifier.setFilter(state.filter.copyWith(clearFolderId: true)),
+                  onClearTags: () =>
+                      notifier.setFilter(state.filter.copyWith(clearTags: true)),
                 ),
+              
+              // Folder View vs Root View
+              Expanded(
+                child: !state.isAtRoot && state.currentFolder != null
+                    ? Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                        child: BentoCard(
+                          padding: EdgeInsets.zero,
+                          backgroundColor: theme.brightness == Brightness.dark
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : Colors.white.withValues(alpha: 0.7),
+                          child: Column(
+                            children: [
+                              _buildFolderHeader(
+                                  context, state.currentFolder!, notifier, theme),
+                              const Divider(height: 1),
+                              Expanded(
+                                child: _buildDocumentsSliverList(
+                                    context, state, notifier, theme),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : _buildDocumentsSliverList(context, state, notifier, theme),
               ),
             ],
           ),
@@ -1398,11 +1424,185 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     );
   }
 
+  /// Helper to build the documents list/grid section, which can be reused
+  Widget _buildDocumentsSliverList(
+    BuildContext context,
+    DocumentsScreenState state,
+    DocumentsScreenNotifier notifier,
+    ThemeData theme,
+  ) {
+    return RefreshIndicator(
+      onRefresh: notifier.refresh,
+      child: CustomScrollView(
+        slivers: [
+          // Folders section (only at root)
+          if (state.isAtRoot && (state.filteredFolders.isNotEmpty || !state.filter.favoritesOnly))
+            SliverToBoxAdapter(
+              child: _FoldersSection(
+                folders: state.filteredFolders,
+                selectedFolderIds: state.selectedFolderIds,
+                isSelectionMode: state.isSelectionMode,
+                onFolderTap: (folder) => _handleFolderTap(folder, state, notifier),
+                onFolderLongPress: (folder) => _handleFolderLongPress(folder, notifier),
+                onCreateFolder: () => _showCreateNewFolderDialog(context, notifier),
+                theme: theme,
+              ),
+            ),
+
+          // Documents section
+          if (state.filteredDocuments.isNotEmpty)
+            state.viewMode == DocumentsViewMode.grid
+                ? SliverPadding(
+                    padding: const EdgeInsets.all(16),
+                    sliver: _DocumentsGridSliver(
+                      documents: state.filteredDocuments,
+                      thumbnails: state.decryptedThumbnails,
+                      selectedIds: state.selectedDocumentIds,
+                      isSelectionMode: state.isSelectionMode,
+                      onDocumentTap: (doc) => _handleDocumentTap(doc, state, notifier),
+                      onDocumentLongPress: (doc) =>
+                          _handleDocumentLongPress(doc, notifier),
+                      onFavoriteToggle: notifier.toggleFavorite,
+                      onRename: (id, title) =>
+                          _showRenameDialog(context, id, title, notifier),
+                      theme: theme,
+                    ),
+                  )
+                : SliverPadding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final doc = state.filteredDocuments[index];
+                          return _DocumentListItem(
+                            document: doc,
+                            thumbnailPath: state.decryptedThumbnails[doc.id],
+                            isSelected: state.selectedDocumentIds.contains(doc.id),
+                            isSelectionMode: state.isSelectionMode,
+                            onTap: () => _handleDocumentTap(doc, state, notifier),
+                            onLongPress: () => _handleDocumentLongPress(doc, notifier),
+                            onFavoriteToggle: () => notifier.toggleFavorite(doc.id),
+                            onRename: () =>
+                                _showRenameDialog(context, doc.id, doc.title, notifier),
+                            theme: theme,
+                          );
+                        },
+                        childCount: state.filteredDocuments.length,
+                      ),
+                    ),
+                  ),
+
+          // Empty filters message (when filtering returns no results)
+          if (state.filteredDocuments.isEmpty &&
+              state.filteredFolders.isEmpty &&
+              (state.filter.hasActiveFilters || state.hasSearch))
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      state.filter.favoritesOnly
+                          ? Icons.favorite_border_rounded
+                          : Icons.filter_list_off,
+                      size: 64,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      state.hasSearch
+                          ? 'Aucun résultat pour "${state.searchQuery}"'
+                          : state.filter.favoritesOnly
+                              ? 'Aucun favori'
+                              : 'Aucun document correspondant',
+                      style: GoogleFonts.outfit(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: () {
+                        if (state.hasSearch) {
+                          _searchController.clear();
+                          notifier.clearSearch();
+                        }
+                        notifier.clearFilters();
+                      },
+                      child: const Text('Effacer les filtres'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+          // Empty folder message (inside a folder with no documents)
+          if (!state.hasDocuments &&
+              !state.hasFolders &&
+              !state.isAtRoot &&
+              !state.filter.hasActiveFilters &&
+              !state.hasSearch)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.folder_open_rounded,
+                      size: 64,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Ce dossier est vide',
+                      style: GoogleFonts.outfit(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget? _buildFab(BuildContext context, DocumentsScreenState state) {
     if (state.isSelectionMode) return null;
 
     return BentoScanFab(
-      onPressed: widget.onScanPressed,
+      onPressed: widget.onScanPressed ?? () => _navigateToScanner(context),
+    );
+  }
+
+  void _navigateToScanner(BuildContext context) {
+    HapticFeedback.lightImpact();
+    ref.read(audioServiceProvider).playScanLaunch();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 200),
+        reverseTransitionDuration: const Duration(milliseconds: 200),
+        opaque: true,
+        barrierColor: isDark ? Colors.black : Colors.white,
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const ScannerScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return ColoredBox(
+            color: isDark ? Colors.black : Colors.white,
+            child: FadeTransition(
+              opacity: animation,
+              child: child,
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -1432,6 +1632,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
             ref.read(documentsScreenProvider.notifier).loadDocuments();
           },
           onOcr: (doc, imageBytes) => _navigateToOcr(navContext, doc, imageBytes),
+          onEnhance: (doc, imageBytes) => _navigateToEnhancement(navContext, doc, imageBytes),
         ),
       ),
     ).then((_) {
@@ -1465,6 +1666,17 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
               }
             }
           },
+        ),
+      ),
+    );
+  }
+
+  void _navigateToEnhancement(BuildContext context, Document document, Uint8List imageBytes) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => EnhancementScreen(
+          imageBytes: imageBytes,
+          title: document.title,
         ),
       ),
     );
@@ -1507,9 +1719,9 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     Folder folder,
     DocumentsScreenNotifier notifier,
   ) async {
-    final result = await showDialog<_FolderEditResult>(
+    final result = await showDialog<BentoFolderDialogResult>(
       context: context,
-      builder: (context) => _FolderEditDialog(folder: folder),
+      builder: (context) => BentoFolderDialog(folder: folder, isEditing: true),
     );
 
     if (result != null && mounted) {
@@ -1661,10 +1873,13 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
         currentFolderId: state.currentFolderId,
         selectedCount: state.selectedCount,
         onCreateFolder: () async {
-          final newFolderName = await _showCreateFolderForMoveDialog(context);
-          if (newFolderName != null && newFolderName.isNotEmpty) {
+          final result = await _showCreateFolderForMoveDialog(context);
+          if (result != null && result.name.isNotEmpty) {
             try {
-              final newFolder = await folderService.createFolder(name: newFolderName);
+              final newFolder = await folderService.createFolder(
+                name: result.name,
+                color: result.color,
+              );
               if (context.mounted) {
                 Navigator.of(context).pop(newFolder.id);
               }
@@ -1699,10 +1914,10 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
   }
 
   /// Shows dialog to create a new folder when moving documents.
-  Future<String?> _showCreateFolderForMoveDialog(BuildContext context) async {
-    return showDialog<String>(
+  Future<BentoFolderDialogResult?> _showCreateFolderForMoveDialog(BuildContext context) async {
+    return showDialog<BentoFolderDialogResult>(
       context: context,
-      builder: (context) => const _CreateFolderForMoveDialog(),
+      builder: (context) => const BentoFolderDialog(),
     );
   }
 
@@ -1711,9 +1926,9 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     BuildContext context,
     DocumentsScreenNotifier notifier,
   ) async {
-    final result = await showDialog<_CreateFolderDialogResult>(
+    final result = await showDialog<BentoFolderDialogResult>(
       context: context,
-      builder: (context) => const _CreateFolderForMoveDialog(showColorPicker: true),
+      builder: (context) => const BentoFolderDialog(),
     );
 
     if (result != null && result.name.isNotEmpty && mounted) {
@@ -1724,15 +1939,10 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
           color: result.color,
         );
         await notifier.loadDocuments();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Folder "${result.name}" created')),
-          );
-        }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to create folder: $e')),
+            SnackBar(content: Text('Échec de la création du dossier: $e')),
           );
         }
       }
@@ -1759,8 +1969,12 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
       return;
     }
 
-    // Share directly - no permission needed for share_plus on modern Android
-    await _shareDocuments(context, shareService, selectedDocuments);
+    // Show format selection dialog
+    final format = await showBentoShareFormatDialog(context);
+    if (format == null) return; // User cancelled
+
+    // Share with selected format
+    await _shareDocuments(context, shareService, selectedDocuments, format);
   }
 
   /// Performs the actual document sharing.
@@ -1768,9 +1982,10 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     BuildContext context,
     DocumentShareService shareService,
     List<Document> documents,
+    ShareFormat format,
   ) async {
     try {
-      final result = await shareService.shareDocuments(documents);
+      final result = await shareService.shareDocuments(documents, format: format);
       // Clean up temporary files after sharing
       await shareService.cleanupTempFiles(result.tempFilePaths);
     } on DocumentShareException catch (e) {
@@ -1797,37 +2012,52 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     String currentTitle,
     DocumentsScreenNotifier notifier,
   ) async {
-    final controller = TextEditingController(text: currentTitle);
-    final newTitle = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Rename Document'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(
-            labelText: 'Document name',
-            border: OutlineInputBorder(),
-          ),
-          onSubmitted: (value) => Navigator.of(context).pop(value),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(controller.text),
-            child: const Text('Rename'),
-          ),
-        ],
-      ),
+    final newTitle = await showBentoRenameDocumentDialog(
+      context,
+      currentTitle: currentTitle,
     );
 
     if (newTitle != null && newTitle.isNotEmpty && newTitle != currentTitle) {
       await notifier.renameDocument(documentId, newTitle);
     }
-    controller.dispose();
+  }
+
+  Color _parseHexColor(String? hexColor, ThemeData theme) {
+    if (hexColor == null) return theme.colorScheme.secondary;
+    try {
+      final hex = hexColor.replaceFirst('#', '');
+      return Color(int.parse('FF$hex', radix: 16));
+    } catch (_) {
+      return theme.colorScheme.secondary;
+    }
+  }
+
+  /// Shows dialog to edit folder (name + color).
+  Future<void> _showEditFolderDialog(
+    BuildContext context,
+    Folder folder,
+    DocumentsScreenNotifier notifier,
+  ) async {
+    final result = await showDialog<BentoFolderDialogResult>(
+      context: context,
+      builder: (context) => BentoFolderDialog(
+        folder: folder,
+        isEditing: true,
+      ),
+    );
+
+    if (result != null) {
+      final hasNameChange = result.name != folder.name && result.name.isNotEmpty;
+      final hasColorChange = result.color != folder.color;
+
+      if (hasNameChange || hasColorChange) {
+        await notifier.updateFolder(
+          folderId: folder.id,
+          name: hasNameChange ? result.name : null,
+          color: hasColorChange ? result.color : null,
+        );
+      }
+    }
   }
 }
 
@@ -2334,7 +2564,7 @@ class _DocumentListItem extends StatelessWidget {
             // Action buttons
             if (!isSelectionMode) ...[
               IconButton(
-                icon: Icon(Icons.edit_rounded, size: 20),
+                icon: const Icon(Icons.edit_rounded, size: 20),
                 onPressed: onRename,
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -2730,6 +2960,7 @@ class _FoldersSection extends StatefulWidget {
     required this.isSelectionMode,
     required this.onFolderTap,
     required this.onFolderLongPress,
+    required this.onCreateFolder,
     required this.theme,
   });
 
@@ -2738,6 +2969,7 @@ class _FoldersSection extends StatefulWidget {
   final bool isSelectionMode;
   final void Function(Folder) onFolderTap;
   final void Function(Folder) onFolderLongPress;
+  final VoidCallback onCreateFolder;
   final ThemeData theme;
 
   @override
@@ -2791,11 +3023,15 @@ class _FoldersSectionState extends State<_FoldersSection> {
           height: 180,
           child: PageView.builder(
             controller: _pageController,
-            itemCount: (widget.folders.length / 8).ceil(),
+            // +1 pour le bouton d'ajout sur la première page
+            itemCount: ((widget.folders.length + 1) / 8).ceil(),
             itemBuilder: (context, pageIndex) {
+              // Sur la première page, on a le bouton + puis les dossiers
+              // Sur les autres pages, juste les dossiers
+              final totalItemsWithButton = widget.folders.length + 1;
               final startIndex = pageIndex * 8;
-              final endIndex = min(startIndex + 8, widget.folders.length);
-              final pageFolders = widget.folders.sublist(startIndex, endIndex);
+              final endIndex = min(startIndex + 8, totalItemsWithButton);
+              final itemsOnThisPage = endIndex - startIndex;
 
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -2807,9 +3043,21 @@ class _FoldersSectionState extends State<_FoldersSection> {
                     crossAxisSpacing: 8,
                     childAspectRatio: 0.85,
                   ),
-                  itemCount: pageFolders.length,
+                  itemCount: itemsOnThisPage,
                   itemBuilder: (context, index) {
-                    final folder = pageFolders[index];
+                    final globalIndex = startIndex + index;
+
+                    // Premier élément = bouton d'ajout
+                    if (globalIndex == 0) {
+                      return _AddFolderButton(
+                        onTap: widget.onCreateFolder,
+                        theme: widget.theme,
+                      );
+                    }
+
+                    // Les autres = dossiers (index - 1 car le bouton prend la place 0)
+                    final folderIndex = globalIndex - 1;
+                    final folder = widget.folders[folderIndex];
                     final isSelected = widget.selectedFolderIds.contains(folder.id);
                     return _FolderCard(
                       folder: folder,
@@ -2826,9 +3074,9 @@ class _FoldersSectionState extends State<_FoldersSection> {
           ),
         ),
         // Page indicator dots (only show if multiple pages)
-        if ((widget.folders.length / 8).ceil() > 1)
+        if (((widget.folders.length + 1) / 8).ceil() > 1)
           _PageIndicatorDots(
-            totalPages: (widget.folders.length / 8).ceil(),
+            totalPages: ((widget.folders.length + 1) / 8).ceil(),
             currentPage: _currentPage,
             theme: widget.theme,
           ),
@@ -2845,6 +3093,72 @@ class _FoldersSectionState extends State<_FoldersSection> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Button to add a new folder.
+class _AddFolderButton extends StatelessWidget {
+  const _AddFolderButton({
+    required this.onTap,
+    required this.theme,
+  });
+
+  final VoidCallback onTap;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = theme.brightness == Brightness.dark;
+    final colorScheme = theme.colorScheme;
+
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          decoration: BoxDecoration(
+            color: isDark
+                ? colorScheme.primary.withValues(alpha: 0.15)
+                : colorScheme.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: colorScheme.primary.withValues(alpha: 0.3),
+              width: 1.5,
+              strokeAlign: BorderSide.strokeAlignInside,
+            ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.add_rounded,
+                  size: 24,
+                  color: colorScheme.primary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Nouveau',
+                style: GoogleFonts.outfit(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.primary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -2942,6 +3256,24 @@ class _FolderCard extends StatelessWidget {
                                 color: colorScheme.onPrimary,
                               )
                             : null,
+                      ),
+                    ),
+                  // Favorite indicator (show heart if favorite)
+                  if (folder.isFavorite && !isSelectionMode)
+                    Positioned(
+                      bottom: -2,
+                      right: -2,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surface,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.favorite_rounded,
+                          size: 12,
+                          color: colorScheme.error,
+                        ),
                       ),
                     ),
                 ],
@@ -3167,389 +3499,6 @@ class _MoveToFolderDialog extends StatelessWidget {
   }
 }
 
-/// Dialog for creating a new folder when moving documents.
-///
-/// Uses StatefulWidget to properly manage the TextEditingController lifecycle
-/// and check mounted state before navigation.
-/// Result from folder creation dialog.
-class _CreateFolderDialogResult {
-  const _CreateFolderDialogResult({
-    required this.name,
-    this.color,
-  });
-
-  final String name;
-  final String? color;
-}
-
-class _CreateFolderForMoveDialog extends StatefulWidget {
-  const _CreateFolderForMoveDialog({this.showColorPicker = false});
-
-  final bool showColorPicker;
-
-  @override
-  State<_CreateFolderForMoveDialog> createState() => _CreateFolderForMoveDialogState();
-}
-
-class _CreateFolderForMoveDialogState extends State<_CreateFolderForMoveDialog> {
-  late final TextEditingController _controller;
-  String? _selectedColor;
-  String? _error;
-
-  static const List<String> _folderColors = [
-    '#F44336', // Red
-    '#E91E63', // Pink
-    '#9C27B0', // Purple
-    '#673AB7', // Deep Purple
-    '#3F51B5', // Indigo
-    '#2196F3', // Blue
-    '#03A9F4', // Light Blue
-    '#00BCD4', // Cyan
-    '#009688', // Teal
-    '#4CAF50', // Green
-    '#8BC34A', // Light Green
-    '#CDDC39', // Lime
-    '#FFEB3B', // Yellow
-    '#FFC107', // Amber
-    '#FF9800', // Orange
-    '#FF5722', // Deep Orange
-    '#795548', // Brown
-    '#607D8B', // Blue Grey
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    final name = _controller.text.trim();
-    if (name.isEmpty) {
-      setState(() => _error = 'Folder name cannot be empty');
-      return;
-    }
-
-    // Unfocus to dismiss keyboard before popping to avoid _dependents.isEmpty
-    FocusScope.of(context).unfocus();
-
-    if (widget.showColorPicker) {
-      Navigator.of(context).pop(_CreateFolderDialogResult(
-        name: name,
-        color: _selectedColor,
-      ));
-    } else {
-      Navigator.of(context).pop(name);
-    }
-  }
-
-  Color _parseColor(String hexColor) {
-    try {
-      final hex = hexColor.replaceFirst('#', '');
-      return Color(int.parse('FF$hex', radix: 16));
-    } catch (_) {
-      return Colors.grey;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return AlertDialog(
-      title: const Text('New Folder'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextField(
-              controller: _controller,
-              autofocus: true,
-              decoration: InputDecoration(
-                labelText: 'Folder name',
-                errorText: _error,
-                border: const OutlineInputBorder(),
-              ),
-              onChanged: (_) {
-                if (_error != null) {
-                  setState(() => _error = null);
-                }
-              },
-              onSubmitted: (_) => _submit(),
-            ),
-            if (widget.showColorPicker) ...[
-              const SizedBox(height: 16),
-              Text(
-                'Color (optional)',
-                style: theme.textTheme.titleSmall,
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  // No color option
-                  GestureDetector(
-                    onTap: () => setState(() => _selectedColor = null),
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerHighest,
-                        shape: BoxShape.circle,
-                        border: _selectedColor == null
-                            ? Border.all(color: theme.colorScheme.primary, width: 2)
-                            : null,
-                      ),
-                      child: Icon(
-                        Icons.folder_outlined,
-                        size: 20,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                  // Color options
-                  for (final color in _folderColors)
-                    GestureDetector(
-                      onTap: () => setState(() => _selectedColor = color),
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: _parseColor(color),
-                          shape: BoxShape.circle,
-                          border: _selectedColor == color
-                              ? Border.all(color: theme.colorScheme.primary, width: 2)
-                              : null,
-                        ),
-                        child: _selectedColor == color
-                            ? const Icon(
-                                Icons.check,
-                                size: 20,
-                                color: Colors.white,
-                              )
-                            : null,
-                      ),
-                    ),
-                ],
-              ),
-            ],
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: _submit,
-          child: const Text('Create'),
-        ),
-      ],
-    );
-  }
-}
-
-/// Result from folder edit dialog.
-class _FolderEditResult {
-  const _FolderEditResult({
-    required this.name,
-    this.color,
-    this.icon,
-    this.clearColor = false,
-    this.clearIcon = false,
-  });
-
-  final String name;
-  final String? color;
-  final String? icon;
-  final bool clearColor;
-  final bool clearIcon;
-}
-
-/// Dialog for editing folder name, color, and icon.
-class _FolderEditDialog extends StatefulWidget {
-  const _FolderEditDialog({required this.folder});
-
-  final Folder folder;
-
-  @override
-  State<_FolderEditDialog> createState() => _FolderEditDialogState();
-}
-
-class _FolderEditDialogState extends State<_FolderEditDialog> {
-  late final TextEditingController _nameController;
-  String? _selectedColor;
-  String? _error;
-
-  static const List<String> _folderColors = [
-    '#F44336', // Red
-    '#E91E63', // Pink
-    '#9C27B0', // Purple
-    '#673AB7', // Deep Purple
-    '#3F51B5', // Indigo
-    '#2196F3', // Blue
-    '#03A9F4', // Light Blue
-    '#00BCD4', // Cyan
-    '#009688', // Teal
-    '#4CAF50', // Green
-    '#8BC34A', // Light Green
-    '#CDDC39', // Lime
-    '#FFEB3B', // Yellow
-    '#FFC107', // Amber
-    '#FF9800', // Orange
-    '#FF5722', // Deep Orange
-    '#795548', // Brown
-    '#607D8B', // Blue Grey
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _nameController = TextEditingController(text: widget.folder.name);
-    _selectedColor = widget.folder.color;
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    final name = _nameController.text.trim();
-    if (name.isEmpty) {
-      setState(() => _error = 'Folder name cannot be empty');
-      return;
-    }
-
-    // Determine if we need to clear the color (user selected "no color")
-    final clearColor = _selectedColor == null && widget.folder.color != null;
-
-    FocusScope.of(context).unfocus();
-    Navigator.of(context).pop(_FolderEditResult(
-      name: name,
-      color: _selectedColor,
-      clearColor: clearColor,
-    ));
-  }
-
-  Color _parseColor(String hexColor) {
-    try {
-      final hex = hexColor.replaceFirst('#', '');
-      return Color(int.parse('FF$hex', radix: 16));
-    } catch (_) {
-      return Colors.grey;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return AlertDialog(
-      title: const Text('Edit Folder'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Name field
-            TextField(
-              controller: _nameController,
-              autofocus: true,
-              decoration: InputDecoration(
-                labelText: 'Folder name',
-                errorText: _error,
-                border: const OutlineInputBorder(),
-              ),
-              onChanged: (_) {
-                if (_error != null) {
-                  setState(() => _error = null);
-                }
-              },
-              onSubmitted: (_) => _submit(),
-            ),
-            const SizedBox(height: 16),
-            // Color picker
-            Text(
-              'Color',
-              style: theme.textTheme.titleSmall,
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                // No color option
-                GestureDetector(
-                  onTap: () => setState(() => _selectedColor = null),
-                  child: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      shape: BoxShape.circle,
-                      border: _selectedColor == null
-                          ? Border.all(color: theme.colorScheme.primary, width: 2)
-                          : null,
-                    ),
-                    child: Icon(
-                      Icons.block,
-                      size: 20,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-                // Color options
-                for (final color in _folderColors)
-                  GestureDetector(
-                    onTap: () => setState(() => _selectedColor = color),
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: _parseColor(color),
-                        shape: BoxShape.circle,
-                        border: _selectedColor == color
-                            ? Border.all(color: theme.colorScheme.primary, width: 2)
-                            : null,
-                      ),
-                      child: _selectedColor == color
-                          ? Icon(
-                              Icons.check,
-                              size: 20,
-                              color: Colors.white,
-                            )
-                          : null,
-                    ),
-                  ),
-              ],
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: _submit,
-          child: const Text('Save'),
-        ),
-      ],
-    );
-  }
-}
 
 class _BubbleTailPainter extends CustomPainter {
   final Color color;
@@ -3580,6 +3529,115 @@ class _BubbleTailPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
     canvas.drawPath(path, borderPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/// Option widget for share format selection dialog.
+class _ShareFormatOption extends StatelessWidget {
+  const _ShareFormatOption({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    required this.isDark,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.05)
+                : Colors.grey.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: iconColor, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.outfit(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white : const Color(0xFF1E1B4B),
+                      ),
+                    ),
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.outfit(
+                        fontSize: 12,
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.6)
+                            : const Color(0xFF64748B),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.4)
+                    : const Color(0xFF94A3B8),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Painter for share dialog speech bubble tail pointing down-left (toward mascot).
+class _ShareBubbleTailPainter extends CustomPainter {
+  final Color color;
+
+  _ShareBubbleTailPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    // Draw tail pointing down-left (toward mascot on the left)
+    final path = Path();
+    path.moveTo(size.width, 0); // Top right (connected to bubble)
+    path.lineTo(0, size.height); // Bottom left (pointing to mascot)
+    path.lineTo(size.width, size.height * 0.6); // Right side
+    path.close();
+
+    canvas.drawPath(path, paint);
   }
 
   @override

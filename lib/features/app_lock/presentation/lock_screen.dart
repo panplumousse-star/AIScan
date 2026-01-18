@@ -9,6 +9,9 @@ import '../../../core/widgets/bento_card.dart';
 import '../domain/app_lock_service.dart';
 import '../../../core/widgets/bento_mascot.dart';
 
+// Re-export justUnlockedProvider for convenience
+export '../domain/app_lock_service.dart' show justUnlockedProvider;
+
 // ============================================================================
 // Lock Screen State
 // ============================================================================
@@ -180,6 +183,8 @@ class _LockScreenState extends ConsumerState<LockScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(lockScreenProvider.notifier).onAuthenticationSuccess = () {
         if (mounted) {
+          // Signal that the app was just unlocked (for mascot animation)
+          ref.read(justUnlockedProvider.notifier).state = true;
           Navigator.of(context).pop();
         }
       };

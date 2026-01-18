@@ -637,6 +637,71 @@ class FolderService {
     }
   }
 
+  /// Toggles the favorite status of a folder.
+  ///
+  /// Parameters:
+  /// - [folderId]: The folder ID
+  ///
+  /// Returns the updated [Folder] with toggled favorite status.
+  ///
+  /// Throws [FolderServiceException] if the update fails.
+  Future<Folder> toggleFavorite(String folderId) async {
+    try {
+      final folder = await getFolder(folderId);
+      if (folder == null) {
+        throw FolderServiceException('Folder not found: $folderId');
+      }
+
+      return await updateFolder(
+        folder.copyWith(isFavorite: !folder.isFavorite),
+      );
+    } catch (e) {
+      if (e is FolderServiceException) {
+        rethrow;
+      }
+      throw FolderServiceException(
+        'Failed to toggle folder favorite: $folderId',
+        cause: e,
+      );
+    }
+  }
+
+  /// Sets the favorite status for multiple folders.
+  ///
+  /// Parameters:
+  /// - [folderIds]: List of folder IDs to update
+  /// - [isFavorite]: The favorite status to set
+  ///
+  /// Returns the list of updated [Folder]s.
+  ///
+  /// Throws [FolderServiceException] if the update fails.
+  Future<List<Folder>> setFavoriteForFolders(
+    List<String> folderIds,
+    bool isFavorite,
+  ) async {
+    try {
+      final updatedFolders = <Folder>[];
+      for (final id in folderIds) {
+        final folder = await getFolder(id);
+        if (folder != null) {
+          final updated = await updateFolder(
+            folder.copyWith(isFavorite: isFavorite),
+          );
+          updatedFolders.add(updated);
+        }
+      }
+      return updatedFolders;
+    } catch (e) {
+      if (e is FolderServiceException) {
+        rethrow;
+      }
+      throw FolderServiceException(
+        'Failed to set favorite for folders',
+        cause: e,
+      );
+    }
+  }
+
   /// Moves a folder to a new parent.
   ///
   /// Parameters:

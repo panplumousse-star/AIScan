@@ -6,15 +6,6 @@ import 'features/app_lock/domain/app_lock_service.dart';
 import 'features/app_lock/presentation/lock_screen.dart';
 import 'features/home/presentation/bento_home_screen.dart';
 
-/// Provider that checks if the lock screen should be shown.
-///
-/// This provider checks the app lock service to determine whether
-/// the user needs to authenticate before accessing the app.
-/// Uses autoDispose to re-check when the app comes to foreground.
-final shouldShowLockScreenProvider = FutureProvider.autoDispose<bool>((ref) async {
-  final appLockService = ref.read(appLockServiceProvider);
-  return await appLockService.shouldShowLockScreen();
-});
 
 /// The root widget of the Scanaï application.
 ///
@@ -76,7 +67,30 @@ class _AppHome extends ConsumerStatefulWidget {
   ConsumerState<_AppHome> createState() => _AppHomeState();
 }
 
-class _AppHomeState extends ConsumerState<_AppHome> {
+class _AppHomeState extends ConsumerState<_AppHome> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    // When app comes back to foreground, re-check lock screen
+    if (state == AppLifecycleState.resumed) {
+      // Invalidate the provider to force a fresh check
+      ref.invalidate(shouldShowLockScreenProvider);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Check if lock screen should be shown

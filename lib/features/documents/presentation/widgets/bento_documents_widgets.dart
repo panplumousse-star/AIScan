@@ -162,6 +162,7 @@ class BentoSearchBar extends StatefulWidget {
     required this.onFavoriteSelected,
     required this.onShareSelected,
     this.hasText = false,
+    this.focusNode,
   });
 
   final TextEditingController controller;
@@ -174,6 +175,7 @@ class BentoSearchBar extends StatefulWidget {
   final bool isFavoritesOnly;
   final bool hasActiveFilters;
   final bool hasText;
+  final FocusNode? focusNode;
 
   // Selection props
   final bool isSelectionMode;
@@ -190,7 +192,8 @@ class BentoSearchBar extends StatefulWidget {
 }
 
 class _BentoSearchBarState extends State<BentoSearchBar> with SingleTickerProviderStateMixin {
-  late FocusNode _focusNode;
+  FocusNode? _internalFocusNode;
+  FocusNode get _focusNode => widget.focusNode ?? _internalFocusNode!;
   bool _isFocused = false;
   late AnimationController _flipController;
   late Animation<double> _flipAnimation;
@@ -198,12 +201,10 @@ class _BentoSearchBarState extends State<BentoSearchBar> with SingleTickerProvid
   @override
   void initState() {
     super.initState();
-    _focusNode = FocusNode();
-    _focusNode.addListener(() {
-      setState(() {
-        _isFocused = _focusNode.hasFocus;
-      });
-    });
+    if (widget.focusNode == null) {
+      _internalFocusNode = FocusNode();
+    }
+    _focusNode.addListener(_onFocusChange);
 
     _flipController = AnimationController(
       vsync: this,
@@ -230,9 +231,16 @@ class _BentoSearchBarState extends State<BentoSearchBar> with SingleTickerProvid
     }
   }
 
+  void _onFocusChange() {
+    setState(() {
+      _isFocused = _focusNode.hasFocus;
+    });
+  }
+
   @override
   void dispose() {
-    _focusNode.dispose();
+    _focusNode.removeListener(_onFocusChange);
+    _internalFocusNode?.dispose();
     _flipController.dispose();
     super.dispose();
   }
@@ -413,18 +421,20 @@ class _BentoSearchBarState extends State<BentoSearchBar> with SingleTickerProvid
             ),
           ),
           const Spacer(),
-          if (widget.hasDocumentsSelected) ...[
+          // Favorite button - shown when documents OR folders are selected
+          if (widget.hasDocumentsSelected || widget.selectedFolderCount > 0)
             _ControlIcon(
               icon: Icons.favorite_border_rounded,
               onPressed: widget.onFavoriteSelected,
               color: isDark ? theme.colorScheme.onSurface : theme.colorScheme.onPrimaryContainer,
             ),
+          // Share button - only for documents
+          if (widget.hasDocumentsSelected)
             _ControlIcon(
               icon: Icons.share_rounded,
               onPressed: widget.onShareSelected,
               color: isDark ? theme.colorScheme.onSurface : theme.colorScheme.onPrimaryContainer,
             ),
-          ],
           _ControlIcon(
             icon: Icons.delete_outline_rounded,
             onPressed: widget.onDeleteSelected,

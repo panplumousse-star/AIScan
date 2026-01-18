@@ -104,18 +104,13 @@ class _BentoCardState extends State<BentoCard>
               : null,
           gradient: widget.gradient,
           borderRadius: BorderRadius.circular(widget.borderRadius),
-          boxShadow: [
+          boxShadow: widget.elevation > 0 ? [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 16,
-              offset: const Offset(0, 8),
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: widget.elevation * 2,
+              offset: Offset(0, widget.elevation),
             ),
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          ] : null,
         ), // Close BoxDecoration
         child: ClipRRect(
           borderRadius: BorderRadius.circular(widget.borderRadius),

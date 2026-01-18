@@ -26,7 +26,7 @@ class DatabaseHelper {
 
   // Database configuration
   static const String _databaseName = 'aiscan.db';
-  static const int _databaseVersion = 1;
+  static const int _databaseVersion = 2;
 
   // Table names
   static const String tableDocuments = 'documents';
@@ -108,6 +108,7 @@ class DatabaseHelper {
         parent_id TEXT,
         color TEXT,
         icon TEXT,
+        $columnIsFavorite INTEGER NOT NULL DEFAULT 0,
         $columnCreatedAt TEXT NOT NULL,
         $columnUpdatedAt TEXT NOT NULL
       )
@@ -191,6 +192,13 @@ class DatabaseHelper {
   /// Handles database upgrades.
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     // Handle database migrations here
+
+    // Migration from version 1 to 2: Add is_favorite column to folders table
+    if (oldVersion < 2) {
+      await db.execute('''
+        ALTER TABLE $tableFolders ADD COLUMN $columnIsFavorite INTEGER NOT NULL DEFAULT 0
+      ''');
+    }
   }
 
   /// Closes the database connection.

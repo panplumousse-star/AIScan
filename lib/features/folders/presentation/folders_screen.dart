@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../domain/folder_model.dart';
 import '../domain/folder_service.dart';
+import 'widgets/bento_folder_dialog.dart';
 
 /// Sort options for folders.
 enum FoldersSortBy {
@@ -764,13 +765,9 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
     BuildContext context,
     FoldersScreenNotifier notifier,
   ) async {
-    final result = await showDialog<_FolderDialogResult>(
-      context: context,
-      builder: (context) =>
-          const _FolderDialog(title: 'New Folder', actionLabel: 'Create'),
-    );
+    final result = await showBentoFolderDialog(context);
 
-    if (result != null && mounted) {
+    if (result != null && result.name.isNotEmpty && mounted) {
       await notifier.createFolder(name: result.name, color: result.color);
     }
   }
@@ -780,19 +777,13 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
     Folder folder,
     FoldersScreenNotifier notifier,
   ) async {
-    final result = await showDialog<_FolderDialogResult>(
-      context: context,
-      builder: (context) => _FolderDialog(
-        title: 'Rename Folder',
-        actionLabel: 'Rename',
-        initialName: folder.name,
-        initialColor: folder.color,
-      ),
-    );
+    final result = await showBentoFolderDialog(context, folder: folder);
 
-    if (result != null && mounted) {
-      await notifier.renameFolder(folder.id, result.name);
-      if (result.color != folder.color) {
+    if (result != null && result.name.isNotEmpty && mounted) {
+      if (result.name != folder.name) {
+        await notifier.renameFolder(folder.id, result.name);
+      }
+      if (result.color != folder.color || result.clearColor) {
         await notifier.updateFolderColor(folder.id, result.color);
       }
     }
@@ -1327,124 +1318,6 @@ class _FolderListItem extends StatelessWidget {
       // Fall through to default
     }
     return Colors.blue;
-  }
-}
-
-/// Result from folder dialog.
-class _FolderDialogResult {
-  const _FolderDialogResult({required this.name, this.color});
-  final String name;
-  final String? color;
-}
-
-/// Dialog for creating or renaming a folder.
-class _FolderDialog extends StatefulWidget {
-  const _FolderDialog({
-    required this.title,
-    required this.actionLabel,
-    this.initialName = '',
-    this.initialColor,
-  });
-
-  final String title;
-  final String actionLabel;
-  final String initialName;
-  final String? initialColor;
-
-  @override
-  State<_FolderDialog> createState() => _FolderDialogState();
-}
-
-class _FolderDialogState extends State<_FolderDialog> {
-  late final TextEditingController _controller;
-  String? _selectedColor;
-  String? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: widget.initialName);
-    _selectedColor = widget.initialColor;
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return AlertDialog(
-      title: Text(widget.title),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TextField(
-            controller: _controller,
-            autofocus: true,
-            decoration: InputDecoration(
-              labelText: 'Folder name',
-              hintText: 'Enter folder name',
-              errorText: _error,
-              prefixIcon: const Icon(Icons.folder_outlined),
-              border: const OutlineInputBorder(),
-            ),
-            textCapitalization: TextCapitalization.sentences,
-            onChanged: (_) {
-              if (_error != null) {
-                setState(() => _error = null);
-              }
-            },
-            onSubmitted: (_) => _submit(),
-          ),
-          const SizedBox(height: 16),
-          Text('Color', style: theme.textTheme.labelLarge),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              // No color option
-              _ColorOption(
-                color: null,
-                isSelected: _selectedColor == null,
-                onTap: () => setState(() => _selectedColor = null),
-              ),
-              // Predefined colors
-              for (final color in _folderColors)
-                _ColorOption(
-                  color: color,
-                  isSelected: _selectedColor == color,
-                  onTap: () => setState(() => _selectedColor = color),
-                ),
-            ],
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(onPressed: _submit, child: Text(widget.actionLabel)),
-      ],
-    );
-  }
-
-  void _submit() {
-    final name = _controller.text.trim();
-    if (name.isEmpty) {
-      setState(() => _error = 'Folder name cannot be empty');
-      return;
-    }
-
-    // Unfocus to dismiss keyboard before popping to avoid _dependents.isEmpty
-    FocusScope.of(context).unfocus();
-    Navigator.of(context).pop(_FolderDialogResult(name: name, color: _selectedColor));
   }
 }
 

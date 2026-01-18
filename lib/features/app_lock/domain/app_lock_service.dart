@@ -3,6 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/security/biometric_auth_service.dart';
 import '../../../core/security/secure_storage_service.dart';
 
+/// Provider that tracks when the app was just unlocked.
+///
+/// This is used to show a special unlock animation on the home screen
+/// mascot for a few seconds after successful authentication.
+final justUnlockedProvider = StateProvider<bool>((ref) => false);
+
 /// Riverpod provider for [AppLockService].
 ///
 /// Provides a singleton instance of the app lock service for
@@ -14,6 +20,16 @@ final appLockServiceProvider = Provider<AppLockService>((ref) {
     secureStorage: secureStorage,
     biometricAuth: biometricAuth,
   );
+});
+
+/// Provider that checks if the lock screen should be shown.
+///
+/// This provider checks the app lock service to determine whether
+/// the user needs to authenticate before accessing the app.
+/// Uses autoDispose to re-check when the app comes to foreground.
+final shouldShowLockScreenProvider = FutureProvider.autoDispose<bool>((ref) async {
+  final appLockService = ref.read(appLockServiceProvider);
+  return await appLockService.shouldShowLockScreen();
 });
 
 /// Exception thrown when app lock operations fail.

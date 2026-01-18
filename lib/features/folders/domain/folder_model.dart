@@ -71,6 +71,7 @@ class Folder {
     this.parentId,
     this.color,
     this.icon,
+    this.isFavorite = false,
   });
 
   /// Unique identifier for the folder (UUID string).
@@ -104,6 +105,11 @@ class Folder {
   /// If null, the default folder icon is used.
   final String? icon;
 
+  /// Whether this folder is marked as a favorite.
+  ///
+  /// Favorite folders can be filtered and displayed prominently.
+  final bool isFavorite;
+
   /// Timestamp when the folder was created.
   final DateTime createdAt;
 
@@ -129,6 +135,7 @@ class Folder {
       parentId: map['parent_id'] as String?,
       color: map['color'] as String?,
       icon: map['icon'] as String?,
+      isFavorite: (map['is_favorite'] as int?) == 1,
       createdAt: DateTime.parse(map['created_at'] as String),
       updatedAt: DateTime.parse(map['updated_at'] as String),
     );
@@ -150,6 +157,7 @@ class Folder {
       'parent_id': parentId,
       'color': color,
       'icon': icon,
+      'is_favorite': isFavorite ? 1 : 0,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
@@ -185,6 +193,7 @@ class Folder {
     String? parentId,
     String? color,
     String? icon,
+    bool? isFavorite,
     DateTime? createdAt,
     DateTime? updatedAt,
     // Special flags to explicitly set nullable fields to null
@@ -198,6 +207,7 @@ class Folder {
       parentId: clearParentId ? null : (parentId ?? this.parentId),
       color: clearColor ? null : (color ?? this.color),
       icon: clearIcon ? null : (icon ?? this.icon),
+      isFavorite: isFavorite ?? this.isFavorite,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -228,6 +238,7 @@ class Folder {
         other.parentId == parentId &&
         other.color == color &&
         other.icon == icon &&
+        other.isFavorite == isFavorite &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt;
   }
@@ -240,6 +251,7 @@ class Folder {
       parentId,
       color,
       icon,
+      isFavorite,
       createdAt,
       updatedAt,
     );
@@ -251,7 +263,8 @@ class Folder {
         'id: $id, '
         'name: $name, '
         'parentId: $parentId, '
-        'isRoot: $isRoot'
+        'isRoot: $isRoot, '
+        'isFavorite: $isFavorite'
         ')';
   }
 }
@@ -276,6 +289,9 @@ extension FolderListExtensions on List<Folder> {
 
   /// Filters to folders that have a custom icon set.
   List<Folder> get withIcon => where((folder) => folder.hasIcon).toList();
+
+  /// Filters to folders that are marked as favorites.
+  List<Folder> get favorites => where((folder) => folder.isFavorite).toList();
 
   /// Sorts folders by name (alphabetically, case-insensitive).
   ///

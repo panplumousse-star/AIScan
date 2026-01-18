@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,10 +15,15 @@ import '../../documents/domain/document_model.dart';
 import '../../documents/presentation/documents_screen.dart';
 import '../../folders/domain/folder_model.dart';
 import '../../folders/domain/folder_service.dart';
+import '../../folders/presentation/widgets/bento_folder_dialog.dart';
 import '../../ocr/domain/ocr_service.dart';
 import '../../sharing/domain/document_share_service.dart';
 import '../domain/scanner_service.dart';
 import '../../../core/widgets/bento_background.dart';
+import '../../../core/widgets/bento_card.dart';
+import '../../../core/widgets/bento_mascot.dart';
+import '../../../core/widgets/bento_rename_document_dialog.dart';
+import '../../../core/widgets/bento_share_format_dialog.dart';
 import '../../home/presentation/bento_home_screen.dart';
 
 /// Scanner screen state notifier for managing scan workflow.
@@ -456,52 +462,95 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     });
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(state.hasSavedDocument
-            ? 'Saved'
-            : (state.hasResult ? 'Preview' : 'Scan Document')),
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () async {
-            if (state.hasSavedDocument) {
-              // Already saved, just go to documents
-              _navigateToDocuments(context);
-            } else if (state.hasResult) {
-              // Not saved, ask to discard
-              final shouldDiscard = await _showDiscardDialog(context);
-              if (shouldDiscard == true) {
-                await notifier.discardScan();
-                if (context.mounted) {
-                  Navigator.of(context).pop();
-                }
-              }
-            } else {
-              Navigator.of(context).pop();
-            }
-          },
-        ),
-        actions: [
-          // Only show "add more pages" if not yet saved
-          if (state.hasResult && !state.hasSavedDocument) ...[
-            IconButton(
-              icon: const Icon(Icons.add_a_photo_outlined),
-              tooltip: 'Add more pages',
-              onPressed: state.isLoading
-                  ? null
-                  : _startMultiPageScanWithPermissionCheck,
-            ),
-          ],
-        ],
-      ),
-      extendBodyBehindAppBar: true, // Allow background to show behind app bar
+      extendBodyBehindAppBar: true, 
       body: Stack(
         children: [
           const BentoBackground(),
           _buildBody(context, state, notifier, theme),
+          // Custom Header
+          _buildCustomHeader(context, state, notifier, theme),
         ],
       ),
       floatingActionButton: _buildFab(context, state, notifier),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+    );
+  }
+
+  Widget _buildCustomHeader(
+    BuildContext context,
+    ScannerScreenState state,
+    ScannerScreenNotifier notifier,
+    ThemeData theme,
+  ) {
+    final isDark = theme.brightness == Brightness.dark;
+    
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      child: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + 8,
+              bottom: 12,
+              left: 12,
+              right: 12,
+            ),
+            decoration: BoxDecoration(
+              color: isDark 
+                  ? Colors.black.withValues(alpha: 0.3) 
+                  : Colors.white.withValues(alpha: 0.3),
+              border: Border(
+                bottom: BorderSide(
+                  color: isDark 
+                      ? Colors.white.withValues(alpha: 0.05) 
+                      : Colors.black.withValues(alpha: 0.05),
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.close_rounded),
+                  onPressed: () async {
+                    if (state.hasSavedDocument) {
+                      _navigateToDocuments(context);
+                    } else if (state.hasResult) {
+                      final shouldDiscard = await _showDiscardDialog(context);
+                      if (shouldDiscard == true) {
+                        await notifier.discardScan();
+                        if (context.mounted) {
+                          Navigator.of(context).pop();
+                        }
+                      }
+                    } else {
+                      Navigator.of(context).pop();
+                    }
+                  },
+                ),
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      state.hasSavedDocument
+                          ? 'Enregistré'
+                          : (state.hasResult ? 'Aperçu' : 'Numérisation'),
+                      style: GoogleFonts.outfit(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                ),
+                // "Add more pages" button removed per user request
+                const SizedBox(width: 48), // Spacer for centering
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -580,33 +629,111 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
 
     // Before save: show Discard and Save buttons (only if we have a scan result)
     if (state.hasResult) {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          FloatingActionButton.extended(
-            heroTag: 'discard',
-            onPressed: () async {
-              final shouldDiscard = await _showDiscardDialog(context);
-              if (shouldDiscard == true) {
-                await notifier.discardScan();
-                if (context.mounted) {
-                  Navigator.of(context).pop();
-                }
-              }
-            },
-            backgroundColor: theme.colorScheme.errorContainer,
-            foregroundColor: theme.colorScheme.onErrorContainer,
-            icon: const Icon(Icons.delete_outline),
-            label: const Text('Discard'),
-          ),
-          const SizedBox(width: 16),
-          FloatingActionButton.extended(
-            heroTag: 'save',
-            onPressed: () => _handleSave(context, state, notifier),
-            icon: const Icon(Icons.save_outlined),
-            label: const Text('Save'),
-          ),
-        ],
+      final isDark = theme.brightness == Brightness.dark;
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: () async {
+                  final shouldDiscard = await _showDiscardDialog(context);
+                  if (shouldDiscard == true) {
+                    await notifier.discardScan();
+                    if (context.mounted) {
+                      Navigator.of(context).pop();
+                    }
+                  }
+                },
+                child: Container(
+                  height: 54,
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? Colors.red.withValues(alpha: 0.15)
+                        : Colors.red.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Colors.red.withValues(alpha: 0.3),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Supprimer',
+                          style: GoogleFonts.outfit(
+                            fontWeight: FontWeight.w700,
+                            color: Colors.redAccent,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Container(
+                height: 54,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: isDark 
+                        ? [
+                            const Color(0xFF312E81),
+                            const Color(0xFF3730A3),
+                            const Color(0xFF1E1B4B),
+                          ]
+                        : [
+                            const Color(0xFF6366F1),
+                            const Color(0xFF4F46E5),
+                            const Color(0xFF3730A3),
+                          ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: (isDark ? Colors.black : const Color(0xFF4F46E5)).withValues(alpha: 0.2),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => _handleSave(context, state, notifier),
+                    borderRadius: BorderRadius.circular(20),
+                    child: Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.save_rounded, color: Colors.white, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Enregistrer',
+                            style: GoogleFonts.outfit(
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       );
     }
 
@@ -616,10 +743,17 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
   Future<void> _handleShare(BuildContext context, ScannerScreenState state) async {
     if (state.savedDocument == null) return;
 
+    // Show format selection dialog
+    final format = await showBentoShareFormatDialog(context);
+    if (format == null) return; // User cancelled
+
     final shareService = ref.read(documentShareServiceProvider);
 
     try {
-      final result = await shareService.shareDocuments([state.savedDocument!]);
+      final result = await shareService.shareDocuments(
+        [state.savedDocument!],
+        format: format,
+      );
       await shareService.cleanupTempFiles(result.tempFilePaths);
       // Navigate to documents after sharing
       if (context.mounted) {
@@ -631,7 +765,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to share: $e'),
+            content: Text('Échec du partage: $e'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -812,40 +946,12 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     BuildContext context,
     String defaultTitle,
   ) async {
-    final controller = TextEditingController(text: defaultTitle);
-    return showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Save Document'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(
-            labelText: 'Document name',
-            border: OutlineInputBorder(),
-          ),
-          onSubmitted: (value) {
-            if (value.isNotEmpty) {
-              Navigator.of(context).pop(value);
-            }
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              final title = controller.text.trim();
-              if (title.isNotEmpty) {
-                Navigator.of(context).pop(title);
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
+    return showBentoRenameDocumentDialog(
+      context,
+      currentTitle: defaultTitle,
+      dialogTitle: 'Enregistrer le document',
+      hintText: 'Nom du document...',
+      confirmButtonText: 'Enregistrer',
     );
   }
 
@@ -888,10 +994,10 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
   }
 
   /// Shows a dialog to create a new folder with name and color.
-  Future<_CreateFolderResult?> _showCreateFolderDialog(BuildContext context) async {
-    return showDialog<_CreateFolderResult>(
+  Future<BentoFolderDialogResult?> _showCreateFolderDialog(BuildContext context) async {
+    return showDialog<BentoFolderDialogResult>(
       context: context,
-      builder: (context) => const _CreateFolderWithColorDialog(),
+      builder: (context) => const BentoFolderDialog(),
     );
   }
 
@@ -930,41 +1036,56 @@ class _SavedView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.all(32.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.check_circle_outline,
-              size: 80,
-              color: theme.colorScheme.primary,
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Document Saved',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
+            BentoLevitationWidget(
+              child: BentoMascot(
+                height: 120,
+                variant: BentoMascotVariant.photo,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 32),
+            Text(
+              'Document Enregistré !',
+              style: GoogleFonts.outfit(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: theme.colorScheme.onSurface,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
             Text(
               documentTitle,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              style: GoogleFonts.outfit(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.primary,
               ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
-            Text(
-              'Use the buttons below to share or finish',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+            BentoCard(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              backgroundColor: isDark 
+                  ? Colors.white.withValues(alpha: 0.05) 
+                  : Colors.black.withValues(alpha: 0.03),
+              child: Text(
+                'Utilisez les boutons ci-dessous pour partager ou terminer.',
+                style: GoogleFonts.outfit(
+                  fontSize: 14,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
             ),
+            const SizedBox(height: 60), // Room for FABs
           ],
         ),
       ),
@@ -1008,43 +1129,120 @@ class _PreviewView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final selectedPage = result.pages[selectedIndex];
 
     return Column(
       children: [
+        SizedBox(height: MediaQuery.of(context).padding.top + 60),
         // Main preview area
         Expanded(
           child: Container(
-            margin: const EdgeInsets.all(16),
+            margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: theme.shadowColor.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
                 ),
               ],
             ),
-            clipBehavior: Clip.antiAlias,
-            child: _PagePreview(imagePath: selectedPage.imagePath),
+            child: BentoCard(
+              padding: EdgeInsets.zero,
+              borderRadius: 24,
+              backgroundColor: isDark 
+                  ? Colors.white.withValues(alpha: 0.05) 
+                  : Colors.white.withValues(alpha: 0.8),
+              blur: 10,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: _PagePreview(imagePath: selectedPage.imagePath),
+              ),
+            ),
           ),
         ),
 
-        // Page info
+        // Mascot and Speech Bubble
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text(
-            'Page ${selectedIndex + 1} of ${result.pageCount}',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              BentoLevitationWidget(
+                child: BentoMascot(
+                  height: 90,
+                  variant: BentoMascotVariant.photo,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 40),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(20),
+                          topRight: Radius.circular(20),
+                          bottomRight: Radius.circular(20),
+                          bottomLeft: Radius.circular(4),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        'Hop, c\'est dans la boîte !',
+                        style: GoogleFonts.outfit(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white : const Color(0xFF1E1B4B),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: -10,
+                      left: 8,
+                      child: CustomPaint(
+                        size: const Size(14, 14),
+                        painter: _BubbleTailPainter(
+                          color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
+                          borderColor: Colors.transparent,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        // Page info
+        Text(
+          'Page ${selectedIndex + 1} sur ${result.pageCount}',
+          style: GoogleFonts.outfit(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
           ),
         ),
 
         // Page thumbnails (if multi-page)
         if (result.pageCount > 1) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           SizedBox(
             height: 80,
             child: _PageThumbnailStrip(
@@ -1055,8 +1253,8 @@ class _PreviewView extends StatelessWidget {
           ),
         ],
 
-        // Bottom padding for FAB
-        const SizedBox(height: 88),
+        // Bottom padding for redesigned FAB
+        const SizedBox(height: 110),
       ],
     );
   }
@@ -1314,183 +1512,37 @@ class _FolderSelectionDialog extends StatelessWidget {
   }
 }
 
-/// Result from folder creation dialog.
-class _CreateFolderResult {
-  const _CreateFolderResult({
-    required this.name,
-    this.color,
-  });
+/// Painter for speech bubble tail pointing down-left toward mascot.
+class _BubbleTailPainter extends CustomPainter {
+  final Color color;
+  final Color borderColor;
 
-  final String name;
-  final String? color;
-}
-
-/// Dialog for creating a new folder with name and color.
-class _CreateFolderWithColorDialog extends StatefulWidget {
-  const _CreateFolderWithColorDialog();
+  _BubbleTailPainter({required this.color, required this.borderColor});
 
   @override
-  State<_CreateFolderWithColorDialog> createState() => _CreateFolderWithColorDialogState();
-}
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
 
-class _CreateFolderWithColorDialogState extends State<_CreateFolderWithColorDialog> {
-  late final TextEditingController _nameController;
-  String? _selectedColor;
-  String? _error;
+    // Draw tail pointing down-left (toward mascot)
+    final path = Path();
+    path.moveTo(size.width, 0); // Top right (connected to bubble)
+    path.lineTo(0, size.height); // Bottom left (pointing to mascot)
+    path.lineTo(size.width, size.height * 0.6); // Right side
+    path.close();
 
-  static const List<String> _folderColors = [
-    '#F44336', // Red
-    '#E91E63', // Pink
-    '#9C27B0', // Purple
-    '#673AB7', // Deep Purple
-    '#3F51B5', // Indigo
-    '#2196F3', // Blue
-    '#03A9F4', // Light Blue
-    '#00BCD4', // Cyan
-    '#009688', // Teal
-    '#4CAF50', // Green
-    '#8BC34A', // Light Green
-    '#CDDC39', // Lime
-    '#FFEB3B', // Yellow
-    '#FFC107', // Amber
-    '#FF9800', // Orange
-    '#FF5722', // Deep Orange
-    '#795548', // Brown
-    '#607D8B', // Blue Grey
-  ];
+    canvas.drawPath(path, paint);
 
-  @override
-  void initState() {
-    super.initState();
-    _nameController = TextEditingController();
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    final name = _nameController.text.trim();
-    if (name.isEmpty) {
-      setState(() => _error = 'Folder name cannot be empty');
-      return;
-    }
-
-    FocusScope.of(context).unfocus();
-    Navigator.of(context).pop(_CreateFolderResult(
-      name: name,
-      color: _selectedColor,
-    ));
-  }
-
-  Color _parseColor(String hexColor) {
-    try {
-      final hex = hexColor.replaceFirst('#', '');
-      return Color(int.parse('FF$hex', radix: 16));
-    } catch (_) {
-      return Colors.grey;
+    if (borderColor != Colors.transparent) {
+      final borderPaint = Paint()
+        ..color = borderColor
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5;
+      canvas.drawPath(path, borderPaint);
     }
   }
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return AlertDialog(
-      title: const Text('New Folder'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Name field
-            TextField(
-              controller: _nameController,
-              autofocus: true,
-              decoration: InputDecoration(
-                labelText: 'Folder name',
-                errorText: _error,
-                border: const OutlineInputBorder(),
-                hintText: 'Enter folder name',
-              ),
-              onChanged: (_) {
-                if (_error != null) {
-                  setState(() => _error = null);
-                }
-              },
-              onSubmitted: (_) => _submit(),
-            ),
-            const SizedBox(height: 16),
-            // Color picker
-            Text(
-              'Color (optional)',
-              style: theme.textTheme.titleSmall,
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                // No color option
-                GestureDetector(
-                  onTap: () => setState(() => _selectedColor = null),
-                  child: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      shape: BoxShape.circle,
-                      border: _selectedColor == null
-                          ? Border.all(color: theme.colorScheme.primary, width: 2)
-                          : null,
-                    ),
-                    child: Icon(
-                      Icons.folder_outlined,
-                      size: 20,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-                // Color options
-                for (final color in _folderColors)
-                  GestureDetector(
-                    onTap: () => setState(() => _selectedColor = color),
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: _parseColor(color),
-                        shape: BoxShape.circle,
-                        border: _selectedColor == color
-                            ? Border.all(color: theme.colorScheme.primary, width: 2)
-                            : null,
-                      ),
-                      child: _selectedColor == color
-                          ? const Icon(
-                              Icons.check,
-                              size: 20,
-                              color: Colors.white,
-                            )
-                          : null,
-                    ),
-                  ),
-              ],
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: _submit,
-          child: const Text('Create'),
-        ),
-      ],
-    );
-  }
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

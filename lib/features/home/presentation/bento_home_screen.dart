@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/permissions/camera_permission_service.dart';
 import '../../../core/permissions/permission_dialog.dart';
+import '../../app_lock/domain/app_lock_service.dart';
 import '../../../core/storage/document_repository.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/bento_card.dart';
@@ -17,16 +18,14 @@ import '../../documents/presentation/documents_screen.dart';
 import '../../scanner/presentation/scanner_screen.dart';
 import '../../settings/presentation/settings_screen.dart';
 import '../../../core/services/audio_service.dart';
+import '../../../core/widgets/bento_mascot.dart';
 import 'package:share_plus/share_plus.dart';
 
-/// Provider that gets recent document names for preview (optional usage).
-final recentDocumentsProvider =
-    FutureProvider.autoDispose<List<String>>((ref) async {
+/// Provider that gets the total document count.
+final totalDocumentCountProvider = FutureProvider.autoDispose<int>((ref) async {
   final repository = ref.read(documentRepositoryProvider);
   final documents = await repository.getAllDocuments();
-  final sorted = documents.toList()
-    ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-  return sorted.take(3).map((d) => d.title).toList();
+  return documents.length;
 });
 
 /// Provider for a random greeting subtitle to avoid monotony.
@@ -73,23 +72,72 @@ class BentoHomeScreen extends ConsumerStatefulWidget {
   ConsumerState<BentoHomeScreen> createState() => _BentoHomeScreenState();
 }
 
-class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> {
+class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsBindingObserver {
   Timer? _idleTimer;
   Timer? _sleepTimer;
+  Timer? _unlockTimer;
   bool _isSleeping = false;
+  bool _showUnlockMascot = false;
   int _sleepMessageIndex = 0;
+  int _mascotKey = 0; // Key to force mascot rebuild for animation
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _resetIdleTimer();
+  }
+
+  void _handleUnlockStateChange(bool? previous, bool justUnlocked) {
+    if (justUnlocked) {
+      // Reset the provider immediately
+      ref.read(justUnlockedProvider.notifier).state = false;
+
+      // Show unlock mascot for 5 seconds
+      setState(() {
+        _showUnlockMascot = true;
+        _isSleeping = false;
+      });
+
+      _unlockTimer?.cancel();
+      _unlockTimer = Timer(const Duration(seconds: 5), () {
+        if (mounted) {
+          setState(() {
+            _showUnlockMascot = false;
+            _mascotKey++; // Force rebuild for waving animation
+          });
+        }
+      });
+    }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _idleTimer?.cancel();
     _sleepTimer?.cancel();
+    _unlockTimer?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    if (state == AppLifecycleState.resumed) {
+      // App revient au premier plan - réveiller la mascotte et relancer l'animation
+      setState(() {
+        _isSleeping = false;
+        _sleepTimer?.cancel();
+        _sleepMessageIndex = 0;
+        _mascotKey++; // Force rebuild pour relancer l'animation hello
+      });
+      _resetIdleTimer();
+    } else if (state == AppLifecycleState.paused) {
+      // App passe en arrière-plan - annuler les timers
+      _idleTimer?.cancel();
+      _sleepTimer?.cancel();
+    }
   }
 
   void _resetIdleTimer() {
@@ -178,16 +226,22 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> {
     ref.read(audioServiceProvider).playScanLaunch();
     final hasPermission = await _checkAndRequestPermission(context, ref);
     if (hasPermission && context.mounted) {
+      final isDark = Theme.of(context).brightness == Brightness.dark;
       Navigator.of(context).push(
         PageRouteBuilder(
-          transitionDuration: const Duration(milliseconds: 300),
-          reverseTransitionDuration: const Duration(milliseconds: 300),
+          transitionDuration: const Duration(milliseconds: 200),
+          reverseTransitionDuration: const Duration(milliseconds: 200),
+          opaque: true,
+          barrierColor: isDark ? Colors.black : Colors.white,
           pageBuilder: (context, animation, secondaryAnimation) =>
               const ScannerScreen(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(
-              opacity: animation,
-              child: child,
+            return ColoredBox(
+              color: isDark ? Colors.black : Colors.white,
+              child: FadeTransition(
+                opacity: animation,
+                child: child,
+              ),
             );
           },
         ),
@@ -211,6 +265,9 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Listen for unlock state changes (when lock screen pops)
+    ref.listen<bool>(justUnlockedProvider, _handleUnlockStateChange);
+
     return Listener(
       onPointerDown: (_) => _handleInteraction(),
       behavior: HitTestBehavior.translucent,
@@ -291,8 +348,8 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> {
                                 flex: 65,
                                 child: BentoAnimatedEntry(
                                   delay: const Duration(milliseconds: 200),
-                                  child: ref.watch(recentDocumentsProvider).when(
-                                    data: (docs) => _buildDocumentsCard(context, docs.length),
+                                  child: ref.watch(totalDocumentCountProvider).when(
+                                    data: (count) => _buildDocumentsCard(context, count),
                                     loading: () => _buildDocumentsCard(context, 0, isLoading: true),
                                     error: (_, __) => _buildDocumentsCard(context, 0),
                                   ),
@@ -579,9 +636,20 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> {
                   fit: BoxFit.contain,
                 ),
               )
+            else if (_showUnlockMascot)
+              _BouncingWidget(
+                child: BentoMascot(
+                  key: const ValueKey('unlock_mascot'),
+                  height: 180,
+                  variant: BentoMascotVariant.unlock,
+                ),
+              )
             else
-              const _WavingMascot(
-                height: 180, // Enlarged
+              BentoMascot(
+                key: ValueKey('home_mascot_$_mascotKey'),
+                height: 180,
+                // animateOnce: false → loops 6 cycles, pauses 10s, repeats
+                // Stops only on sleep mode or page navigation
               ),
           ],
         ),
@@ -706,16 +774,22 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> {
 
   Widget _buildDocumentsCard(BuildContext context, int count, {bool isLoading = false}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return _BentoInteractiveWrapper(
-      onTap: () {
-        HapticFeedback.mediumImpact();
-        ref.read(audioServiceProvider).playSwoosh();
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const DocumentsScreen()),
-        );
-      },
-      child: Container(
+    final isEmpty = count == 0 && !isLoading;
+
+    return Opacity(
+      opacity: isEmpty ? 0.5 : 1.0,
+      child: _BentoInteractiveWrapper(
+        onTap: isEmpty
+            ? null
+            : () {
+                HapticFeedback.mediumImpact();
+                ref.read(audioServiceProvider).playSwoosh();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const DocumentsScreen()),
+                );
+              },
+        child: Container(
         height: 140,
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : Colors.white,
@@ -773,11 +847,11 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> {
                         ),
                       ),
                       Text(
-                        count > 0 ? '$count documents' : 'Ma bibliothèque',
+                        count > 0 ? 'Voir mes fichiers' : 'Aucun document',
                         style: GoogleFonts.outfit(
                           fontSize: 14,
-                          color: isDark 
-                              ? const Color(0xFF94A3B8) 
+                          color: isDark
+                              ? const Color(0xFF94A3B8)
                               : const Color(0xFF6366F1).withValues(alpha: 0.7),
                         ),
                         maxLines: 1,
@@ -830,7 +904,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> {
                     border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
                   ),
                   child: Text(
-                    '+$count',
+                    '$count',
                     style: GoogleFonts.outfit(
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
@@ -841,6 +915,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> {
               ),
           ],
         ),
+      ),
       ),
     );
   }
@@ -924,104 +999,6 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> {
   }
 }
 
-class _WavingMascot extends ConsumerStatefulWidget {
-  final double height;
-
-  const _WavingMascot({
-    required this.height,
-  });
-
-  @override
-  ConsumerState<_WavingMascot> createState() => _WavingMascotState();
-}
-
-class _WavingMascotState extends ConsumerState<_WavingMascot>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  bool _isStarted = false;
-  bool _isAnimationFinished = false;
-
-  @override
-  void initState() {
-    super.initState();
-    // 480ms for one full cycle
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 480),
-      vsync: this,
-    );
-
-    // Immediate start
-    Future.delayed(const Duration(milliseconds: 50), () {
-      if (mounted) {
-        setState(() {
-          _isStarted = true;
-          _controller.repeat();
-        });
-      }
-    });
-
-    // Stop waving after exactly 6 cycles
-    Future.delayed(const Duration(milliseconds: 2930), () {
-      if (mounted) {
-        // Trigger sound and haptic feedback
-        ref.read(audioServiceProvider).playPock();
-        HapticFeedback.lightImpact();
-        
-        setState(() {
-          _isAnimationFinished = true;
-          _controller.stop();
-        });
-      }
-    });
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    precacheImage(const AssetImage('assets/images/scanai_hello_01.png'), context);
-    precacheImage(const AssetImage('assets/images/scanai_hello_02.png'), context);
-    precacheImage(const AssetImage('assets/images/scanai_hello_03.png'), context);
-    precacheImage(const AssetImage('assets/images/scanai_hello.png'), context);
-    precacheImage(const AssetImage('assets/images/scanai_kdo.png'), context);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        String assetPath;
-        if (!_isStarted) {
-          assetPath = 'assets/images/scanai_hello_01.png';
-        } else if (_isAnimationFinished) {
-          assetPath = 'assets/images/scanai_hello_03.png'; // Land on requested frame
-        } else {
-          if (_controller.value < 0.33) {
-            assetPath = 'assets/images/scanai_hello_01.png';
-          } else if (_controller.value < 0.66) {
-            assetPath = 'assets/images/scanai_hello_02.png';
-          } else {
-            assetPath = 'assets/images/scanai_hello_03.png';
-          }
-        }
-
-        return Image.asset(
-          assetPath,
-          height: widget.height,
-          fit: BoxFit.contain,
-          alignment: Alignment.center,
-          gaplessPlayback: true,
-        );
-      },
-    );
-  }
-}
 
 class _FloatingAsset extends StatefulWidget {
   final double height;

@@ -6,10 +6,13 @@
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
 
     <!-- Storage permissions for saving documents -->
+    <!-- READ_EXTERNAL_STORAGE needed for Android 12 and below -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
+    <!-- WRITE_EXTERNAL_STORAGE only needed for Android 9 (API 28) and below -->
+    <!-- Android 10+ uses SAF via file_picker which handles permissions automatically -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        android:maxSdkVersion="29" />
+        android:maxSdkVersion="28" />
 
     <!-- Required for scoped storage on Android 10+ -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />

@@ -19,6 +19,7 @@ import '../../ocr/presentation/ocr_results_screen.dart';
 import '../../enhancement/presentation/enhancement_screen.dart';
 import '../../settings/presentation/settings_screen.dart';
 import '../../sharing/domain/document_share_service.dart';
+import '../../../core/export/document_export_service.dart';
 import '../domain/document_model.dart';
 import 'document_detail_screen.dart';
 import 'models/documents_ui_models.dart';
@@ -1372,6 +1373,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                       _showDeleteConfirmation(context, state, notifier),
                   onFavoriteSelected: notifier.toggleFavoriteSelected,
                   onShareSelected: () => _handleShareSelected(context, state),
+                  onExportSelected: () => _handleExportSelected(context, state),
                 ),
               ),
               // Active filters indicator
@@ -2001,6 +2003,53 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
         }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message)),
+        );
+      }
+    }
+  }
+
+  /// Handles exporting selected documents to external storage.
+  ///
+  /// Opens SAF file picker for each selected document and exports as PDF.
+  /// Shows success or error feedback via SnackBar.
+  Future<void> _handleExportSelected(
+    BuildContext context,
+    DocumentsScreenState state,
+  ) async {
+    final exportService = ref.read(documentExportServiceProvider);
+
+    // Get selected documents
+    final selectedDocuments = state.documents
+        .where((doc) => state.selectedDocumentIds.contains(doc.id))
+        .toList();
+
+    if (selectedDocuments.isEmpty) {
+      return;
+    }
+
+    // Export documents
+    try {
+      final result = await exportService.exportDocuments(selectedDocuments);
+
+      if (!context.mounted) return;
+
+      if (result.isSuccess) {
+        final message = result.exportedCount == 1
+            ? 'Document exporté'
+            : '${result.exportedCount} documents exportés';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
+        );
+      } else if (result.isFailed) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result.errorMessage ?? 'Échec de l\'exportation')),
+        );
+      }
+      // If cancelled, do nothing
+    } on DocumentExportException catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message)),
         );
       }
     }

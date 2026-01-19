@@ -1633,6 +1633,28 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
             // Refresh the documents list
             ref.read(documentsScreenProvider.notifier).loadDocuments();
           },
+          onExport: (doc, imageBytes) async {
+            final exportService = ref.read(documentExportServiceProvider);
+            try {
+              final result = await exportService.exportDocument(doc);
+              if (!navContext.mounted) return;
+              if (result.isSuccess) {
+                ScaffoldMessenger.of(navContext).showSnackBar(
+                  const SnackBar(content: Text('Document exporté')),
+                );
+              } else if (result.isFailed) {
+                ScaffoldMessenger.of(navContext).showSnackBar(
+                  SnackBar(content: Text(result.errorMessage ?? 'Échec de l\'exportation')),
+                );
+              }
+            } on DocumentExportException catch (e) {
+              if (navContext.mounted) {
+                ScaffoldMessenger.of(navContext).showSnackBar(
+                  SnackBar(content: Text(e.message)),
+                );
+              }
+            }
+          },
           onOcr: (doc, imageBytes) => _navigateToOcr(navContext, doc, imageBytes),
           onEnhance: (doc, imageBytes) => _navigateToEnhancement(navContext, doc, imageBytes),
         ),

@@ -11,7 +11,7 @@ dependencies:
     sdk: flutter
 
   # Audio
-  audioplayers: ^5.2.1
+  audioplayers: ^6.5.1
   native_camera_sound: ^0.0.4
 
   # Document Scanning
@@ -26,27 +26,27 @@ dependencies:
   printing: ^5.11.0
 
   # Image Processing
-  image: ^4.0.0
+  image: ^4.5.4
 
   # Storage & Database
   sqflite: ^2.3.0
   path_provider: ^2.1.0
   shared_preferences: ^2.2.2
-  file_picker: ^6.1.1
+  file_picker: ^10.3.0
 
   # Security
-  flutter_secure_storage: ^9.0.0
+  flutter_secure_storage: ^10.0.0
   encrypt: ^5.0.3
   aes_encrypt_file: ^0.0.4
-  local_auth: ^2.1.8
+  local_auth: ^3.0.0
 
   # State Management
-  flutter_riverpod: ^2.4.0
+  flutter_riverpod: ^2.6.0
 
   # UI Components
   flutter_svg: ^2.0.0
   lottie: ^3.0.0
-  google_fonts: ^6.1.0
+  google_fonts: ^7.0.0
 
   # Signature Capture
   hand_signature: ^3.0.0
@@ -54,9 +54,9 @@ dependencies:
   # Utilities
   path: ^1.8.0
   uuid: ^4.2.0
-  intl: ^0.18.0
-  permission_handler: ^11.1.0
-  share_plus: ^7.2.0
+  intl: ^0.20.0
+  permission_handler: ^12.0.0
+  share_plus: ^12.0.0
 
   # Contacts
   flutter_contacts: ^1.1.7+1
@@ -64,7 +64,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.0
+  flutter_lints: ^6.0.0
   mockito: ^5.4.0
   build_runner: ^2.4.0
 

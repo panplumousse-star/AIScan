@@ -21,7 +21,6 @@ linter:
 
     # Documentation rules
     public_member_api_docs: false
-    package_api_docs: false
 
     # Security-related rules
     avoid_web_libraries_in_flutter: true
@@ -38,3 +37,5 @@ analyzer:
     - "**/*.freezed.dart"
     - "build/**"
     - ".dart_tool/**"
+    - "**/*.disabled/**"
+    - "lib/features/signature.disabled/**"

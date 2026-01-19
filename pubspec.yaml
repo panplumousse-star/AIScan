@@ -31,6 +31,8 @@ dependencies:
   # Storage & Database
   sqflite: ^2.3.0
   path_provider: ^2.1.0
+  shared_preferences: ^2.2.2
+  file_picker: ^6.1.1
 
   # Security
   flutter_secure_storage: ^9.0.0

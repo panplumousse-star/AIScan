@@ -162,6 +162,7 @@ class BentoSearchBar extends StatefulWidget {
     required this.onFavoriteSelected,
     required this.onShareSelected,
     required this.onExportSelected,
+    required this.onMoveSelected,
     this.hasText = false,
     this.focusNode,
   });
@@ -188,6 +189,7 @@ class BentoSearchBar extends StatefulWidget {
   final VoidCallback onFavoriteSelected;
   final VoidCallback onShareSelected;
   final VoidCallback onExportSelected;
+  final VoidCallback onMoveSelected;
 
   @override
   State<BentoSearchBar> createState() => _BentoSearchBarState();
@@ -442,6 +444,13 @@ class _BentoSearchBarState extends State<BentoSearchBar> with SingleTickerProvid
             _ControlIcon(
               icon: Icons.save_alt_rounded,
               onPressed: widget.onExportSelected,
+              color: isDark ? theme.colorScheme.onSurface : theme.colorScheme.onPrimaryContainer,
+            ),
+          // Move button - only for documents
+          if (widget.hasDocumentsSelected)
+            _ControlIcon(
+              icon: Icons.drive_file_move_outline,
+              onPressed: widget.onMoveSelected,
               color: isDark ? theme.colorScheme.onSurface : theme.colorScheme.onPrimaryContainer,
             ),
           _ControlIcon(

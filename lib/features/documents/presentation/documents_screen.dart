@@ -28,6 +28,7 @@ import 'widgets/filter_sheet.dart';
 import '../../../core/widgets/bento_background.dart';
 import '../../../core/widgets/bento_card.dart';
 import '../../../core/widgets/bento_mascot.dart';
+import '../../../core/widgets/bento_move_folder_dialog.dart';
 import '../../../core/widgets/bento_rename_document_dialog.dart';
 import '../../../core/widgets/bento_share_format_dialog.dart';
 
@@ -1381,6 +1382,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                   onFavoriteSelected: notifier.toggleFavoriteSelected,
                   onShareSelected: () => _handleShareSelected(context, state),
                   onExportSelected: () => _handleExportSelected(context, state),
+                  onMoveSelected: () => _handleMoveSelected(context, state, notifier),
                 ),
               ),
               // Active filters indicator
@@ -2080,6 +2082,77 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(e.message)),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleMoveSelected(
+    BuildContext context,
+    DocumentsScreenState state,
+    DocumentsScreenNotifier notifier,
+  ) async {
+    final repository = ref.read(documentRepositoryProvider);
+    final folderService = ref.read(folderServiceProvider);
+
+    // Get selected documents
+    final selectedDocuments = state.documents
+        .where((doc) => state.selectedDocumentIds.contains(doc.id))
+        .toList();
+
+    if (selectedDocuments.isEmpty) {
+      return;
+    }
+
+    final folders = await folderService.getAllFolders();
+    if (!context.mounted) return;
+
+    final selectedFolderId = await showBentoMoveToFolderDialog(
+      context,
+      folders: folders,
+      selectedCount: selectedDocuments.length,
+      onCreateFolder: (name, color) async {
+        try {
+          final newFolder = await folderService.createFolder(
+            name: name,
+            color: color,
+          );
+          return newFolder;
+        } catch (e) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Erreur lors de la création du dossier: $e')),
+            );
+          }
+          return null;
+        }
+      },
+    );
+
+    // User cancelled
+    if (selectedFolderId == '_cancelled_') return;
+
+    try {
+      // Move all selected documents to the folder
+      for (final doc in selectedDocuments) {
+        await repository.moveToFolder(doc.id, selectedFolderId);
+      }
+
+      if (context.mounted) {
+        final message = selectedDocuments.length == 1
+            ? 'Document déplacé'
+            : '${selectedDocuments.length} documents déplacés';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
+        );
+        // Refresh and clear selection
+        notifier.clearSelection();
+        notifier.refresh();
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur lors du déplacement: $e')),
         );
       }
     }
@@ -3577,7 +3650,6 @@ class _MoveToFolderDialog extends StatelessWidget {
     );
   }
 }
-
 
 class _BubbleTailPainter extends CustomPainter {
   final Color color;

@@ -150,10 +150,10 @@ class _BentoMascotState extends ConsumerState<BentoMascot>
       precacheImage(const AssetImage('assets/images/scanai_hello_02.png'), context);
       precacheImage(const AssetImage('assets/images/scanai_hello_03.png'), context);
     } else if (widget.variant == BentoMascotVariant.settings) {
-      precacheImage(const AssetImage('assets/images/sacnai_settings_01.png'), context);
-      precacheImage(const AssetImage('assets/images/sacnai_settings_02.png'), context);
+      precacheImage(const AssetImage('assets/images/scanai_settings_01.png'), context);
+      precacheImage(const AssetImage('assets/images/scanai_settings_02.png'), context);
     } else if (widget.variant == BentoMascotVariant.lock) {
-      precacheImage(const AssetImage('assets/images/scani_lock.png'), context);
+      precacheImage(const AssetImage('assets/images/scanai_lock.png'), context);
     } else if (widget.variant == BentoMascotVariant.documents) {
       precacheImage(const AssetImage('assets/images/scanai_documents_01.png'), context);
       precacheImage(const AssetImage('assets/images/scanai_documents_02.png'), context);
@@ -234,14 +234,14 @@ class _BentoMascotState extends ConsumerState<BentoMascot>
           case BentoMascotVariant.settings:
             // 2-frame animation
             if (_controller.value < 0.5) {
-              assetPath = 'assets/images/sacnai_settings_01.png';
+              assetPath = 'assets/images/scanai_settings_01.png';
             } else {
-              assetPath = 'assets/images/sacnai_settings_02.png';
+              assetPath = 'assets/images/scanai_settings_02.png';
             }
             break;
             
           case BentoMascotVariant.lock:
-            assetPath = 'assets/images/scani_lock.png';
+            assetPath = 'assets/images/scanai_lock.png';
             break;
 
           case BentoMascotVariant.unlock:

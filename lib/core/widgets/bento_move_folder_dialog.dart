@@ -6,7 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../features/folders/domain/folder_model.dart';
 import '../../features/folders/presentation/widgets/bento_folder_dialog.dart';
 import 'bento_card.dart';
-import 'animated_widgets.dart';
+import 'bento_mascot.dart';
 
 /// Shows the Bento-style move to folder dialog.
 ///

@@ -901,6 +901,12 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                 theme: theme,
               ),
               _BentoActionButton(
+                icon: Icons.save_alt_rounded,
+                label: 'Exporter',
+                onPressed: () => _handleExport(context, state),
+                theme: theme,
+              ),
+              _BentoActionButton(
                 icon: Icons.drive_file_move_rounded,
                 label: 'Déplacer',
                 onPressed: () => _showMoveToFolderDialog(context, state),
@@ -993,6 +999,15 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
     final bytes = await notifier.loadImageBytes();
     if (bytes != null && mounted) {
       widget.onEnhance?.call(state.document!, bytes);
+    }
+  }
+
+  Future<void> _handleExport(BuildContext context, DocumentDetailScreenState state) async {
+    if (state.document == null) return;
+    final notifier = ref.read(documentDetailScreenProvider.notifier);
+    final bytes = await notifier.loadImageBytes();
+    if (bytes != null && mounted) {
+      widget.onExport?.call(state.document!, bytes);
     }
   }
 

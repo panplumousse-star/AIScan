@@ -274,6 +274,15 @@ class DocumentExportService {
     String? lastFolderPath;
     String? lastFolderDisplayName;
 
+    // Select directory once for all documents
+    String? exportDir = await FilePicker.platform.getDirectoryPath(
+      dialogTitle: 'Sélectionner le dossier d\'exportation',
+    );
+    
+    if (exportDir == null) {
+      return const ExportResult.cancelled();
+    }
+
     try {
       for (final document in documents) {
         // Get decrypted page paths
@@ -286,25 +295,22 @@ class DocumentExportService {
         // Get suggested filename
         final suggestedFileName = _getSafeFileName(document, extension: 'pdf');
 
-        // Open SAF save file picker
-        final savedPath = await FilePicker.platform.saveFile(
-          dialogTitle: 'Exporter le document',
-          fileName: suggestedFileName,
-          type: FileType.custom,
-          allowedExtensions: ['pdf'],
-        );
-
-        // User cancelled the picker
-        if (savedPath == null) {
-          // Clean up temp files before returning
-          await _cleanupTempFiles(tempFilePaths);
-          return const ExportResult.cancelled();
+        // Determine unique save path in the selected directory
+        String savedPath = p.join(exportDir, suggestedFileName);
+        
+        // Ensure unique filename if it already exists
+        int counter = 1;
+        while (await File(savedPath).exists()) {
+           final nameWithoutExt = p.basenameWithoutExtension(suggestedFileName);
+           final ext = p.extension(suggestedFileName);
+           savedPath = p.join(exportDir, '${nameWithoutExt}_$counter$ext');
+           counter++;
         }
-
-        // Write the PDF bytes to the selected file
+        
+        // Write the PDF bytes
         final outputFile = File(savedPath);
         await outputFile.writeAsBytes(pdfBytes);
-
+        
         exportedPaths.add(savedPath);
 
         // Extract folder information from the saved path

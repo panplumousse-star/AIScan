@@ -863,16 +863,10 @@ class ScannerStorageService {
   ) async {
     try {
       final sourceBytes = await page.readBytes();
-      final image = img.decodeImage(sourceBytes);
-
-      if (image == null) {
-        throw ScannerException(
-          'Failed to decode scanned image: page $pageIndex',
-        );
-      }
-
-      // Encode as PNG (lossless)
-      final pngBytes = img.encodePng(image);
+      
+      // Use compute to offload heavy image processing to a background isolate
+      // to avoid blocking the main UI thread.
+      final pngBytes = await compute(_processPngIsolate, sourceBytes);
 
       // Save to temp file
       final pngPath = path.join(
@@ -989,20 +983,13 @@ class ScannerStorageService {
 
       // Read the source image
       final bytes = await sourceFile.readAsBytes();
-      final sourceImage = img.decodeImage(bytes);
-      if (sourceImage == null) {
-        return null;
-      }
-
-      // Resize to thumbnail size maintaining aspect ratio
-      final thumbnail = img.copyResize(
-        sourceImage,
-        width: _thumbnailWidth,
-        interpolation: img.Interpolation.linear,
-      );
-
-      // Encode as JPEG
-      final thumbnailBytes = img.encodeJpg(thumbnail, quality: _thumbnailQuality);
+      
+      // Use compute to offload heavy image processing to a background isolate
+      final thumbnailBytes = await compute(_processThumbnailIsolate, {
+        'bytes': bytes,
+        'width': _thumbnailWidth,
+        'quality': _thumbnailQuality,
+      });
 
       // Save to a temporary file
       final tempDir = Directory.systemTemp;
@@ -1042,4 +1029,28 @@ class ScannerStorageService {
       // Ignore deletion errors - file may already be deleted
     }
   }
+}
+
+/// Helper function for PNG conversion in background isolate.
+Uint8List _processPngIsolate(Uint8List bytes) {
+  final image = img.decodeImage(bytes);
+  if (image == null) throw Exception('Failed to decode scanned image');
+  return img.encodePng(image);
+}
+
+/// Helper function for Thumbnail generation in background isolate.
+Uint8List _processThumbnailIsolate(Map<String, dynamic> params) {
+  final bytes = params['bytes'] as Uint8List;
+  final width = params['width'] as int;
+  final quality = params['quality'] as int;
+  
+  final image = img.decodeImage(bytes);
+  if (image == null) throw Exception('Failed to decode image for thumbnail');
+  
+  final thumbnail = img.copyResize(
+    image, 
+    width: width,
+    interpolation: img.Interpolation.linear,
+  );
+  return img.encodeJpg(thumbnail, quality: quality);
 }

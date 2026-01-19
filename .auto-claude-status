@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "012-biometric-app-lock",
+  "spec": "023-implement-document-export-to-external-storage-feat",
   "state": "building",
   "subtasks": {
-    "completed": 6,
+    "completed": 5,
     "total": 10,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Settings Screen Integration",
+    "current": "Multi-Selection Export",
     "id": null,
-    "total": 1
+    "total": 2
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 8,
-    "started_at": "2026-01-16T16:11:39.037070"
+    "number": 6,
+    "started_at": "2026-01-19T14:16:16.619941"
   },
-  "last_update": "2026-01-16T16:29:53.618252"
+  "last_update": "2026-01-19T14:24:33.517168"
 }

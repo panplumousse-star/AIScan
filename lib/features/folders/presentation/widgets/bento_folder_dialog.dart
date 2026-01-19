@@ -179,35 +179,48 @@ class _BentoFolderDialogState extends State<BentoFolderDialog> {
                     const SizedBox(height: 20),
 
                     // Name input field
-                    TextField(
-                      controller: _nameController,
-                      autofocus: true,
-                      style: GoogleFonts.outfit(fontWeight: FontWeight.w500),
-                      decoration: InputDecoration(
-                        hintText: 'Nom du dossier...',
-                        errorText: _error,
-                        filled: true,
-                        fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide.none,
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF1E293B)
+                            : colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isDark 
+                              ? Colors.white.withValues(alpha: 0.1) 
+                              : const Color(0xFFE2E8F0),
                         ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       ),
-                      onChanged: (_) {
-                        if (_error != null) setState(() => _error = null);
-                      },
-                      onSubmitted: (_) => _submit(),
+                      child: TextField(
+                        controller: _nameController,
+                        autofocus: true,
+                        style: GoogleFonts.outfit(
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.onSurface,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'Nom du dossier...',
+                          hintStyle: GoogleFonts.outfit(
+                            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                          ),
+                          errorText: _error,
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        ),
+                        onChanged: (_) {
+                          if (_error != null) setState(() => _error = null);
+                        },
+                        onSubmitted: (_) => _submit(),
+                      ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 24),
 
                     // Color picker label
                     Text(
                       'Couleur',
                       style: GoogleFonts.outfit(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: colorScheme.onSurfaceVariant,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -259,23 +272,36 @@ class _BentoFolderDialogState extends State<BentoFolderDialog> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Container(
-                            height: 50,
+                            height: 54,
                             decoration: BoxDecoration(
-                              color: colorScheme.primary,
-                              borderRadius: BorderRadius.circular(14),
+                              gradient: LinearGradient(
+                                colors: isDark 
+                                    ? [const Color(0xFF312E81), const Color(0xFF1E1B4B)]
+                                    : [const Color(0xFF6366F1), const Color(0xFF4F46E5)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF4F46E5).withValues(alpha: 0.3),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                             ),
                             child: Material(
                               color: Colors.transparent,
                               child: InkWell(
                                 onTap: _submit,
-                                borderRadius: BorderRadius.circular(14),
+                                borderRadius: BorderRadius.circular(20),
                                 child: Center(
                                   child: Text(
                                     widget.isEditing ? 'Enregistrer' : 'Créer',
                                     style: GoogleFonts.outfit(
                                       fontWeight: FontWeight.w700,
-                                      color: colorScheme.onPrimary,
-                                      fontSize: 15,
+                                      color: Colors.white,
+                                      fontSize: 16,
                                     ),
                                   ),
                                 ),

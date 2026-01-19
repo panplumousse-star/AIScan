@@ -70,40 +70,46 @@ class BentoShareFormatDialog extends StatelessWidget {
                             children: [
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 10,
+                                  horizontal: 20,
+                                  vertical: 12,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: isDark
-                                      ? Colors.white.withValues(alpha: 0.1)
-                                      : const Color(0xFFEEF2FF),
-                                  borderRadius: const BorderRadius.only(
-                                    topLeft: Radius.circular(4),
-                                    topRight: Radius.circular(16),
-                                    bottomRight: Radius.circular(16),
-                                    bottomLeft: Radius.circular(16),
+                                  color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: isDark 
+                                        ? const Color(0xFFFFFFFF).withValues(alpha: 0.1) 
+                                        : const Color(0xFFE2E8F0),
+                                    width: 1.5,
                                   ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+                                      blurRadius: 16,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
                                 ),
                                 child: Text(
                                   'J\'envoie !',
                                   style: GoogleFonts.outfit(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w700,
-                                    color: isDark
-                                        ? Colors.white
-                                        : const Color(0xFF1E1B4B),
+                                    color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E293B),
+                                    letterSpacing: 0.2,
                                   ),
                                 ),
                               ),
                               Positioned(
-                                bottom: -6,
+                                bottom: -10,
                                 left: 8,
                                 child: CustomPaint(
-                                  size: const Size(10, 10),
+                                  size: const Size(12, 16),
                                   painter: _BubbleTailPainter(
-                                    color: isDark
-                                        ? Colors.white.withValues(alpha: 0.1)
-                                        : const Color(0xFFEEF2FF),
+                                    color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : Colors.white,
+                                    borderColor: isDark 
+                                        ? const Color(0xFFFFFFFF).withValues(alpha: 0.1) 
+                                        : const Color(0xFFE2E8F0),
                                   ),
                                 ),
                               ),
@@ -186,9 +192,10 @@ class _ShareOptionTile extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: color.withValues(alpha: 0.2),
+            width: 1.5,
           ),
         ),
         child: Row(
@@ -228,11 +235,12 @@ class _ShareOptionTile extends StatelessWidget {
   }
 }
 
-/// Painter for speech bubble tail pointing toward mascot on the left.
+/// Painter for speech bubble tail pointing down-left toward mascot on the left.
 class _BubbleTailPainter extends CustomPainter {
   final Color color;
+  final Color borderColor;
 
-  _BubbleTailPainter({required this.color});
+  _BubbleTailPainter({required this.color, required this.borderColor});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -240,14 +248,31 @@ class _BubbleTailPainter extends CustomPainter {
       ..color = color
       ..style = PaintingStyle.fill;
 
-    // Draw tail pointing down-left (toward mascot on the left)
+    // Triangular path with rounded tip using a quadratic bezier (Bento Style)
     final path = Path();
-    path.moveTo(size.width, 0); // Top right (connected to bubble)
-    path.lineTo(0, size.height); // Bottom left (pointing to mascot)
-    path.lineTo(size.width, size.height * 0.6); // Right side
+    path.moveTo(0, 0);                 
+    path.quadraticBezierTo(size.width * 1.2, size.height / 2, 0, size.height); 
     path.close();
 
+    // 1. Shadow for the tail to match the card
+    final shadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.03)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+    canvas.drawPath(path.shift(const Offset(2, 4)), shadowPaint);
+
+    // 2. Main fill
     canvas.drawPath(path, paint);
+
+    // 3. Border stroke
+    final borderPaint = Paint()
+      ..color = borderColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    
+    final borderPath = Path();
+    borderPath.moveTo(0, 0);
+    borderPath.quadraticBezierTo(size.width * 1.2, size.height / 2, 0, size.height);
+    canvas.drawPath(borderPath, borderPaint);
   }
 
   @override

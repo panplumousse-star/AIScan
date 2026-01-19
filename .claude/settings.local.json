@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git fetch:*)",
+      "Bash(git stash:*)",
+      "Bash(flutter analyze:*)",
+      "Bash(git rm:*)",
+      "Bash(flutter upgrade:*)",
+      "Bash(adb logcat:*)",
+      "Bash(adb devices:*)",
+      "Bash(/mnt/c/Users/PluM_/AppData/Local/Android/Sdk/platform-tools/adb.exe logcat:*)",
+      "WebFetch(domain:pub.dev)",
+      "Bash(timeout 60 flutter run:*)",
+      "Bash(dart analyze:*)",
+      "Bash(flutter pub get:*)",
+      "Bash(git -C /home/plum_-/AIscan/aiscan diff HEAD -- lib/features/documents/presentation/documents_screen.dart)",
+      "Bash(git merge:*)",
+      "Bash(flutter build:*)",
+      "Bash(sudo apt-get update:*)",
+      "Bash(sudo apt-get install:*)",
+      "Bash(flutter doctor:*)",
+      "Bash(export ANDROID_HOME=/home/plum_-/android-sdk)",
+      "Bash(export ANDROID_SDK_ROOT=/home/plum_-/android-sdk:*)",
+      "Bash(export PATH=\"$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH\")",
+      "Bash(export PATH=\"/home/plum_-/snap/flutter/common/flutter/bin:$PATH\":*)",
+      "Bash(flutter clean:*)",
+      "Bash(pkill:*)",
+      "Bash(bash -l -c 'flutter clean && flutter pub get && flutter build apk --debug')",
+      "Bash(source ~/.bashrc)",
+      "Bash(export PATH:*)",
+      "Bash(export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH:*)",
+      "Bash(/home/plum_-/snap/flutter/common/flutter/bin/flutter --version:*)",
+      "Bash(export PATH=/home/plum_-/snap/flutter/common/flutter/bin:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH:*)",
+      "Bash(ANDROID_HOME=/home/plum_-/android-sdk ANDROID_SDK_ROOT=/home/plum_-/android-sdk ./gradlew:*)"
+    ]
+  }
+}

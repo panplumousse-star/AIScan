@@ -571,20 +571,25 @@ class _EnhancementScreenState extends ConsumerState<EnhancementScreen> {
             ),
         ],
       ),
-      body: Column(
+      body: Stack(
         children: [
-          // Preview area
-          Expanded(
-            child: _PreviewArea(
-              state: state,
-            ),
-          ),
+          const BentoBackground(),
+          Column(
+            children: [
+              // Preview area
+              Expanded(
+                child: _PreviewArea(
+                  state: state,
+                ),
+              ),
 
-          // Controls panel
-          _ControlsPanel(
-            state: state,
-            notifier: notifier,
-            theme: theme,
+              // Controls panel
+              _ControlsPanel(
+                state: state,
+                notifier: notifier,
+                theme: theme,
+              ),
+            ],
           ),
         ],
       ),
@@ -659,14 +664,14 @@ class _PreviewArea extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: theme.shadowColor.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: theme.brightness == Brightness.dark ? 0.3 : 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
@@ -695,9 +700,11 @@ class _PreviewArea extends StatelessWidget {
           if (state.isProcessing)
             Positioned.fill(
               child: Container(
-                color: theme.colorScheme.surface.withOpacity(0.5),
+                color: theme.brightness == Brightness.dark 
+                    ? Colors.black.withValues(alpha: 0.5) 
+                    : theme.colorScheme.surface.withValues(alpha: 0.5),
                 child: const Center(
-                  child: CircularProgressIndicator(),
+                  child: ScanaiLoader(size: 60),
                 ),
               ),
             ),
@@ -710,19 +717,21 @@ class _PreviewArea extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      color: theme.colorScheme.surfaceContainerHighest,
+      color: theme.brightness == Brightness.dark 
+          ? Colors.black.withValues(alpha: 0.2) 
+          : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.1),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(
-              color: theme.colorScheme.primary,
-            ),
-            const SizedBox(height: 16),
+            const ScanaiLoader(size: 50),
+            const SizedBox(height: 24),
             Text(
-              'Loading image...',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              'Préparation de l\'image...',
+              style: GoogleFonts.outfit(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.primary,
               ),
             ),
           ],
@@ -775,15 +784,17 @@ class _ControlsPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainer,
+        color: theme.brightness == Brightness.dark 
+            ? const Color(0xFF0F172A).withValues(alpha: 0.95) 
+            : theme.colorScheme.surface,
         borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(24),
+          top: Radius.circular(32),
         ),
         boxShadow: [
           BoxShadow(
-            color: theme.shadowColor.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
           ),
         ],
       ),
@@ -1001,12 +1012,21 @@ class _EnhancementSlider extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: Slider(
-              value: value,
-              min: min,
-              max: max,
-              divisions: (max - min).round(),
-              onChanged: enabled ? onChanged : null,
+            child: SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                activeTrackColor: const Color(0xFF6366F1),
+                inactiveTrackColor: const Color(0xFF6366F1).withValues(alpha: 0.2),
+                thumbColor: const Color(0xFF6366F1),
+                overlayColor: const Color(0xFF6366F1).withValues(alpha: 0.1),
+                trackHeight: 4,
+              ),
+              child: Slider(
+                value: value,
+                min: min,
+                max: max,
+                divisions: (max - min).round(),
+                onChanged: enabled ? onChanged : null,
+              ),
             ),
           ),
           SizedBox(
@@ -1118,45 +1138,172 @@ class _BottomBar extends StatelessWidget {
 
     return Container(
       padding: EdgeInsets.fromLTRB(
+        24,
         16,
-        12,
-        16,
-        12 + MediaQuery.of(context).padding.bottom,
+        24,
+        16 + MediaQuery.of(context).padding.bottom,
       ),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border(
-          top: BorderSide(
-            color: theme.colorScheme.outlineVariant.withOpacity(0.5),
+        color: theme.brightness == Brightness.dark 
+            ? const Color(0xFF0F172A) 
+            : theme.colorScheme.surface,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
           ),
-        ),
+        ],
       ),
       child: Row(
         children: [
           Expanded(
-            child: OutlinedButton(
+            child: _BentoSecondaryButton(
               onPressed: state.isLoading ? null : onCancel,
-              child: const Text('Cancel'),
+              label: 'Annuler',
+              theme: theme,
             ),
           ),
           const SizedBox(width: 16),
           Expanded(
-            child: FilledButton.icon(
+            child: _BentoPrimaryButton(
               onPressed: state.isLoading || !state.hasOriginal ? null : onSave,
-              icon: state.isSaving
-                  ? SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: theme.colorScheme.onPrimary,
-                      ),
-                    )
-                  : const Icon(Icons.check),
-              label: Text(state.isSaving ? 'Saving...' : 'Apply'),
+              label: state.isSaving ? 'Enregistrement...' : 'Appliquer',
+              icon: state.isSaving ? null : Icons.check_circle_rounded,
+              theme: theme,
+              isLoading: state.isSaving,
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _BentoPrimaryButton extends StatelessWidget {
+  const _BentoPrimaryButton({
+    required this.onPressed,
+    required this.label,
+    this.icon,
+    required this.theme,
+    this.isLoading = false,
+  });
+
+  final VoidCallback? onPressed;
+  final String label;
+  final IconData? icon;
+  final ThemeData theme;
+  final bool isLoading;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      height: 54,
+      decoration: BoxDecoration(
+        gradient: onPressed != null 
+            ? LinearGradient(
+                colors: isDark 
+                    ? [const Color(0xFF312E81), const Color(0xFF1E1B4B)]
+                    : [const Color(0xFF6366F1), const Color(0xFF4F46E5)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )
+            : null,
+        color: onPressed == null ? theme.disabledColor.withValues(alpha: 0.2) : null,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: onPressed != null ? [
+          BoxShadow(
+            color: const Color(0xFF4F46E5).withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ] : null,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(20),
+          child: Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (isLoading)
+                  const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                else if (icon != null)
+                  Icon(icon, color: Colors.white, size: 20),
+                if (isLoading || icon != null) const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: GoogleFonts.outfit(
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BentoSecondaryButton extends StatelessWidget {
+  const _BentoSecondaryButton({
+    required this.onPressed,
+    required this.label,
+    required this.theme,
+  });
+
+  final VoidCallback? onPressed;
+  final String label;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 54,
+      decoration: BoxDecoration(
+        color: theme.brightness == Brightness.dark 
+            ? Colors.white.withValues(alpha: 0.05) 
+            : const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: theme.brightness == Brightness.dark 
+              ? Colors.white.withValues(alpha: 0.1) 
+              : const Color(0xFFE2E8F0),
+          width: 1.5,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(20),
+          child: Center(
+            child: Text(
+              label,
+              style: GoogleFonts.outfit(
+                fontWeight: FontWeight.w700,
+                color: theme.brightness == Brightness.dark 
+                    ? Colors.white.withValues(alpha: 0.7) 
+                    : const Color(0xFF475569),
+                fontSize: 16,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

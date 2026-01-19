@@ -18,6 +18,7 @@ import '../../folders/domain/folder_service.dart';
 import '../../folders/presentation/widgets/bento_folder_dialog.dart';
 import '../../ocr/domain/ocr_service.dart';
 import '../../sharing/domain/document_share_service.dart';
+import '../../../core/export/document_export_service.dart';
 import '../domain/scanner_service.dart';
 import '../../../core/widgets/bento_background.dart';
 import '../../../core/widgets/bento_card.dart';
@@ -594,7 +595,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
 
     final theme = Theme.of(context);
 
-    // After save: show Share, OCR, and Done buttons
+    // After save: show Share, Export, OCR, and Done buttons
     if (state.hasSavedDocument) {
       return Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -604,6 +605,15 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
             onPressed: () => _handleShare(context, state),
             icon: const Icon(Icons.share_outlined),
             label: const Text('Share'),
+          ),
+          const SizedBox(width: 12),
+          FloatingActionButton.extended(
+            heroTag: 'export',
+            onPressed: () => _handleExport(context, state),
+            backgroundColor: theme.colorScheme.tertiaryContainer,
+            foregroundColor: theme.colorScheme.onTertiaryContainer,
+            icon: const Icon(Icons.save_alt_rounded),
+            label: const Text('Exporter'),
           ),
           const SizedBox(width: 12),
           FloatingActionButton.extended(
@@ -766,6 +776,77 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Échec du partage: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Handles exporting the saved document to external storage via SAF.
+  Future<void> _handleExport(BuildContext context, ScannerScreenState state) async {
+    if (state.savedDocument == null) return;
+
+    // Show loading indicator
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              SizedBox(width: 16),
+              Text('Exportation en cours...'),
+            ],
+          ),
+          duration: Duration(seconds: 30),
+        ),
+      );
+    }
+
+    final exportService = ref.read(documentExportServiceProvider);
+
+    try {
+      final result = await exportService.exportDocument(state.savedDocument!);
+
+      // Hide loading snackbar
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      }
+
+      if (!context.mounted) return;
+
+      if (result.isSuccess) {
+        // Show success message with folder name
+        final folderName = result.folderDisplayName ?? 'stockage externe';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Document exporté vers $folderName'),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        // Set just scanned state for celebration message
+        ref.read(hasJustScannedProvider.notifier).state = true;
+        _navigateToDocuments(context);
+      } else if (result.isFailed) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.errorMessage ?? 'Échec de l\'exportation'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+      // If cancelled, do nothing (user cancelled the picker)
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Échec de l\'exportation: $e'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );

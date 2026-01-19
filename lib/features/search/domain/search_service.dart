@@ -719,6 +719,9 @@ class SearchService {
       // Verify the database is available
       await _database.initialize();
 
+      // Load recent searches from database
+      await _loadRecentSearches();
+
       _isInitialized = true;
       debugPrint('Search service initialized');
       return true;
@@ -1216,6 +1219,25 @@ class SearchService {
     });
   }
 
+  /// Loads recent searches from database.
+  Future<void> _loadRecentSearches() async {
+    try {
+      final searchHistory = await _database.getSearchHistory(
+        limit: maxRecentSearches,
+      );
+
+      _recentSearches.clear();
+      for (final map in searchHistory) {
+        _recentSearches.add(RecentSearch.fromMap(map));
+      }
+
+      debugPrint('Loaded ${_recentSearches.length} recent searches');
+    } catch (e) {
+      // Log error but don't throw - search history is not critical
+      debugPrint('Failed to load recent searches: $e');
+    }
+  }
+
   /// Adds a query to recent searches.
   void _addToRecentSearches(String query, int resultCount) {
     // Remove existing entry with same query
@@ -1236,6 +1258,29 @@ class SearchService {
     // Trim to max size
     while (_recentSearches.length > maxRecentSearches) {
       _recentSearches.removeLast();
+    }
+
+    // Persist to database (fire and forget)
+    _persistRecentSearchesToDatabase();
+  }
+
+  /// Persists the current in-memory recent searches list to the database.
+  Future<void> _persistRecentSearchesToDatabase() async {
+    try {
+      // Clear existing entries and re-insert all current searches
+      // This ensures database stays synchronized with in-memory list
+      await _database.clearSearchHistory();
+
+      for (final search in _recentSearches) {
+        await _database.insertSearchHistory(
+          query: search.query,
+          timestamp: search.timestamp.toIso8601String(),
+          resultCount: search.resultCount ?? 0,
+        );
+      }
+    } catch (e) {
+      // Log error but don't throw - search history persistence is not critical
+      debugPrint('Failed to persist recent searches to database: $e');
     }
   }
 
@@ -1319,6 +1364,14 @@ class SearchService {
   /// Clears recent search history.
   Future<void> clearRecentSearches() async {
     _recentSearches.clear();
+
+    // Delete from database
+    try {
+      await _database.clearSearchHistory();
+    } catch (e) {
+      // Log error but don't throw - search history persistence is not critical
+      debugPrint('Failed to clear search history from database: $e');
+    }
   }
 
   /// Removes a specific search from history.
@@ -1326,6 +1379,9 @@ class SearchService {
     _recentSearches.removeWhere(
       (s) => s.query.toLowerCase() == query.toLowerCase(),
     );
+
+    // Update database to reflect the removal
+    await _persistRecentSearchesToDatabase();
   }
 
   /// Rebuilds the search index.

@@ -26,7 +26,7 @@ class DatabaseHelper {
 
   // Database configuration
   static const String _databaseName = 'aiscan.db';
-  static const int _databaseVersion = 2;
+  static const int _databaseVersion = 3;
 
   // Table names
   static const String tableDocuments = 'documents';
@@ -36,6 +36,7 @@ class DatabaseHelper {
   static const String tableTags = 'tags';
   static const String tableDocumentTags = 'document_tags';
   static const String tableSignatures = 'signatures';
+  static const String tableSearchHistory = 'search_history';
 
   // Column names for documents table
   static const String columnId = 'id';
@@ -63,6 +64,11 @@ class DatabaseHelper {
 
   // Column names for tags table
   static const String columnColor = 'color';
+
+  // Column names for search_history table
+  static const String columnQuery = 'query';
+  static const String columnTimestamp = 'timestamp';
+  static const String columnResultCount = 'result_count';
 
   /// Active FTS version: 5 (FTS5), 4 (FTS4), or 0 (disabled)
   ///
@@ -178,12 +184,23 @@ class DatabaseHelper {
       )
     ''');
 
+    // Create search_history table
+    await db.execute('''
+      CREATE TABLE $tableSearchHistory (
+        $columnId INTEGER PRIMARY KEY AUTOINCREMENT,
+        $columnQuery TEXT NOT NULL,
+        $columnTimestamp TEXT NOT NULL,
+        $columnResultCount INTEGER NOT NULL DEFAULT 0
+      )
+    ''');
+
     // Create indices for common queries
     await db.execute('CREATE INDEX idx_documents_folder ON $tableDocuments($columnFolderId)');
     await db.execute('CREATE INDEX idx_documents_favorite ON $tableDocuments($columnIsFavorite)');
     await db.execute('CREATE INDEX idx_documents_created ON $tableDocuments($columnCreatedAt)');
     await db.execute('CREATE INDEX idx_document_pages_document ON $tableDocumentPages($columnDocumentId)');
     await db.execute('CREATE UNIQUE INDEX idx_document_pages_order ON $tableDocumentPages($columnDocumentId, $columnPageNumber)');
+    await db.execute('CREATE INDEX idx_search_history_timestamp ON $tableSearchHistory($columnTimestamp)');
 
     // Initialize FTS tables and triggers with automatic fallback
     await _initializeFts(db);
@@ -198,6 +215,19 @@ class DatabaseHelper {
       await db.execute('''
         ALTER TABLE $tableFolders ADD COLUMN $columnIsFavorite INTEGER NOT NULL DEFAULT 0
       ''');
+    }
+
+    // Migration from version 2 to 3: Add search_history table
+    if (oldVersion < 3) {
+      await db.execute('''
+        CREATE TABLE $tableSearchHistory (
+          $columnId INTEGER PRIMARY KEY AUTOINCREMENT,
+          $columnQuery TEXT NOT NULL,
+          $columnTimestamp TEXT NOT NULL,
+          $columnResultCount INTEGER NOT NULL DEFAULT 0
+        )
+      ''');
+      await db.execute('CREATE INDEX idx_search_history_timestamp ON $tableSearchHistory($columnTimestamp)');
     }
   }
 
@@ -951,5 +981,52 @@ class DatabaseHelper {
       [documentId],
     );
     return Sqflite.firstIntValue(result) ?? 0;
+  }
+
+  // ============================================================
+  // Search History CRUD Methods
+  // ============================================================
+
+  /// Inserts a new search history entry.
+  Future<int> insertSearchHistory({
+    required String query,
+    required String timestamp,
+    required int resultCount,
+  }) async {
+    final db = await database;
+    return await db.insert(tableSearchHistory, {
+      columnQuery: query,
+      columnTimestamp: timestamp,
+      columnResultCount: resultCount,
+    });
+  }
+
+  /// Gets all search history entries, ordered by timestamp descending.
+  Future<List<Map<String, dynamic>>> getSearchHistory({
+    int? limit,
+    String? orderBy,
+  }) async {
+    final db = await database;
+    return await db.query(
+      tableSearchHistory,
+      orderBy: orderBy ?? '$columnTimestamp DESC',
+      limit: limit,
+    );
+  }
+
+  /// Deletes a specific search history entry by ID.
+  Future<int> deleteSearchHistory(int id) async {
+    final db = await database;
+    return await db.delete(
+      tableSearchHistory,
+      where: '$columnId = ?',
+      whereArgs: [id],
+    );
+  }
+
+  /// Deletes all search history entries.
+  Future<int> clearSearchHistory() async {
+    final db = await database;
+    return await db.delete(tableSearchHistory);
   }
 }

@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "023-implement-document-export-to-external-storage-feat",
+  "spec": "024-persist-search-history-to-database",
   "state": "building",
   "subtasks": {
     "completed": 8,
-    "total": 10,
+    "total": 9,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Integration & Verification",
+    "current": "Integration Testing",
     "id": null,
-    "total": 2
+    "total": 1
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 9,
-    "started_at": "2026-01-19T14:16:16.619941"
+    "number": 10,
+    "started_at": "2026-01-19T18:39:39.891257"
   },
-  "last_update": "2026-01-19T14:30:08.303071"
+  "last_update": "2026-01-19T18:55:25.721376"
 }

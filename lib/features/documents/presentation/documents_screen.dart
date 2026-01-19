@@ -1338,11 +1338,18 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     return Stack(
       children: [
         const BentoBackground(),
-        SafeArea(
-          child: Column(
-            children: [
-              _buildTopAppBar(context, state, notifier, theme),
-              _buildBentoHeader(context, state, notifier, theme),
+        GestureDetector(
+          onTap: () {
+            if (state.isSelectionMode) {
+              notifier.clearSelection();
+            }
+          },
+          behavior: HitTestBehavior.translucent,
+          child: SafeArea(
+            child: Column(
+              children: [
+                _buildTopAppBar(context, state, notifier, theme),
+                _buildBentoHeader(context, state, notifier, theme),
               // Integrated Search Bar with Controls & Selection Flip
               SizedBox(
                 height: 72,
@@ -1421,8 +1428,9 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
               ),
             ],
           ),
-        ),
-      ],
+        ), // End SafeArea
+      ), // End GestureDetector
+    ],
     );
   }
 

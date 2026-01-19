@@ -151,6 +151,7 @@ class _BentoFolderDialogState extends State<BentoFolderDialog> {
                 backgroundColor: isDark
                     ? Colors.white.withValues(alpha: 0.1)
                     : Colors.white.withValues(alpha: 0.9),
+                borderRadius: 32, // Added missing borderRadius
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -179,6 +180,7 @@ class _BentoFolderDialogState extends State<BentoFolderDialog> {
                     const SizedBox(height: 20),
 
                     // Name input field
+                    Container(
                       decoration: BoxDecoration(
                         color: isDark
                             ? const Color(0xFF1E293B)

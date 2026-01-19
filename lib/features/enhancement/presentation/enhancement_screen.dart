@@ -4,7 +4,10 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
+import '../../../core/widgets/bento_background.dart';
+import '../../../core/widgets/scanai_loader.dart';
 import '../domain/image_processor.dart';
 
 /// State for the enhancement screen.
@@ -573,7 +576,7 @@ class _EnhancementScreenState extends ConsumerState<EnhancementScreen> {
       ),
       body: Stack(
         children: [
-          const BentoBackground(),
+          BentoBackground(),
           Column(
             children: [
               // Preview area
@@ -703,7 +706,7 @@ class _PreviewArea extends StatelessWidget {
                 color: theme.brightness == Brightness.dark 
                     ? Colors.black.withValues(alpha: 0.5) 
                     : theme.colorScheme.surface.withValues(alpha: 0.5),
-                child: const Center(
+                child: Center(
                   child: ScanaiLoader(size: 60),
                 ),
               ),
@@ -724,7 +727,7 @@ class _PreviewArea extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const ScanaiLoader(size: 50),
+            ScanaiLoader(size: 50),
             const SizedBox(height: 24),
             Text(
               'Préparation de l\'image...',

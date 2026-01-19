@@ -1,7 +1,9 @@
 import 'dart:io';
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -20,6 +22,7 @@ import '../../ocr/domain/ocr_service.dart';
 import '../../sharing/domain/document_share_service.dart';
 import '../../../core/export/document_export_service.dart';
 import '../domain/scanner_service.dart';
+import '../../../core/storage/document_repository.dart';
 import '../../../core/widgets/bento_background.dart';
 import '../../../core/widgets/bento_card.dart';
 import '../../../core/widgets/bento_mascot.dart';
@@ -213,7 +216,6 @@ class ScannerScreenNotifier extends StateNotifier<ScannerScreenState> {
       state = state.copyWith(
         isSaving: false,
         savedDocument: savedResult.document,
-        clearResult: true,
       );
 
       return savedResult.document;
@@ -251,6 +253,14 @@ class ScannerScreenNotifier extends StateNotifier<ScannerScreenState> {
 
   /// Gets the saved document, if any.
   Document? get savedDocument => state.savedDocument;
+
+  @override
+  void dispose() {
+    if (state.scanResult != null) {
+      _scannerService.cleanupScanResult(state.scanResult!);
+    }
+    super.dispose();
+  }
 }
 
 /// Riverpod provider for the scanner screen state.
@@ -468,8 +478,6 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
         children: [
           const BentoBackground(),
           _buildBody(context, state, notifier, theme),
-          // Custom Header
-          _buildCustomHeader(context, state, notifier, theme),
         ],
       ),
       floatingActionButton: _buildFab(context, state, notifier),
@@ -531,22 +539,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                     }
                   },
                 ),
-                Expanded(
-                  child: Center(
-                    child: Text(
-                      state.hasSavedDocument
-                          ? 'Enregistré'
-                          : (state.hasResult ? 'Aperçu' : 'Numérisation'),
-                      style: GoogleFonts.outfit(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                    ),
-                  ),
-                ),
-                // "Add more pages" button removed per user request
-                const SizedBox(width: 48), // Spacer for centering
+                const Spacer(),
               ],
             ),
           ),
@@ -562,28 +555,41 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     ThemeData theme,
   ) {
     if (state.isScanning) {
-      return const _LoadingView(message: 'Opening scanner...');
+      return const _LoadingView(message: 'Ouverture du scanner...');
     }
 
-    if (state.isSaving) {
-      return const _LoadingView(message: 'Saving document...');
+    if (state.isSaving && !state.hasResult && !state.hasSavedDocument) {
+      return const _LoadingView(message: 'Enregistrement du document...');
     }
 
-    if (state.hasResult) {
-      return _PreviewView(
-        result: state.scanResult!,
+    if (state.hasResult || state.hasSavedDocument) {
+      return _ResultView(
+        scanResult: state.scanResult,
+        savedDocument: state.savedDocument,
         selectedIndex: state.selectedPageIndex,
         onPageSelected: notifier.selectPage,
+        onSave: (title, folderId) => notifier.saveToStorage(
+          title: title,
+          folderId: folderId,
+        ),
+        onDelete: () async {
+          final shouldDiscard = await _showDiscardDialog(context);
+          if (shouldDiscard == true) {
+            await notifier.discardScan();
+            if (context.mounted) {
+              Navigator.of(context).pop();
+            }
+          }
+        },
+        onShare: () => _handleShare(context, state),
+        onExport: () => _handleExport(context, state),
+        onOcr: () => _handleOcr(context, state),
+        onDone: () => _navigateToDocuments(context),
       );
     }
 
-    // After save: show saved confirmation
-    if (state.hasSavedDocument) {
-      return _SavedView(documentTitle: state.savedDocument!.title);
-    }
-
     // Fallback: show loading while auto-scan starts
-    return const _LoadingView(message: 'Starting scanner...');
+    return const _LoadingView(message: 'Lancement du scanner...');
   }
 
   Widget? _buildFab(
@@ -595,156 +601,9 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
 
     final theme = Theme.of(context);
 
-    // After save: show Share, Export, OCR, and Done buttons
-    if (state.hasSavedDocument) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _BentoActionButton(
-                onPressed: () => _handleShare(context, state),
-                icon: Icons.share_rounded,
-                label: 'Share',
-                color: const Color(0xFF6366F1),
-              ),
-              const SizedBox(width: 8),
-              _BentoActionButton(
-                onPressed: () => _handleExport(context, state),
-                icon: Icons.save_alt_rounded,
-                label: 'Exporter',
-                color: const Color(0xFF0D9488),
-              ),
-              const SizedBox(width: 8),
-              _BentoActionButton(
-                onPressed: () => _handleOcr(context, state),
-                icon: Icons.contact_page_rounded,
-                label: 'OCR',
-                color: const Color(0xFF7C3AED),
-              ),
-              const SizedBox(width: 8),
-              _BentoActionButton(
-                onPressed: () => _navigateToDocuments(context),
-                icon: Icons.check_circle_rounded,
-                label: 'Fermer',
-                isPrimary: true,
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    // Before save: show Discard and Save buttons (only if we have a scan result)
-    if (state.hasResult) {
-      final isDark = theme.brightness == Brightness.dark;
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Row(
-          children: [
-            Expanded(
-              child: GestureDetector(
-                onTap: () async {
-                  final shouldDiscard = await _showDiscardDialog(context);
-                  if (shouldDiscard == true) {
-                    await notifier.discardScan();
-                    if (context.mounted) {
-                      Navigator.of(context).pop();
-                    }
-                  }
-                },
-                child: Container(
-                  height: 54,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? Colors.red.withValues(alpha: 0.15)
-                        : Colors.red.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: Colors.red.withValues(alpha: 0.3),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Supprimer',
-                          style: GoogleFonts.outfit(
-                            fontWeight: FontWeight.w700,
-                            color: Colors.redAccent,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Container(
-                height: 54,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: isDark 
-                        ? [
-                            const Color(0xFF312E81),
-                            const Color(0xFF3730A3),
-                            const Color(0xFF1E1B4B),
-                          ]
-                        : [
-                            const Color(0xFF6366F1),
-                            const Color(0xFF4F46E5),
-                            const Color(0xFF3730A3),
-                          ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: (isDark ? Colors.black : const Color(0xFF4F46E5)).withValues(alpha: 0.2),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () => _handleSave(context, state, notifier),
-                    borderRadius: BorderRadius.circular(20),
-                    child: Center(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.save_rounded, color: Colors.white, size: 20),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Enregistrer',
-                            style: GoogleFonts.outfit(
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
+    // After save or in result view: no FAB (buttons are integrated)
+    if (state.hasSavedDocument || state.hasResult) {
+      return null;
     }
 
     return null;
@@ -958,149 +817,25 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     );
   }
 
-  Future<void> _handleSave(
-    BuildContext context,
-    ScannerScreenState state,
-    ScannerScreenNotifier notifier,
-  ) async {
-    if (state.scanResult == null) return;
-
-    // Show rename dialog before saving
-    final documentTitle = await _showSaveRenameDialog(
-      context,
-      widget.documentTitle ?? 'Scan ${DateTime.now().toString().substring(0, 16)}',
-    );
-
-    // User cancelled the dialog
-    if (documentTitle == null) return;
-
-    // Show folder selection dialog
-    if (!context.mounted) return;
-    final selectedFolderId = await _showFolderSelectionDialog(context);
-
-    // User cancelled the folder selection
-    if (selectedFolderId == '_cancelled_') return;
-
-    try {
-      // Save to encrypted storage with selected folder
-      final savedDocument = await notifier.saveToStorage(
-        title: documentTitle,
-        folderId: selectedFolderId ?? widget.folderId,
-      );
-
-      if (savedDocument != null) {
-        // Call the new onDocumentSaved callback
-        widget.onDocumentSaved?.call(savedDocument);
-
-        // Also call legacy callback for backward compatibility
-        // ignore: deprecated_member_use_from_same_package
-        widget.onScanComplete?.call(state.scanResult!);
-
-        if (context.mounted) {
-          // Set just scanned state for celebration message
-          ref.read(hasJustScannedProvider.notifier).state = true;
-          
-          // Show success message
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Document saved: ${savedDocument.title}'),
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              duration: const Duration(seconds: 2),
-            ),
-          );
-          // Stay on screen to allow sharing - don't pop
-        }
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to save: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<String?> _showSaveRenameDialog(
-    BuildContext context,
-    String defaultTitle,
-  ) async {
-    return showBentoRenameDocumentDialog(
-      context,
-      currentTitle: defaultTitle,
-      dialogTitle: 'Enregistrer le document',
-      hintText: 'Nom du document...',
-      confirmButtonText: 'Enregistrer',
-    );
-  }
-
-  /// Shows a dialog to select a folder for saving the document.
-  ///
-  /// Returns the selected folder ID, or null for root.
-  /// Returns a special value '_cancelled_' if the user cancelled.
-  Future<String?> _showFolderSelectionDialog(BuildContext context) async {
-    final folderService = ref.read(folderServiceProvider);
-    final folders = await folderService.getAllFolders();
-
-    if (!context.mounted) return '_cancelled_';
-
-    return showDialog<String>(
-      context: context,
-      builder: (context) => _FolderSelectionDialog(
-        folders: folders,
-        onCreateFolder: () async {
-          final result = await _showCreateFolderDialog(context);
-          if (result != null && result.name.isNotEmpty) {
-            try {
-              final newFolder = await folderService.createFolder(
-                name: result.name,
-                color: result.color,
-              );
-              if (context.mounted) {
-                Navigator.of(context).pop(newFolder.id);
-              }
-            } catch (e) {
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Failed to create folder: $e')),
-                );
-              }
-            }
-          }
-        },
-      ),
-    );
-  }
-
-  /// Shows a dialog to create a new folder with name and color.
-  Future<BentoFolderDialogResult?> _showCreateFolderDialog(BuildContext context) async {
-    return showDialog<BentoFolderDialogResult>(
-      context: context,
-      builder: (context) => const BentoFolderDialog(),
-    );
-  }
-
   Future<bool?> _showDiscardDialog(BuildContext context) {
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Discard scan?'),
+        title: const Text('Abandonner le scan ?'),
         content: const Text(
-          'Are you sure you want to discard this scan? This action cannot be undone.',
+          'Êtes-vous sûr de vouloir abandonner ce scan ? Cette action est irréversible.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: const Text('Annuler'),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.error,
             ),
-            child: const Text('Discard'),
+            child: const Text('Abandonner'),
           ),
         ],
       ),
@@ -1109,68 +844,916 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
 }
 
 /// View shown after document is saved.
-class _SavedView extends StatelessWidget {
-  const _SavedView({required this.documentTitle});
+/// Unified view for scan result (preview + post-save actions).
+class _ResultView extends ConsumerWidget {
+  const _ResultView({
+    required this.scanResult,
+    required this.savedDocument,
+    required this.selectedIndex,
+    required this.onPageSelected,
+    required this.onSave,
+    required this.onDelete,
+    required this.onShare,
+    required this.onExport,
+    required this.onOcr,
+    required this.onDone,
+  });
 
-  final String documentTitle;
+  final ScanResult? scanResult;
+  final Document? savedDocument;
+  final int selectedIndex;
+  final void Function(int) onPageSelected;
+  final Function(String, String?) onSave;
+  final VoidCallback onDelete;
+  final VoidCallback onShare;
+  final VoidCallback onExport;
+  final VoidCallback onOcr;
+  final VoidCallback onDone;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final isSaved = savedDocument != null;
+    
+    final now = DateTime.now();
+    final timestamp = 'scanai_${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_'
+                      '${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}${now.second.toString().padLeft(2, '0')}';
+
+    // We prefer the saved document for title, but fallback to a default if not yet saved
+    final title = savedDocument?.title ?? timestamp;
+    
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: Column(
+        children: [
+          // Spacing to clear the floating header
+          // Spacing to clear the system status bar
+          const SizedBox(height: 60),
+          
+          // 1. Top Section: Mascot & Bubble (Simplified)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Mascot Card
+                Expanded(
+                  flex: 4,
+                  child: Container(
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: isDark 
+                            ? const Color(0xFFFFFFFF).withValues(alpha: 0.1) 
+                            : const Color(0xFFE2E8F0),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: const Center(
+                      child: BentoMascot(
+                        height: 90,
+                        variant: BentoMascotVariant.photo,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Message Bubble
+                Expanded(
+                  flex: 6,
+                  child: Container(
+                    height: 40,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: isDark 
+                            ? const Color(0xFFFFFFFF).withValues(alpha: 0.1) 
+                            : const Color(0xFFE2E8F0),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Center(
+                          child: Text(
+                            isSaved ? 'Hop, c\'est dans la boîte !' : 'On l\'enregistre ?',
+                            style: GoogleFonts.outfit(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                              color: isDark ? Colors.white : const Color(0xFF1E293B),
+                              letterSpacing: -0.5,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        // Bubble Tail pointing left towards Mascot
+                        Positioned(
+                          left: -6,
+                          top: 15,
+                          child: CustomPaint(
+                            size: const Size(10, 8),
+                            painter: _BubbleTailPainter(
+                              color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : Colors.white,
+                              borderColor: isDark 
+                                  ? const Color(0xFFFFFFFF).withValues(alpha: 0.1) 
+                                  : const Color(0xFFE2E8F0),
+                              pointRight: false,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // 2. Center Section: Document Preview
+          Container(
+            height: 310, // Reduced from 380 to save vertical space
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: BentoCard(
+                padding: EdgeInsets.zero,
+                borderRadius: 28,
+                backgroundColor: isDark 
+                    ? Colors.white.withValues(alpha: 0.05) 
+                    : Colors.white,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(28),
+                  child: savedDocument != null 
+                    ? _SavedPreview(document: savedDocument!)
+                    : (scanResult != null ? _PagePreview(imagePath: scanResult!.pages[selectedIndex].imagePath) : const SizedBox()),
+                ),
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 8),
+          
+          // Page Info Text
+          if (!isSaved && scanResult != null)
+            Text(
+              'Page ${selectedIndex + 1} sur ${scanResult!.pageCount}',
+              style: GoogleFonts.outfit(
+                fontSize: 14,
+                color: isDark ? Colors.white70 : Colors.black54,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            
+          const SizedBox(height: 16),
+          
+          // 3. Footer Section: Action Wizard (Multi-step)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+            child: _ActionWizard(
+              initialTitle: title,
+              isSaved: isSaved,
+              onSave: onSave,
+              onDelete: onDelete,
+              onShare: onShare,
+              onExport: onExport,
+              onOcr: onOcr,
+              onDone: onDone,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SavedPreview extends ConsumerWidget {
+  const _SavedPreview({required this.document});
+  final Document document;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final repository = ref.read(documentRepositoryProvider);
+    return FutureBuilder<String?>(
+      future: repository.getDecryptedThumbnailPath(document),
+      builder: (context, snapshot) {
+        final path = snapshot.data;
+        if (path == null) return const Center(child: CircularProgressIndicator());
+        return Image.file(File(path), fit: BoxFit.contain);
+      },
+    );
+  }
+}
+
+class _ActionWizard extends StatefulWidget {
+  const _ActionWizard({
+    required this.initialTitle,
+    required this.isSaved,
+    required this.onSave,
+    required this.onDelete,
+    required this.onShare,
+    required this.onExport,
+    required this.onOcr,
+    required this.onDone,
+  });
+
+  final String initialTitle;
+  final bool isSaved;
+  final Function(String, String?) onSave;
+  final VoidCallback onDelete;
+  final VoidCallback onShare;
+  final VoidCallback onExport;
+  final VoidCallback onOcr;
+  final VoidCallback onDone;
+
+  @override
+  State<_ActionWizard> createState() => _ActionWizardState();
+}
+
+class _ActionWizardState extends State<_ActionWizard> with TickerProviderStateMixin {
+  late AnimationController _flipController;
+  late AnimationController _pulseController;
+  late Animation<double> _flipAnimation;
+  late Animation<double> _pulseAnimation;
+  late TextEditingController _titleController;
+  late TextEditingController _folderSearchController;
+  
+  int _step = 0; // 0: Rename, 1: Folder selection, 2: Final Actions
+  String? _selectedFolderId;
+  String _folderSearchQuery = '';
+  bool _isSavingLocal = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize empty if unsaved to show the "temporary" timestamp hint
+    _titleController = TextEditingController(text: widget.isSaved ? widget.initialTitle : '');
+    _folderSearchController = TextEditingController();
+    _flipController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    _flipAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _flipController, curve: Curves.easeInOutBack),
+    );
+    
+    _pulseController = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+    _pulseAnimation = Tween<double>(begin: 0.8, end: 1.2).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOutSine),
+    );
+
+    if (widget.isSaved) {
+      _step = 2;
+      _flipController.value = 1.0;
+    }
+  }
+
+  @override
+  void didUpdateWidget(_ActionWizard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isSaved && !oldWidget.isSaved) {
+      // Artificially wait a bit for the pulse to feel intentional and complete
+      Future.delayed(const Duration(milliseconds: 600), () {
+        if (!mounted) return;
+        
+        setState(() {
+          _isSavingLocal = false;
+          _step = 2;
+        });
+        _pulseController.stop();
+        _flipController.forward();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _folderSearchController.dispose();
+    _flipController.dispose();
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleNextWithFlip() async {
+    // Phase 1: Flip to halfway (90 degrees)
+    await _flipController.animateTo(0.5, duration: const Duration(milliseconds: 300));
+    
+    // Switch to step 1
+    setState(() => _step = 1);
+    
+    // Phase 2: Complete the flip
+    await _flipController.animateTo(1.0, duration: const Duration(milliseconds: 300));
+    
+    // Reset controller for next potential flip (step 1 -> step 2)
+    _flipController.value = 0.0;
+  }
+
+  Future<void> _handleBackWithFlip() async {
+    await _flipController.animateTo(0.5, duration: const Duration(milliseconds: 300));
+    setState(() => _step = 0);
+    await _flipController.reverse();
+    _flipController.value = 0.0;
+  }
+
+  Future<void> _handleSaveWithFlip() async {
+    // Use the controller text if provided, otherwise fallback to the temporary timestamp title
+    final finalTitle = _titleController.text.trim().isEmpty ? widget.initialTitle : _titleController.text.trim();
+    
+    setState(() => _isSavingLocal = true);
+    _pulseController.repeat(reverse: true);
+
+    // The actual save happens via widget.onSave. 
+    widget.onSave(finalTitle, _selectedFolderId);
+    
+    // Note: didUpdateWidget will detect isSaved change and trigger the final flip.
+  }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    return SizedBox(
+      height: 320, // Consistent fixed height for all steps
+      child: AnimatedBuilder(
+        animation: _flipAnimation,
+        builder: (context, child) {
+          final isFlipping = _flipController.value > 0 && _flipController.value < 1;
+          final angle = _flipAnimation.value * pi;
+          final isBack = angle > pi / 2;
 
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
+          return Stack(
+            children: [
+              Transform(
+                transform: Matrix4.identity()
+                  ..setEntry(3, 2, 0.001)
+                  ..rotateY(angle),
+                alignment: Alignment.center,
+                child: isBack
+                    ? Transform(
+                        transform: Matrix4.identity()..rotateY(pi),
+                        alignment: Alignment.center,
+                        child: _step == 1 ? _buildFolderStep() : _buildFinalActions(),
+                      )
+                    : (_step == 0 ? _buildRenameStep() : _buildFolderStep()),
+              ),
+              // Full-screen loading removed in favor of button-specific pulse animation
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildRenameStep() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _titleController,
+            style: GoogleFonts.outfit(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: isDark ? Colors.white : const Color(0xFF1E293B),
+            ),
+            decoration: InputDecoration(
+              labelText: 'Nom du document',
+              labelStyle: GoogleFonts.outfit(
+                color: isDark ? Colors.white60 : Colors.black45,
+                fontWeight: FontWeight.w600,
+              ),
+              hintText: 'ex: ${widget.initialTitle}',
+              hintStyle: GoogleFonts.outfit(
+                color: isDark ? Colors.white30 : Colors.black26,
+                fontWeight: FontWeight.w500,
+              ),
+              filled: true,
+              fillColor: isDark 
+                  ? const Color(0xFFFFFFFF).withValues(alpha: 0.05) 
+                  : const Color(0xFFF8FAFC),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: const Color(0xFF4F46E5).withValues(alpha: 0.2),
+                  width: 1.5,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: const Color(0xFF4F46E5).withValues(alpha: 0.2),
+                  width: 1.5,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(
+                  color: Color(0xFF4F46E5),
+                  width: 2,
+                ),
+              ),
+              prefixIcon: const Icon(Icons.edit_note_rounded, color: Color(0xFF4F46E5)),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: _buildSimpleButton(
+                  label: 'Supprimer',
+                  icon: Icons.delete_outline_rounded,
+                  onTap: widget.onDelete,
+                  color: Colors.redAccent,
+                  isSecondary: true,
+                ),
+              ),
+              const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildSimpleButton(
+                      label: 'Continuer',
+                      icon: Icons.arrow_forward_rounded,
+                      onTap: _handleNextWithFlip,
+                      color: const Color(0xFF4F46E5),
+                      isSecondary: false,
+                    ),
+                  ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFolderStep() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Consumer(
+      builder: (context, ref, _) {
+        final folderService = ref.read(folderServiceProvider);
+        return FutureBuilder<List<Folder>>(
+          future: folderService.getAllFolders(),
+          builder: (context, snapshot) {
+            final folders = snapshot.data ?? [];
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header with Back and Search integrated
+                  Row(
+                    children: [
+                      IconButton(
+                        onPressed: _handleBackWithFlip,
+                        icon: const Icon(Icons.arrow_back_rounded, size: 22),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Container(
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: isDark ? Colors.black.withValues(alpha: 0.2) : const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: TextField(
+                            controller: _folderSearchController,
+                            onChanged: (value) => setState(() => _folderSearchQuery = value),
+                            style: GoogleFonts.outfit(fontSize: 13),
+                            decoration: InputDecoration(
+                              hintText: 'Rechercher un dossier...',
+                              hintStyle: GoogleFonts.outfit(color: isDark ? Colors.white30 : Colors.black38, fontSize: 13),
+                              prefixIcon: const Icon(Icons.search_rounded, size: 18),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(vertical: 9),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+                  SizedBox(
+                    height: 85, // Reduced height for more compact cards
+                    child: Builder(
+                      builder: (context) {
+                        // Sort folders by creation date descent (newest first)
+                        final sortedFolders = List<Folder>.from(folders)..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+                        
+                        final filteredFolders = _folderSearchQuery.isEmpty 
+                            ? sortedFolders 
+                            : sortedFolders.where((f) => f.name.toLowerCase().contains(_folderSearchQuery.toLowerCase())).toList();
+                        
+                        return ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: filteredFolders.length + (_folderSearchQuery.isEmpty ? 2 : 0),
+                          itemBuilder: (context, index) {
+                            if (_folderSearchQuery.isEmpty) {
+                              if (index == 0 && filteredFolders.isNotEmpty) {
+                                // NEWEST FOLDER (takes index 0)
+                                final folder = filteredFolders[0];
+                                final isSelected = _selectedFolderId == folder.id;
+                                return _buildFolderOption(
+                                  icon: Icons.folder_rounded,
+                                  label: folder.name,
+                                  isSelected: isSelected,
+                                  onTap: () => setState(() => _selectedFolderId = folder.id),
+                                  color: folder.color != null ? _parseColor(folder.color!) : null,
+                                );
+                              }
+                              
+                              // Adjust index for subsequent items
+                              final realIndex = filteredFolders.isEmpty ? index : index - (index > 0 ? 1 : 0);
+                              
+                              if (index == (filteredFolders.isEmpty ? 0 : 1)) {
+                                // Create New Folder
+                                return _buildFolderOption(
+                                  icon: Icons.create_new_folder_outlined,
+                                  label: 'Nouveau',
+                                  isSelected: false,
+                                  onTap: () async {
+                                    final result = await showDialog<BentoFolderDialogResult>(
+                                      context: context,
+                                      builder: (context) => const BentoFolderDialog(),
+                                    );
+                                    if (result != null && result.name.isNotEmpty) {
+                                      try {
+                                        final newFolder = await folderService.createFolder(
+                                          name: result.name,
+                                          color: result.color,
+                                        );
+                                        setState(() {
+                                          _selectedFolderId = newFolder.id;
+                                          _folderSearchQuery = '';
+                                          _folderSearchController.clear();
+                                        });
+                                      } catch (e) {
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text('Échec création dossier: $e')),
+                                          );
+                                        }
+                                      }
+                                    }
+                                  },
+                                );
+                              }
+                              if (index == (filteredFolders.isEmpty ? 1 : 2)) {
+                                // Root folder (no folder)
+                                final isSelected = _selectedFolderId == null;
+                                return _buildFolderOption(
+                                  icon: Icons.home_outlined,
+                                  label: 'Mes Docs',
+                                  isSelected: isSelected,
+                                  onTap: () => setState(() => _selectedFolderId = null),
+                                );
+                              }
+                              
+                              // Other folders
+                              final folder = filteredFolders[index - (filteredFolders.isEmpty ? 2 : 2)];
+                              // We already showed folders[0] at index 0, so we skip it here if it exists
+                              final folderToShow = filteredFolders[index - 2]; 
+                              if (folderToShow.id == filteredFolders[0].id) {
+                                // This is a bit tricky, let's just use a clear logic:
+                                // [Newest] [Create] [Root] [Rest...]
+                              }
+                              
+                              // Simplified logic for order: [Newest] [Create] [Root] [Others...]
+                              // Wait, if filteredFolders is empty: [Create] [Root]
+                              // If not empty: [F[0]] [Create] [Root] [F[1]...]
+                              
+                              if (index >= 3) {
+                                final folder = filteredFolders[index - 2];
+                                final isSelected = _selectedFolderId == folder.id;
+                                return _buildFolderOption(
+                                  icon: Icons.folder_rounded,
+                                  label: folder.name,
+                                  isSelected: isSelected,
+                                  onTap: () => setState(() => _selectedFolderId = folder.id),
+                                  color: folder.color != null ? _parseColor(folder.color!) : null,
+                                );
+                              }
+                              return const SizedBox();
+                            } else {
+                              // Search results: alphabetical or recent
+                              final folder = filteredFolders[index];
+                              final isSelected = _selectedFolderId == folder.id;
+                              return _buildFolderOption(
+                                icon: Icons.folder_rounded,
+                                label: folder.name,
+                                isSelected: isSelected,
+                                onTap: () => setState(() => _selectedFolderId = folder.id),
+                                color: folder.color != null ? _parseColor(folder.color!) : null,
+                              );
+                            }
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Builder(
+                    builder: (context) {
+                      Color btnColor = const Color(0xFF4F46E5); // Default Indigo
+                      if (_selectedFolderId != null) {
+                        final folder = folders.firstWhere((f) => f.id == _selectedFolderId, orElse: () => folders.first);
+                        if (folder.color != null) {
+                          btnColor = _parseColor(folder.color!);
+                        }
+                      }
+                      
+                      return _buildSimpleButton(
+                        label: 'Enregistrer ici',
+                        icon: Icons.check_circle_rounded,
+                        onTap: _handleSaveWithFlip,
+                        color: btnColor,
+                        isSecondary: false,
+                      );
+                    },
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildFolderOption({
+    required IconData icon,
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+    Color? color,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 72,
+        margin: const EdgeInsets.only(right: 10),
+        decoration: BoxDecoration(
+          color: isSelected 
+              ? (color?.withValues(alpha: 0.1) ?? const Color(0xFF4F46E5).withValues(alpha: 0.1))
+              : (isDark ? Colors.black.withValues(alpha: 0.1) : const Color(0xFFF8FAFC)),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected 
+                ? (color ?? const Color(0xFF4F46E5))
+                : Colors.transparent,
+            width: 2,
+          ),
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            BentoLevitationWidget(
-              child: BentoMascot(
-                height: 120,
-                variant: BentoMascotVariant.photo,
-              ),
+            Icon(
+              icon, 
+              color: color ?? (isSelected ? const Color(0xFF4F46E5) : (isDark ? Colors.white60 : Colors.black38)),
+              size: 20, // Slightly smaller as requested
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 6),
             Text(
-              'Document Enregistré !',
+              label,
               style: GoogleFonts.outfit(
-                fontSize: 24,
+                fontSize: 10,
                 fontWeight: FontWeight.w700,
-                color: theme.colorScheme.onSurface,
+                color: isSelected 
+                    ? (isDark ? Colors.white : Colors.black87) 
+                    : (isDark ? Colors.white54 : Colors.black54),
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 12),
-            Text(
-              documentTitle,
-              style: GoogleFonts.outfit(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: theme.colorScheme.primary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            BentoCard(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              backgroundColor: isDark 
-                  ? Colors.white.withValues(alpha: 0.05) 
-                  : Colors.black.withValues(alpha: 0.03),
-              child: Text(
-                'Utilisez les boutons ci-dessous pour partager ou terminer.',
-                style: GoogleFonts.outfit(
-                  fontSize: 14,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            const SizedBox(height: 60), // Room for FABs
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildFinalActions() {
+    return Container(
+      padding: EdgeInsets.zero,
+      child: GridView.count(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        crossAxisCount: 2,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 1.3,
+        children: [
+          _buildActionTile(
+            icon: Icons.share_rounded,
+            label: 'Partager',
+            onTap: widget.onShare,
+            color: const Color(0xFF6366F1),
+          ),
+          _buildActionTile(
+            icon: Icons.save_alt_rounded,
+            label: 'Exporter',
+            onTap: widget.onExport,
+            color: const Color(0xFF10B981),
+          ),
+          _buildActionTile(
+            icon: Icons.auto_fix_high_rounded,
+            label: 'OCR',
+            onTap: widget.onOcr,
+            color: const Color(0xFFF59E0B),
+          ),
+          _buildActionTile(
+            icon: Icons.check_circle_rounded,
+            label: 'Terminer',
+            onTap: widget.onDone,
+            color: const Color(0xFF4F46E5),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSimpleButton({
+    required String label,
+    required IconData icon,
+    required VoidCallback onTap,
+    required Color color,
+    required bool isSecondary,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        onTap();
+      },
+      child: Container(
+        height: 60,
+        decoration: BoxDecoration(
+          color: isSecondary
+              ? (isDark ? Colors.redAccent.withValues(alpha: 0.1) : const Color(0xFFFEF2F2))
+              : color,
+          borderRadius: BorderRadius.circular(20),
+          border: isSecondary
+              ? Border.all(color: color.withValues(alpha: 0.3), width: 1.5)
+              : null,
+          boxShadow: isSecondary ? null : [
+            BoxShadow(
+              color: color.withValues(alpha: _isSavingLocal ? 0.6 : 0.3),
+              blurRadius: _isSavingLocal ? 20 : 12,
+              spreadRadius: _isSavingLocal ? 4 : 0,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: AnimatedBuilder(
+          animation: _pulseController,
+          builder: (context, child) {
+            return Transform.scale(
+              scale: _isSavingLocal ? _pulseAnimation.value : 1.0,
+              child: child,
+            );
+          },
+          child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: isSecondary ? color : Colors.white, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: GoogleFonts.outfit(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: isSecondary ? color : Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionTile({
+    required IconData icon, 
+    required String label, 
+    required VoidCallback onTap, 
+    required Color color,
+    double? height,
+    bool isWide = false,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      child: Container(
+        height: height,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : Colors.white,
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(
+            color: isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE2E8F0),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: isWide 
+          ? Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: color, size: 24),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: GoogleFonts.outfit(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : const Color(0xFF1E293B),
+                    ),
+                  ),
+                ),
+              ],
+            )
+          : Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: color, size: 24),
+                const SizedBox(height: 8),
+                Text(
+                  label,
+                  style: GoogleFonts.outfit(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : const Color(0xFF1E293B),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+      ),
+    );
+  }
+
+  Color _parseColor(String hexColor) {
+    try {
+      final hex = hexColor.replaceFirst('#', '');
+      return Color(int.parse('FF$hex', radix: 16));
+    } catch (_) {
+      return Colors.grey;
+    }
   }
 }
 
@@ -1182,180 +1765,41 @@ class _LoadingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        const BentoBackground(),
-        Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const ScanaiLoader(size: 60),
-              const SizedBox(height: 24),
-              Text(
-                message,
-                style: GoogleFonts.outfit(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF4F46E5),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Preview view for scanned pages.
-class _PreviewView extends StatelessWidget {
-  const _PreviewView({
-    required this.result,
-    required this.selectedIndex,
-    required this.onPageSelected,
-  });
-
-  final ScanResult result;
-  final int selectedIndex;
-  final void Function(int) onPageSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final selectedPage = result.pages[selectedIndex];
-
-    return Column(
-      children: [
-        SizedBox(height: MediaQuery.of(context).padding.top + 60),
-        // Main preview area
-        Expanded(
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(32),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: BentoCard(
-              padding: EdgeInsets.zero,
-              borderRadius: 32,
-              backgroundColor: isDark 
-                  ? Colors.white.withValues(alpha: 0.05) 
-                  : Colors.white.withValues(alpha: 0.8),
-              blur: 10,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(32),
-                child: _PagePreview(imagePath: selectedPage.imagePath),
-              ),
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          BentoLevitationWidget(
+            child: BentoMascot(
+              height: 120,
+              variant: BentoMascotVariant.waving,
             ),
           ),
-        ),
-
-        // Mascot and Speech Bubble
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              BentoLevitationWidget(
-                child: BentoMascot(
-                  height: 90,
-                  variant: BentoMascotVariant.photo,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 40),
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: isDark 
-                              ? const Color(0xFFFFFFFF).withValues(alpha: 0.1) 
-                              : const Color(0xFFE2E8F0),
-                          width: 1.5,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
-                            blurRadius: 16,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Text(
-                        'Hop, c\'est dans la boîte !',
-                        style: GoogleFonts.outfit(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E293B),
-                          letterSpacing: 0.2,
-                        ),
-                      ),
-                    Positioned(
-                      bottom: -10,
-                      left: 8,
-                      child: CustomPaint(
-                        size: const Size(14, 14),
-                        painter: _BubbleTailPainter(
-                          color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
-                          borderColor: Colors.transparent,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 12),
-
-        // Page info
-        Text(
-          'Page ${selectedIndex + 1} sur ${result.pageCount}',
-          style: GoogleFonts.outfit(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-          ),
-        ),
-
-        // Page thumbnails (if multi-page)
-        if (result.pageCount > 1) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: 32),
           SizedBox(
-            height: 80,
-            child: _PageThumbnailStrip(
-              result: result,
-              selectedIndex: selectedIndex,
-              onPageSelected: onPageSelected,
+            width: 32,
+            height: 32,
+            child: CircularProgressIndicator(
+              strokeWidth: 3,
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4F46E5)),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Un instant s\'il vous plaît...',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF64748B),
             ),
           ),
         ],
-
-        // Bottom padding for redesigned FAB
-        const SizedBox(height: 110),
-      ],
+      ),
     );
   }
 }
 
 /// Single page preview image.
-///
-/// Uses cacheWidth to limit memory usage while still allowing zoom.
 class _PagePreview extends StatelessWidget {
   const _PagePreview({required this.imagePath});
 
@@ -1364,7 +1808,6 @@ class _PagePreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final file = File(imagePath);
-    // Cache at 2x screen width for good quality when zooming
     final screenWidth = MediaQuery.of(context).size.width;
     final cacheWidth = (screenWidth * 2).toInt();
 
@@ -1395,30 +1838,17 @@ class _PagePreview extends StatelessWidget {
     );
   }
 
-  Widget _buildLoadingPlaceholder(BuildContext context) {
-    return const Center(
-      child: ScanaiLoader(size: 40),
-    );
-  }
-
   Widget _buildErrorPlaceholder(BuildContext context) {
     final theme = Theme.of(context);
-
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.broken_image_outlined,
-            size: 64,
-            color: theme.colorScheme.error,
-          ),
+          Icon(Icons.broken_image_outlined, size: 64, color: theme.colorScheme.error),
           const SizedBox(height: 16),
           Text(
-            'Failed to load image',
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: theme.colorScheme.error,
-            ),
+            'Échec du chargement de l\'image',
+            style: theme.textTheme.bodyLarge?.copyWith(color: theme.colorScheme.error),
           ),
         ],
       ),
@@ -1451,9 +1881,7 @@ class _PageThumbnailStrip extends StatelessWidget {
         final isSelected = index == selectedIndex;
 
         return Padding(
-          padding: EdgeInsets.only(
-            right: index < result.pageCount - 1 ? 8 : 0,
-          ),
+          padding: EdgeInsets.only(right: index < result.pageCount - 1 ? 8 : 0),
           child: GestureDetector(
             onTap: () => onPageSelected(index),
             child: Container(
@@ -1461,9 +1889,7 @@ class _PageThumbnailStrip extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: isSelected
-                      ? theme.colorScheme.primary
-                      : theme.colorScheme.outline.withOpacity(0.3),
+                  color: isSelected ? theme.colorScheme.primary : theme.colorScheme.outline.withOpacity(0.3),
                   width: isSelected ? 2 : 1,
                 ),
               ),
@@ -1474,17 +1900,12 @@ class _PageThumbnailStrip extends StatelessWidget {
                     child: Image.file(
                       File(page.imagePath),
                       fit: BoxFit.cover,
-                      // Thumbnails are 56px wide, cache at 2x for retina displays
                       cacheWidth: 112,
                       cacheHeight: 160,
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
                           color: theme.colorScheme.surfaceContainerHighest,
-                          child: Icon(
-                            Icons.image_not_supported_outlined,
-                            size: 24,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
+                          child: const Icon(Icons.image_not_supported_outlined, size: 24),
                         );
                       },
                     ),
@@ -1496,15 +1917,8 @@ class _PageThumbnailStrip extends StatelessWidget {
                       child: Container(
                         width: 16,
                         height: 16,
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.check,
-                          size: 12,
-                          color: theme.colorScheme.onPrimary,
-                        ),
+                        decoration: BoxDecoration(color: theme.colorScheme.primary, shape: BoxShape.circle),
+                        child: Icon(Icons.check, size: 12, color: theme.colorScheme.onPrimary),
                       ),
                     ),
                 ],
@@ -1517,106 +1931,18 @@ class _PageThumbnailStrip extends StatelessWidget {
   }
 }
 
-/// Dialog for selecting a folder when saving a document.
-class _FolderSelectionDialog extends StatelessWidget {
-  const _FolderSelectionDialog({
-    required this.folders,
-    required this.onCreateFolder,
-  });
 
-  final List<Folder> folders;
-  final VoidCallback onCreateFolder;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return AlertDialog(
-      title: const Text('Save to folder'),
-      content: SizedBox(
-        width: double.maxFinite,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Root folder option (no folder)
-            ListTile(
-              leading: Icon(
-                Icons.home_outlined,
-                color: theme.colorScheme.primary,
-              ),
-              title: const Text('My Documents'),
-              subtitle: const Text('Save without folder'),
-              onTap: () => Navigator.of(context).pop(null),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            if (folders.isNotEmpty) ...[
-              const Divider(),
-              // Existing folders list
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 250),
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: folders.length,
-                  itemBuilder: (context, index) {
-                    final folder = folders[index];
-                    return ListTile(
-                      leading: Icon(
-                        Icons.folder_outlined,
-                        color: folder.color != null
-                            ? _parseColor(folder.color!)
-                            : theme.colorScheme.secondary,
-                      ),
-                      title: Text(folder.name),
-                      onTap: () => Navigator.of(context).pop(folder.id),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-            const SizedBox(height: 8),
-            // Create new folder button
-            OutlinedButton.icon(
-              onPressed: onCreateFolder,
-              icon: const Icon(Icons.create_new_folder_outlined),
-              label: const Text('Create new folder'),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 48),
-              ),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop('_cancelled_'),
-          child: const Text('Cancel'),
-        ),
-      ],
-    );
-  }
-
-  /// Parses a hex color string to a Color.
-  Color _parseColor(String hexColor) {
-    try {
-      final hex = hexColor.replaceFirst('#', '');
-      return Color(int.parse('FF$hex', radix: 16));
-    } catch (_) {
-      return Colors.grey;
-    }
-  }
-}
-
-/// Painter for speech bubble tail pointing down-left toward mascot.
+/// Painter for speech bubble tail.
 class _BubbleTailPainter extends CustomPainter {
   final Color color;
   final Color borderColor;
+  final bool pointRight;
 
-  _BubbleTailPainter({required this.color, required this.borderColor});
+  _BubbleTailPainter({
+    required this.color, 
+    required this.borderColor,
+    this.pointRight = true,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1624,114 +1950,29 @@ class _BubbleTailPainter extends CustomPainter {
       ..color = color
       ..style = PaintingStyle.fill;
 
-    // Triangular path with rounded tip using a quadratic bezier (Bento Style)
     final path = Path();
-    path.moveTo(0, 0);                 
-    path.quadraticBezierTo(size.width * 1.2, size.height / 2, 0, size.height); 
+    if (pointRight) {
+      path.moveTo(0, 0);
+      path.lineTo(size.width, size.height);
+      path.lineTo(0, size.height * 0.6);
+    } else {
+      path.moveTo(size.width, 0); 
+      path.lineTo(0, size.height); 
+      path.lineTo(size.width, size.height * 0.6);
+    }
     path.close();
 
-    // 1. Shadow for the tail to match the card
-    final shadowPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.03)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
-    canvas.drawPath(path.shift(const Offset(2, 4)), shadowPaint);
-
-    // 2. Main fill
     canvas.drawPath(path, paint);
 
-    // 3. Border stroke if needed
     if (borderColor != Colors.transparent) {
       final borderPaint = Paint()
         ..color = borderColor
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.5;
-      
-      final borderPath = Path();
-      borderPath.moveTo(0, 0);
-      borderPath.quadraticBezierTo(size.width * 1.2, size.height / 2, 0, size.height);
-      canvas.drawPath(borderPath, borderPaint);
+      canvas.drawPath(path, borderPaint);
     }
   }
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _BentoActionButton extends StatelessWidget {
-  const _BentoActionButton({
-    required this.onPressed,
-    required this.icon,
-    required this.label,
-    this.color,
-    this.isPrimary = false,
-  });
-
-  final VoidCallback onPressed;
-  final IconData icon;
-  final String label;
-  final Color? color;
-  final bool isPrimary;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final effectiveColor = color ?? const Color(0xFF4F46E5);
-
-    return Container(
-      height: 54,
-      decoration: BoxDecoration(
-        gradient: isPrimary 
-            ? LinearGradient(
-                colors: isDark 
-                    ? [const Color(0xFF312E81), const Color(0xFF1E1B4B)]
-                    : [const Color(0xFF6366F1), const Color(0xFF4F46E5)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              )
-            : null,
-        color: isPrimary ? null : effectiveColor.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: isPrimary 
-            ? Border.all(color: Colors.white.withValues(alpha: 0.1))
-            : Border.all(color: effectiveColor.withValues(alpha: 0.2), width: 1.5),
-        boxShadow: isPrimary ? [
-          BoxShadow(
-            color: effectiveColor.withValues(alpha: 0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ] : null,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: BorderRadius.circular(20),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  icon, 
-                  color: isPrimary ? Colors.white : effectiveColor, 
-                  size: 20,
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  label,
-                  style: GoogleFonts.outfit(
-                    fontWeight: FontWeight.w700,
-                    color: isPrimary ? Colors.white : effectiveColor,
-                    fontSize: 15,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }

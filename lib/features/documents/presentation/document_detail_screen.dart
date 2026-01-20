@@ -20,6 +20,7 @@ import '../../sharing/domain/document_share_service.dart';
 import '../domain/document_model.dart';
 import 'widgets/document_info_panel.dart';
 import 'widgets/document_preview.dart';
+import 'widgets/ocr_text_panel.dart';
 
 /// State for the document detail screen.
 @immutable
@@ -783,7 +784,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
         if (state.document!.hasOcrText)
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-            child: _OcrTextPanel(ocrText: state.document!.ocrText!, theme: theme),
+            child: OcrTextPanel(ocrText: state.document!.ocrText!, theme: theme),
           ),
         
         const SizedBox(height: 12),
@@ -1300,109 +1301,6 @@ class _FullScreenView extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Expandable OCR text panel.
-class _OcrTextPanel extends StatefulWidget {
-  const _OcrTextPanel({required this.ocrText, required this.theme});
-
-  final String ocrText;
-  final ThemeData theme;
-
-  @override
-  State<_OcrTextPanel> createState() => _OcrTextPanelState();
-}
-
-class _OcrTextPanelState extends State<_OcrTextPanel> {
-  bool _isExpanded = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = widget.theme.brightness == Brightness.dark;
-
-    return BentoCard(
-      padding: EdgeInsets.zero,
-      backgroundColor: isDark 
-          ? Colors.white.withValues(alpha: 0.05) 
-          : Colors.white.withValues(alpha: 0.8),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Header
-          InkWell(
-            onTap: () => setState(() => _isExpanded = !_isExpanded),
-            borderRadius: BorderRadius.circular(20),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.text_snippet_rounded,
-                    size: 20,
-                    color: Color(0xFF10B981),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Texte OCR',
-                      style: GoogleFonts.outfit(
-                        fontWeight: FontWeight.w700,
-                        color: widget.theme.colorScheme.onSurface,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.copy_all_rounded, size: 20),
-                    onPressed: _copyText,
-                    visualDensity: VisualDensity.compact,
-                  ),
-                  Icon(
-                    _isExpanded 
-                        ? Icons.keyboard_arrow_up_rounded 
-                        : Icons.keyboard_arrow_down_rounded,
-                    color: widget.theme.colorScheme.onSurface.withValues(alpha: 0.3),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Content
-          AnimatedCrossFade(
-            firstChild: const SizedBox.shrink(),
-            secondChild: Container(
-              constraints: const BoxConstraints(maxHeight: 200),
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: SingleChildScrollView(
-                child: SelectableText(
-                  widget.ocrText,
-                  style: GoogleFonts.outfit(
-                    fontSize: 13,
-                    color: widget.theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                    height: 1.5,
-                  ),
-                ),
-              ),
-            ),
-            crossFadeState: _isExpanded
-                ? CrossFadeState.showSecond
-                : CrossFadeState.showFirst,
-            duration: const Duration(milliseconds: 300),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _copyText() {
-    Clipboard.setData(ClipboardData(text: widget.ocrText));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Text copied to clipboard'),
-        duration: Duration(seconds: 2),
       ),
     );
   }

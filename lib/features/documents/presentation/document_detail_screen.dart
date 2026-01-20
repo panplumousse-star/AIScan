@@ -18,6 +18,7 @@ import '../../folders/domain/folder_service.dart';
 import '../../folders/presentation/widgets/bento_folder_dialog.dart';
 import '../../sharing/domain/document_share_service.dart';
 import '../domain/document_model.dart';
+import 'widgets/document_action_button.dart';
 import 'widgets/document_info_panel.dart';
 import 'widgets/document_preview.dart';
 import 'widgets/ocr_text_panel.dart';
@@ -894,32 +895,32 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _BentoActionButton(
+              DocumentActionButton(
                 icon: Icons.share_rounded,
                 label: 'Partager',
                 onPressed: () => _handleShare(context, state),
                 theme: theme,
               ),
-              _BentoActionButton(
+              DocumentActionButton(
                 icon: Icons.save_alt_rounded,
                 label: 'Exporter',
                 onPressed: () => _handleExport(context, state),
                 theme: theme,
               ),
-              _BentoActionButton(
+              DocumentActionButton(
                 icon: Icons.drive_file_move_rounded,
                 label: 'Déplacer',
                 onPressed: () => _showMoveToFolderDialog(context, state),
                 theme: theme,
               ),
-              _BentoActionButton(
+              DocumentActionButton(
                 icon: Icons.text_snippet_rounded,
                 label: 'OCR',
                 onPressed: () => _handleOcr(context, state),
                 badge: state.document!.hasOcrText ? null : '!',
                 theme: theme,
               ),
-              _BentoActionButton(
+              DocumentActionButton(
                 icon: Icons.auto_fix_high_rounded,
                 label: 'Magie',
                 onPressed: () => _handleEnhance(context, state),
@@ -1301,112 +1302,6 @@ class _FullScreenView extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Action button for bottom bar.
-/// Action button for bottom bar.
-class _BentoActionButton extends StatelessWidget {
-  const _BentoActionButton({
-    required this.icon,
-    required this.label,
-    required this.onPressed,
-    required this.theme,
-    this.badge,
-    this.isPrimary = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onPressed;
-  final ThemeData theme;
-  final String? badge;
-  final bool isPrimary;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = theme.brightness == Brightness.dark;
-    
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            decoration: isPrimary ? BoxDecoration(
-              gradient: LinearGradient(
-                colors: isDark 
-                    ? [const Color(0xFF312E81), const Color(0xFF3730A3)] 
-                    : [const Color(0xFF6366F1), const Color(0xFF4F46E5)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: (isDark ? Colors.black : const Color(0xFF4F46E5)).withValues(alpha: 0.2),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ) : null,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Icon(
-                      icon, 
-                      size: 24, 
-                      color: isPrimary 
-                          ? Colors.white 
-                          : theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                    ),
-                    if (badge != null)
-                      Positioned(
-                        top: -4,
-                        right: -4,
-                        child: Container(
-                          width: 14,
-                          height: 14,
-                          decoration: const BoxDecoration(
-                            color: Colors.redAccent,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: Text(
-                              badge!,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  label,
-                  style: GoogleFonts.outfit(
-                    fontSize: 11,
-                    fontWeight: isPrimary ? FontWeight.w700 : FontWeight.w600,
-                    color: isPrimary 
-                        ? Colors.white 
-                        : theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }

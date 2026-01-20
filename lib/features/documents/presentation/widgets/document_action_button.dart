@@ -88,23 +88,26 @@ class DocumentActionButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 10),
-            decoration: isPrimary ? BoxDecoration(
-              gradient: LinearGradient(
-                colors: isDark
-                    ? [const Color(0xFF312E81), const Color(0xFF3730A3)]
-                    : [const Color(0xFF6366F1), const Color(0xFF4F46E5)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: (isDark ? Colors.black : const Color(0xFF4F46E5)).withValues(alpha: 0.2),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ) : null,
+            decoration: isPrimary
+                ? BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: isDark
+                          ? [const Color(0xFF312E81), const Color(0xFF3730A3)]
+                          : [const Color(0xFF6366F1), const Color(0xFF4F46E5)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: (isDark ? Colors.black : const Color(0xFF4F46E5))
+                            .withValues(alpha: 0.2),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  )
+                : null,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [

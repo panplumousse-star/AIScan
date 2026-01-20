@@ -73,7 +73,8 @@ class DocumentInfoSheet extends StatelessWidget {
             child: Row(
               children: [
                 const BentoLevitationWidget(
-                  child: Icon(Icons.info_rounded, color: Color(0xFF4F46E5), size: 28),
+                  child: Icon(Icons.info_rounded,
+                      color: Color(0xFF4F46E5), size: 28),
                 ),
                 const SizedBox(width: 16),
                 Text(
@@ -96,7 +97,11 @@ class DocumentInfoSheet extends StatelessWidget {
               controller: scrollController,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
               children: [
-                BentoInfoRow(icon: Icons.title_rounded, label: 'Titre', value: document.title, theme: theme),
+                BentoInfoRow(
+                    icon: Icons.title_rounded,
+                    label: 'Titre',
+                    value: document.title,
+                    theme: theme),
                 BentoInfoRow(
                   icon: Icons.straighten_rounded,
                   label: 'Taille du fichier',
@@ -142,7 +147,9 @@ class DocumentInfoSheet extends StatelessWidget {
                     theme: theme,
                   ),
                 BentoInfoRow(
-                  icon: document.isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                  icon: document.isFavorite
+                      ? Icons.favorite_rounded
+                      : Icons.favorite_border_rounded,
                   label: 'Favori',
                   value: document.isFavorite ? 'Oui' : 'Non',
                   theme: theme,

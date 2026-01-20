@@ -62,9 +62,9 @@ class DocumentDetailScreen extends ConsumerStatefulWidget {
     this.onEnhance,
     this.onSign,
   }) : assert(
-         documentId != null || document != null,
-         'Either documentId or document must be provided',
-       );
+          documentId != null || document != null,
+          'Either documentId or document must be provided',
+        );
 
   /// Document ID to load. Takes precedence if both provided.
   final String? documentId;
@@ -168,8 +168,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
               Expanded(
                 child: _buildBody(context, state, notifier, theme),
               ),
-              if (state.isReady)
-                _buildActionBar(context, state, theme),
+              if (state.isReady) _buildActionBar(context, state, theme),
             ],
           ),
           _buildCustomHeader(context, state, notifier, theme),
@@ -249,7 +248,8 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                       Icons.info_outline_rounded,
                       color: isDark ? Colors.white : const Color(0xFF1E1B4B),
                     ),
-                    onPressed: () => _handleMenuAction(context, 'info', state, notifier),
+                    onPressed: () =>
+                        _handleMenuAction(context, 'info', state, notifier),
                     iconSize: 24,
                   ),
                   // Delete button
@@ -258,7 +258,8 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                       Icons.delete_outline_rounded,
                       color: Colors.redAccent,
                     ),
-                    onPressed: () => _handleMenuAction(context, 'delete', state, notifier),
+                    onPressed: () =>
+                        _handleMenuAction(context, 'delete', state, notifier),
                     iconSize: 24,
                   ),
                 ],
@@ -268,7 +269,8 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
             if (state.hasDocument) ...[
               const SizedBox(height: 8),
               GestureDetector(
-                onTap: () => _showRenameDialog(context, state.document!, notifier),
+                onTap: () =>
+                    _showRenameDialog(context, state.document!, notifier),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -278,7 +280,8 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                         style: GoogleFonts.outfit(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : const Color(0xFF1E1B4B),
+                          color:
+                              isDark ? Colors.white : const Color(0xFF1E1B4B),
                         ),
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
@@ -336,8 +339,8 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
             child: BentoCard(
               padding: EdgeInsets.zero,
               borderRadius: 24,
-              backgroundColor: theme.brightness == Brightness.dark 
-                  ? Colors.white.withValues(alpha: 0.05) 
+              backgroundColor: theme.brightness == Brightness.dark
+                  ? Colors.white.withValues(alpha: 0.05)
                   : Colors.white.withValues(alpha: 0.8),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(24),
@@ -373,9 +376,10 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
         if (state.document!.hasOcrText)
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-            child: OcrTextPanel(ocrText: state.document!.ocrText!, theme: theme),
+            child:
+                OcrTextPanel(ocrText: state.document!.ocrText!, theme: theme),
           ),
-        
+
         const SizedBox(height: 12),
 
         // Mascot interaction with speech bubble
@@ -394,9 +398,12 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                       clipBehavior: Clip.none,
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
                           decoration: BoxDecoration(
-                            color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.1)
+                                : Colors.white,
                             borderRadius: const BorderRadius.only(
                               topLeft: Radius.circular(16),
                               topRight: Radius.circular(16),
@@ -416,7 +423,9 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                             style: GoogleFonts.outfit(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white : const Color(0xFF1E1B4B),
+                              color: isDark
+                                  ? Colors.white
+                                  : const Color(0xFF1E1B4B),
                             ),
                           ),
                         ),
@@ -426,7 +435,9 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                           child: CustomPaint(
                             size: const Size(12, 12),
                             painter: BubbleTailPainterRight(
-                              color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.1)
+                                  : Colors.white,
                             ),
                           ),
                         ),
@@ -457,7 +468,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
     ThemeData theme,
   ) {
     final isDark = theme.brightness == Brightness.dark;
-    
+
     return ClipRect(
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
@@ -469,13 +480,13 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
             12 + MediaQuery.of(context).padding.bottom,
           ),
           decoration: BoxDecoration(
-            color: isDark 
-                ? Colors.black.withValues(alpha: 0.4) 
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.4)
                 : Colors.white.withValues(alpha: 0.4),
             border: Border(
               top: BorderSide(
-                color: isDark 
-                    ? Colors.white.withValues(alpha: 0.05) 
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.05)
                     : Colors.black.withValues(alpha: 0.05),
               ),
             ),
@@ -573,7 +584,8 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
     }
   }
 
-  Future<void> _handleOcr(BuildContext context, DocumentDetailScreenState state) async {
+  Future<void> _handleOcr(
+      BuildContext context, DocumentDetailScreenState state) async {
     if (state.document == null) return;
     final notifier = ref.read(documentDetailScreenProvider.notifier);
     final bytes = await notifier.loadImageBytes();
@@ -582,7 +594,8 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
     }
   }
 
-  Future<void> _handleEnhance(BuildContext context, DocumentDetailScreenState state) async {
+  Future<void> _handleEnhance(
+      BuildContext context, DocumentDetailScreenState state) async {
     if (state.document == null) return;
     final notifier = ref.read(documentDetailScreenProvider.notifier);
     final bytes = await notifier.loadImageBytes();
@@ -591,7 +604,8 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
     }
   }
 
-  Future<void> _handleExport(BuildContext context, DocumentDetailScreenState state) async {
+  Future<void> _handleExport(
+      BuildContext context, DocumentDetailScreenState state) async {
     if (state.document == null) return;
     final notifier = ref.read(documentDetailScreenProvider.notifier);
     final bytes = await notifier.loadImageBytes();
@@ -677,14 +691,15 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
               color: Colors.transparent,
               child: BentoCard(
                 padding: const EdgeInsets.all(24),
-                backgroundColor: isDark 
-                    ? Colors.white.withValues(alpha: 0.1) 
+                backgroundColor: isDark
+                    ? Colors.white.withValues(alpha: 0.1)
                     : Colors.white.withValues(alpha: 0.9),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const BentoLevitationWidget(
-                      child: Icon(Icons.delete_forever_rounded, color: Colors.redAccent, size: 48),
+                      child: Icon(Icons.delete_forever_rounded,
+                          color: Colors.redAccent, size: 48),
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -700,7 +715,8 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                       'Cette action est irréversible. Le document sera définitivement supprimé.',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.outfit(
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                     ),
                     const SizedBox(height: 32),
@@ -722,7 +738,9 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                               decoration: BoxDecoration(
                                 color: Colors.redAccent.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: Colors.redAccent.withValues(alpha: 0.3)),
+                                border: Border.all(
+                                    color: Colors.redAccent
+                                        .withValues(alpha: 0.3)),
                               ),
                               child: Center(
                                 child: Text(
@@ -780,14 +798,15 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
           );
           return newFolder;
         } catch (e) {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Erreur lors de la création du dossier: $e')),
-              );
-            }
-            return null;
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                  content: Text('Erreur lors de la création du dossier: $e')),
+            );
           }
-        },
+          return null;
+        }
+      },
     );
 
     // User cancelled
@@ -806,7 +825,9 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
           ),
         );
         // Refresh document state
-        ref.read(documentDetailScreenProvider.notifier).loadDocument(state.document!.id);
+        ref
+            .read(documentDetailScreenProvider.notifier)
+            .loadDocument(state.document!.id);
       }
     } catch (e) {
       if (mounted) {

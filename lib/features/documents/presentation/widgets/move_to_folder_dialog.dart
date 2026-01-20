@@ -142,7 +142,8 @@ class _MoveToFolderDialogState extends State<MoveToFolderDialog> {
                                 'Choisis un dossier de destination',
                                 style: GoogleFonts.outfit(
                                   fontSize: 12,
-                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                                  color: theme.colorScheme.onSurface
+                                      .withValues(alpha: 0.5),
                                 ),
                               ),
                             ],
@@ -164,9 +165,12 @@ class _MoveToFolderDialogState extends State<MoveToFolderDialog> {
                               top: -8,
                               right: 60,
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 6),
                                 decoration: BoxDecoration(
-                                  color: isDark ? Colors.white.withValues(alpha: 0.15) : const Color(0xFFEEF2FF),
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.15)
+                                      : const Color(0xFFEEF2FF),
                                   borderRadius: const BorderRadius.only(
                                     topLeft: Radius.circular(12),
                                     topRight: Radius.circular(12),
@@ -175,7 +179,8 @@ class _MoveToFolderDialogState extends State<MoveToFolderDialog> {
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.05),
+                                      color:
+                                          Colors.black.withValues(alpha: 0.05),
                                       blurRadius: 8,
                                       offset: const Offset(0, 2),
                                     ),
@@ -186,7 +191,9 @@ class _MoveToFolderDialogState extends State<MoveToFolderDialog> {
                                   style: GoogleFonts.outfit(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
-                                    color: isDark ? Colors.white : const Color(0xFF1E1B4B),
+                                    color: isDark
+                                        ? Colors.white
+                                        : const Color(0xFF1E1B4B),
                                   ),
                                 ),
                               ),
@@ -208,7 +215,8 @@ class _MoveToFolderDialogState extends State<MoveToFolderDialog> {
                           children: [
                             // "My Documents" option
                             _FolderOptionTile(
-                              onTap: () => setState(() => _selectedFolderId = null),
+                              onTap: () =>
+                                  setState(() => _selectedFolderId = null),
                               icon: Icons.description_rounded,
                               title: 'Mes Documents',
                               color: const Color(0xFF4F46E5),
@@ -218,16 +226,17 @@ class _MoveToFolderDialogState extends State<MoveToFolderDialog> {
                             const SizedBox(height: 8),
                             // Specific folders
                             ...widget.folders.map((folder) => Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: _FolderOptionTile(
-                                onTap: () => setState(() => _selectedFolderId = folder.id),
-                                icon: Icons.folder_rounded,
-                                title: folder.name,
-                                color: _parseColor(folder.color),
-                                isSelected: _selectedFolderId == folder.id,
-                                theme: theme,
-                              ),
-                            )),
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: _FolderOptionTile(
+                                    onTap: () => setState(
+                                        () => _selectedFolderId = folder.id),
+                                    icon: Icons.folder_rounded,
+                                    title: folder.name,
+                                    color: _parseColor(folder.color),
+                                    isSelected: _selectedFolderId == folder.id,
+                                    theme: theme,
+                                  ),
+                                )),
                           ],
                         ),
                       ),
@@ -244,7 +253,8 @@ class _MoveToFolderDialogState extends State<MoveToFolderDialog> {
                           color: Colors.transparent,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                            color: theme.colorScheme.primary
+                                .withValues(alpha: 0.1),
                           ),
                         ),
                         child: Row(
@@ -252,7 +262,8 @@ class _MoveToFolderDialogState extends State<MoveToFolderDialog> {
                             Icon(
                               Icons.add_circle_outline_rounded,
                               size: 24,
-                              color: theme.colorScheme.primary.withValues(alpha: 0.6),
+                              color: theme.colorScheme.primary
+                                  .withValues(alpha: 0.6),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -260,7 +271,8 @@ class _MoveToFolderDialogState extends State<MoveToFolderDialog> {
                                 'Nouveau Dossier',
                                 style: GoogleFonts.outfit(
                                   fontWeight: FontWeight.w600,
-                                  color: theme.colorScheme.primary.withValues(alpha: 0.7),
+                                  color: theme.colorScheme.primary
+                                      .withValues(alpha: 0.7),
                                 ),
                               ),
                             ),
@@ -275,16 +287,19 @@ class _MoveToFolderDialogState extends State<MoveToFolderDialog> {
                       children: [
                         Expanded(
                           child: TextButton(
-                            onPressed: () => Navigator.of(context).pop('_cancelled_'),
+                            onPressed: () =>
+                                Navigator.of(context).pop('_cancelled_'),
                             style: TextButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14)),
                             ),
                             child: Text(
                               'Annuler',
                               style: GoogleFonts.outfit(
                                 fontWeight: FontWeight.w600,
-                                color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                                color: theme.colorScheme.onSurface
+                                    .withValues(alpha: 0.4),
                               ),
                             ),
                           ),
@@ -354,9 +369,7 @@ class _FolderOptionTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isSelected
-              ? color.withValues(alpha: 0.1)
-              : Colors.transparent,
+          color: isSelected ? color.withValues(alpha: 0.1) : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected

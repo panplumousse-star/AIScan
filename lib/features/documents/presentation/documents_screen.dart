@@ -151,9 +151,9 @@ class DocumentsScreenState {
     // Apply search filter
     if (searchQuery.isNotEmpty) {
       final query = searchQuery.toLowerCase();
-      result = result.where((folder) =>
-        folder.name.toLowerCase().contains(query)
-      ).toList();
+      result = result
+          .where((folder) => folder.name.toLowerCase().contains(query))
+          .toList();
     }
 
     return result;
@@ -172,7 +172,8 @@ class DocumentsScreenState {
   int get selectedFolderCount => selectedFolderIds.length;
 
   /// Total count of selected items (documents + folders).
-  int get selectedCount => selectedDocumentIds.length + selectedFolderIds.length;
+  int get selectedCount =>
+      selectedDocumentIds.length + selectedFolderIds.length;
 
   /// Whether all documents are selected.
   bool get allDocumentsSelected =>
@@ -210,8 +211,10 @@ class DocumentsScreenState {
     return DocumentsScreenState(
       documents: documents ?? this.documents,
       folders: folders ?? this.folders,
-      currentFolderId: clearCurrentFolder ? null : (currentFolderId ?? this.currentFolderId),
-      currentFolder: clearCurrentFolder ? null : (currentFolder ?? this.currentFolder),
+      currentFolderId:
+          clearCurrentFolder ? null : (currentFolderId ?? this.currentFolderId),
+      currentFolder:
+          clearCurrentFolder ? null : (currentFolder ?? this.currentFolder),
       viewMode: viewMode ?? this.viewMode,
       sortBy: sortBy ?? this.sortBy,
       filter: filter ?? this.filter,
@@ -226,9 +229,8 @@ class DocumentsScreenState {
       selectedFolderIds: clearSelection
           ? const {}
           : (selectedFolderIds ?? this.selectedFolderIds),
-      isSelectionMode: clearSelection
-          ? false
-          : (isSelectionMode ?? this.isSelectionMode),
+      isSelectionMode:
+          clearSelection ? false : (isSelectionMode ?? this.isSelectionMode),
       decryptedThumbnails: decryptedThumbnails ?? this.decryptedThumbnails,
     );
   }
@@ -251,17 +253,17 @@ class DocumentsScreenState {
 
   @override
   int get hashCode => Object.hash(
-    viewMode,
-    sortBy,
-    filter,
-    searchQuery,
-    isLoading,
-    isRefreshing,
-    isInitialized,
-    error,
-    isSelectionMode,
-    documentCount,
-  );
+        viewMode,
+        sortBy,
+        filter,
+        searchQuery,
+        isLoading,
+        isRefreshing,
+        isInitialized,
+        error,
+        isSelectionMode,
+        documentCount,
+      );
 }
 
 /// State notifier for the documents screen.
@@ -270,7 +272,7 @@ class DocumentsScreenState {
 class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
   /// Creates a [DocumentsScreenNotifier] with the given repository and folder service.
   DocumentsScreenNotifier(
-    this._repository, 
+    this._repository,
     this._folderService,
     this._shareService,
   ) : super(const DocumentsScreenState());
@@ -344,7 +346,8 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
         final allFolders = await _folderService.getAllFolders();
         folders = allFolders.childrenOf(state.currentFolderId!).sortedByName();
         // Refresh current folder to get updated favorite status
-        final refreshedFolder = await _folderService.getFolder(state.currentFolderId!);
+        final refreshedFolder =
+            await _folderService.getFolder(state.currentFolderId!);
         if (refreshedFolder != null) {
           state = state.copyWith(currentFolder: refreshedFolder);
         }
@@ -404,7 +407,8 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
   Future<void> exitFolder() async {
     if (state.currentFolder?.parentId != null) {
       // Go to parent folder
-      final parentFolder = await _folderService.getFolder(state.currentFolder!.parentId!);
+      final parentFolder =
+          await _folderService.getFolder(state.currentFolder!.parentId!);
       state = state.copyWith(
         currentFolderId: parentFolder?.id,
         currentFolder: parentFolder,
@@ -715,7 +719,8 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
 
   /// Toggles favorite status for all selected documents.
   Future<void> toggleFavoriteSelected() async {
-    if (state.selectedDocumentIds.isEmpty && state.selectedFolderIds.isEmpty) return;
+    if (state.selectedDocumentIds.isEmpty && state.selectedFolderIds.isEmpty)
+      return;
 
     state = state.copyWith(isLoading: true, clearError: true);
     try {
@@ -740,14 +745,14 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
   /// Shares all selected documents.
   Future<void> shareSelected() async {
     if (state.selectedDocumentIds.isEmpty) return;
-    
+
     try {
       final documents = <Document>[];
       for (final id in state.selectedDocumentIds) {
         final doc = await _repository.getDocument(id);
         if (doc != null) documents.add(doc);
       }
-      
+
       if (documents.isNotEmpty) {
         await _shareService.shareDocuments(documents);
       }
@@ -825,7 +830,8 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
   /// Deletes all selected items (documents and folders).
   /// Documents in deleted folders are moved to root level.
   Future<void> deleteAllSelected() async {
-    if (state.selectedDocumentIds.isEmpty && state.selectedFolderIds.isEmpty) return;
+    if (state.selectedDocumentIds.isEmpty && state.selectedFolderIds.isEmpty)
+      return;
 
     state = state.copyWith(isLoading: true, clearError: true);
 
@@ -850,7 +856,8 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
 
   /// Deletes all selected folders AND documents inside them.
   Future<void> deleteAllSelectedWithDocuments() async {
-    if (state.selectedDocumentIds.isEmpty && state.selectedFolderIds.isEmpty) return;
+    if (state.selectedDocumentIds.isEmpty && state.selectedFolderIds.isEmpty)
+      return;
 
     state = state.copyWith(isLoading: true, clearError: true);
 
@@ -950,16 +957,13 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
 }
 
 /// Riverpod provider for the documents screen state.
-final documentsScreenProvider =
-    StateNotifierProvider.autoDispose<
-      DocumentsScreenNotifier,
-      DocumentsScreenState
-    >((ref) {
-      final repository = ref.watch(documentRepositoryProvider);
-      final folderService = ref.watch(folderServiceProvider);
-      final shareService = ref.watch(documentShareServiceProvider);
-      return DocumentsScreenNotifier(repository, folderService, shareService);
-    });
+final documentsScreenProvider = StateNotifierProvider.autoDispose<
+    DocumentsScreenNotifier, DocumentsScreenState>((ref) {
+  final repository = ref.watch(documentRepositoryProvider);
+  final folderService = ref.watch(folderServiceProvider);
+  final shareService = ref.watch(documentShareServiceProvider);
+  return DocumentsScreenNotifier(repository, folderService, shareService);
+});
 
 /// Main documents library screen.
 ///
@@ -1142,7 +1146,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     ThemeData theme,
   ) {
     final isDark = theme.brightness == Brightness.dark;
-    
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
       child: Row(
@@ -1157,8 +1161,8 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                 BentoCard(
                   height: 64,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  backgroundColor: isDark 
-                      ? const Color(0xFF1E293B).withValues(alpha: 0.6) 
+                  backgroundColor: isDark
+                      ? const Color(0xFF1E293B).withValues(alpha: 0.6)
                       : const Color(0xFFF1F5F9).withValues(alpha: 0.8),
                   borderRadius: 20,
                   child: Center(
@@ -1176,16 +1180,16 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                 ),
                 // The Bubble Tail (Pointing Right to Mascot)
                 Positioned(
-                  right: -9, 
+                  right: -9,
                   top: 12,
                   child: CustomPaint(
                     size: const Size(12, 16),
                     painter: _BubbleTailPainter(
-                      color: isDark 
-                          ? const Color(0xFF1E293B).withValues(alpha: 0.6) 
+                      color: isDark
+                          ? const Color(0xFF1E293B).withValues(alpha: 0.6)
                           : const Color(0xFFF1F5F9).withValues(alpha: 0.8),
-                      borderColor: isDark 
-                          ? const Color(0xFFFFFFFF).withValues(alpha: 0.1) 
+                      borderColor: isDark
+                          ? const Color(0xFFFFFFFF).withValues(alpha: 0.1)
                           : const Color(0xFFE2E8F0),
                     ),
                   ),
@@ -1200,8 +1204,8 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
             child: BentoCard(
               height: 110,
               padding: const EdgeInsets.all(8),
-              backgroundColor: isDark 
-                  ? const Color(0xFF000000).withValues(alpha: 0.6) 
+              backgroundColor: isDark
+                  ? const Color(0xFF000000).withValues(alpha: 0.6)
                   : Colors.white.withValues(alpha: 0.6),
               borderRadius: 20,
               child: const Center(
@@ -1263,7 +1267,8 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                   style: GoogleFonts.outfit(
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
-                    color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                    color: theme.colorScheme.onSurfaceVariant
+                        .withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -1271,7 +1276,9 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
           ),
           IconButton(
             icon: Icon(
-              folder.isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+              folder.isFavorite
+                  ? Icons.favorite_rounded
+                  : Icons.favorite_border_rounded,
               size: 18,
             ),
             onPressed: () async {
@@ -1281,7 +1288,8 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
             style: IconButton.styleFrom(
               backgroundColor: folder.isFavorite
                   ? theme.colorScheme.error.withValues(alpha: 0.1)
-                  : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                  : theme.colorScheme.surfaceContainerHighest
+                      .withValues(alpha: 0.5),
               padding: const EdgeInsets.all(8),
               foregroundColor: folder.isFavorite
                   ? theme.colorScheme.error
@@ -1293,7 +1301,8 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
             icon: const Icon(Icons.edit_rounded, size: 18),
             onPressed: () => _showEditFolderDialog(context, folder, notifier),
             style: IconButton.styleFrom(
-              backgroundColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+              backgroundColor: theme.colorScheme.surfaceContainerHighest
+                  .withValues(alpha: 0.5),
               padding: const EdgeInsets.all(8),
               foregroundColor: folderColor,
             ),
@@ -1327,7 +1336,11 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     // If no documents and no folders at root, and not loading, and no active filters, go back
     // (shouldn't happen since we check before showing button)
     // Don't pop when filters are active - show empty state instead
-    if (!state.hasDocuments && !state.hasFolders && !state.isLoading && state.isAtRoot && !state.filter.hasActiveFilters) {
+    if (!state.hasDocuments &&
+        !state.hasFolders &&
+        !state.isLoading &&
+        state.isAtRoot &&
+        !state.filter.hasActiveFilters) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) Navigator.of(context).pop();
       });
@@ -1356,88 +1369,94 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
               children: [
                 _buildTopAppBar(context, state, notifier, theme),
                 _buildBentoHeader(context, state, notifier, theme),
-              // Integrated Search Bar with Controls & Selection Flip
-              SizedBox(
-                height: 72,
-                child: BentoSearchBar(
-                  controller: _searchController,
-                  focusNode: _searchFocusNode,
-                  onChanged: notifier.setSearchQuery,
-                  onClear: () {
-                    _searchController.clear();
-                    notifier.clearSearch();
-                  },
-                  hasText: state.hasSearch,
-                  onToggleViewMode: notifier.toggleViewMode,
-                  onShowFilters: () => _showFilterSheet(context, state, notifier),
-                  onToggleFavorites: () => notifier.setFilter(
-                    state.filter.copyWith(favoritesOnly: !state.filter.favoritesOnly),
+                // Integrated Search Bar with Controls & Selection Flip
+                SizedBox(
+                  height: 72,
+                  child: BentoSearchBar(
+                    controller: _searchController,
+                    focusNode: _searchFocusNode,
+                    onChanged: notifier.setSearchQuery,
+                    onClear: () {
+                      _searchController.clear();
+                      notifier.clearSearch();
+                    },
+                    hasText: state.hasSearch,
+                    onToggleViewMode: notifier.toggleViewMode,
+                    onShowFilters: () =>
+                        _showFilterSheet(context, state, notifier),
+                    onToggleFavorites: () => notifier.setFilter(
+                      state.filter
+                          .copyWith(favoritesOnly: !state.filter.favoritesOnly),
+                    ),
+                    viewMode: state.viewMode,
+                    isFavoritesOnly: state.filter.favoritesOnly,
+                    hasActiveFilters: state.filter.hasActiveFilters,
+                    // Selection
+                    isSelectionMode: state.isSelectionMode,
+                    selectedCount: state.selectedCount,
+                    selectedDocumentCount: state.selectedDocumentCount,
+                    selectedFolderCount: state.selectedFolderCount,
+                    hasDocumentsSelected: state.selectedDocumentCount > 0,
+                    onDeleteSelected: () =>
+                        _showDeleteConfirmation(context, state, notifier),
+                    onFavoriteSelected: notifier.toggleFavoriteSelected,
+                    onShareSelected: () => _handleShareSelected(context, state),
+                    onExportSelected: () =>
+                        _handleExportSelected(context, state),
+                    onMoveSelected: () => _showMoveSelectedToFolderDialog(
+                        context, state, notifier),
                   ),
-                  viewMode: state.viewMode,
-                  isFavoritesOnly: state.filter.favoritesOnly,
-                  hasActiveFilters: state.filter.hasActiveFilters,
-                  // Selection
-                  isSelectionMode: state.isSelectionMode,
-                  selectedCount: state.selectedCount,
-                  selectedDocumentCount: state.selectedDocumentCount,
-                  selectedFolderCount: state.selectedFolderCount,
-                  hasDocumentsSelected: state.selectedDocumentCount > 0,
-                  onDeleteSelected: () =>
-                      _showDeleteConfirmation(context, state, notifier),
-                  onFavoriteSelected: notifier.toggleFavoriteSelected,
-                  onShareSelected: () => _handleShareSelected(context, state),
-                  onExportSelected: () => _handleExportSelected(context, state),
-                  onMoveSelected: () => _showMoveSelectedToFolderDialog(context, state, notifier),
                 ),
-              ),
-              // Active filters indicator
-              if (state.filter.hasActiveFilters ||
-                  state.sortBy != DocumentsSortBy.createdDesc)
-                _ActiveFiltersBar(
-                  filter: state.filter,
-                  sortBy: state.sortBy,
-                  onClearAll: notifier.clearFilters,
-                  onClearSort: () => notifier.setSortBy(DocumentsSortBy.createdDesc),
-                  onClearFavorites: () =>
-                      notifier.setFilter(state.filter.copyWith(favoritesOnly: false)),
-                  onClearOcr: () =>
-                      notifier.setFilter(state.filter.copyWith(hasOcrOnly: false)),
-                  onClearFolder: () =>
-                      notifier.setFilter(state.filter.copyWith(clearFolderId: true)),
-                  onClearTags: () =>
-                      notifier.setFilter(state.filter.copyWith(clearTags: true)),
-                ),
-              
-              // Folder View vs Root View
-              Expanded(
-                child: !state.isAtRoot && state.currentFolder != null
-                    ? Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-                        child: BentoCard(
-                          padding: EdgeInsets.zero,
-                          backgroundColor: theme.brightness == Brightness.dark
-                              ? Colors.white.withValues(alpha: 0.05)
-                              : Colors.white.withValues(alpha: 0.7),
-                          child: Column(
-                            children: [
-                              _buildFolderHeader(
-                                  context, state.currentFolder!, notifier, theme),
-                              const Divider(height: 1),
-                              Expanded(
-                                child: _buildDocumentsSliverList(
-                                    context, state, notifier, theme),
-                              ),
-                            ],
+                // Active filters indicator
+                if (state.filter.hasActiveFilters ||
+                    state.sortBy != DocumentsSortBy.createdDesc)
+                  _ActiveFiltersBar(
+                    filter: state.filter,
+                    sortBy: state.sortBy,
+                    onClearAll: notifier.clearFilters,
+                    onClearSort: () =>
+                        notifier.setSortBy(DocumentsSortBy.createdDesc),
+                    onClearFavorites: () => notifier
+                        .setFilter(state.filter.copyWith(favoritesOnly: false)),
+                    onClearOcr: () => notifier
+                        .setFilter(state.filter.copyWith(hasOcrOnly: false)),
+                    onClearFolder: () => notifier
+                        .setFilter(state.filter.copyWith(clearFolderId: true)),
+                    onClearTags: () => notifier
+                        .setFilter(state.filter.copyWith(clearTags: true)),
+                  ),
+
+                // Folder View vs Root View
+                Expanded(
+                  child: !state.isAtRoot && state.currentFolder != null
+                      ? Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                          child: BentoCard(
+                            padding: EdgeInsets.zero,
+                            backgroundColor: theme.brightness == Brightness.dark
+                                ? Colors.white.withValues(alpha: 0.05)
+                                : Colors.white.withValues(alpha: 0.7),
+                            child: Column(
+                              children: [
+                                _buildFolderHeader(context,
+                                    state.currentFolder!, notifier, theme),
+                                const Divider(height: 1),
+                                Expanded(
+                                  child: _buildDocumentsSliverList(
+                                      context, state, notifier, theme),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      )
-                    : _buildDocumentsSliverList(context, state, notifier, theme),
-              ),
-            ],
-          ),
-        ), // End SafeArea
-      ), // End GestureDetector
-    ],
+                        )
+                      : _buildDocumentsSliverList(
+                          context, state, notifier, theme),
+                ),
+              ],
+            ),
+          ), // End SafeArea
+        ), // End GestureDetector
+      ],
     );
   }
 
@@ -1453,15 +1472,19 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
       child: CustomScrollView(
         slivers: [
           // Folders section (only at root)
-          if (state.isAtRoot && (state.filteredFolders.isNotEmpty || !state.filter.favoritesOnly))
+          if (state.isAtRoot &&
+              (state.filteredFolders.isNotEmpty || !state.filter.favoritesOnly))
             SliverToBoxAdapter(
               child: _FoldersSection(
                 folders: state.filteredFolders,
                 selectedFolderIds: state.selectedFolderIds,
                 isSelectionMode: state.isSelectionMode,
-                onFolderTap: (folder) => _handleFolderTap(folder, state, notifier),
-                onFolderLongPress: (folder) => _handleFolderLongPress(folder, notifier),
-                onCreateFolder: () => _showCreateNewFolderDialog(context, notifier),
+                onFolderTap: (folder) =>
+                    _handleFolderTap(folder, state, notifier),
+                onFolderLongPress: (folder) =>
+                    _handleFolderLongPress(folder, notifier),
+                onCreateFolder: () =>
+                    _showCreateNewFolderDialog(context, notifier),
                 theme: theme,
               ),
             ),
@@ -1476,7 +1499,8 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                       thumbnails: state.decryptedThumbnails,
                       selectedIds: state.selectedDocumentIds,
                       isSelectionMode: state.isSelectionMode,
-                      onDocumentTap: (doc) => _handleDocumentTap(doc, state, notifier),
+                      onDocumentTap: (doc) =>
+                          _handleDocumentTap(doc, state, notifier),
                       onDocumentLongPress: (doc) =>
                           _handleDocumentLongPress(doc, notifier),
                       onFavoriteToggle: notifier.toggleFavorite,
@@ -1494,13 +1518,17 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                           return _DocumentListItem(
                             document: doc,
                             thumbnailPath: state.decryptedThumbnails[doc.id],
-                            isSelected: state.selectedDocumentIds.contains(doc.id),
+                            isSelected:
+                                state.selectedDocumentIds.contains(doc.id),
                             isSelectionMode: state.isSelectionMode,
-                            onTap: () => _handleDocumentTap(doc, state, notifier),
-                            onLongPress: () => _handleDocumentLongPress(doc, notifier),
-                            onFavoriteToggle: () => notifier.toggleFavorite(doc.id),
-                            onRename: () =>
-                                _showRenameDialog(context, doc.id, doc.title, notifier),
+                            onTap: () =>
+                                _handleDocumentTap(doc, state, notifier),
+                            onLongPress: () =>
+                                _handleDocumentLongPress(doc, notifier),
+                            onFavoriteToggle: () =>
+                                notifier.toggleFavorite(doc.id),
+                            onRename: () => _showRenameDialog(
+                                context, doc.id, doc.title, notifier),
                             theme: theme,
                           );
                         },
@@ -1639,7 +1667,8 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
   }
 
   void _navigateToDocumentDetail(BuildContext context, Document document) {
-    Navigator.of(context).push(
+    Navigator.of(context)
+        .push(
       MaterialPageRoute(
         builder: (navContext) => DocumentDetailScreen(
           document: document,
@@ -1659,7 +1688,9 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                 );
               } else if (result.isFailed) {
                 ScaffoldMessenger.of(navContext).showSnackBar(
-                  SnackBar(content: Text(result.errorMessage ?? 'Échec de l\'exportation')),
+                  SnackBar(
+                      content: Text(
+                          result.errorMessage ?? 'Échec de l\'exportation')),
                 );
               }
             } on DocumentExportException catch (e) {
@@ -1670,11 +1701,14 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
               }
             }
           },
-          onOcr: (doc, imageBytes) => _navigateToOcr(navContext, doc, imageBytes),
-          onEnhance: (doc, imageBytes) => _navigateToEnhancement(navContext, doc, imageBytes),
+          onOcr: (doc, imageBytes) =>
+              _navigateToOcr(navContext, doc, imageBytes),
+          onEnhance: (doc, imageBytes) =>
+              _navigateToEnhancement(navContext, doc, imageBytes),
         ),
       ),
-    ).then((_) {
+    )
+        .then((_) {
       // Refresh documents when returning from detail screen
       if (mounted) {
         ref.read(documentsScreenProvider.notifier).loadDocuments();
@@ -1682,7 +1716,8 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     });
   }
 
-  void _navigateToOcr(BuildContext context, Document document, Uint8List imageBytes) {
+  void _navigateToOcr(
+      BuildContext context, Document document, Uint8List imageBytes) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => OcrResultsScreen(
@@ -1710,7 +1745,8 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     );
   }
 
-  void _navigateToEnhancement(BuildContext context, Document document, Uint8List imageBytes) {
+  void _navigateToEnhancement(
+      BuildContext context, Document document, Uint8List imageBytes) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => EnhancementScreen(
@@ -1846,10 +1882,12 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     // Standard confirmation for documents only or empty folders
     String message;
     if (folderCount > 0 && docCount > 0) {
-      message = 'Delete $folderCount ${folderCount == 1 ? 'folder' : 'folders'} and '
-                '$docCount ${docCount == 1 ? 'document' : 'documents'}?';
+      message =
+          'Delete $folderCount ${folderCount == 1 ? 'folder' : 'folders'} and '
+          '$docCount ${docCount == 1 ? 'document' : 'documents'}?';
     } else if (folderCount > 0) {
-      message = 'Delete $folderCount ${folderCount == 1 ? 'folder' : 'folders'}?';
+      message =
+          'Delete $folderCount ${folderCount == 1 ? 'folder' : 'folders'}?';
     } else {
       message = 'Delete $docCount ${docCount == 1 ? 'document' : 'documents'}?';
     }
@@ -1953,7 +1991,8 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
   }
 
   /// Shows dialog to create a new folder when moving documents.
-  Future<BentoFolderDialogResult?> _showCreateFolderForMoveDialog(BuildContext context) async {
+  Future<BentoFolderDialogResult?> _showCreateFolderForMoveDialog(
+      BuildContext context) async {
     return showDialog<BentoFolderDialogResult>(
       context: context,
       builder: (context) => const BentoFolderDialog(),
@@ -2024,7 +2063,8 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     ShareFormat format,
   ) async {
     try {
-      final result = await shareService.shareDocuments(documents, format: format);
+      final result =
+          await shareService.shareDocuments(documents, format: format);
       // Clean up temporary files after sharing
       await shareService.cleanupTempFiles(result.tempFilePaths);
     } on DocumentShareException catch (e) {
@@ -2079,7 +2119,8 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
         );
       } else if (result.isFailed) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result.errorMessage ?? 'Échec de l\'exportation')),
+          SnackBar(
+              content: Text(result.errorMessage ?? 'Échec de l\'exportation')),
         );
       }
       // If cancelled, do nothing
@@ -2133,7 +2174,8 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     );
 
     if (result != null) {
-      final hasNameChange = result.name != folder.name && result.name.isNotEmpty;
+      final hasNameChange =
+          result.name != folder.name && result.name.isNotEmpty;
       final hasColorChange = result.color != folder.color;
 
       if (hasNameChange || hasColorChange) {
@@ -2475,7 +2517,9 @@ class _DocumentListItem extends StatelessWidget {
         blur: 8,
         backgroundColor: isSelected
             ? colorScheme.primary.withValues(alpha: 0.1)
-            : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.7)),
+            : (isDark
+                ? Colors.white.withValues(alpha: 0.05)
+                : Colors.white.withValues(alpha: 0.7)),
         onTap: onTap,
         onLongPress: onLongPress,
         child: Row(
@@ -2488,15 +2532,19 @@ class _DocumentListItem extends StatelessWidget {
                   width: 24,
                   height: 24,
                   decoration: BoxDecoration(
-                    color: isSelected ? colorScheme.primary : Colors.transparent,
+                    color:
+                        isSelected ? colorScheme.primary : Colors.transparent,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: isSelected ? colorScheme.primary : colorScheme.outline,
+                      color: isSelected
+                          ? colorScheme.primary
+                          : colorScheme.outline,
                       width: 2,
                     ),
                   ),
                   child: isSelected
-                      ? Icon(Icons.check, size: 16, color: colorScheme.onPrimary)
+                      ? Icon(Icons.check,
+                          size: 16, color: colorScheme.onPrimary)
                       : null,
                 ),
               ),
@@ -2546,7 +2594,8 @@ class _DocumentListItem extends StatelessWidget {
                         document.fileSizeFormatted,
                         style: GoogleFonts.outfit(
                           fontSize: 13,
-                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                          color: colorScheme.onSurfaceVariant
+                              .withValues(alpha: 0.7),
                         ),
                       ),
                       if (document.pageCount > 1) ...[
@@ -2574,15 +2623,18 @@ class _DocumentListItem extends StatelessWidget {
                         _formatDate(document.createdAt),
                         style: GoogleFonts.outfit(
                           fontSize: 12,
-                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                          color: colorScheme.onSurfaceVariant
+                              .withValues(alpha: 0.5),
                         ),
                       ),
                       if (document.hasOcrText) ...[
                         const SizedBox(width: 12),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: colorScheme.secondaryContainer.withValues(alpha: 0.5),
+                            color: colorScheme.secondaryContainer
+                                .withValues(alpha: 0.5),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -2610,11 +2662,15 @@ class _DocumentListItem extends StatelessWidget {
               ),
               IconButton(
                 icon: Icon(
-                  document.isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                  document.isFavorite
+                      ? Icons.favorite_rounded
+                      : Icons.favorite_border_rounded,
                   size: 20,
                 ),
                 onPressed: onFavoriteToggle,
-                color: document.isFavorite ? colorScheme.error : colorScheme.onSurfaceVariant,
+                color: document.isFavorite
+                    ? colorScheme.error
+                    : colorScheme.onSurfaceVariant,
               ),
             ],
           ],
@@ -2815,7 +2871,8 @@ class _ActiveFiltersBar extends StatelessWidget {
     if (filter.tagIds.isNotEmpty) {
       chips.add(
         _FilterChip(
-          label: '${filter.tagIds.length} tag${filter.tagIds.length > 1 ? 's' : ''}',
+          label:
+              '${filter.tagIds.length} tag${filter.tagIds.length > 1 ? 's' : ''}',
           icon: Icons.label,
           onDelete: onClearTags,
         ),
@@ -3098,7 +3155,8 @@ class _FoldersSectionState extends State<_FoldersSection> {
                     // Les autres = dossiers (index - 1 car le bouton prend la place 0)
                     final folderIndex = globalIndex - 1;
                     final folder = widget.folders[folderIndex];
-                    final isSelected = widget.selectedFolderIds.contains(folder.id);
+                    final isSelected =
+                        widget.selectedFolderIds.contains(folder.id);
                     return _FolderCard(
                       folder: folder,
                       isSelected: isSelected,
@@ -3460,7 +3518,8 @@ class _MoveToFolderDialog extends StatelessWidget {
     final theme = Theme.of(context);
 
     return AlertDialog(
-      title: Text('Move ${selectedCount == 1 ? 'document' : '$selectedCount documents'}'),
+      title: Text(
+          'Move ${selectedCount == 1 ? 'document' : '$selectedCount documents'}'),
       content: SizedBox(
         width: double.maxFinite,
         child: Column(
@@ -3539,7 +3598,6 @@ class _MoveToFolderDialog extends StatelessWidget {
   }
 }
 
-
 class _BubbleTailPainter extends CustomPainter {
   final Color color;
   final Color borderColor;
@@ -3553,7 +3611,7 @@ class _BubbleTailPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     final path = Path();
-    path.moveTo(0, 0);                 
+    path.moveTo(0, 0);
     path.quadraticBezierTo(size.width * 1.2, size.height / 2, 0, size.height);
     path.close();
 

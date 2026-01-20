@@ -9,7 +9,8 @@ import '../models/documents_ui_models.dart';
 import '../documents_screen.dart';
 
 /// A provider for loading folders for the filter sheet.
-final _filterFoldersProvider = FutureProvider.autoDispose<List<Folder>>((ref) async {
+final _filterFoldersProvider =
+    FutureProvider.autoDispose<List<Folder>>((ref) async {
   final folderService = ref.watch(folderServiceProvider);
   try {
     await folderService.initialize();
@@ -152,13 +153,15 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                     const SizedBox(height: 24),
 
                     // Quick filters section
-                    _buildSectionHeader(context, 'Quick Filters', Icons.filter_list),
+                    _buildSectionHeader(
+                        context, 'Quick Filters', Icons.filter_list),
                     const SizedBox(height: 8),
                     _buildQuickFilters(context),
                     const SizedBox(height: 24),
 
                     // Folder filter section
-                    _buildSectionHeader(context, 'Folder', Icons.folder_outlined),
+                    _buildSectionHeader(
+                        context, 'Folder', Icons.folder_outlined),
                     const SizedBox(height: 8),
                     _buildFolderFilter(context),
                     const SizedBox(height: 24),
@@ -200,7 +203,8 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
     );
   }
 
-  Widget _buildSectionHeader(BuildContext context, String title, IconData icon) {
+  Widget _buildSectionHeader(
+      BuildContext context, String title, IconData icon) {
     final theme = Theme.of(context);
     return Row(
       children: [
@@ -420,7 +424,8 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
               isSelected: _selectedFilter.folderId == null,
               onTap: () {
                 setState(() {
-                  _selectedFilter = _selectedFilter.copyWith(clearFolderId: true);
+                  _selectedFilter =
+                      _selectedFilter.copyWith(clearFolderId: true);
                 });
               },
             ),
@@ -434,16 +439,17 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                   context: context,
                   title: folder.name,
                   icon: Icons.folder,
-                  color: folder.color != null
-                      ? _parseColor(folder.color!)
-                      : null,
+                  color:
+                      folder.color != null ? _parseColor(folder.color!) : null,
                   isSelected: isSelected,
                   onTap: () {
                     setState(() {
                       if (isSelected) {
-                        _selectedFilter = _selectedFilter.copyWith(clearFolderId: true);
+                        _selectedFilter =
+                            _selectedFilter.copyWith(clearFolderId: true);
                       } else {
-                        _selectedFilter = _selectedFilter.copyWith(folderId: folder.id);
+                        _selectedFilter =
+                            _selectedFilter.copyWith(folderId: folder.id);
                       }
                     });
                   },
@@ -486,7 +492,8 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                 child: Text(
                   title,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                    fontWeight:
+                        isSelected ? FontWeight.w600 : FontWeight.normal,
                   ),
                 ),
               ),
@@ -565,7 +572,8 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                     );
                   } else {
                     _selectedFilter = _selectedFilter.copyWith(
-                      tagIds: selectedTagIds.where((id) => id != tag.id).toList(),
+                      tagIds:
+                          selectedTagIds.where((id) => id != tag.id).toList(),
                     );
                   }
                 });
@@ -601,7 +609,8 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
   }
 
   bool get _hasActiveFilters =>
-      _selectedFilter.hasActiveFilters || _selectedSort != DocumentsSortBy.createdDesc;
+      _selectedFilter.hasActiveFilters ||
+      _selectedSort != DocumentsSortBy.createdDesc;
 
   void _clearAllFilters() {
     setState(() {

@@ -88,7 +88,8 @@ class _OcrTextPanelState extends State<OcrTextPanel> {
                     _isExpanded
                         ? Icons.keyboard_arrow_up_rounded
                         : Icons.keyboard_arrow_down_rounded,
-                    color: widget.theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                    color: widget.theme.colorScheme.onSurface
+                        .withValues(alpha: 0.3),
                   ),
                 ],
               ),
@@ -106,7 +107,8 @@ class _OcrTextPanelState extends State<OcrTextPanel> {
                   widget.ocrText,
                   style: GoogleFonts.outfit(
                     fontSize: 13,
-                    color: widget.theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                    color: widget.theme.colorScheme.onSurface
+                        .withValues(alpha: 0.7),
                     height: 1.5,
                   ),
                 ),

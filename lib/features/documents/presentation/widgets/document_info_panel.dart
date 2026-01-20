@@ -92,7 +92,8 @@ class DocumentInfoPanel extends StatelessWidget {
                       height: 14,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4F46E5)),
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(Color(0xFF4F46E5)),
                       ),
                     )
                   : Text(
@@ -106,7 +107,9 @@ class DocumentInfoPanel extends StatelessWidget {
             ),
             IconButton(
               icon: const Icon(Icons.chevron_right_rounded),
-              onPressed: currentPage < document.pageCount - 1 && !isLoading ? onNextPage : null,
+              onPressed: currentPage < document.pageCount - 1 && !isLoading
+                  ? onNextPage
+                  : null,
               visualDensity: VisualDensity.compact,
             ),
             const SizedBox(width: 8),
@@ -158,7 +161,8 @@ class DocumentInfoPanel extends StatelessWidget {
             ),
 
           if (document.isFavorite)
-            const Icon(Icons.favorite_rounded, size: 18, color: Colors.redAccent),
+            const Icon(Icons.favorite_rounded,
+                size: 18, color: Colors.redAccent),
         ],
       ),
     );

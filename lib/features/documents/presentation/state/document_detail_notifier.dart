@@ -120,14 +120,14 @@ class DocumentDetailScreenState {
 
   @override
   int get hashCode => Object.hash(
-    document?.id,
-    currentPage,
-    isLoading,
-    isDecrypting,
-    isDeleting,
-    isFullScreen,
-    error,
-  );
+        document?.id,
+        currentPage,
+        isLoading,
+        isDecrypting,
+        isDeleting,
+        isFullScreen,
+        error,
+      );
 }
 
 /// State notifier for the document detail screen.
@@ -137,7 +137,7 @@ class DocumentDetailScreenNotifier
     extends StateNotifier<DocumentDetailScreenState> {
   /// Creates a [DocumentDetailScreenNotifier] with the given repository.
   DocumentDetailScreenNotifier(this._repository)
-    : super(const DocumentDetailScreenState());
+      : super(const DocumentDetailScreenState());
 
   final DocumentRepository _repository;
 
@@ -409,11 +409,8 @@ class DocumentDetailScreenNotifier
 }
 
 /// Riverpod provider for the document detail screen state.
-final documentDetailScreenProvider =
-    StateNotifierProvider.autoDispose<
-      DocumentDetailScreenNotifier,
-      DocumentDetailScreenState
-    >((ref) {
-      final repository = ref.watch(documentRepositoryProvider);
-      return DocumentDetailScreenNotifier(repository);
-    });
+final documentDetailScreenProvider = StateNotifierProvider.autoDispose<
+    DocumentDetailScreenNotifier, DocumentDetailScreenState>((ref) {
+  final repository = ref.watch(documentRepositoryProvider);
+  return DocumentDetailScreenNotifier(repository);
+});

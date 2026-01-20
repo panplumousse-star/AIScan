@@ -35,11 +35,11 @@ class BentoStatsHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return BentoCard(
       blur: 10,
-      backgroundColor: isDark 
-          ? const Color(0xFF000000).withValues(alpha: 0.4) 
+      backgroundColor: isDark
+          ? const Color(0xFF000000).withValues(alpha: 0.4)
           : Colors.white.withValues(alpha: 0.4),
       padding: const EdgeInsets.all(20),
       child: Row(
@@ -53,14 +53,18 @@ class BentoStatsHeader extends StatelessWidget {
                     _StatChip(
                       icon: Icons.description_outlined,
                       label: '$documentCount documents',
-                      color: isDark ? const Color(0xFF93C5FD) : AppColors.bentoButtonBlue,
+                      color: isDark
+                          ? const Color(0xFF93C5FD)
+                          : AppColors.bentoButtonBlue,
                       isDark: isDark,
                     ),
                     const SizedBox(width: 8),
                     _StatChip(
                       icon: Icons.folder_outlined,
                       label: '$folderCount dossiers',
-                      color: isDark ? const Color(0xFFFDBA74) : Colors.orange[700]!,
+                      color: isDark
+                          ? const Color(0xFFFDBA74)
+                          : Colors.orange[700]!,
                       isDark: isDark,
                     ),
                   ],
@@ -81,13 +85,16 @@ class BentoStatsHeader extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: (isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05)),
+              color: (isDark
+                  ? Colors.white10
+                  : Colors.black.withValues(alpha: 0.05)),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Icon(
               Icons.analytics_outlined,
               size: 28,
-              color: isDark ? const Color(0xFF93C5FD) : AppColors.bentoButtonBlue,
+              color:
+                  isDark ? const Color(0xFF93C5FD) : AppColors.bentoButtonBlue,
             ),
           ),
         ],
@@ -114,7 +121,9 @@ class _StatChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.05) : color.withValues(alpha: 0.08),
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.05)
+            : color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isDark ? Colors.white10 : color.withValues(alpha: 0.1),
@@ -195,7 +204,8 @@ class BentoSearchBar extends StatefulWidget {
   State<BentoSearchBar> createState() => _BentoSearchBarState();
 }
 
-class _BentoSearchBarState extends State<BentoSearchBar> with SingleTickerProviderStateMixin {
+class _BentoSearchBarState extends State<BentoSearchBar>
+    with SingleTickerProviderStateMixin {
   FocusNode? _internalFocusNode;
   FocusNode get _focusNode => widget.focusNode ?? _internalFocusNode!;
   bool _isFocused = false;
@@ -255,7 +265,7 @@ class _BentoSearchBarState extends State<BentoSearchBar> with SingleTickerProvid
     final isDark = theme.brightness == Brightness.dark;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8), 
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: AnimatedBuilder(
         animation: _flipAnimation,
         builder: (context, child) {
@@ -271,8 +281,8 @@ class _BentoSearchBarState extends State<BentoSearchBar> with SingleTickerProvid
               alignment: Alignment.center,
               transform: Matrix4.identity()
                 ..rotateX(isBack ? 3.141592653589793 : 0),
-              child: isBack 
-                  ? _buildSelectionSide(isDark, theme) 
+              child: isBack
+                  ? _buildSelectionSide(isDark, theme)
                   : _buildSearchSide(isDark, theme),
             ),
           );
@@ -349,7 +359,9 @@ class _BentoSearchBarState extends State<BentoSearchBar> with SingleTickerProvid
                   ),
                   _ControlIcon(
                     icon: Icons.tune_rounded,
-                    color: widget.hasActiveFilters ? theme.colorScheme.primary : null,
+                    color: widget.hasActiveFilters
+                        ? theme.colorScheme.primary
+                        : null,
                     onPressed: widget.onShowFilters,
                   ),
                   _ControlIcon(
@@ -381,10 +393,14 @@ class _BentoSearchBarState extends State<BentoSearchBar> with SingleTickerProvid
       return '$folderText, $docText';
     } else if (folders > 0) {
       // Seulement des dossiers
-      return folders == 1 ? '1 dossier sélectionné' : '$folders dossiers sélectionnés';
+      return folders == 1
+          ? '1 dossier sélectionné'
+          : '$folders dossiers sélectionnés';
     } else {
       // Seulement des documents
-      return docs == 1 ? '1 document sélectionné' : '$docs documents sélectionnés';
+      return docs == 1
+          ? '1 document sélectionné'
+          : '$docs documents sélectionnés';
     }
   }
 
@@ -394,7 +410,8 @@ class _BentoSearchBarState extends State<BentoSearchBar> with SingleTickerProvid
       blur: 15,
       borderRadius: 20,
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      backgroundColor: theme.colorScheme.primaryContainer.withValues(alpha: isDark ? 0.3 : 0.8),
+      backgroundColor: theme.colorScheme.primaryContainer
+          .withValues(alpha: isDark ? 0.3 : 0.8),
       child: Row(
         children: [
           Container(
@@ -419,7 +436,9 @@ class _BentoSearchBarState extends State<BentoSearchBar> with SingleTickerProvid
               style: GoogleFonts.outfit(
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
-                color: isDark ? theme.colorScheme.onSurface : theme.colorScheme.onPrimaryContainer,
+                color: isDark
+                    ? theme.colorScheme.onSurface
+                    : theme.colorScheme.onPrimaryContainer,
               ),
               overflow: TextOverflow.ellipsis,
             ),
@@ -430,28 +449,36 @@ class _BentoSearchBarState extends State<BentoSearchBar> with SingleTickerProvid
             _ControlIcon(
               icon: Icons.favorite_border_rounded,
               onPressed: widget.onFavoriteSelected,
-              color: isDark ? theme.colorScheme.onSurface : theme.colorScheme.onPrimaryContainer,
+              color: isDark
+                  ? theme.colorScheme.onSurface
+                  : theme.colorScheme.onPrimaryContainer,
             ),
           // Share button - only for documents
           if (widget.hasDocumentsSelected)
             _ControlIcon(
               icon: Icons.share_rounded,
               onPressed: widget.onShareSelected,
-              color: isDark ? theme.colorScheme.onSurface : theme.colorScheme.onPrimaryContainer,
+              color: isDark
+                  ? theme.colorScheme.onSurface
+                  : theme.colorScheme.onPrimaryContainer,
             ),
           // Export button - only for documents
           if (widget.hasDocumentsSelected)
             _ControlIcon(
               icon: Icons.save_alt_rounded,
               onPressed: widget.onExportSelected,
-              color: isDark ? theme.colorScheme.onSurface : theme.colorScheme.onPrimaryContainer,
+              color: isDark
+                  ? theme.colorScheme.onSurface
+                  : theme.colorScheme.onPrimaryContainer,
             ),
           // Move button - only for documents
           if (widget.hasDocumentsSelected)
             _ControlIcon(
               icon: Icons.drive_file_move_outline,
               onPressed: widget.onMoveSelected,
-              color: isDark ? theme.colorScheme.onSurface : theme.colorScheme.onPrimaryContainer,
+              color: isDark
+                  ? theme.colorScheme.onSurface
+                  : theme.colorScheme.onPrimaryContainer,
             ),
           _ControlIcon(
             icon: Icons.delete_outline_rounded,
@@ -551,7 +578,9 @@ class _BentoFolderCardState extends State<BentoFolderCard>
       blur: 10,
       backgroundColor: widget.isSelected
           ? widget.color.withValues(alpha: 0.2)
-          : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.7)),
+          : (isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.white.withValues(alpha: 0.7)),
       child: Stack(
         children: [
           Padding(
@@ -605,14 +634,18 @@ class _BentoFolderCardState extends State<BentoFolderCard>
                   color: widget.isSelected ? widget.color : Colors.transparent,
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: widget.isSelected ? Colors.transparent : (isDark ? Colors.white24 : Colors.black12),
+                    color: widget.isSelected
+                        ? Colors.transparent
+                        : (isDark ? Colors.white24 : Colors.black12),
                     width: 1.5,
                   ),
                 ),
                 child: Icon(
                   widget.isSelected ? Icons.check : Icons.circle_outlined,
                   size: 14,
-                  color: widget.isSelected ? Colors.white : (isDark ? Colors.white24 : Colors.black12),
+                  color: widget.isSelected
+                      ? Colors.white
+                      : (isDark ? Colors.white24 : Colors.black12),
                 ),
               ),
             ),
@@ -679,7 +712,7 @@ class _BentoDocumentCardState extends State<BentoDocumentCard>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: BentoCard(
@@ -689,7 +722,9 @@ class _BentoDocumentCardState extends State<BentoDocumentCard>
         blur: 8,
         backgroundColor: widget.isSelected
             ? AppColors.bentoButtonBlue.withValues(alpha: 0.15)
-            : (isDark ? Colors.white.withValues(alpha: 0.03) : Colors.white.withValues(alpha: 0.6)),
+            : (isDark
+                ? Colors.white.withValues(alpha: 0.03)
+                : Colors.white.withValues(alpha: 0.6)),
         child: Row(
           children: [
             // Thumbnail
@@ -697,10 +732,14 @@ class _BentoDocumentCardState extends State<BentoDocumentCard>
               width: 64,
               height: 76,
               decoration: BoxDecoration(
-                color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[100],
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : Colors.grey[100],
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.black.withValues(alpha: 0.03),
                 ),
               ),
               clipBehavior: Clip.antiAlias,
@@ -745,7 +784,9 @@ class _BentoDocumentCardState extends State<BentoDocumentCard>
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
-                          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : Colors.black.withValues(alpha: 0.03),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -774,14 +815,18 @@ class _BentoDocumentCardState extends State<BentoDocumentCard>
                           : Colors.transparent,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: widget.isSelected ? Colors.transparent : (isDark ? Colors.white24 : Colors.black12),
+                        color: widget.isSelected
+                            ? Colors.transparent
+                            : (isDark ? Colors.white24 : Colors.black12),
                         width: 1.5,
                       ),
                     ),
                     child: Icon(
                       widget.isSelected ? Icons.check : Icons.circle_outlined,
                       size: 18,
-                      color: widget.isSelected ? Colors.white : (isDark ? Colors.white24 : Colors.black12),
+                      color: widget.isSelected
+                          ? Colors.white
+                          : (isDark ? Colors.white24 : Colors.black12),
                     ),
                   )
                 else
@@ -901,4 +946,3 @@ class _BentoScanFabState extends State<BentoScanFab>
     );
   }
 }
-

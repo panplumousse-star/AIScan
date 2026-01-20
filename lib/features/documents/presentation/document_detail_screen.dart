@@ -20,6 +20,7 @@ import '../../sharing/domain/document_share_service.dart';
 import '../domain/document_model.dart';
 import 'widgets/document_action_button.dart';
 import 'widgets/document_info_panel.dart';
+import 'widgets/document_info_sheet.dart';
 import 'widgets/document_preview.dart';
 import 'widgets/ocr_text_panel.dart';
 
@@ -837,7 +838,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                           right: 8,
                           child: CustomPaint(
                             size: const Size(12, 12),
-                            painter: _BubbleTailPainterRight(
+                            painter: BubbleTailPainterRight(
                               color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
                             ),
                           ),
@@ -1247,7 +1248,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
         maxChildSize: 0.9,
         minChildSize: 0.3,
         expand: false,
-        builder: (context, scrollController) => _DocumentInfoSheet(
+        builder: (context, scrollController) => DocumentInfoSheet(
           document: document,
           scrollController: scrollController,
           theme: theme,
@@ -1302,210 +1303,6 @@ class _FullScreenView extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Document info bottom sheet.
-class _DocumentInfoSheet extends StatelessWidget {
-  const _DocumentInfoSheet({
-    required this.document,
-    required this.scrollController,
-    required this.theme,
-  });
-
-  final Document document;
-  final ScrollController scrollController;
-  final ThemeData theme;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = theme.brightness == Brightness.dark;
-    
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? Colors.black : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-      ),
-      child: Column(
-        children: [
-          // Handle
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-
-          // Title
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
-            child: Row(
-              children: [
-                const BentoLevitationWidget(
-                  child: Icon(Icons.info_rounded, color: Color(0xFF4F46E5), size: 28),
-                ),
-                const SizedBox(width: 16),
-                Text(
-                  'Informations Document',
-                  style: GoogleFonts.outfit(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const Divider(height: 1),
-
-          // Content
-          Expanded(
-            child: ListView(
-              controller: scrollController,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-              children: [
-                _BentoInfoRow(icon: Icons.title_rounded, label: 'Titre', value: document.title, theme: theme),
-                _BentoInfoRow(
-                  icon: Icons.straighten_rounded,
-                  label: 'Taille du fichier',
-                  value: document.fileSizeFormatted,
-                  theme: theme,
-                ),
-                _BentoInfoRow(
-                  icon: Icons.pages_rounded,
-                  label: 'Pages',
-                  value: '${document.pageCount}',
-                  theme: theme,
-                ),
-                _BentoInfoRow(
-                  icon: Icons.calendar_today_rounded,
-                  label: 'Créé le',
-                  value: _formatFullDate(document.createdAt),
-                  theme: theme,
-                ),
-                _BentoInfoRow(
-                  icon: Icons.history_rounded,
-                  label: 'Modifié le',
-                  value: _formatFullDate(document.updatedAt),
-                  theme: theme,
-                ),
-                if (document.mimeType != null)
-                  _BentoInfoRow(
-                    icon: Icons.code_rounded,
-                    label: 'Format',
-                    value: document.mimeType!,
-                    theme: theme,
-                  ),
-                _BentoInfoRow(
-                  icon: Icons.font_download_rounded,
-                  label: 'Statut OCR',
-                  value: document.ocrStatus.value.toUpperCase(),
-                  theme: theme,
-                ),
-                if (document.folderId != null)
-                  _BentoInfoRow(
-                    icon: Icons.folder_rounded,
-                    label: 'Dossier',
-                    value: document.folderId!,
-                    theme: theme,
-                  ),
-                _BentoInfoRow(
-                  icon: document.isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                  label: 'Favori',
-                  value: document.isFavorite ? 'Oui' : 'Non',
-                  theme: theme,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _formatFullDate(DateTime date) {
-    final months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
-    ];
-    final hour = date.hour.toString().padLeft(2, '0');
-    final minute = date.minute.toString().padLeft(2, '0');
-    return '${months[date.month - 1]} ${date.day}, ${date.year} at $hour:$minute';
-  }
-}
-
-class _BentoInfoRow extends StatelessWidget {
-  const _BentoInfoRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.theme,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-  final ThemeData theme;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: BentoCard(
-        padding: const EdgeInsets.all(16),
-        backgroundColor: theme.brightness == Brightness.dark 
-            ? Colors.white.withValues(alpha: 0.05) 
-            : Colors.black.withValues(alpha: 0.02),
-        child: Row(
-          children: [
-            Icon(
-              icon, 
-              size: 20, 
-              color: theme.colorScheme.primary.withValues(alpha: 0.6),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: GoogleFonts.outfit(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    value,
-                    style: GoogleFonts.outfit(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: theme.colorScheme.onSurface,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -1852,30 +1649,4 @@ class _FolderOptionTile extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Painter for speech bubble tail pointing to the right (toward mascot).
-class _BubbleTailPainterRight extends CustomPainter {
-  final Color color;
-
-  _BubbleTailPainterRight({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-
-    // Draw tail pointing down-right (toward mascot on the right)
-    final path = Path();
-    path.moveTo(0, 0); // Top left (connected to bubble)
-    path.lineTo(size.width, size.height); // Bottom right (pointing to mascot)
-    path.lineTo(0, size.height * 0.6); // Left side
-    path.close();
-
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

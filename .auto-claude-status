@@ -3,7 +3,7 @@
   "spec": "041-refactor-document-detail-screen-dart-to-reduce-com",
   "state": "building",
   "subtasks": {
-    "completed": 6,
+    "completed": 7,
     "total": 17,
     "in_progress": 1,
     "failed": 0
@@ -18,8 +18,8 @@
     "max": 1
   },
   "session": {
-    "number": 8,
+    "number": 9,
     "started_at": "2026-01-20T06:47:43.454413"
   },
-  "last_update": "2026-01-20T07:04:41.023065"
+  "last_update": "2026-01-20T07:06:50.009523"
 }

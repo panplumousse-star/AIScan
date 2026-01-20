@@ -17,6 +17,7 @@ import '../../sharing/domain/document_share_service.dart';
 import '../domain/document_model.dart';
 import 'state/document_detail_notifier.dart';
 import 'widgets/document_action_button.dart';
+import 'widgets/document_full_screen_view.dart';
 import 'widgets/document_info_panel.dart';
 import 'widgets/document_info_sheet.dart';
 import 'widgets/document_preview.dart';
@@ -150,11 +151,10 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
 
     // Fullscreen mode
     if (state.isFullScreen && state.imageBytes != null) {
-      return _FullScreenView(
+      return DocumentFullScreenView(
         imageBytes: state.imageBytes!,
         transformationController: _transformationController,
         onClose: notifier.toggleFullScreen,
-        theme: theme,
       );
     }
 
@@ -838,56 +838,6 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
           scrollController: scrollController,
           theme: theme,
         ),
-      ),
-    );
-  }
-}
-
-/// Full screen image view.
-class _FullScreenView extends StatelessWidget {
-  const _FullScreenView({
-    required this.imageBytes,
-    required this.transformationController,
-    required this.onClose,
-    required this.theme,
-  });
-
-  final Uint8List imageBytes;
-  final TransformationController transformationController;
-  final VoidCallback onClose;
-  final ThemeData theme;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          // Image
-          InteractiveViewer(
-            transformationController: transformationController,
-            minScale: 0.5,
-            maxScale: 6.0,
-            child: Center(
-              child: Image.memory(
-                imageBytes,
-                fit: BoxFit.contain,
-                gaplessPlayback: true,
-              ),
-            ),
-          ),
-
-          // Close button
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 8,
-            left: 8,
-            child: IconButton(
-              icon: const Icon(Icons.close, color: Colors.white),
-              onPressed: onClose,
-              style: IconButton.styleFrom(backgroundColor: Colors.black54),
-            ),
-          ),
-        ],
       ),
     );
   }

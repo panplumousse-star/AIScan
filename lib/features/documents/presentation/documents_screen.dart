@@ -1387,6 +1387,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                   onFavoriteSelected: notifier.toggleFavoriteSelected,
                   onShareSelected: () => _handleShareSelected(context, state),
                   onExportSelected: () => _handleExportSelected(context, state),
+                  onMoveSelected: () => _showMoveSelectedToFolderDialog(context, state, notifier),
                 ),
               ),
               // Active filters indicator

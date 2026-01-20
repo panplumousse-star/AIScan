@@ -18,6 +18,7 @@ import '../../folders/domain/folder_service.dart';
 import '../../folders/presentation/widgets/bento_folder_dialog.dart';
 import '../../sharing/domain/document_share_service.dart';
 import '../domain/document_model.dart';
+import 'widgets/document_preview.dart';
 
 /// State for the document detail screen.
 @immutable
@@ -751,10 +752,9 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                 borderRadius: BorderRadius.circular(24),
                 child: GestureDetector(
                   onDoubleTap: notifier.toggleFullScreen,
-                  child: _DocumentPreview(
+                  child: DocumentPreview(
                     imageBytes: state.imageBytes!,
                     transformationController: _transformationController,
-                    theme: theme,
                   ),
                 ),
               ),
@@ -1248,58 +1248,6 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
           document: document,
           scrollController: scrollController,
           theme: theme,
-        ),
-      ),
-    );
-  }
-}
-
-/// Interactive document preview with zoom.
-class _DocumentPreview extends StatelessWidget {
-  const _DocumentPreview({
-    required this.imageBytes,
-    required this.transformationController,
-    required this.theme,
-  });
-
-  final Uint8List imageBytes;
-  final TransformationController transformationController;
-  final ThemeData theme;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: theme.colorScheme.surfaceContainerLowest,
-      child: InteractiveViewer(
-        transformationController: transformationController,
-        minScale: 0.5,
-        maxScale: 4.0,
-        child: Center(
-          child: Image.memory(
-            imageBytes,
-            fit: BoxFit.contain,
-            gaplessPlayback: true,
-            errorBuilder: (context, error, stackTrace) => Container(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.broken_image_outlined,
-                    size: 64,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Failed to load image',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
         ),
       ),
     );

@@ -18,6 +18,7 @@ import '../../folders/domain/folder_service.dart';
 import '../../folders/presentation/widgets/bento_folder_dialog.dart';
 import '../../sharing/domain/document_share_service.dart';
 import '../domain/document_model.dart';
+import 'widgets/document_info_panel.dart';
 import 'widgets/document_preview.dart';
 
 /// State for the document detail screen.
@@ -767,7 +768,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
         // Document info panel
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: _DocumentInfoPanel(
+          child: DocumentInfoPanel(
             document: state.document!,
             currentPage: state.currentPage,
             onPageChanged: (page) => notifier.goToPage(page),
@@ -1301,150 +1302,6 @@ class _FullScreenView extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-/// Document info panel showing metadata and page navigation.
-class _DocumentInfoPanel extends StatelessWidget {
-  const _DocumentInfoPanel({
-    required this.document,
-    required this.currentPage,
-    required this.onPageChanged,
-    required this.onPreviousPage,
-    required this.onNextPage,
-    required this.isLoading,
-    required this.theme,
-  });
-
-  final Document document;
-  final int currentPage;
-  final ValueChanged<int> onPageChanged;
-  final VoidCallback onPreviousPage;
-  final VoidCallback onNextPage;
-  final bool isLoading;
-  final ThemeData theme;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = theme.brightness == Brightness.dark;
-
-    return BentoCard(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      backgroundColor: isDark 
-          ? Colors.white.withValues(alpha: 0.05) 
-          : Colors.white.withValues(alpha: 0.8),
-      child: Row(
-        children: [
-          // Page navigation for multi-page documents
-          if (document.isMultiPage) ...[
-            IconButton(
-              icon: const Icon(Icons.chevron_left_rounded),
-              onPressed: currentPage > 0 && !isLoading ? onPreviousPage : null,
-              visualDensity: VisualDensity.compact,
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: isLoading
-                  ? const SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4F46E5)),
-                      ),
-                    )
-                  : Text(
-                      '${currentPage + 1} / ${document.pageCount}',
-                      style: GoogleFonts.outfit(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
-            ),
-            IconButton(
-              icon: const Icon(Icons.chevron_right_rounded),
-              onPressed: currentPage < document.pageCount - 1 && !isLoading ? onNextPage : null,
-              visualDensity: VisualDensity.compact,
-            ),
-            const SizedBox(width: 8),
-          ],
-
-          // Size and date
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  document.fileSizeFormatted,
-                  style: GoogleFonts.outfit(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                  ),
-                ),
-                Text(
-                  _formatDate(document.createdAt),
-                  style: GoogleFonts.outfit(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Status badges
-          if (document.hasOcrText)
-            Container(
-              margin: const EdgeInsets.only(right: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: const Color(0xFF10B981).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                'OCR',
-                style: GoogleFonts.outfit(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF10B981),
-                ),
-              ),
-            ),
-
-          if (document.isFavorite)
-            const Icon(Icons.favorite_rounded, size: 18, color: Colors.redAccent),
-        ],
-      ),
-    );
-  }
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date);
-
-    if (difference.inDays == 0) {
-      return 'Today at ${_formatTime(date)}';
-    } else if (difference.inDays == 1) {
-      return 'Yesterday at ${_formatTime(date)}';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays} days ago';
-    } else {
-      return '${date.day}/${date.month}/${date.year}';
-    }
-  }
-
-  String _formatTime(DateTime date) {
-    final hour = date.hour.toString().padLeft(2, '0');
-    final minute = date.minute.toString().padLeft(2, '0');
-    return '$hour:$minute';
   }
 }
 

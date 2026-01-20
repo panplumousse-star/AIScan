@@ -28,9 +28,9 @@ import 'widgets/filter_sheet.dart';
 import '../../../core/widgets/bento_background.dart';
 import '../../../core/widgets/bento_card.dart';
 import '../../../core/widgets/bento_mascot.dart';
-import '../../../core/widgets/bento_move_folder_dialog.dart';
 import '../../../core/widgets/bento_rename_document_dialog.dart';
 import '../../../core/widgets/bento_share_format_dialog.dart';
+import '../../../core/widgets/bento_state_views.dart';
 
 // View models have been moved to models/documents_ui_models.dart
 
@@ -1312,13 +1312,16 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     final isDark = theme.brightness == Brightness.dark;
     // Show loading while initializing (before first load completes)
     if (!state.isInitialized) {
-      return const Center(
-        child: CircularProgressIndicator(),
+      return const BentoLoadingView(
+        message: 'Chargement de vos documents...',
       );
     }
 
     if (state.hasError && !state.hasDocuments) {
-      return _ErrorView(message: state.error!, onRetry: notifier.initialize);
+      return BentoErrorView(
+        message: state.error!,
+        onRetry: notifier.initialize,
+      );
     }
 
     // If no documents and no folders at root, and not loading, and no active filters, go back
@@ -1328,12 +1331,14 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) Navigator.of(context).pop();
       });
-      return const Center(child: CircularProgressIndicator());
+      return const BentoLoadingView();
     }
 
     // Still loading documents
     if (state.isLoading && !state.hasDocuments && !state.hasFolders) {
-      return const Center(child: CircularProgressIndicator());
+      return const BentoLoadingView(
+        message: 'Chargement de vos documents...',
+      );
     }
 
     return Stack(
@@ -1382,7 +1387,6 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                   onFavoriteSelected: notifier.toggleFavoriteSelected,
                   onShareSelected: () => _handleShareSelected(context, state),
                   onExportSelected: () => _handleExportSelected(context, state),
-                  onMoveSelected: () => _handleMoveSelected(context, state, notifier),
                 ),
               ),
               // Active filters indicator
@@ -2087,77 +2091,6 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     }
   }
 
-  Future<void> _handleMoveSelected(
-    BuildContext context,
-    DocumentsScreenState state,
-    DocumentsScreenNotifier notifier,
-  ) async {
-    final repository = ref.read(documentRepositoryProvider);
-    final folderService = ref.read(folderServiceProvider);
-
-    // Get selected documents
-    final selectedDocuments = state.documents
-        .where((doc) => state.selectedDocumentIds.contains(doc.id))
-        .toList();
-
-    if (selectedDocuments.isEmpty) {
-      return;
-    }
-
-    final folders = await folderService.getAllFolders();
-    if (!context.mounted) return;
-
-    final selectedFolderId = await showBentoMoveToFolderDialog(
-      context,
-      folders: folders,
-      selectedCount: selectedDocuments.length,
-      onCreateFolder: (name, color) async {
-        try {
-          final newFolder = await folderService.createFolder(
-            name: name,
-            color: color,
-          );
-          return newFolder;
-        } catch (e) {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Erreur lors de la création du dossier: $e')),
-            );
-          }
-          return null;
-        }
-      },
-    );
-
-    // User cancelled
-    if (selectedFolderId == '_cancelled_') return;
-
-    try {
-      // Move all selected documents to the folder
-      for (final doc in selectedDocuments) {
-        await repository.moveToFolder(doc.id, selectedFolderId);
-      }
-
-      if (context.mounted) {
-        final message = selectedDocuments.length == 1
-            ? 'Document déplacé'
-            : '${selectedDocuments.length} documents déplacés';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
-        );
-        // Refresh and clear selection
-        notifier.clearSelection();
-        notifier.refresh();
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur lors du déplacement: $e')),
-        );
-      }
-    }
-  }
-
   Future<void> _showRenameDialog(
     BuildContext context,
     String documentId,
@@ -2210,52 +2143,6 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
         );
       }
     }
-  }
-}
-
-/// Error state view.
-class _ErrorView extends StatelessWidget {
-  const _ErrorView({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 64, color: theme.colorScheme.error),
-            const SizedBox(height: 16),
-            Text(
-              'Something went wrong',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              message,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
 
@@ -3650,6 +3537,7 @@ class _MoveToFolderDialog extends StatelessWidget {
     );
   }
 }
+
 
 class _BubbleTailPainter extends CustomPainter {
   final Color color;

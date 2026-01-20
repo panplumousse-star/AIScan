@@ -28,6 +28,7 @@ import '../../../core/widgets/bento_card.dart';
 import '../../../core/widgets/bento_mascot.dart';
 import '../../../core/widgets/bento_rename_document_dialog.dart';
 import '../../../core/widgets/bento_share_format_dialog.dart';
+import '../../../core/widgets/bento_state_views.dart';
 import '../../home/presentation/bento_home_screen.dart';
 
 /// Scanner screen state notifier for managing scan workflow.
@@ -555,11 +556,11 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     ThemeData theme,
   ) {
     if (state.isScanning) {
-      return const _LoadingView(message: 'Ouverture du scanner...');
+      return const BentoLoadingView(message: 'Ouverture du scanner...');
     }
 
     if (state.isSaving && !state.hasResult && !state.hasSavedDocument) {
-      return const _LoadingView(message: 'Enregistrement du document...');
+      return const BentoLoadingView(message: 'Enregistrement du document...');
     }
 
     if (state.hasResult || state.hasSavedDocument) {
@@ -589,7 +590,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     }
 
     // Fallback: show loading while auto-scan starts
-    return const _LoadingView(message: 'Lancement du scanner...');
+    return const BentoLoadingView(message: 'Lancement du scanner...');
   }
 
   Widget? _buildFab(
@@ -1754,48 +1755,6 @@ class _ActionWizardState extends State<_ActionWizard> with TickerProviderStateMi
     } catch (_) {
       return Colors.grey;
     }
-  }
-}
-
-/// Loading state view.
-class _LoadingView extends StatelessWidget {
-  const _LoadingView({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          BentoLevitationWidget(
-            child: BentoMascot(
-              height: 120,
-              variant: BentoMascotVariant.waving,
-            ),
-          ),
-          const SizedBox(height: 32),
-          SizedBox(
-            width: 32,
-            height: 32,
-            child: CircularProgressIndicator(
-              strokeWidth: 3,
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4F46E5)),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Un instant s\'il vous plaît...',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF64748B),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
 

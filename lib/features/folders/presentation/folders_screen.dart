@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/widgets/bento_state_views.dart';
 import '../domain/folder_model.dart';
 import '../domain/folder_service.dart';
 import 'widgets/bento_folder_dialog.dart';
@@ -663,11 +664,16 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
     ThemeData theme,
   ) {
     if (!state.isInitialized && state.isLoading) {
-      return const _LoadingView();
+      return const BentoLoadingView(
+        message: 'Chargement des dossiers...',
+      );
     }
 
     if (state.hasError && !state.hasFolders) {
-      return _ErrorView(message: state.error!, onRetry: notifier.initialize);
+      return BentoErrorView(
+        message: state.error!,
+        onRetry: notifier.initialize,
+      );
     }
 
     return Column(
@@ -704,9 +710,14 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
                     theme: theme,
                   ),
                 )
-              : _EmptyView(
-                  isAtRoot: state.isAtRoot,
-                  onCreateFolder: () => _showCreateDialog(context, notifier),
+              : BentoEmptyView(
+                  title: state.isAtRoot
+                      ? 'Aucun dossier pour le moment'
+                      : 'Ce dossier est vide',
+                  description: 'Créez un dossier pour organiser vos documents',
+                  icon: Icons.folder_outlined,
+                  actionLabel: 'Créer un dossier',
+                  onAction: () => _showCreateDialog(context, notifier),
                 ),
         ),
       ],
@@ -871,113 +882,6 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
     if (mounted && color != folder.color) {
       await notifier.updateFolderColor(folder.id, color);
     }
-  }
-}
-
-/// Loading indicator view.
-class _LoadingView extends StatelessWidget {
-  const _LoadingView();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(child: CircularProgressIndicator());
-  }
-}
-
-/// Error state view.
-class _ErrorView extends StatelessWidget {
-  const _ErrorView({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 64, color: theme.colorScheme.error),
-            const SizedBox(height: 16),
-            Text(
-              'Something went wrong',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              message,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Empty state view.
-class _EmptyView extends StatelessWidget {
-  const _EmptyView({required this.isAtRoot, required this.onCreateFolder});
-
-  final bool isAtRoot;
-  final VoidCallback onCreateFolder;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.folder_outlined,
-              size: 80,
-              color: theme.colorScheme.primary.withOpacity(0.6),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              isAtRoot ? 'No folders yet' : 'This folder is empty',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Create a folder to organize your documents',
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-            FilledButton.icon(
-              onPressed: onCreateFolder,
-              icon: const Icon(Icons.create_new_folder_outlined),
-              label: const Text('Create Folder'),
-              style: FilledButton.styleFrom(minimumSize: const Size(200, 56)),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
 

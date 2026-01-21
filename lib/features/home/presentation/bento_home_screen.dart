@@ -608,17 +608,17 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
       child: Container(
         height: 140,
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : const Color(0xFFF1F5F9), // Light grey or obsidian
+          color: isDark ? AppColors.surfaceDark.withValues(alpha: 0.6) : AppColors.surfaceVariantLight,
           borderRadius: BorderRadius.circular(32),
           border: Border.all(
-            color: isDark 
-                ? const Color(0xFFFFFFFF).withValues(alpha: 0.1) 
+            color: isDark
+                ? AppColors.surfaceLight.withValues(alpha: 0.1)
                 : const Color(0xFFE2E8F0),
             width: 1.5,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+              color: AppColors.surfaceDark.withValues(alpha: isDark ? 0.2 : 0.05),
               blurRadius: 16,
               offset: const Offset(0, 4),
             ),

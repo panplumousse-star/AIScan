@@ -10,6 +10,7 @@ import 'package:uuid/uuid.dart';
 import 'package:aiscan/core/security/encryption_service.dart';
 import 'package:aiscan/core/storage/database_helper.dart';
 import 'package:aiscan/core/storage/document_repository.dart';
+import 'package:aiscan/core/utils/performance_utils.dart';
 import 'package:aiscan/features/documents/domain/document_model.dart';
 
 import 'document_repository_test.mocks.dart';
@@ -19,6 +20,9 @@ class MockUuid extends Mock implements Uuid {
   @override
   String v4({Map<String, dynamic>? options}) => 'mock-uuid-12345';
 }
+
+/// Mock ThumbnailCacheService for testing.
+class MockThumbnailCacheService extends Mock implements ThumbnailCacheService {}
 
 @GenerateMocks([EncryptionService, DatabaseHelper])
 void main() {
@@ -68,10 +72,18 @@ void main() {
   setUp(() {
     mockEncryption = MockEncryptionService();
     mockDatabase = MockDatabaseHelper();
+    final mockThumbnailCache = MockThumbnailCacheService();
+
     repository = DocumentRepository(
       encryptionService: mockEncryption,
       databaseHelper: mockDatabase,
+      thumbnailCacheService: mockThumbnailCache,
     );
+
+    // Add default mock behaviors for cache
+    when(mockThumbnailCache.getCachedThumbnail(any)).thenReturn(null);
+    when(mockThumbnailCache.cacheThumbnail(any, any)).thenReturn(null);
+    when(mockThumbnailCache.removeThumbnail(any)).thenReturn(null);
 
     // Default mock behaviors
     when(mockEncryption.isReady()).thenAnswer((_) async => true);

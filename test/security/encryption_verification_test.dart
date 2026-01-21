@@ -12,6 +12,7 @@ import 'package:aiscan/core/security/encryption_service.dart';
 import 'package:aiscan/core/security/secure_storage_service.dart';
 import 'package:aiscan/core/storage/database_helper.dart';
 import 'package:aiscan/core/storage/document_repository.dart';
+import 'package:aiscan/core/utils/performance_utils.dart';
 import 'package:aiscan/features/documents/domain/document_model.dart';
 
 import 'encryption_verification_test.mocks.dart';
@@ -26,6 +27,9 @@ import 'encryption_verification_test.mocks.dart';
 ///
 /// CRITICAL: These tests must pass before any release to ensure user data privacy.
 @GenerateMocks([SecureStorageService, DatabaseHelper])
+/// Mock ThumbnailCacheService for testing.
+class MockThumbnailCacheService extends Mock implements ThumbnailCacheService {}
+
 void main() {
   late MockSecureStorageService mockSecureStorage;
   late EncryptionService encryptionService;
@@ -740,9 +744,12 @@ void main() {
 
     setUp(() {
       mockDatabase = MockDatabaseHelper();
+      final mockThumbnailCache = MockThumbnailCacheService();
+
       documentRepository = DocumentRepository(
         encryptionService: encryptionService,
         databaseHelper: mockDatabase,
+        thumbnailCacheService: mockThumbnailCache,
       );
 
       // Setup database mock

@@ -245,7 +245,14 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
             );
           },
         ),
-      );
+      ).then((_) {
+        // Refresh document counts when returning from scanner
+        // This ensures the home screen reflects any newly scanned documents
+        if (mounted) {
+          ref.invalidate(totalDocumentCountProvider);
+          ref.invalidate(monthlyScanCountProvider);
+        }
+      });
     }
   }
 

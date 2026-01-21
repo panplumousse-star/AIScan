@@ -920,12 +920,12 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
         height: 140,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : const Color(0xFFF8FAFC),
+          color: isDark ? AppColors.surfaceDark.withValues(alpha: 0.6) : AppColors.bentoBackground,
           borderRadius: BorderRadius.circular(32),
           border: Border.all(
-            color: isDark 
-                ? const Color(0xFFFFFFFF).withValues(alpha: 0.1) 
-                : const Color(0xFFFFFFFF).withValues(alpha: 0.6),
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.1)
+                : Colors.white.withValues(alpha: 0.6),
             width: 1.5,
           ),
           boxShadow: [
@@ -943,7 +943,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEEF2FF), // Soft Indigo background
+                color: isDark ? AppColors.surfaceVariantDark : const Color(0xFFEEF2FF), // Soft Indigo background
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -962,7 +962,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                   style: GoogleFonts.outfit(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B), // Deep Indigo / Off White
+                    color: isDark ? AppColors.surfaceVariantLight : const Color(0xFF1E1B4B), // Deep Indigo / Off White
                   ),
                 ),
                 Text(
@@ -971,8 +971,8 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.outfit(
                     fontSize: 11,
-                    color: isDark 
-                        ? const Color(0xFF94A3B8) 
+                    color: isDark
+                        ? AppColors.neutralDark
                         : const Color(0xFF6366F1).withValues(alpha: 0.6),
                   ),
                 ),

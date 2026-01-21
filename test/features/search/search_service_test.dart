@@ -33,10 +33,9 @@ void main() {
       id: id,
       title: title,
       description: description,
-      filePath: '/path/to/$id.enc',
+      pagesPaths: ['/path/to/$id-page-1.enc'],
       thumbnailPath: '/path/to/$id-thumb.enc',
       originalFileName: '$id.jpg',
-      pageCount: 1,
       fileSize: fileSize,
       mimeType: 'image/jpeg',
       ocrText: ocrText,
@@ -53,6 +52,8 @@ void main() {
     mockDocumentRepository = MockDocumentRepository();
 
     when(mockDatabaseHelper.initialize()).thenAnswer((_) async => true);
+    when(mockDatabaseHelper.getSearchHistory(limit: anyNamed('limit')))
+        .thenAnswer((_) async => []);
 
     searchService = SearchService(
       databaseHelper: mockDatabaseHelper,
@@ -802,6 +803,37 @@ void main() {
         () => searchService.initialize(),
         throwsA(isA<SearchException>()),
       );
+    });
+
+    test('loads recent searches during initialization', () async {
+      // Mock search history data
+      when(mockDatabaseHelper.getSearchHistory(limit: anyNamed('limit')))
+          .thenAnswer((_) async => [
+                {
+                  'query': 'invoice 2024',
+                  'timestamp': '2024-01-15T10:30:00.000',
+                  'resultCount': 5,
+                },
+                {
+                  'query': 'contract',
+                  'timestamp': '2024-01-14T14:20:00.000',
+                  'resultCount': 3,
+                },
+              ]);
+
+      await searchService.initialize();
+
+      // Verify recent searches were loaded
+      expect(searchService.recentSearches.length, 2);
+      expect(searchService.recentSearches[0].query, 'invoice 2024');
+      expect(searchService.recentSearches[0].resultCount, 5);
+      expect(searchService.recentSearches[1].query, 'contract');
+      expect(searchService.recentSearches[1].resultCount, 3);
+
+      // Verify getSearchHistory was called with correct limit
+      verify(
+        mockDatabaseHelper.getSearchHistory(limit: SearchService.maxRecentSearches),
+      ).called(1);
     });
 
     test('search throws if not initialized', () async {

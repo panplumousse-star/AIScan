@@ -1240,6 +1240,38 @@ void main() {
       expect(searchService.recentSearches, isEmpty);
     });
 
+    test('removeRecentSearch persists to database', () async {
+      await searchService.initialize();
+      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => []);
+      when(mockDatabaseHelper.clearSearchHistory()).thenAnswer((_) async => 0);
+      when(mockDatabaseHelper.insertSearchHistory(
+        query: anyNamed('query'),
+        timestamp: anyNamed('timestamp'),
+        resultCount: anyNamed('resultCount'),
+      )).thenAnswer((_) async => 1);
+
+      await searchService.search('query1');
+      await searchService.search('query2');
+      await searchService.search('query3');
+
+      // Wait a bit for async persistence to complete after searches
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      // Reset verification counts
+      clearInteractions(mockDatabaseHelper);
+
+      await searchService.removeRecentSearch('query2');
+
+      // Verify database methods were called to persist the change
+      verify(mockDatabaseHelper.clearSearchHistory()).called(1);
+      // Should insert remaining 2 queries
+      verify(mockDatabaseHelper.insertSearchHistory(
+        query: anyNamed('query'),
+        timestamp: anyNamed('timestamp'),
+        resultCount: anyNamed('resultCount'),
+      )).called(2);
+    });
+
     test('rebuildIndex throws if not initialized', () async {
       expect(
         () => searchService.rebuildIndex(),

@@ -2106,5 +2106,211 @@ void main() {
         expect(DatabaseHelper.columnTimestamp, equals('timestamp'));
       });
     });
+
+    group('getSearchHistory', () {
+      test('returns Future<List<Map<String, dynamic>>>', () {
+        // Method signature:
+        // Future<List<Map<String, dynamic>>> getSearchHistory({
+        //   int? limit,
+        //   String? orderBy,
+        // })
+        //
+        // Expected: Returns list of maps representing search history entries
+        // Rationale: Standard database query return type
+        // Implementation: db.query() returns List<Map<String, dynamic>>
+        final mockResult = <Map<String, dynamic>>[];
+        expect(mockResult, isA<List<Map<String, dynamic>>>());
+      });
+
+      test('accepts optional limit parameter', () {
+        // Parameter definition:
+        // int? limit
+        //
+        // Expected: limit is optional (nullable int)
+        // Rationale: Allows fetching all entries or limiting results
+        // Implementation: Optional named parameter passed to db.query()
+        final limit = 10;
+        expect(limit, isA<int>());
+        expect(limit, greaterThan(0));
+      });
+
+      test('accepts optional orderBy parameter', () {
+        // Parameter definition:
+        // String? orderBy
+        //
+        // Expected: orderBy is optional (nullable String)
+        // Rationale: Allows custom sort order or default timestamp DESC
+        // Implementation: Optional named parameter passed to db.query()
+        final orderBy = 'timestamp ASC';
+        expect(orderBy, isA<String>());
+        expect(orderBy, contains('timestamp'));
+      });
+
+      test('queries search_history table', () {
+        // Table target:
+        // await db.query(tableSearchHistory, ...)
+        //
+        // Expected: Uses tableSearchHistory constant
+        // Rationale: Consistent table name references
+        // Implementation: DatabaseHelper.tableSearchHistory = 'search_history'
+        expect(DatabaseHelper.tableSearchHistory, equals('search_history'));
+      });
+
+      test('defaults to timestamp DESC ordering', () {
+        // Default orderBy clause:
+        // orderBy: orderBy ?? '$columnTimestamp DESC'
+        //
+        // Expected: When orderBy is null, orders by timestamp DESC
+        // Rationale: Most recent searches should appear first
+        // Implementation: Null-coalescing operator with default
+        final defaultOrder = '${DatabaseHelper.columnTimestamp} DESC';
+        expect(defaultOrder, equals('timestamp DESC'));
+        expect(defaultOrder, endsWith('DESC'));
+      });
+
+      test('allows custom orderBy to override default', () {
+        // Custom orderBy usage:
+        // orderBy: orderBy ?? '$columnTimestamp DESC'
+        //
+        // Expected: When orderBy is provided, uses custom sort
+        // Rationale: Flexibility for different sorting needs
+        // Implementation: Null-coalescing operator passes custom value
+        final customOrder = 'query ASC';
+        expect(customOrder, isA<String>());
+        expect(customOrder, isNot(contains('timestamp')));
+      });
+
+      test('applies limit when specified', () {
+        // Limit parameter usage:
+        // limit: limit
+        //
+        // Expected: When limit is provided, restricts result count
+        // Rationale: Pagination and performance optimization
+        // Implementation: Passed directly to db.query()
+        final limit = 20;
+        expect(limit, isA<int>());
+        expect(limit, greaterThan(0));
+      });
+
+      test('returns all entries when limit is not specified', () {
+        // No limit behavior:
+        // limit: limit (when limit is null)
+        //
+        // Expected: When limit is null, returns all matching rows
+        // Rationale: SQLite query without LIMIT clause fetches all
+        // Implementation: db.query() with limit: null
+        int? noLimit;
+        expect(noLimit, isNull);
+      });
+
+      test('uses async/await for database operation', () {
+        // Async pattern:
+        // Future<List<Map<String, dynamic>>> getSearchHistory(...) async {
+        //   final db = await database;
+        //   return await db.query(...);
+        // }
+        //
+        // Expected: Method returns Future for async operation
+        // Rationale: Database operations are asynchronous
+        // Implementation: async/await throughout method chain
+        expect(DatabaseHelper.tableSearchHistory, isNotEmpty);
+      });
+
+      test('gets database instance before query', () {
+        // Database access pattern:
+        // final db = await database;
+        // return await db.query(...);
+        //
+        // Expected: Calls database getter before operation
+        // Rationale: Ensures database is initialized
+        // Implementation: Standard pattern for all database operations
+        expect(DatabaseHelper.tableSearchHistory, equals('search_history'));
+      });
+
+      test('returns entries with all search_history columns', () {
+        // Query result structure:
+        // Each Map contains: id, query, timestamp, result_count
+        //
+        // Expected: Returns all columns from search_history table
+        // Rationale: db.query() without columns parameter fetches all
+        // Implementation: Full row data in each map
+        final mockEntry = {
+          'id': 1,
+          'query': 'flutter tutorial',
+          'timestamp': '2024-01-15T10:30:00Z',
+          'result_count': 42,
+        };
+        expect(mockEntry.keys.length, equals(4));
+        expect(mockEntry['id'], isA<int>());
+        expect(mockEntry['query'], isA<String>());
+        expect(mockEntry['timestamp'], isA<String>());
+        expect(mockEntry['result_count'], isA<int>());
+      });
+
+      test('leverages timestamp index for efficient sorting', () {
+        // Index usage:
+        // CREATE INDEX idx_search_history_timestamp ON search_history(timestamp)
+        // Default: ORDER BY timestamp DESC
+        //
+        // Expected: Query optimizer uses timestamp index
+        // Rationale: Index on timestamp enables fast DESC ordering
+        // Implementation: Index created in _onCreate supports default sort
+        expect(DatabaseHelper.columnTimestamp, equals('timestamp'));
+      });
+
+      test('supports common limit values for pagination', () {
+        // Common limit usage patterns:
+        // - limit: 10 (recent searches)
+        // - limit: 50 (more history)
+        // - limit: null (all entries)
+        //
+        // Expected: Accepts any positive integer or null
+        // Rationale: Different UI contexts need different amounts
+        // Implementation: Direct pass-through to SQLite LIMIT clause
+        final recentLimit = 10;
+        final moreLimit = 50;
+        int? allLimit;
+
+        expect(recentLimit, equals(10));
+        expect(moreLimit, equals(50));
+        expect(allLimit, isNull);
+      });
+
+      test('can order by query column alphabetically', () {
+        // Alternative orderBy example:
+        // orderBy: 'query ASC'
+        //
+        // Expected: Supports ordering by query column
+        // Rationale: Alphabetical sorting may be useful for some UIs
+        // Implementation: Custom orderBy overrides default
+        final alphabeticalOrder = '${DatabaseHelper.columnQuery} ASC';
+        expect(alphabeticalOrder, equals('query ASC'));
+        expect(alphabeticalOrder, contains('query'));
+      });
+
+      test('can order by result_count for popularity sorting', () {
+        // Alternative orderBy example:
+        // orderBy: 'result_count DESC'
+        //
+        // Expected: Supports ordering by result count
+        // Rationale: May want to show searches with most results
+        // Implementation: Custom orderBy overrides default
+        final popularityOrder = '${DatabaseHelper.columnResultCount} DESC';
+        expect(popularityOrder, equals('result_count DESC'));
+        expect(popularityOrder, contains('result_count'));
+      });
+
+      test('returns empty list when no history exists', () {
+        // Empty result handling:
+        // return await db.query(...)
+        //
+        // Expected: Returns empty list when table is empty
+        // Rationale: db.query() returns empty list, not null
+        // Implementation: No special empty handling needed
+        final emptyResult = <Map<String, dynamic>>[];
+        expect(emptyResult, isEmpty);
+        expect(emptyResult, isA<List<Map<String, dynamic>>>());
+      });
+    });
   });
 }

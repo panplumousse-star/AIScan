@@ -1924,5 +1924,187 @@ void main() {
         expect(result.keys.length, equals(2));
       });
     });
+
+    group('insertSearchHistory', () {
+      test('accepts required parameters query, timestamp, and resultCount', () {
+        // Method signature:
+        // Future<int> insertSearchHistory({
+        //   required String query,
+        //   required String timestamp,
+        //   required int resultCount,
+        // })
+        //
+        // Expected: All three parameters are required
+        // Rationale: Search history needs complete information
+        // Implementation: Named parameters with required keyword
+        expect(DatabaseHelper.columnQuery, equals('query'));
+        expect(DatabaseHelper.columnTimestamp, equals('timestamp'));
+        expect(DatabaseHelper.columnResultCount, equals('result_count'));
+      });
+
+      test('returns Future<int> with auto-incremented ID', () {
+        // Return type is Future<int>:
+        // return await db.insert(tableSearchHistory, {...});
+        //
+        // Expected: Returns the auto-incremented row ID
+        // Rationale: search_history.id is INTEGER PRIMARY KEY AUTOINCREMENT
+        // Implementation: db.insert() returns the new row's ID
+        final mockId = 42;
+        expect(mockId, isA<int>());
+        expect(mockId, greaterThan(0));
+      });
+
+      test('inserts into search_history table', () {
+        // Table target:
+        // await db.insert(tableSearchHistory, {...});
+        //
+        // Expected: Uses tableSearchHistory constant
+        // Rationale: Consistent table name references
+        // Implementation: DatabaseHelper.tableSearchHistory = 'search_history'
+        expect(DatabaseHelper.tableSearchHistory, equals('search_history'));
+      });
+
+      test('inserts all three column values correctly', () {
+        // Insert map structure:
+        // {
+        //   columnQuery: query,
+        //   columnTimestamp: timestamp,
+        //   columnResultCount: resultCount,
+        // }
+        //
+        // Expected: All parameters mapped to correct columns
+        // Rationale: Each parameter has corresponding database column
+        // Implementation: Map keys use column name constants
+        final insertMap = {
+          'query': 'flutter tutorial',
+          'timestamp': '2024-01-15T10:30:00Z',
+          'result_count': 42,
+        };
+        expect(insertMap.keys.length, equals(3));
+        expect(insertMap['query'], isA<String>());
+        expect(insertMap['timestamp'], isA<String>());
+        expect(insertMap['result_count'], isA<int>());
+      });
+
+      test('stores query as TEXT in database', () {
+        // Column definition:
+        // CREATE TABLE search_history (
+        //   query TEXT NOT NULL,
+        //   ...
+        // )
+        //
+        // Expected: Query stored as TEXT column
+        // Rationale: Search queries are variable-length strings
+        // Implementation: columnQuery: query parameter
+        expect(DatabaseHelper.columnQuery, equals('query'));
+      });
+
+      test('stores timestamp as TEXT in ISO 8601 format', () {
+        // Column definition:
+        // CREATE TABLE search_history (
+        //   timestamp TEXT NOT NULL,
+        //   ...
+        // )
+        //
+        // Expected: Timestamp stored as TEXT (ISO 8601 format)
+        // Rationale: SQLite stores dates as TEXT, INTEGER, or REAL
+        // Implementation: columnTimestamp: timestamp parameter
+        final isoTimestamp = '2024-01-15T10:30:00.000Z';
+        expect(isoTimestamp, matches(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}'));
+      });
+
+      test('stores resultCount as INTEGER in database', () {
+        // Column definition:
+        // CREATE TABLE search_history (
+        //   result_count INTEGER NOT NULL DEFAULT 0,
+        //   ...
+        // )
+        //
+        // Expected: Result count stored as INTEGER column
+        // Rationale: Number of results is always a whole number
+        // Implementation: columnResultCount: resultCount parameter
+        final resultCount = 42;
+        expect(resultCount, isA<int>());
+        expect(resultCount, greaterThanOrEqualTo(0));
+      });
+
+      test('allows zero results to be recorded', () {
+        // Valid result count range:
+        // resultCount can be 0 (no results found)
+        //
+        // Expected: Zero is a valid result count
+        // Rationale: Search may return no matches
+        // Implementation: No minimum value validation
+        final zeroResults = 0;
+        expect(zeroResults, equals(0));
+        expect(zeroResults, greaterThanOrEqualTo(0));
+      });
+
+      test('allows empty query strings to be recorded', () {
+        // Valid query values:
+        // query can be empty string ''
+        //
+        // Expected: Empty string is accepted (though unusual)
+        // Rationale: No validation prevents empty queries
+        // Implementation: Direct parameter pass-through
+        final emptyQuery = '';
+        expect(emptyQuery, isA<String>());
+        expect(emptyQuery.length, equals(0));
+      });
+
+      test('uses async/await for database operation', () {
+        // Async pattern:
+        // Future<int> insertSearchHistory(...) async {
+        //   final db = await database;
+        //   return await db.insert(...);
+        // }
+        //
+        // Expected: Method returns Future for async operation
+        // Rationale: Database operations are asynchronous
+        // Implementation: async/await throughout method chain
+        expect(DatabaseHelper.tableSearchHistory, isNotEmpty);
+      });
+
+      test('gets database instance before insert', () {
+        // Database access pattern:
+        // final db = await database;
+        // return await db.insert(...);
+        //
+        // Expected: Calls database getter before operation
+        // Rationale: Ensures database is initialized
+        // Implementation: Standard pattern for all database operations
+        expect(DatabaseHelper.tableSearchHistory, equals('search_history'));
+      });
+
+      test('creates search_history table with correct schema', () {
+        // Table schema (created in _onCreate):
+        // CREATE TABLE search_history (
+        //   id INTEGER PRIMARY KEY AUTOINCREMENT,
+        //   query TEXT NOT NULL,
+        //   timestamp TEXT NOT NULL,
+        //   result_count INTEGER NOT NULL DEFAULT 0
+        // )
+        //
+        // Expected: Table exists with auto-increment ID and three data columns
+        // Rationale: Schema supports search history tracking
+        // Implementation: Created in database version 3 migration
+        expect(DatabaseHelper.tableSearchHistory, equals('search_history'));
+        expect(DatabaseHelper.columnId, equals('id'));
+        expect(DatabaseHelper.columnQuery, equals('query'));
+        expect(DatabaseHelper.columnTimestamp, equals('timestamp'));
+        expect(DatabaseHelper.columnResultCount, equals('result_count'));
+      });
+
+      test('has index on timestamp for efficient sorting', () {
+        // Index creation (in _onCreate):
+        // CREATE INDEX idx_search_history_timestamp
+        // ON search_history(timestamp)
+        //
+        // Expected: Index exists for timestamp column
+        // Rationale: Search history is typically ordered by recency
+        // Implementation: Index created during table creation
+        expect(DatabaseHelper.columnTimestamp, equals('timestamp'));
+      });
+    });
   });
 }

@@ -895,6 +895,31 @@ void main() {
       expect(searchService.recentSearches.first.query, 'my query');
     });
 
+    test('persistRecentSearches to database after search', () async {
+      await searchService.initialize();
+
+      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => []);
+      when(mockDatabaseHelper.clearSearchHistory()).thenAnswer((_) async => 0);
+      when(mockDatabaseHelper.insertSearchHistory(
+        query: anyNamed('query'),
+        timestamp: anyNamed('timestamp'),
+        resultCount: anyNamed('resultCount'),
+      )).thenAnswer((_) async => 1);
+
+      await searchService.search('test query');
+
+      // Wait a bit for async persistence to complete
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      // Verify database methods were called
+      verify(mockDatabaseHelper.clearSearchHistory()).called(1);
+      verify(mockDatabaseHelper.insertSearchHistory(
+        query: 'test query',
+        timestamp: anyNamed('timestamp'),
+        resultCount: 0,
+      )).called(1);
+    });
+
     test('search deduplicates recent searches', () async {
       await searchService.initialize();
 

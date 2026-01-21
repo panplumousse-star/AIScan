@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "042-persist-search-history-to-database",
+  "spec": "045-pdf-compression",
   "state": "building",
   "subtasks": {
-    "completed": 5,
-    "total": 8,
+    "completed": 4,
+    "total": 11,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "SearchService Integration Tests",
+    "current": "Implement Image Compression Logic",
     "id": null,
-    "total": 4
+    "total": 3
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 7,
-    "started_at": "2026-01-21T13:52:07.861803"
+    "number": 5,
+    "started_at": "2026-01-21T15:15:02.991355"
   },
-  "last_update": "2026-01-21T14:05:24.362793"
+  "last_update": "2026-01-21T15:19:18.727962"
 }

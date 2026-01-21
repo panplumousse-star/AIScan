@@ -1,8 +1,8 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image/image.dart' as img;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
@@ -208,13 +208,11 @@ class PDFGeneratorOptions {
     this.creator = 'Scanaï Document Scanner',
     this.imageQuality = 85,
     this.compressImages = true,
+    this.maxWidth = 2000,
   });
 
   /// Default options for document scanning.
   static const PDFGeneratorOptions document = PDFGeneratorOptions(
-    pageSize: PDFPageSize.a4,
-    orientation: PDFOrientation.auto,
-    imageFit: PDFImageFit.contain,
     marginLeft: 20,
     marginRight: 20,
     marginTop: 20,
@@ -223,19 +221,12 @@ class PDFGeneratorOptions {
 
   /// Options for full-page image output (no margins).
   static const PDFGeneratorOptions fullPage = PDFGeneratorOptions(
-    pageSize: PDFPageSize.a4,
-    orientation: PDFOrientation.auto,
     imageFit: PDFImageFit.fill,
-    marginLeft: 0,
-    marginRight: 0,
-    marginTop: 0,
-    marginBottom: 0,
   );
 
   /// Options for photo output (fit to image size).
   static const PDFGeneratorOptions photo = PDFGeneratorOptions(
     pageSize: PDFPageSize.fitToImage,
-    orientation: PDFOrientation.auto,
     imageFit: PDFImageFit.original,
   );
 
@@ -284,6 +275,13 @@ class PDFGeneratorOptions {
   /// Whether to compress images in the PDF.
   final bool compressImages;
 
+  /// Maximum width in pixels for image resizing during compression.
+  ///
+  /// Images wider than this value will be resized proportionally before
+  /// embedding in the PDF. Default is 2000px, which is sufficient for
+  /// A4 at 300 DPI.
+  final int maxWidth;
+
   /// Total horizontal margin.
   double get horizontalMargin => marginLeft + marginRight;
 
@@ -307,6 +305,7 @@ class PDFGeneratorOptions {
     String? creator,
     int? imageQuality,
     bool? compressImages,
+    int? maxWidth,
     bool clearAuthor = false,
     bool clearSubject = false,
     bool clearKeywords = false,
@@ -327,6 +326,7 @@ class PDFGeneratorOptions {
       creator: creator ?? this.creator,
       imageQuality: imageQuality ?? this.imageQuality,
       compressImages: compressImages ?? this.compressImages,
+      maxWidth: maxWidth ?? this.maxWidth,
     );
   }
 
@@ -348,7 +348,8 @@ class PDFGeneratorOptions {
         other.producer == producer &&
         other.creator == creator &&
         other.imageQuality == imageQuality &&
-        other.compressImages == compressImages;
+        other.compressImages == compressImages &&
+        other.maxWidth == maxWidth;
   }
 
   @override
@@ -368,6 +369,7 @@ class PDFGeneratorOptions {
         creator,
         imageQuality,
         compressImages,
+        maxWidth,
       );
 
   @override
@@ -742,15 +744,14 @@ Future<GeneratedPDF> _generatePDFIsolate(_PDFGenerationParams params) async {
       throw PDFGeneratorException('Page $i has no image data');
     }
 
+    // Apply image compression before embedding in PDF
+    imageBytes = _compressImageForPdf(imageBytes, options);
+
     // Decode image to get dimensions
     final pdfImage = pw.MemoryImage(imageBytes);
 
-    // Determine page format
-    final pageFormat = _getPageFormat(
-      options: options,
-      imageWidth: null, // We don't have actual dimensions without decoding
-      imageHeight: null,
-    );
+    // Determine page format (image dimensions not available without decoding)
+    final pageFormat = _getPageFormat(options: options);
 
     // Determine orientation for this page
     final pageOrientation =
@@ -867,4 +868,46 @@ pw.Widget _buildPageContent({
       fit: boxFit,
     ),
   );
+}
+
+/// Compresses an image for PDF embedding.
+///
+/// Applies JPEG compression and optional resizing to reduce PDF file size.
+/// Returns the original bytes if compression is disabled or if decoding fails.
+///
+/// The [imageBytes] are the raw image bytes to compress.
+/// The [options] control compression quality and maximum dimensions.
+///
+/// Returns compressed image bytes, or original bytes if compression is
+/// disabled or image decoding fails.
+Uint8List _compressImageForPdf(Uint8List imageBytes, PDFGeneratorOptions options) {
+  // Preserve backward compatibility when compression is disabled
+  if (!options.compressImages) {
+    return imageBytes;
+  }
+
+  // Decode the image
+  final decodedImage = img.decodeImage(imageBytes);
+  if (decodedImage == null) {
+    // Return original bytes if decode fails (graceful degradation)
+    return imageBytes;
+  }
+
+  // Resize if wider than maxWidth, maintaining aspect ratio
+  img.Image processedImage;
+  if (decodedImage.width > options.maxWidth) {
+    processedImage = img.copyResize(
+      decodedImage,
+      width: options.maxWidth,
+      interpolation: img.Interpolation.linear,
+    );
+  } else {
+    processedImage = decodedImage;
+  }
+
+  // Re-encode as JPEG with specified quality (clamped to valid range)
+  final quality = options.imageQuality.clamp(1, 100);
+  final compressedBytes = img.encodeJpg(processedImage, quality: quality);
+
+  return Uint8List.fromList(compressedBytes);
 }

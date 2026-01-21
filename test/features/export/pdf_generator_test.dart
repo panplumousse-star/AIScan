@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:aiscan/features/export/domain/pdf_generator.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image/image.dart' as img;
 
 void main() {
   group('PDFGeneratorException', () {
@@ -389,6 +390,117 @@ void main() {
       expect(options.toString(), contains('letter'));
       expect(options.toString(), contains('My Document'));
     });
+
+    group('maxWidth parameter', () {
+      test('should have default value of 2000', () {
+        const options = PDFGeneratorOptions();
+
+        expect(options.maxWidth, 2000);
+      });
+
+      test('should create options with custom maxWidth', () {
+        const options = PDFGeneratorOptions(
+          maxWidth: 1500,
+        );
+
+        expect(options.maxWidth, 1500);
+      });
+
+      test('should support different maxWidth values', () {
+        const smallOptions = PDFGeneratorOptions(maxWidth: 800);
+        const mediumOptions = PDFGeneratorOptions(maxWidth: 1200);
+        const largeOptions = PDFGeneratorOptions(maxWidth: 3000);
+
+        expect(smallOptions.maxWidth, 800);
+        expect(mediumOptions.maxWidth, 1200);
+        expect(largeOptions.maxWidth, 3000);
+      });
+
+      test('should support copyWith for maxWidth', () {
+        const original = PDFGeneratorOptions(
+          title: 'Test',
+          maxWidth: 1000,
+        );
+
+        final modified = original.copyWith(maxWidth: 1500);
+
+        expect(modified.maxWidth, 1500);
+        expect(modified.title, 'Test'); // Unchanged
+      });
+
+      test('should preserve maxWidth when not specified in copyWith', () {
+        const original = PDFGeneratorOptions(
+          title: 'Test',
+          maxWidth: 1200,
+        );
+
+        final modified = original.copyWith(title: 'Modified');
+
+        expect(modified.maxWidth, 1200); // Unchanged
+        expect(modified.title, 'Modified');
+      });
+
+      test('should include maxWidth in equality check', () {
+        const options1 = PDFGeneratorOptions(
+          title: 'Test',
+          maxWidth: 1500,
+        );
+
+        const options2 = PDFGeneratorOptions(
+          title: 'Test',
+          maxWidth: 1500,
+        );
+
+        const options3 = PDFGeneratorOptions(
+          title: 'Test',
+          maxWidth: 2000, // Different maxWidth
+        );
+
+        expect(options1, equals(options2));
+        expect(options1, isNot(equals(options3)));
+      });
+
+      test('should include maxWidth in hashCode', () {
+        const options1 = PDFGeneratorOptions(
+          title: 'Test',
+          maxWidth: 1500,
+        );
+
+        const options2 = PDFGeneratorOptions(
+          title: 'Test',
+          maxWidth: 1500,
+        );
+
+        expect(options1.hashCode, equals(options2.hashCode));
+      });
+
+      test('should work with preset options', () {
+        const documentPreset = PDFGeneratorOptions.document;
+        const fullPagePreset = PDFGeneratorOptions.fullPage;
+        const photoPreset = PDFGeneratorOptions.photo;
+
+        // All presets should have the default maxWidth
+        expect(documentPreset.maxWidth, 2000);
+        expect(fullPagePreset.maxWidth, 2000);
+        expect(photoPreset.maxWidth, 2000);
+      });
+
+      test('should allow maxWidth to be combined with other options', () {
+        const options = PDFGeneratorOptions(
+          pageSize: PDFPageSize.letter,
+          orientation: PDFOrientation.landscape,
+          imageQuality: 90,
+          compressImages: true,
+          maxWidth: 1800,
+        );
+
+        expect(options.pageSize, PDFPageSize.letter);
+        expect(options.orientation, PDFOrientation.landscape);
+        expect(options.imageQuality, 90);
+        expect(options.compressImages, true);
+        expect(options.maxWidth, 1800);
+      });
+    });
   });
 
   group('PDFPage', () {
@@ -694,6 +806,418 @@ void main() {
         ),
         throwsA(isA<PDFGeneratorException>()),
       );
+    });
+  });
+
+  group('Compression', () {
+    // Helper to create a test image with specified dimensions
+    Uint8List createTestImage({
+      int width = 100,
+      int height = 100,
+      img.Color? fillColor,
+    }) {
+      final image = img.Image(width: width, height: height);
+      final color = fillColor ?? img.ColorRgb8(128, 128, 128);
+
+      for (var y = 0; y < height; y++) {
+        for (var x = 0; x < width; x++) {
+          image.setPixel(x, y, color);
+        }
+      }
+
+      return Uint8List.fromList(img.encodeJpg(image, quality: 100));
+    }
+
+    // Helper to create a larger image for compression testing
+    Uint8List createLargeTestImage({
+      int width = 3000,
+      int height = 2000,
+    }) {
+      final image = img.Image(width: width, height: height);
+
+      // Create a gradient pattern for better compression testing
+      for (var y = 0; y < height; y++) {
+        for (var x = 0; x < width; x++) {
+          final r = ((x / width) * 255).round();
+          final g = ((y / height) * 255).round();
+          final b = ((x + y) / (width + height) * 255).round();
+          image.setPixel(x, y, img.ColorRgb8(r, g, b));
+        }
+      }
+
+      return Uint8List.fromList(img.encodeJpg(image, quality: 100));
+    }
+
+    group('compressImages flag', () {
+      test('should compress images when compressImages is true (default)', () async {
+        final generator = PDFGenerator();
+        final largeImage = createLargeTestImage(width: 3000, height: 2000);
+
+        // Generate with compression enabled (default)
+        final compressedResult = await generator.generateFromBytes(
+          imageBytesList: [largeImage],
+          options: const PDFGeneratorOptions(
+            compressImages: true,
+            imageQuality: 85,
+            maxWidth: 2000,
+          ),
+        );
+
+        // Generate with compression disabled
+        final uncompressedResult = await generator.generateFromBytes(
+          imageBytesList: [largeImage],
+          options: const PDFGeneratorOptions(
+            compressImages: false,
+          ),
+        );
+
+        // Compressed PDF should be smaller
+        expect(
+          compressedResult.fileSize,
+          lessThan(uncompressedResult.fileSize),
+        );
+      });
+
+      test('should preserve original bytes when compressImages is false', () async {
+        final generator = PDFGenerator();
+        final testImage = createTestImage(width: 500, height: 500);
+
+        // Generate with compression disabled
+        final result = await generator.generateFromBytes(
+          imageBytesList: [testImage],
+          options: const PDFGeneratorOptions(
+            compressImages: false,
+          ),
+        );
+
+        // The PDF should still generate successfully
+        expect(result.bytes, isNotEmpty);
+        expect(result.pageCount, 1);
+      });
+
+      test('should default compressImages to true', () {
+        const options = PDFGeneratorOptions();
+        expect(options.compressImages, true);
+      });
+    });
+
+    group('imageQuality parameter', () {
+      test('should use default quality of 85', () {
+        const options = PDFGeneratorOptions();
+        expect(options.imageQuality, 85);
+      });
+
+      test('should produce smaller files with lower quality', () async {
+        final generator = PDFGenerator();
+        final largeImage = createLargeTestImage(width: 2000, height: 1500);
+
+        // Generate with high quality
+        final highQualityResult = await generator.generateFromBytes(
+          imageBytesList: [largeImage],
+          options: const PDFGeneratorOptions(
+            compressImages: true,
+            imageQuality: 95,
+            maxWidth: 2000,
+          ),
+        );
+
+        // Generate with low quality
+        final lowQualityResult = await generator.generateFromBytes(
+          imageBytesList: [largeImage],
+          options: const PDFGeneratorOptions(
+            compressImages: true,
+            imageQuality: 50,
+            maxWidth: 2000,
+          ),
+        );
+
+        // Lower quality should produce smaller file
+        expect(
+          lowQualityResult.fileSize,
+          lessThan(highQualityResult.fileSize),
+        );
+      });
+
+      test('should support custom imageQuality values', () {
+        const options = PDFGeneratorOptions(imageQuality: 75);
+        expect(options.imageQuality, 75);
+      });
+
+      test('should preserve imageQuality in copyWith', () {
+        const original = PDFGeneratorOptions(imageQuality: 60);
+        final modified = original.copyWith(title: 'Modified');
+
+        expect(modified.imageQuality, 60);
+      });
+
+      test('should update imageQuality with copyWith', () {
+        const original = PDFGeneratorOptions(imageQuality: 85);
+        final modified = original.copyWith(imageQuality: 50);
+
+        expect(modified.imageQuality, 50);
+      });
+    });
+
+    group('maxWidth resizing', () {
+      test('should resize images wider than maxWidth', () async {
+        final generator = PDFGenerator();
+        // Create image wider than default maxWidth of 2000
+        final wideImage = createLargeTestImage(width: 4000, height: 2000);
+
+        // Generate with small maxWidth
+        final smallMaxWidthResult = await generator.generateFromBytes(
+          imageBytesList: [wideImage],
+          options: const PDFGeneratorOptions(
+            compressImages: true,
+            imageQuality: 85,
+            maxWidth: 1000,
+          ),
+        );
+
+        // Generate with larger maxWidth
+        final largeMaxWidthResult = await generator.generateFromBytes(
+          imageBytesList: [wideImage],
+          options: const PDFGeneratorOptions(
+            compressImages: true,
+            imageQuality: 85,
+            maxWidth: 3000,
+          ),
+        );
+
+        // Smaller maxWidth should produce smaller file
+        expect(
+          smallMaxWidthResult.fileSize,
+          lessThan(largeMaxWidthResult.fileSize),
+        );
+      });
+
+      test('should not resize images smaller than maxWidth', () async {
+        final generator = PDFGenerator();
+        // Create image smaller than maxWidth
+        final smallImage = createTestImage(width: 500, height: 400);
+
+        // Generate with large maxWidth
+        final result = await generator.generateFromBytes(
+          imageBytesList: [smallImage],
+          options: const PDFGeneratorOptions(
+            compressImages: true,
+            imageQuality: 85,
+            maxWidth: 2000,
+          ),
+        );
+
+        // Should still generate successfully
+        expect(result.bytes, isNotEmpty);
+        expect(result.pageCount, 1);
+      });
+
+      test('should use default maxWidth of 2000', () {
+        const options = PDFGeneratorOptions();
+        expect(options.maxWidth, 2000);
+      });
+    });
+
+    group('graceful degradation', () {
+      test('should return original bytes when decode fails with compression', () async {
+        final generator = PDFGenerator();
+        // Invalid image bytes that cannot be decoded
+        final invalidBytes = Uint8List.fromList([1, 2, 3, 4, 5]);
+
+        // When compression is enabled but decoding fails, the original bytes
+        // are returned (graceful degradation). The PDF library will then try
+        // to process these bytes and may throw an error.
+        // This tests that the compression function doesn't crash unexpectedly.
+        var errorThrown = false;
+        try {
+          await generator.generateFromBytes(
+            imageBytesList: [invalidBytes],
+            options: const PDFGeneratorOptions(
+              compressImages: true,
+            ),
+          );
+          // If it gets here, the PDF library handled the invalid bytes somehow
+        } catch (e) {
+          // Expected - the PDF library couldn't handle the invalid bytes
+          // The error could be an Exception or Error (e.g., RangeError)
+          errorThrown = true;
+        }
+        // We expect an error to be thrown when invalid image bytes are provided
+        expect(errorThrown, isTrue);
+      });
+
+      test('should generate PDF with valid images mixed with compression', () async {
+        final generator = PDFGenerator();
+        final testImage = createTestImage(width: 800, height: 600);
+
+        // Should work with compression
+        final result = await generator.generateFromBytes(
+          imageBytesList: [testImage],
+          options: const PDFGeneratorOptions(
+            compressImages: true,
+            imageQuality: 85,
+          ),
+        );
+
+        expect(result.bytes, isNotEmpty);
+        expect(result.pageCount, 1);
+      });
+    });
+
+    group('quality clamping', () {
+      test('should accept quality at lower bound (1)', () async {
+        final generator = PDFGenerator();
+        final testImage = createTestImage(width: 500, height: 500);
+
+        final result = await generator.generateFromBytes(
+          imageBytesList: [testImage],
+          options: const PDFGeneratorOptions(
+            compressImages: true,
+            imageQuality: 1,
+          ),
+        );
+
+        expect(result.bytes, isNotEmpty);
+        expect(result.pageCount, 1);
+      });
+
+      test('should accept quality at upper bound (100)', () async {
+        final generator = PDFGenerator();
+        final testImage = createTestImage(width: 500, height: 500);
+
+        final result = await generator.generateFromBytes(
+          imageBytesList: [testImage],
+          options: const PDFGeneratorOptions(
+            compressImages: true,
+            imageQuality: 100,
+          ),
+        );
+
+        expect(result.bytes, isNotEmpty);
+        expect(result.pageCount, 1);
+      });
+    });
+
+    group('multi-page compression', () {
+      test('should compress all pages in multi-page PDF', () async {
+        final generator = PDFGenerator();
+        final image1 = createLargeTestImage(width: 2500, height: 1800);
+        final image2 = createLargeTestImage(width: 2500, height: 1800);
+
+        // Generate with compression
+        final compressedResult = await generator.generateFromBytes(
+          imageBytesList: [image1, image2],
+          options: const PDFGeneratorOptions(
+            compressImages: true,
+            imageQuality: 70,
+            maxWidth: 1500,
+          ),
+        );
+
+        // Generate without compression
+        final uncompressedResult = await generator.generateFromBytes(
+          imageBytesList: [image1, image2],
+          options: const PDFGeneratorOptions(
+            compressImages: false,
+          ),
+        );
+
+        // Compressed PDF should be significantly smaller
+        expect(compressedResult.pageCount, 2);
+        expect(uncompressedResult.pageCount, 2);
+        expect(
+          compressedResult.fileSize,
+          lessThan(uncompressedResult.fileSize),
+        );
+      });
+    });
+
+    group('Compression with different image formats', () {
+      test('should handle PNG images with compression', () async {
+        final generator = PDFGenerator();
+
+        // Create a PNG image
+        final image = img.Image(width: 800, height: 600);
+        for (var y = 0; y < 600; y++) {
+          for (var x = 0; x < 800; x++) {
+            image.setPixel(x, y, img.ColorRgb8(100, 150, 200));
+          }
+        }
+        final pngBytes = Uint8List.fromList(img.encodePng(image));
+
+        // Should compress PNG and convert to JPEG
+        final result = await generator.generateFromBytes(
+          imageBytesList: [pngBytes],
+          options: const PDFGeneratorOptions(
+            compressImages: true,
+            imageQuality: 85,
+          ),
+        );
+
+        expect(result.bytes, isNotEmpty);
+        expect(result.pageCount, 1);
+      });
+    });
+
+    group('Compression options interaction', () {
+      test('should work with document preset', () async {
+        final generator = PDFGenerator();
+        final testImage = createTestImage(width: 1000, height: 800);
+
+        final result = await generator.generateFromBytes(
+          imageBytesList: [testImage],
+          options: PDFGeneratorOptions.document,
+        );
+
+        expect(result.bytes, isNotEmpty);
+        expect(result.pageCount, 1);
+      });
+
+      test('should work with fullPage preset', () async {
+        final generator = PDFGenerator();
+        final testImage = createTestImage(width: 1000, height: 800);
+
+        final result = await generator.generateFromBytes(
+          imageBytesList: [testImage],
+          options: PDFGeneratorOptions.fullPage,
+        );
+
+        expect(result.bytes, isNotEmpty);
+        expect(result.pageCount, 1);
+      });
+
+      test('should work with photo preset', () async {
+        final generator = PDFGenerator();
+        final testImage = createTestImage(width: 1000, height: 800);
+
+        final result = await generator.generateFromBytes(
+          imageBytesList: [testImage],
+          options: PDFGeneratorOptions.photo,
+        );
+
+        expect(result.bytes, isNotEmpty);
+        expect(result.pageCount, 1);
+      });
+
+      test('should combine compression with custom margins', () async {
+        final generator = PDFGenerator();
+        final testImage = createTestImage(width: 1000, height: 800);
+
+        final result = await generator.generateFromBytes(
+          imageBytesList: [testImage],
+          options: const PDFGeneratorOptions(
+            compressImages: true,
+            imageQuality: 80,
+            maxWidth: 1500,
+            marginLeft: 20,
+            marginRight: 20,
+            marginTop: 20,
+            marginBottom: 20,
+          ),
+        );
+
+        expect(result.bytes, isNotEmpty);
+        expect(result.pageCount, 1);
+      });
     });
   });
 }

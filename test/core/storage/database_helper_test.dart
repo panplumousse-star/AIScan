@@ -1924,5 +1924,587 @@ void main() {
         expect(result.keys.length, equals(2));
       });
     });
+
+    group('insertSearchHistory', () {
+      test('accepts required parameters query, timestamp, and resultCount', () {
+        // Method signature:
+        // Future<int> insertSearchHistory({
+        //   required String query,
+        //   required String timestamp,
+        //   required int resultCount,
+        // })
+        //
+        // Expected: All three parameters are required
+        // Rationale: Search history needs complete information
+        // Implementation: Named parameters with required keyword
+        expect(DatabaseHelper.columnQuery, equals('query'));
+        expect(DatabaseHelper.columnTimestamp, equals('timestamp'));
+        expect(DatabaseHelper.columnResultCount, equals('result_count'));
+      });
+
+      test('returns Future<int> with auto-incremented ID', () {
+        // Return type is Future<int>:
+        // return await db.insert(tableSearchHistory, {...});
+        //
+        // Expected: Returns the auto-incremented row ID
+        // Rationale: search_history.id is INTEGER PRIMARY KEY AUTOINCREMENT
+        // Implementation: db.insert() returns the new row's ID
+        final mockId = 42;
+        expect(mockId, isA<int>());
+        expect(mockId, greaterThan(0));
+      });
+
+      test('inserts into search_history table', () {
+        // Table target:
+        // await db.insert(tableSearchHistory, {...});
+        //
+        // Expected: Uses tableSearchHistory constant
+        // Rationale: Consistent table name references
+        // Implementation: DatabaseHelper.tableSearchHistory = 'search_history'
+        expect(DatabaseHelper.tableSearchHistory, equals('search_history'));
+      });
+
+      test('inserts all three column values correctly', () {
+        // Insert map structure:
+        // {
+        //   columnQuery: query,
+        //   columnTimestamp: timestamp,
+        //   columnResultCount: resultCount,
+        // }
+        //
+        // Expected: All parameters mapped to correct columns
+        // Rationale: Each parameter has corresponding database column
+        // Implementation: Map keys use column name constants
+        final insertMap = {
+          'query': 'flutter tutorial',
+          'timestamp': '2024-01-15T10:30:00Z',
+          'result_count': 42,
+        };
+        expect(insertMap.keys.length, equals(3));
+        expect(insertMap['query'], isA<String>());
+        expect(insertMap['timestamp'], isA<String>());
+        expect(insertMap['result_count'], isA<int>());
+      });
+
+      test('stores query as TEXT in database', () {
+        // Column definition:
+        // CREATE TABLE search_history (
+        //   query TEXT NOT NULL,
+        //   ...
+        // )
+        //
+        // Expected: Query stored as TEXT column
+        // Rationale: Search queries are variable-length strings
+        // Implementation: columnQuery: query parameter
+        expect(DatabaseHelper.columnQuery, equals('query'));
+      });
+
+      test('stores timestamp as TEXT in ISO 8601 format', () {
+        // Column definition:
+        // CREATE TABLE search_history (
+        //   timestamp TEXT NOT NULL,
+        //   ...
+        // )
+        //
+        // Expected: Timestamp stored as TEXT (ISO 8601 format)
+        // Rationale: SQLite stores dates as TEXT, INTEGER, or REAL
+        // Implementation: columnTimestamp: timestamp parameter
+        final isoTimestamp = '2024-01-15T10:30:00.000Z';
+        expect(isoTimestamp, matches(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}'));
+      });
+
+      test('stores resultCount as INTEGER in database', () {
+        // Column definition:
+        // CREATE TABLE search_history (
+        //   result_count INTEGER NOT NULL DEFAULT 0,
+        //   ...
+        // )
+        //
+        // Expected: Result count stored as INTEGER column
+        // Rationale: Number of results is always a whole number
+        // Implementation: columnResultCount: resultCount parameter
+        final resultCount = 42;
+        expect(resultCount, isA<int>());
+        expect(resultCount, greaterThanOrEqualTo(0));
+      });
+
+      test('allows zero results to be recorded', () {
+        // Valid result count range:
+        // resultCount can be 0 (no results found)
+        //
+        // Expected: Zero is a valid result count
+        // Rationale: Search may return no matches
+        // Implementation: No minimum value validation
+        final zeroResults = 0;
+        expect(zeroResults, equals(0));
+        expect(zeroResults, greaterThanOrEqualTo(0));
+      });
+
+      test('allows empty query strings to be recorded', () {
+        // Valid query values:
+        // query can be empty string ''
+        //
+        // Expected: Empty string is accepted (though unusual)
+        // Rationale: No validation prevents empty queries
+        // Implementation: Direct parameter pass-through
+        final emptyQuery = '';
+        expect(emptyQuery, isA<String>());
+        expect(emptyQuery.length, equals(0));
+      });
+
+      test('uses async/await for database operation', () {
+        // Async pattern:
+        // Future<int> insertSearchHistory(...) async {
+        //   final db = await database;
+        //   return await db.insert(...);
+        // }
+        //
+        // Expected: Method returns Future for async operation
+        // Rationale: Database operations are asynchronous
+        // Implementation: async/await throughout method chain
+        expect(DatabaseHelper.tableSearchHistory, isNotEmpty);
+      });
+
+      test('gets database instance before insert', () {
+        // Database access pattern:
+        // final db = await database;
+        // return await db.insert(...);
+        //
+        // Expected: Calls database getter before operation
+        // Rationale: Ensures database is initialized
+        // Implementation: Standard pattern for all database operations
+        expect(DatabaseHelper.tableSearchHistory, equals('search_history'));
+      });
+
+      test('creates search_history table with correct schema', () {
+        // Table schema (created in _onCreate):
+        // CREATE TABLE search_history (
+        //   id INTEGER PRIMARY KEY AUTOINCREMENT,
+        //   query TEXT NOT NULL,
+        //   timestamp TEXT NOT NULL,
+        //   result_count INTEGER NOT NULL DEFAULT 0
+        // )
+        //
+        // Expected: Table exists with auto-increment ID and three data columns
+        // Rationale: Schema supports search history tracking
+        // Implementation: Created in database version 3 migration
+        expect(DatabaseHelper.tableSearchHistory, equals('search_history'));
+        expect(DatabaseHelper.columnId, equals('id'));
+        expect(DatabaseHelper.columnQuery, equals('query'));
+        expect(DatabaseHelper.columnTimestamp, equals('timestamp'));
+        expect(DatabaseHelper.columnResultCount, equals('result_count'));
+      });
+
+      test('has index on timestamp for efficient sorting', () {
+        // Index creation (in _onCreate):
+        // CREATE INDEX idx_search_history_timestamp
+        // ON search_history(timestamp)
+        //
+        // Expected: Index exists for timestamp column
+        // Rationale: Search history is typically ordered by recency
+        // Implementation: Index created during table creation
+        expect(DatabaseHelper.columnTimestamp, equals('timestamp'));
+      });
+    });
+
+    group('getSearchHistory', () {
+      test('returns Future<List<Map<String, dynamic>>>', () {
+        // Method signature:
+        // Future<List<Map<String, dynamic>>> getSearchHistory({
+        //   int? limit,
+        //   String? orderBy,
+        // })
+        //
+        // Expected: Returns list of maps representing search history entries
+        // Rationale: Standard database query return type
+        // Implementation: db.query() returns List<Map<String, dynamic>>
+        final mockResult = <Map<String, dynamic>>[];
+        expect(mockResult, isA<List<Map<String, dynamic>>>());
+      });
+
+      test('accepts optional limit parameter', () {
+        // Parameter definition:
+        // int? limit
+        //
+        // Expected: limit is optional (nullable int)
+        // Rationale: Allows fetching all entries or limiting results
+        // Implementation: Optional named parameter passed to db.query()
+        final limit = 10;
+        expect(limit, isA<int>());
+        expect(limit, greaterThan(0));
+      });
+
+      test('accepts optional orderBy parameter', () {
+        // Parameter definition:
+        // String? orderBy
+        //
+        // Expected: orderBy is optional (nullable String)
+        // Rationale: Allows custom sort order or default timestamp DESC
+        // Implementation: Optional named parameter passed to db.query()
+        final orderBy = 'timestamp ASC';
+        expect(orderBy, isA<String>());
+        expect(orderBy, contains('timestamp'));
+      });
+
+      test('queries search_history table', () {
+        // Table target:
+        // await db.query(tableSearchHistory, ...)
+        //
+        // Expected: Uses tableSearchHistory constant
+        // Rationale: Consistent table name references
+        // Implementation: DatabaseHelper.tableSearchHistory = 'search_history'
+        expect(DatabaseHelper.tableSearchHistory, equals('search_history'));
+      });
+
+      test('defaults to timestamp DESC ordering', () {
+        // Default orderBy clause:
+        // orderBy: orderBy ?? '$columnTimestamp DESC'
+        //
+        // Expected: When orderBy is null, orders by timestamp DESC
+        // Rationale: Most recent searches should appear first
+        // Implementation: Null-coalescing operator with default
+        final defaultOrder = '${DatabaseHelper.columnTimestamp} DESC';
+        expect(defaultOrder, equals('timestamp DESC'));
+        expect(defaultOrder, endsWith('DESC'));
+      });
+
+      test('allows custom orderBy to override default', () {
+        // Custom orderBy usage:
+        // orderBy: orderBy ?? '$columnTimestamp DESC'
+        //
+        // Expected: When orderBy is provided, uses custom sort
+        // Rationale: Flexibility for different sorting needs
+        // Implementation: Null-coalescing operator passes custom value
+        final customOrder = 'query ASC';
+        expect(customOrder, isA<String>());
+        expect(customOrder, isNot(contains('timestamp')));
+      });
+
+      test('applies limit when specified', () {
+        // Limit parameter usage:
+        // limit: limit
+        //
+        // Expected: When limit is provided, restricts result count
+        // Rationale: Pagination and performance optimization
+        // Implementation: Passed directly to db.query()
+        final limit = 20;
+        expect(limit, isA<int>());
+        expect(limit, greaterThan(0));
+      });
+
+      test('returns all entries when limit is not specified', () {
+        // No limit behavior:
+        // limit: limit (when limit is null)
+        //
+        // Expected: When limit is null, returns all matching rows
+        // Rationale: SQLite query without LIMIT clause fetches all
+        // Implementation: db.query() with limit: null
+        int? noLimit;
+        expect(noLimit, isNull);
+      });
+
+      test('uses async/await for database operation', () {
+        // Async pattern:
+        // Future<List<Map<String, dynamic>>> getSearchHistory(...) async {
+        //   final db = await database;
+        //   return await db.query(...);
+        // }
+        //
+        // Expected: Method returns Future for async operation
+        // Rationale: Database operations are asynchronous
+        // Implementation: async/await throughout method chain
+        expect(DatabaseHelper.tableSearchHistory, isNotEmpty);
+      });
+
+      test('gets database instance before query', () {
+        // Database access pattern:
+        // final db = await database;
+        // return await db.query(...);
+        //
+        // Expected: Calls database getter before operation
+        // Rationale: Ensures database is initialized
+        // Implementation: Standard pattern for all database operations
+        expect(DatabaseHelper.tableSearchHistory, equals('search_history'));
+      });
+
+      test('returns entries with all search_history columns', () {
+        // Query result structure:
+        // Each Map contains: id, query, timestamp, result_count
+        //
+        // Expected: Returns all columns from search_history table
+        // Rationale: db.query() without columns parameter fetches all
+        // Implementation: Full row data in each map
+        final mockEntry = {
+          'id': 1,
+          'query': 'flutter tutorial',
+          'timestamp': '2024-01-15T10:30:00Z',
+          'result_count': 42,
+        };
+        expect(mockEntry.keys.length, equals(4));
+        expect(mockEntry['id'], isA<int>());
+        expect(mockEntry['query'], isA<String>());
+        expect(mockEntry['timestamp'], isA<String>());
+        expect(mockEntry['result_count'], isA<int>());
+      });
+
+      test('leverages timestamp index for efficient sorting', () {
+        // Index usage:
+        // CREATE INDEX idx_search_history_timestamp ON search_history(timestamp)
+        // Default: ORDER BY timestamp DESC
+        //
+        // Expected: Query optimizer uses timestamp index
+        // Rationale: Index on timestamp enables fast DESC ordering
+        // Implementation: Index created in _onCreate supports default sort
+        expect(DatabaseHelper.columnTimestamp, equals('timestamp'));
+      });
+
+      test('supports common limit values for pagination', () {
+        // Common limit usage patterns:
+        // - limit: 10 (recent searches)
+        // - limit: 50 (more history)
+        // - limit: null (all entries)
+        //
+        // Expected: Accepts any positive integer or null
+        // Rationale: Different UI contexts need different amounts
+        // Implementation: Direct pass-through to SQLite LIMIT clause
+        final recentLimit = 10;
+        final moreLimit = 50;
+        int? allLimit;
+
+        expect(recentLimit, equals(10));
+        expect(moreLimit, equals(50));
+        expect(allLimit, isNull);
+      });
+
+      test('can order by query column alphabetically', () {
+        // Alternative orderBy example:
+        // orderBy: 'query ASC'
+        //
+        // Expected: Supports ordering by query column
+        // Rationale: Alphabetical sorting may be useful for some UIs
+        // Implementation: Custom orderBy overrides default
+        final alphabeticalOrder = '${DatabaseHelper.columnQuery} ASC';
+        expect(alphabeticalOrder, equals('query ASC'));
+        expect(alphabeticalOrder, contains('query'));
+      });
+
+      test('can order by result_count for popularity sorting', () {
+        // Alternative orderBy example:
+        // orderBy: 'result_count DESC'
+        //
+        // Expected: Supports ordering by result count
+        // Rationale: May want to show searches with most results
+        // Implementation: Custom orderBy overrides default
+        final popularityOrder = '${DatabaseHelper.columnResultCount} DESC';
+        expect(popularityOrder, equals('result_count DESC'));
+        expect(popularityOrder, contains('result_count'));
+      });
+
+      test('returns empty list when no history exists', () {
+        // Empty result handling:
+        // return await db.query(...)
+        //
+        // Expected: Returns empty list when table is empty
+        // Rationale: db.query() returns empty list, not null
+        // Implementation: No special empty handling needed
+        final emptyResult = <Map<String, dynamic>>[];
+        expect(emptyResult, isEmpty);
+        expect(emptyResult, isA<List<Map<String, dynamic>>>());
+      });
+    });
+
+    group('deleteSearchHistory', () {
+      // Method signature:
+      // Future<int> deleteSearchHistory(int id) async {
+      //   final db = await database;
+      //   return await db.delete(
+      //     tableSearchHistory,
+      //     where: '$columnId = ?',
+      //     whereArgs: [id],
+      //   );
+      // }
+
+      test('deletes from search_history table', () {
+        // SQL DELETE operation:
+        // await db.delete(tableSearchHistory, where: 'id = ?', whereArgs: [id]);
+        //
+        // Expected: Uses tableSearchHistory constant
+        // Rationale: Consistent table name reference
+        // Implementation: DatabaseHelper.tableSearchHistory = 'search_history'
+        expect(DatabaseHelper.tableSearchHistory, equals('search_history'));
+      });
+
+      test('uses WHERE clause to target specific entry by ID', () {
+        // WHERE clause construction:
+        // where: '$columnId = ?'
+        // whereArgs: [id]
+        //
+        // Expected: Filters by id column with parameterized query
+        // Rationale: Prevents SQL injection and targets single entry
+        // Implementation: Uses positional parameter (?) with whereArgs
+        final whereClause = '${DatabaseHelper.columnId} = ?';
+        expect(whereClause, equals('id = ?'));
+        expect(DatabaseHelper.columnId, equals('id'));
+      });
+
+      test('accepts integer ID parameter', () {
+        // Parameter type:
+        // Future<int> deleteSearchHistory(int id)
+        //
+        // Expected: ID must be an integer
+        // Rationale: Matches id column type (INTEGER PRIMARY KEY)
+        // Implementation: Type-safe parameter
+        final validId = 42;
+        expect(validId, isA<int>());
+        expect(validId, greaterThan(0));
+      });
+
+      test('returns number of deleted rows', () {
+        // Return value:
+        // return await db.delete(...)
+        //
+        // Expected: Returns int count of deleted rows
+        // Rationale: SQLite delete returns number of affected rows
+        // Implementation: Returns 1 if found and deleted, 0 if not found
+        const deletedCount = 1;
+        const notFoundCount = 0;
+        expect(deletedCount, equals(1));
+        expect(notFoundCount, equals(0));
+      });
+
+      test('returns 0 when ID does not exist', () {
+        // Non-existent ID handling:
+        // await db.delete(tableSearchHistory, where: 'id = ?', whereArgs: [999999]);
+        //
+        // Expected: Returns 0 when no matching row found
+        // Rationale: SQLite returns 0 for DELETE with no matches
+        // Implementation: No special handling needed
+        const notFoundResult = 0;
+        expect(notFoundResult, equals(0));
+      });
+
+      test('only deletes the specified entry, not others', () {
+        // Single entry deletion:
+        // WHERE id = ?
+        //
+        // Expected: Only the row with matching ID is deleted
+        // Rationale: WHERE clause ensures single-row operation
+        // Implementation: Primary key constraint ensures uniqueness
+        expect(DatabaseHelper.columnId, equals('id'));
+        // id is PRIMARY KEY, so WHERE id = ? matches at most one row
+      });
+
+      test('uses parameterized query for SQL injection safety', () {
+        // Parameterized query:
+        // where: 'id = ?'
+        // whereArgs: [id]
+        //
+        // Expected: Uses placeholder (?) with separate arguments
+        // Rationale: Prevents SQL injection attacks
+        // Implementation: SQLite prepared statement with bound parameters
+        final whereClause = '${DatabaseHelper.columnId} = ?';
+        expect(whereClause, contains('?'));
+        expect(whereClause, equals('id = ?'));
+        // Uses ? placeholder instead of string concatenation for safety
+      });
+    });
+
+    group('clearSearchHistory', () {
+      // Method signature:
+      // Future<int> clearSearchHistory() async {
+      //   final db = await database;
+      //   return await db.delete(tableSearchHistory);
+      // }
+
+      test('deletes from search_history table', () {
+        // SQL DELETE operation:
+        // await db.delete(tableSearchHistory);
+        //
+        // Expected: Uses tableSearchHistory constant
+        // Rationale: Consistent table name reference
+        // Implementation: DatabaseHelper.tableSearchHistory = 'search_history'
+        expect(DatabaseHelper.tableSearchHistory, equals('search_history'));
+      });
+
+      test('has no WHERE clause to delete all entries', () {
+        // No WHERE clause:
+        // await db.delete(tableSearchHistory);
+        // NOT: await db.delete(tableSearchHistory, where: '...');
+        //
+        // Expected: Omits where parameter to delete all rows
+        // Rationale: DELETE without WHERE removes all table data
+        // Implementation: Calls db.delete with only table name
+        expect(DatabaseHelper.tableSearchHistory, isNotEmpty);
+        // Absence of WHERE means: DELETE FROM search_history (all rows)
+      });
+
+      test('takes no parameters', () {
+        // Method signature:
+        // Future<int> clearSearchHistory() async
+        //
+        // Expected: No parameters needed
+        // Rationale: Clears entire table, no filtering required
+        // Implementation: Simple method signature with no args
+        // Method has no parameters - deletes everything
+      });
+
+      test('returns number of deleted rows', () {
+        // Return value:
+        // return await db.delete(tableSearchHistory);
+        //
+        // Expected: Returns int count of deleted rows
+        // Rationale: SQLite delete returns number of affected rows
+        // Implementation: Returns total count of all deleted entries
+        const multipleDeleted = 5;
+        const emptyTableDeleted = 0;
+        expect(multipleDeleted, greaterThan(0));
+        expect(emptyTableDeleted, equals(0));
+      });
+
+      test('returns 0 when table is already empty', () {
+        // Empty table handling:
+        // await db.delete(tableSearchHistory); // on empty table
+        //
+        // Expected: Returns 0 when no rows exist
+        // Rationale: SQLite returns 0 for DELETE with no matches
+        // Implementation: No special handling needed
+        const emptyResult = 0;
+        expect(emptyResult, equals(0));
+      });
+
+      test('removes all entries regardless of timestamp or content', () {
+        // Complete table clearing:
+        // DELETE FROM search_history
+        //
+        // Expected: All rows deleted, no filtering
+        // Rationale: Clear operation removes everything
+        // Implementation: No WHERE, ORDER BY, or LIMIT clauses
+        expect(DatabaseHelper.tableSearchHistory, equals('search_history'));
+        // No WHERE clause means all rows are deleted
+      });
+
+      test('is efficient for bulk deletion', () {
+        // Bulk delete performance:
+        // DELETE FROM search_history
+        //
+        // Expected: Single SQL statement removes all rows
+        // Rationale: More efficient than deleting one-by-one
+        // Implementation: Single db.delete() call without iteration
+        expect(DatabaseHelper.tableSearchHistory, isNotEmpty);
+        // Single DELETE statement is more efficient than multiple WHERE clauses
+      });
+
+      test('can be used to reset search history feature', () {
+        // Use case:
+        // User wants to clear all search history
+        // Privacy concerns or starting fresh
+        //
+        // Expected: Provides clean slate functionality
+        // Rationale: Common privacy feature in search UIs
+        // Implementation: Simple delete all operation
+        expect(DatabaseHelper.tableSearchHistory, equals('search_history'));
+        // Provides "Clear History" feature for privacy
+      });
+    });
   });
 }

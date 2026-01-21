@@ -33,10 +33,9 @@ void main() {
       id: id,
       title: title,
       description: description,
-      filePath: '/path/to/$id.enc',
+      pagesPaths: ['/path/to/$id-page-1.enc'],
       thumbnailPath: '/path/to/$id-thumb.enc',
       originalFileName: '$id.jpg',
-      pageCount: 1,
       fileSize: fileSize,
       mimeType: 'image/jpeg',
       ocrText: ocrText,
@@ -53,6 +52,8 @@ void main() {
     mockDocumentRepository = MockDocumentRepository();
 
     when(mockDatabaseHelper.initialize()).thenAnswer((_) async => true);
+    when(mockDatabaseHelper.getSearchHistory(limit: anyNamed('limit')))
+        .thenAnswer((_) async => []);
 
     searchService = SearchService(
       databaseHelper: mockDatabaseHelper,
@@ -804,6 +805,37 @@ void main() {
       );
     });
 
+    test('loads recent searches during initialization', () async {
+      // Mock search history data
+      when(mockDatabaseHelper.getSearchHistory(limit: anyNamed('limit')))
+          .thenAnswer((_) async => [
+                {
+                  'query': 'invoice 2024',
+                  'timestamp': '2024-01-15T10:30:00.000',
+                  'resultCount': 5,
+                },
+                {
+                  'query': 'contract',
+                  'timestamp': '2024-01-14T14:20:00.000',
+                  'resultCount': 3,
+                },
+              ]);
+
+      await searchService.initialize();
+
+      // Verify recent searches were loaded
+      expect(searchService.recentSearches.length, 2);
+      expect(searchService.recentSearches[0].query, 'invoice 2024');
+      expect(searchService.recentSearches[0].resultCount, 5);
+      expect(searchService.recentSearches[1].query, 'contract');
+      expect(searchService.recentSearches[1].resultCount, 3);
+
+      // Verify getSearchHistory was called with correct limit
+      verify(
+        mockDatabaseHelper.getSearchHistory(limit: SearchService.maxRecentSearches),
+      ).called(1);
+    });
+
     test('search throws if not initialized', () async {
       expect(
         () => searchService.search('test'),
@@ -861,6 +893,31 @@ void main() {
 
       expect(searchService.recentSearches.length, 1);
       expect(searchService.recentSearches.first.query, 'my query');
+    });
+
+    test('persistRecentSearches to database after search', () async {
+      await searchService.initialize();
+
+      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => []);
+      when(mockDatabaseHelper.clearSearchHistory()).thenAnswer((_) async => 0);
+      when(mockDatabaseHelper.insertSearchHistory(
+        query: anyNamed('query'),
+        timestamp: anyNamed('timestamp'),
+        resultCount: anyNamed('resultCount'),
+      )).thenAnswer((_) async => 1);
+
+      await searchService.search('test query');
+
+      // Wait a bit for async persistence to complete
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      // Verify database methods were called
+      verify(mockDatabaseHelper.clearSearchHistory()).called(1);
+      verify(mockDatabaseHelper.insertSearchHistory(
+        query: 'test query',
+        timestamp: anyNamed('timestamp'),
+        resultCount: 0,
+      )).called(1);
     });
 
     test('search deduplicates recent searches', () async {
@@ -1119,12 +1176,39 @@ void main() {
     test('clearRecentSearches removes all entries', () async {
       await searchService.initialize();
       when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => []);
+      when(mockDatabaseHelper.clearSearchHistory()).thenAnswer((_) async => 0);
+      when(mockDatabaseHelper.insertSearchHistory(
+        query: anyNamed('query'),
+        timestamp: anyNamed('timestamp'),
+        resultCount: anyNamed('resultCount'),
+      )).thenAnswer((_) async => 1);
 
       await searchService.search('query1');
       await searchService.search('query2');
 
       await searchService.clearRecentSearches();
 
+      expect(searchService.recentSearches, isEmpty);
+    });
+
+    test('clearRecentSearches persists to database', () async {
+      await searchService.initialize();
+      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => []);
+      when(mockDatabaseHelper.clearSearchHistory()).thenAnswer((_) async => 0);
+      when(mockDatabaseHelper.insertSearchHistory(
+        query: anyNamed('query'),
+        timestamp: anyNamed('timestamp'),
+        resultCount: anyNamed('resultCount'),
+      )).thenAnswer((_) async => 1);
+
+      await searchService.search('query1');
+      await searchService.search('query2');
+
+      await searchService.clearRecentSearches();
+
+      // Verify database method was called at least 3 times
+      // (once per search for persistence, once for clearRecentSearches)
+      verify(mockDatabaseHelper.clearSearchHistory()).called(3);
       expect(searchService.recentSearches, isEmpty);
     });
 
@@ -1154,6 +1238,38 @@ void main() {
       await searchService.removeRecentSearch('MYQUERY');
 
       expect(searchService.recentSearches, isEmpty);
+    });
+
+    test('removeRecentSearch persists to database', () async {
+      await searchService.initialize();
+      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => []);
+      when(mockDatabaseHelper.clearSearchHistory()).thenAnswer((_) async => 0);
+      when(mockDatabaseHelper.insertSearchHistory(
+        query: anyNamed('query'),
+        timestamp: anyNamed('timestamp'),
+        resultCount: anyNamed('resultCount'),
+      )).thenAnswer((_) async => 1);
+
+      await searchService.search('query1');
+      await searchService.search('query2');
+      await searchService.search('query3');
+
+      // Wait a bit for async persistence to complete after searches
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      // Reset verification counts
+      clearInteractions(mockDatabaseHelper);
+
+      await searchService.removeRecentSearch('query2');
+
+      // Verify database methods were called to persist the change
+      verify(mockDatabaseHelper.clearSearchHistory()).called(1);
+      // Should insert remaining 2 queries
+      verify(mockDatabaseHelper.insertSearchHistory(
+        query: anyNamed('query'),
+        timestamp: anyNamed('timestamp'),
+        resultCount: anyNamed('resultCount'),
+      )).called(2);
     });
 
     test('rebuildIndex throws if not initialized', () async {

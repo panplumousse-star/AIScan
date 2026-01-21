@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "025-batch-database-queries-to-eliminate-n-1-issues-in-",
+  "spec": "042-persist-search-history-to-database",
   "state": "building",
   "subtasks": {
-    "completed": 8,
-    "total": 11,
+    "completed": 5,
+    "total": 8,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Verification and Testing",
+    "current": "SearchService Integration Tests",
     "id": null,
-    "total": 3
+    "total": 4
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 10,
-    "started_at": "2026-01-21T09:19:07.559674"
+    "number": 7,
+    "started_at": "2026-01-21T13:52:07.861803"
   },
-  "last_update": "2026-01-21T09:35:51.085536"
+  "last_update": "2026-01-21T14:05:24.362793"
 }

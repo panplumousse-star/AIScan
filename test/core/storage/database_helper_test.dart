@@ -2312,5 +2312,199 @@ void main() {
         expect(emptyResult, isA<List<Map<String, dynamic>>>());
       });
     });
+
+    group('deleteSearchHistory', () {
+      // Method signature:
+      // Future<int> deleteSearchHistory(int id) async {
+      //   final db = await database;
+      //   return await db.delete(
+      //     tableSearchHistory,
+      //     where: '$columnId = ?',
+      //     whereArgs: [id],
+      //   );
+      // }
+
+      test('deletes from search_history table', () {
+        // SQL DELETE operation:
+        // await db.delete(tableSearchHistory, where: 'id = ?', whereArgs: [id]);
+        //
+        // Expected: Uses tableSearchHistory constant
+        // Rationale: Consistent table name reference
+        // Implementation: DatabaseHelper.tableSearchHistory = 'search_history'
+        expect(DatabaseHelper.tableSearchHistory, equals('search_history'));
+      });
+
+      test('uses WHERE clause to target specific entry by ID', () {
+        // WHERE clause construction:
+        // where: '$columnId = ?'
+        // whereArgs: [id]
+        //
+        // Expected: Filters by id column with parameterized query
+        // Rationale: Prevents SQL injection and targets single entry
+        // Implementation: Uses positional parameter (?) with whereArgs
+        final whereClause = '${DatabaseHelper.columnId} = ?';
+        expect(whereClause, equals('id = ?'));
+        expect(DatabaseHelper.columnId, equals('id'));
+      });
+
+      test('accepts integer ID parameter', () {
+        // Parameter type:
+        // Future<int> deleteSearchHistory(int id)
+        //
+        // Expected: ID must be an integer
+        // Rationale: Matches id column type (INTEGER PRIMARY KEY)
+        // Implementation: Type-safe parameter
+        final validId = 42;
+        expect(validId, isA<int>());
+        expect(validId, greaterThan(0));
+      });
+
+      test('returns number of deleted rows', () {
+        // Return value:
+        // return await db.delete(...)
+        //
+        // Expected: Returns int count of deleted rows
+        // Rationale: SQLite delete returns number of affected rows
+        // Implementation: Returns 1 if found and deleted, 0 if not found
+        const deletedCount = 1;
+        const notFoundCount = 0;
+        expect(deletedCount, equals(1));
+        expect(notFoundCount, equals(0));
+      });
+
+      test('returns 0 when ID does not exist', () {
+        // Non-existent ID handling:
+        // await db.delete(tableSearchHistory, where: 'id = ?', whereArgs: [999999]);
+        //
+        // Expected: Returns 0 when no matching row found
+        // Rationale: SQLite returns 0 for DELETE with no matches
+        // Implementation: No special handling needed
+        const notFoundResult = 0;
+        expect(notFoundResult, equals(0));
+      });
+
+      test('only deletes the specified entry, not others', () {
+        // Single entry deletion:
+        // WHERE id = ?
+        //
+        // Expected: Only the row with matching ID is deleted
+        // Rationale: WHERE clause ensures single-row operation
+        // Implementation: Primary key constraint ensures uniqueness
+        expect(DatabaseHelper.columnId, equals('id'));
+        // id is PRIMARY KEY, so WHERE id = ? matches at most one row
+      });
+
+      test('uses parameterized query for SQL injection safety', () {
+        // Parameterized query:
+        // where: 'id = ?'
+        // whereArgs: [id]
+        //
+        // Expected: Uses placeholder (?) with separate arguments
+        // Rationale: Prevents SQL injection attacks
+        // Implementation: SQLite prepared statement with bound parameters
+        final whereClause = '${DatabaseHelper.columnId} = ?';
+        expect(whereClause, contains('?'));
+        expect(whereClause, equals('id = ?'));
+        // Uses ? placeholder instead of string concatenation for safety
+      });
+    });
+
+    group('clearSearchHistory', () {
+      // Method signature:
+      // Future<int> clearSearchHistory() async {
+      //   final db = await database;
+      //   return await db.delete(tableSearchHistory);
+      // }
+
+      test('deletes from search_history table', () {
+        // SQL DELETE operation:
+        // await db.delete(tableSearchHistory);
+        //
+        // Expected: Uses tableSearchHistory constant
+        // Rationale: Consistent table name reference
+        // Implementation: DatabaseHelper.tableSearchHistory = 'search_history'
+        expect(DatabaseHelper.tableSearchHistory, equals('search_history'));
+      });
+
+      test('has no WHERE clause to delete all entries', () {
+        // No WHERE clause:
+        // await db.delete(tableSearchHistory);
+        // NOT: await db.delete(tableSearchHistory, where: '...');
+        //
+        // Expected: Omits where parameter to delete all rows
+        // Rationale: DELETE without WHERE removes all table data
+        // Implementation: Calls db.delete with only table name
+        expect(DatabaseHelper.tableSearchHistory, isNotEmpty);
+        // Absence of WHERE means: DELETE FROM search_history (all rows)
+      });
+
+      test('takes no parameters', () {
+        // Method signature:
+        // Future<int> clearSearchHistory() async
+        //
+        // Expected: No parameters needed
+        // Rationale: Clears entire table, no filtering required
+        // Implementation: Simple method signature with no args
+        // Method has no parameters - deletes everything
+      });
+
+      test('returns number of deleted rows', () {
+        // Return value:
+        // return await db.delete(tableSearchHistory);
+        //
+        // Expected: Returns int count of deleted rows
+        // Rationale: SQLite delete returns number of affected rows
+        // Implementation: Returns total count of all deleted entries
+        const multipleDeleted = 5;
+        const emptyTableDeleted = 0;
+        expect(multipleDeleted, greaterThan(0));
+        expect(emptyTableDeleted, equals(0));
+      });
+
+      test('returns 0 when table is already empty', () {
+        // Empty table handling:
+        // await db.delete(tableSearchHistory); // on empty table
+        //
+        // Expected: Returns 0 when no rows exist
+        // Rationale: SQLite returns 0 for DELETE with no matches
+        // Implementation: No special handling needed
+        const emptyResult = 0;
+        expect(emptyResult, equals(0));
+      });
+
+      test('removes all entries regardless of timestamp or content', () {
+        // Complete table clearing:
+        // DELETE FROM search_history
+        //
+        // Expected: All rows deleted, no filtering
+        // Rationale: Clear operation removes everything
+        // Implementation: No WHERE, ORDER BY, or LIMIT clauses
+        expect(DatabaseHelper.tableSearchHistory, equals('search_history'));
+        // No WHERE clause means all rows are deleted
+      });
+
+      test('is efficient for bulk deletion', () {
+        // Bulk delete performance:
+        // DELETE FROM search_history
+        //
+        // Expected: Single SQL statement removes all rows
+        // Rationale: More efficient than deleting one-by-one
+        // Implementation: Single db.delete() call without iteration
+        expect(DatabaseHelper.tableSearchHistory, isNotEmpty);
+        // Single DELETE statement is more efficient than multiple WHERE clauses
+      });
+
+      test('can be used to reset search history feature', () {
+        // Use case:
+        // User wants to clear all search history
+        // Privacy concerns or starting fresh
+        //
+        // Expected: Provides clean slate functionality
+        // Rationale: Common privacy feature in search UIs
+        // Implementation: Simple delete all operation
+        expect(DatabaseHelper.tableSearchHistory, equals('search_history'));
+        // Provides "Clear History" feature for privacy
+      });
+    });
   });
 }

@@ -395,7 +395,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : Colors.white,
+            color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : AppColors.bentoCardWhite,
             borderRadius: BorderRadius.circular(32),
             border: Border.all(
               color: isDark 
@@ -416,7 +416,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEEF2FF),
+                  color: isDark ? AppColors.surfaceVariantDark : const Color(0xFFEEF2FF),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -437,14 +437,14 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                       style: GoogleFonts.outfit(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
+                        color: isDark ? AppColors.surfaceVariantLight : const Color(0xFF1E1B4B),
                       ),
                     ),
                     Text(
                       'Tout est sauvegardé localement',
                       style: GoogleFonts.outfit(
                         fontSize: 12,
-                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        color: isDark ? AppColors.neutralDark : AppColors.neutralLight,
                       ),
                     ),
                   ],
@@ -455,7 +455,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF5F3FF),
+                    color: isDark ? AppColors.surfaceVariantDark : const Color(0xFFF5F3FF),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: isDark 

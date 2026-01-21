@@ -1,15 +1,15 @@
 {
   "active": true,
-  "spec": "027-replace-hardcoded-colors-with-theme-constants",
+  "spec": "025-batch-database-queries-to-eliminate-n-1-issues-in-",
   "state": "building",
   "subtasks": {
-    "completed": 9,
-    "total": 10,
+    "completed": 8,
+    "total": 11,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Visual Regression Testing",
+    "current": "Verification and Testing",
     "id": null,
     "total": 3
   },
@@ -18,8 +18,8 @@
     "max": 1
   },
   "session": {
-    "number": 11,
-    "started_at": "2026-01-21T08:21:15.359986"
+    "number": 10,
+    "started_at": "2026-01-21T09:19:07.559674"
   },
-  "last_update": "2026-01-21T08:45:59.247694"
+  "last_update": "2026-01-21T09:35:51.085536"
 }

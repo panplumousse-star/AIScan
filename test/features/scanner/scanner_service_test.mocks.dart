@@ -4,6 +4,7 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i4;
+import 'dart:typed_data' as _i6;
 
 import 'package:aiscan/core/storage/document_repository.dart' as _i3;
 import 'package:aiscan/features/documents/domain/document_model.dart' as _i2;
@@ -201,6 +202,17 @@ class MockDocumentRepository extends _i1.Mock
         ),
         returnValue: _i4.Future<List<int>>.value(<int>[]),
       ) as _i4.Future<List<int>>);
+
+  @override
+  _i4.Future<_i6.Uint8List?> getDecryptedThumbnailBytes(
+          _i2.Document? document) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getDecryptedThumbnailBytes,
+          [document],
+        ),
+        returnValue: _i4.Future<_i6.Uint8List?>.value(),
+      ) as _i4.Future<_i6.Uint8List?>);
 
   @override
   _i4.Future<String?> getDecryptedThumbnailPath(_i2.Document? document) =>

@@ -4,6 +4,7 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i3;
+import 'dart:typed_data' as _i8;
 
 import 'package:aiscan/core/storage/database_helper.dart' as _i5;
 import 'package:aiscan/core/storage/document_repository.dart' as _i7;
@@ -355,6 +356,18 @@ class MockDatabaseHelper extends _i1.Mock implements _i5.DatabaseHelper {
       ) as _i3.Future<List<String>>);
 
   @override
+  _i3.Future<Map<String, List<String>>> getBatchDocumentPagePaths(
+          List<String>? documentIds) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getBatchDocumentPagePaths,
+          [documentIds],
+        ),
+        returnValue: _i3.Future<Map<String, List<String>>>.value(
+            <String, List<String>>{}),
+      ) as _i3.Future<Map<String, List<String>>>);
+
+  @override
   _i3.Future<Map<String, dynamic>?> getDocumentPage(
     String? documentId,
     int? pageNumber,
@@ -444,6 +457,18 @@ class MockDatabaseHelper extends _i1.Mock implements _i5.DatabaseHelper {
         ),
         returnValue: _i3.Future<int>.value(0),
       ) as _i3.Future<int>);
+
+  @override
+  _i3.Future<Map<String, List<String>>> getBatchDocumentTags(
+          List<String>? documentIds) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getBatchDocumentTags,
+          [documentIds],
+        ),
+        returnValue: _i3.Future<Map<String, List<String>>>.value(
+            <String, List<String>>{}),
+      ) as _i3.Future<Map<String, List<String>>>);
 
   @override
   _i3.Future<int> insertSearchHistory({
@@ -667,6 +692,17 @@ class MockDocumentRepository extends _i1.Mock
         ),
         returnValue: _i3.Future<List<int>>.value(<int>[]),
       ) as _i3.Future<List<int>>);
+
+  @override
+  _i3.Future<_i8.Uint8List?> getDecryptedThumbnailBytes(
+          _i4.Document? document) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getDecryptedThumbnailBytes,
+          [document],
+        ),
+        returnValue: _i3.Future<_i8.Uint8List?>.value(),
+      ) as _i3.Future<_i8.Uint8List?>);
 
   @override
   _i3.Future<String?> getDecryptedThumbnailPath(_i4.Document? document) =>

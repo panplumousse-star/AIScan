@@ -453,6 +453,17 @@ class MockDocumentRepository extends _i1.Mock
       ) as _i5.Future<List<int>>);
 
   @override
+  _i5.Future<_i7.Uint8List?> getDecryptedThumbnailBytes(
+          _i3.Document? document) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getDecryptedThumbnailBytes,
+          [document],
+        ),
+        returnValue: _i5.Future<_i7.Uint8List?>.value(),
+      ) as _i5.Future<_i7.Uint8List?>);
+
+  @override
   _i5.Future<String?> getDecryptedThumbnailPath(_i3.Document? document) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -1002,6 +1013,18 @@ class MockDatabaseHelper extends _i1.Mock implements _i10.DatabaseHelper {
       ) as _i5.Future<List<String>>);
 
   @override
+  _i5.Future<Map<String, List<String>>> getBatchDocumentPagePaths(
+          List<String>? documentIds) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getBatchDocumentPagePaths,
+          [documentIds],
+        ),
+        returnValue: _i5.Future<Map<String, List<String>>>.value(
+            <String, List<String>>{}),
+      ) as _i5.Future<Map<String, List<String>>>);
+
+  @override
   _i5.Future<Map<String, dynamic>?> getDocumentPage(
     String? documentId,
     int? pageNumber,
@@ -1091,6 +1114,18 @@ class MockDatabaseHelper extends _i1.Mock implements _i10.DatabaseHelper {
         ),
         returnValue: _i5.Future<int>.value(0),
       ) as _i5.Future<int>);
+
+  @override
+  _i5.Future<Map<String, List<String>>> getBatchDocumentTags(
+          List<String>? documentIds) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getBatchDocumentTags,
+          [documentIds],
+        ),
+        returnValue: _i5.Future<Map<String, List<String>>>.value(
+            <String, List<String>>{}),
+      ) as _i5.Future<Map<String, List<String>>>);
 
   @override
   _i5.Future<int> insertSearchHistory({

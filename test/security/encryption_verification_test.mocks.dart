@@ -555,6 +555,18 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
       ) as _i3.Future<List<String>>);
 
   @override
+  _i3.Future<Map<String, List<String>>> getBatchDocumentPagePaths(
+          List<String>? documentIds) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getBatchDocumentPagePaths,
+          [documentIds],
+        ),
+        returnValue: _i3.Future<Map<String, List<String>>>.value(
+            <String, List<String>>{}),
+      ) as _i3.Future<Map<String, List<String>>>);
+
+  @override
   _i3.Future<Map<String, dynamic>?> getDocumentPage(
     String? documentId,
     int? pageNumber,
@@ -644,6 +656,18 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
         ),
         returnValue: _i3.Future<int>.value(0),
       ) as _i3.Future<int>);
+
+  @override
+  _i3.Future<Map<String, List<String>>> getBatchDocumentTags(
+          List<String>? documentIds) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getBatchDocumentTags,
+          [documentIds],
+        ),
+        returnValue: _i3.Future<Map<String, List<String>>>.value(
+            <String, List<String>>{}),
+      ) as _i3.Future<Map<String, List<String>>>);
 
   @override
   _i3.Future<int> insertSearchHistory({

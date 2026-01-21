@@ -68,6 +68,32 @@ class DocumentRepositoryException implements Exception {
 /// - Decryption happens on-demand when accessing document content
 /// - Metadata is stored in SQLite via [DatabaseHelper]
 ///
+/// ## Performance
+/// All document list methods use batch queries to eliminate N+1 query problems:
+/// - [getAllDocuments], [getDocumentsInFolder], [getFavoriteDocuments], [getDocumentsByTag]:
+///   Query count reduced from **1 + N + N** to **3 queries** total (for N documents)
+/// - [searchDocuments]:
+///   Query count reduced from **1 + N + N + N** to **4 queries** total
+///
+/// ### N+1 Query Elimination
+/// Previously, fetching a list of documents would result in O(N) database queries:
+/// - 1 query to fetch document metadata
+/// - N queries to fetch page paths for each document individually
+/// - N queries to fetch tags for each document individually (if includeTags = true)
+///
+/// With batch query optimization:
+/// - 1 query to fetch document metadata
+/// - 1 batch query to fetch ALL page paths using SQL IN clause
+/// - 1 batch query to fetch ALL tags using SQL IN clause
+///
+/// **Example**: Loading 50 documents with tags
+/// - Before: 1 + 50 + 50 = **101 queries**
+/// - After: 1 + 1 + 1 = **3 queries**
+/// - Improvement: **97% reduction** in database queries
+///
+/// This dramatically improves performance, especially on mobile devices where
+/// database query overhead (context switching, lock acquisition) is significant.
+///
 /// ## Usage
 /// ```dart
 /// final repository = ref.read(documentRepositoryProvider);
@@ -389,6 +415,11 @@ class DocumentRepository {
   /// - [offset]: Number of documents to skip (for pagination)
   ///
   /// Throws [DocumentRepositoryException] if the query fails.
+  ///
+  /// ## Performance
+  /// This method uses batch queries to eliminate N+1 query problems:
+  /// - Before: 1 + N + N queries (1 for documents, N for page paths, N for tags)
+  /// - After: 1 + 1 + 1 = 3 queries total (1 for documents, 1 batch for all page paths, 1 batch for all tags)
   Future<List<Document>> getAllDocuments({
     bool includeTags = false,
     String? orderBy,
@@ -403,14 +434,31 @@ class DocumentRepository {
         offset: offset,
       );
 
+      // Return early if no documents found
+      if (results.isEmpty) {
+        return [];
+      }
+
+      // Extract all document IDs
+      final documentIds = results
+          .map((result) => result[DatabaseHelper.columnId] as String)
+          .toList();
+
+      // Batch fetch page paths for all documents in a single query
+      final allPagesPaths = await _database.getBatchDocumentPagePaths(documentIds);
+
+      // Batch fetch tags for all documents in a single query if requested
+      Map<String, List<String>>? allTags;
+      if (includeTags) {
+        allTags = await _database.getBatchDocumentTags(documentIds);
+      }
+
+      // Build document objects using the batch-fetched data
       final documents = <Document>[];
       for (final result in results) {
         final docId = result[DatabaseHelper.columnId] as String;
-        final pagesPaths = await _database.getDocumentPagePaths(docId);
-        List<String>? tags;
-        if (includeTags) {
-          tags = await getDocumentTags(docId);
-        }
+        final pagesPaths = allPagesPaths[docId] ?? [];
+        final tags = includeTags ? allTags![docId] : null;
         documents.add(Document.fromMap(result, pagesPaths: pagesPaths, tags: tags));
       }
 
@@ -431,6 +479,11 @@ class DocumentRepository {
   /// - [orderBy]: SQL ORDER BY clause
   ///
   /// Throws [DocumentRepositoryException] if the query fails.
+  ///
+  /// ## Performance
+  /// This method uses batch queries to eliminate N+1 query problems:
+  /// - Before: 1 + N + N queries (1 for documents, N for page paths, N for tags)
+  /// - After: 1 + 1 + 1 = 3 queries total (1 for documents, 1 batch for all page paths, 1 batch for all tags)
   Future<List<Document>> getDocumentsInFolder(
     String? folderId, {
     bool includeTags = false,
@@ -446,14 +499,31 @@ class DocumentRepository {
         orderBy: orderBy ?? '${DatabaseHelper.columnCreatedAt} DESC',
       );
 
+      // Return early if no documents found
+      if (results.isEmpty) {
+        return [];
+      }
+
+      // Extract all document IDs
+      final documentIds = results
+          .map((result) => result[DatabaseHelper.columnId] as String)
+          .toList();
+
+      // Batch fetch page paths for all documents in a single query
+      final allPagesPaths = await _database.getBatchDocumentPagePaths(documentIds);
+
+      // Batch fetch tags for all documents in a single query if requested
+      Map<String, List<String>>? allTags;
+      if (includeTags) {
+        allTags = await _database.getBatchDocumentTags(documentIds);
+      }
+
+      // Build document objects using the batch-fetched data
       final documents = <Document>[];
       for (final result in results) {
         final docId = result[DatabaseHelper.columnId] as String;
-        final pagesPaths = await _database.getDocumentPagePaths(docId);
-        List<String>? tags;
-        if (includeTags) {
-          tags = await getDocumentTags(docId);
-        }
+        final pagesPaths = allPagesPaths[docId] ?? [];
+        final tags = includeTags ? allTags![docId] : null;
         documents.add(Document.fromMap(result, pagesPaths: pagesPaths, tags: tags));
       }
 
@@ -469,6 +539,11 @@ class DocumentRepository {
   /// Gets favorite documents.
   ///
   /// Throws [DocumentRepositoryException] if the query fails.
+  ///
+  /// ## Performance
+  /// This method uses batch queries to eliminate N+1 query problems:
+  /// - Before: 1 + N + N queries (1 for documents, N for page paths, N for tags)
+  /// - After: 1 + 1 + 1 = 3 queries total (1 for documents, 1 batch for all page paths, 1 batch for all tags)
   Future<List<Document>> getFavoriteDocuments({
     bool includeTags = false,
   }) async {
@@ -480,14 +555,31 @@ class DocumentRepository {
         orderBy: '${DatabaseHelper.columnCreatedAt} DESC',
       );
 
+      // Return early if no documents found
+      if (results.isEmpty) {
+        return [];
+      }
+
+      // Extract all document IDs
+      final documentIds = results
+          .map((result) => result[DatabaseHelper.columnId] as String)
+          .toList();
+
+      // Batch fetch page paths for all documents in a single query
+      final allPagesPaths = await _database.getBatchDocumentPagePaths(documentIds);
+
+      // Batch fetch tags for all documents in a single query if requested
+      Map<String, List<String>>? allTags;
+      if (includeTags) {
+        allTags = await _database.getBatchDocumentTags(documentIds);
+      }
+
+      // Build document objects using the batch-fetched data
       final documents = <Document>[];
       for (final result in results) {
         final docId = result[DatabaseHelper.columnId] as String;
-        final pagesPaths = await _database.getDocumentPagePaths(docId);
-        List<String>? tags;
-        if (includeTags) {
-          tags = await getDocumentTags(docId);
-        }
+        final pagesPaths = allPagesPaths[docId] ?? [];
+        final tags = includeTags ? allTags![docId] : null;
         documents.add(Document.fromMap(result, pagesPaths: pagesPaths, tags: tags));
       }
 
@@ -1141,6 +1233,11 @@ class DocumentRepository {
   /// Gets all documents with a specific tag.
   ///
   /// Throws [DocumentRepositoryException] if the query fails.
+  ///
+  /// ## Performance
+  /// This method uses batch queries to eliminate N+1 query problems:
+  /// - Before: 1 + N + N queries (1 for documents, N for page paths, N for tags)
+  /// - After: 1 + 1 + 1 = 3 queries total (1 for documents, 1 batch for all page paths, 1 batch for all tags)
   Future<List<Document>> getDocumentsByTag(
     String tagId, {
     bool includeTags = false,
@@ -1158,14 +1255,31 @@ class DocumentRepository {
         [tagId],
       );
 
+      // Return early if no documents found
+      if (results.isEmpty) {
+        return [];
+      }
+
+      // Extract all document IDs
+      final documentIds = results
+          .map((result) => result[DatabaseHelper.columnId] as String)
+          .toList();
+
+      // Batch fetch page paths for all documents in a single query
+      final allPagesPaths = await _database.getBatchDocumentPagePaths(documentIds);
+
+      // Batch fetch tags for all documents in a single query if requested
+      Map<String, List<String>>? allTags;
+      if (includeTags) {
+        allTags = await _database.getBatchDocumentTags(documentIds);
+      }
+
+      // Build document objects using the batch-fetched data
       final documents = <Document>[];
       for (final result in results) {
         final docId = result[DatabaseHelper.columnId] as String;
-        final pagesPaths = await _database.getDocumentPagePaths(docId);
-        List<String>? tags;
-        if (includeTags) {
-          tags = await getDocumentTags(docId);
-        }
+        final pagesPaths = allPagesPaths[docId] ?? [];
+        final tags = includeTags ? allTags![docId] : null;
         documents.add(Document.fromMap(result, pagesPaths: pagesPaths, tags: tags));
       }
 
@@ -1189,6 +1303,11 @@ class DocumentRepository {
   /// Returns documents matching the search query.
   ///
   /// Throws [DocumentRepositoryException] if the search fails.
+  ///
+  /// ## Performance
+  /// This method uses batch queries to eliminate N+1 query problems:
+  /// - Before: 1 + N + N + N queries (1 for search, N for documents, N for page paths, N for tags)
+  /// - After: 1 + 1 + 1 + 1 = 4 queries total (1 for search, 1 for documents, 1 batch for all page paths, 1 batch for all tags)
   Future<List<Document>> searchDocuments(
     String query, {
     bool includeTags = false,
@@ -1196,12 +1315,43 @@ class DocumentRepository {
     try {
       final documentIds = await _database.searchDocuments(query);
 
+      // Return early if no documents found
+      if (documentIds.isEmpty) {
+        return [];
+      }
+
+      // Batch fetch full document records for all search results
+      final placeholders = List.filled(documentIds.length, '?').join(', ');
+      final results = await _database.rawQuery(
+        '''
+        SELECT * FROM ${DatabaseHelper.tableDocuments}
+        WHERE ${DatabaseHelper.columnId} IN ($placeholders)
+        ORDER BY ${DatabaseHelper.columnCreatedAt} DESC
+        ''',
+        documentIds,
+      );
+
+      // Return early if no documents found (shouldn't happen, but defensive)
+      if (results.isEmpty) {
+        return [];
+      }
+
+      // Batch fetch page paths for all documents in a single query
+      final allPagesPaths = await _database.getBatchDocumentPagePaths(documentIds);
+
+      // Batch fetch tags for all documents in a single query if requested
+      Map<String, List<String>>? allTags;
+      if (includeTags) {
+        allTags = await _database.getBatchDocumentTags(documentIds);
+      }
+
+      // Build document objects using the batch-fetched data
       final documents = <Document>[];
-      for (final id in documentIds) {
-        final document = await getDocument(id, includeTags: includeTags);
-        if (document != null) {
-          documents.add(document);
-        }
+      for (final result in results) {
+        final docId = result[DatabaseHelper.columnId] as String;
+        final pagesPaths = allPagesPaths[docId] ?? [];
+        final tags = includeTags ? allTags![docId] : null;
+        documents.add(Document.fromMap(result, pagesPaths: pagesPaths, tags: tags));
       }
 
       return documents;

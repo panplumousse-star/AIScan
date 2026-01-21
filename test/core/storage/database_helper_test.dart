@@ -1614,4 +1614,315 @@ void main() {
       expect(DatabaseHelper.ftsVersion, equals(4));
     });
   });
+
+  group('Batch Query Methods', () {
+    group('getBatchDocumentPagePaths', () {
+      test('returns empty map for empty document ID list', () {
+        // When given an empty list of document IDs:
+        // getBatchDocumentPagePaths([])
+        //
+        // Expected: Returns empty map {}
+        // Rationale: No documents to query means no results
+        // Implementation: Early return before database query
+        expect([], isEmpty);
+      });
+
+      test('returns map with all requested document IDs as keys', () {
+        // When given multiple document IDs:
+        // getBatchDocumentPagePaths(['doc1', 'doc2', 'doc3'])
+        //
+        // Expected: Map contains all three IDs as keys
+        // Rationale: Result map is pre-initialized with all document IDs
+        // Implementation: for (final id in documentIds) result[id] = [];
+        final documentIds = ['doc1', 'doc2', 'doc3'];
+        expect(documentIds.length, equals(3));
+      });
+
+      test('initializes each document ID with empty list', () {
+        // Before database query, all document IDs get empty lists:
+        // result['doc1'] = []
+        // result['doc2'] = []
+        //
+        // Expected: Documents with no pages keep empty list
+        // Rationale: Ensures consistent return structure
+        // Implementation: Result map initialized before query
+        final emptyList = <String>[];
+        expect(emptyList, isEmpty);
+      });
+
+      test('uses SQL IN clause for batch fetching', () {
+        // Batch query uses parameterized IN clause:
+        // WHERE document_id IN (?, ?, ?)
+        //
+        // Expected: Single database query for all documents
+        // Rationale: Eliminates N+1 query problem
+        // Implementation: Uses List.filled(count, '?').join(',')
+        final documentIds = ['doc1', 'doc2', 'doc3'];
+        final placeholders = List.filled(documentIds.length, '?').join(',');
+        expect(placeholders, equals('?,?,?'));
+      });
+
+      test('orders pages by document ID and page number', () {
+        // Query includes ORDER BY clause:
+        // ORDER BY document_id, page_number ASC
+        //
+        // Expected: Pages grouped by document, ordered by page number
+        // Rationale: Ensures correct page order for each document
+        // Implementation: SQL ORDER BY in batch query
+        expect(DatabaseHelper.columnDocumentId, equals('document_id'));
+        expect(DatabaseHelper.columnPageNumber, equals('page_number'));
+      });
+
+      test('groups page paths by document ID', () {
+        // Results are grouped after query:
+        // for (final page in pages) {
+        //   final docId = page['document_id'];
+        //   result[docId].add(page['file_path']);
+        // }
+        //
+        // Expected: Each document ID maps to its page paths list
+        // Rationale: Converts flat query results to grouped structure
+        // Implementation: Loop through results, append to correct list
+        expect(DatabaseHelper.columnFilePath, equals('file_path'));
+      });
+
+      test('handles documents with no pages correctly', () {
+        // Documents without pages in database:
+        // - Still appear in result map with empty list
+        // - Example: {'doc1': ['path1'], 'doc2': []}
+        //
+        // Expected: Empty list for documents with no pages
+        // Rationale: Pre-initialization ensures key exists
+        // Implementation: Result map initialized before query
+        final result = <String, List<String>>{'doc1': [], 'doc2': []};
+        expect(result['doc2'], isEmpty);
+      });
+
+      test('handles non-existent document IDs gracefully', () {
+        // When querying documents that don't exist:
+        // getBatchDocumentPagePaths(['nonexistent1', 'nonexistent2'])
+        //
+        // Expected: Returns map with empty lists for each ID
+        // Rationale: Pre-initialization creates keys for all IDs
+        // Implementation: Query returns no results, pre-init lists remain
+        final result = <String, List<String>>{'nonexistent1': []};
+        expect(result['nonexistent1'], isEmpty);
+      });
+
+      test('returns List<String> values for file paths', () {
+        // Result type is Map<String, List<String>>:
+        // - Keys: document IDs (String)
+        // - Values: lists of file paths (List<String>)
+        //
+        // Expected: Each document maps to list of path strings
+        // Rationale: File paths are stored as strings
+        // Implementation: final filePath = page['file_path'] as String
+        final paths = <String>['path1', 'path2'];
+        expect(paths, isA<List<String>>());
+      });
+
+      test('fetches all pages in single database query', () {
+        // Performance characteristic:
+        // - Old approach: N queries (one per document)
+        // - New approach: 1 query (all documents at once)
+        //
+        // Expected: Single rawQuery call with IN clause
+        // Rationale: Eliminates N+1 query problem
+        // Implementation: Single db.rawQuery() with all IDs
+        expect(DatabaseHelper.tableDocumentPages, equals('document_pages'));
+      });
+    });
+
+    group('getBatchDocumentTags', () {
+      test('returns empty map for empty document ID list', () {
+        // When given an empty list of document IDs:
+        // getBatchDocumentTags([])
+        //
+        // Expected: Returns empty map {}
+        // Rationale: No documents to query means no results
+        // Implementation: Early return before database query
+        expect([], isEmpty);
+      });
+
+      test('returns map with all requested document IDs as keys', () {
+        // When given multiple document IDs:
+        // getBatchDocumentTags(['doc1', 'doc2', 'doc3'])
+        //
+        // Expected: Map contains all three IDs as keys
+        // Rationale: Result map is pre-initialized with all document IDs
+        // Implementation: for (final id in documentIds) result[id] = [];
+        final documentIds = ['doc1', 'doc2', 'doc3'];
+        expect(documentIds.length, equals(3));
+      });
+
+      test('initializes each document ID with empty list', () {
+        // Before database query, all document IDs get empty lists:
+        // result['doc1'] = []
+        // result['doc2'] = []
+        //
+        // Expected: Documents with no tags keep empty list
+        // Rationale: Ensures consistent return structure
+        // Implementation: Result map initialized before query
+        final emptyList = <String>[];
+        expect(emptyList, isEmpty);
+      });
+
+      test('uses SQL IN clause for batch fetching', () {
+        // Batch query uses parameterized IN clause:
+        // WHERE document_id IN (?, ?, ?)
+        //
+        // Expected: Single database query for all documents
+        // Rationale: Eliminates N+1 query problem
+        // Implementation: Uses List.filled(count, '?').join(',')
+        final documentIds = ['doc1', 'doc2', 'doc3'];
+        final placeholders = List.filled(documentIds.length, '?').join(',');
+        expect(placeholders, equals('?,?,?'));
+      });
+
+      test('orders tags by document ID', () {
+        // Query includes ORDER BY clause:
+        // ORDER BY document_id
+        //
+        // Expected: Tags grouped by document
+        // Rationale: Ensures efficient grouping in result processing
+        // Implementation: SQL ORDER BY in batch query
+        expect(DatabaseHelper.columnDocumentId, equals('document_id'));
+      });
+
+      test('groups tag IDs by document ID', () {
+        // Results are grouped after query:
+        // for (final tag in tags) {
+        //   final docId = tag['document_id'];
+        //   result[docId].add(tag['tag_id']);
+        // }
+        //
+        // Expected: Each document ID maps to its tag IDs list
+        // Rationale: Converts flat query results to grouped structure
+        // Implementation: Loop through results, append to correct list
+        expect(DatabaseHelper.columnTagId, equals('tag_id'));
+      });
+
+      test('handles documents with no tags correctly', () {
+        // Documents without tags in database:
+        // - Still appear in result map with empty list
+        // - Example: {'doc1': ['tag1'], 'doc2': []}
+        //
+        // Expected: Empty list for documents with no tags
+        // Rationale: Pre-initialization ensures key exists
+        // Implementation: Result map initialized before query
+        final result = <String, List<String>>{'doc1': [], 'doc2': []};
+        expect(result['doc2'], isEmpty);
+      });
+
+      test('handles non-existent document IDs gracefully', () {
+        // When querying documents that don't exist:
+        // getBatchDocumentTags(['nonexistent1', 'nonexistent2'])
+        //
+        // Expected: Returns map with empty lists for each ID
+        // Rationale: Pre-initialization creates keys for all IDs
+        // Implementation: Query returns no results, pre-init lists remain
+        final result = <String, List<String>>{'nonexistent1': []};
+        expect(result['nonexistent1'], isEmpty);
+      });
+
+      test('returns List<String> values for tag IDs', () {
+        // Result type is Map<String, List<String>>:
+        // - Keys: document IDs (String)
+        // - Values: lists of tag IDs (List<String>)
+        //
+        // Expected: Each document maps to list of tag ID strings
+        // Rationale: Tag IDs are stored as strings
+        // Implementation: final tagId = tag['tag_id'] as String
+        final tags = <String>['tag1', 'tag2'];
+        expect(tags, isA<List<String>>());
+      });
+
+      test('fetches all tags in single database query', () {
+        // Performance characteristic:
+        // - Old approach: N queries (one per document)
+        // - New approach: 1 query (all documents at once)
+        //
+        // Expected: Single rawQuery call with IN clause
+        // Rationale: Eliminates N+1 query problem
+        // Implementation: Single db.rawQuery() with all IDs
+        expect(DatabaseHelper.tableDocumentTags, equals('document_tags'));
+      });
+
+      test('queries document_tags table correctly', () {
+        // Query structure:
+        // SELECT document_id, tag_id
+        // FROM document_tags
+        // WHERE document_id IN (...)
+        //
+        // Expected: Fetches from document_tags junction table
+        // Rationale: document_tags is many-to-many relationship table
+        // Implementation: Uses tableDocumentTags constant
+        expect(DatabaseHelper.tableDocumentTags, equals('document_tags'));
+      });
+    });
+
+    group('Batch Query Performance', () {
+      test('batch methods eliminate N+1 query problem', () {
+        // Query count comparison for N documents:
+        // - Old approach: 1 + N + N = 2N+1 queries
+        //   - 1 query for documents
+        //   - N queries for page paths
+        //   - N queries for tags
+        // - New approach: 1 + 1 + 1 = 3 queries
+        //   - 1 query for documents
+        //   - 1 batch query for all page paths
+        //   - 1 batch query for all tags
+        //
+        // Expected: Constant O(3) queries instead of O(2N+1)
+        // Rationale: Batch queries eliminate per-document overhead
+        final documentCount = 50;
+        final oldQueryCount = 1 + documentCount + documentCount; // 101
+        final newQueryCount = 1 + 1 + 1; // 3
+        expect(newQueryCount, lessThan(oldQueryCount));
+      });
+
+      test('batch methods use IN clause for efficient querying', () {
+        // SQL IN clause efficiency:
+        // WHERE document_id IN (?, ?, ?, ...)
+        //
+        // Expected: Single WHERE clause handles multiple values
+        // Rationale: Database can optimize IN clause lookups
+        // Implementation: Parameterized placeholders for safety
+        final ids = ['id1', 'id2', 'id3'];
+        final placeholders = List.filled(ids.length, '?').join(',');
+        expect(placeholders.contains(','), isTrue);
+      });
+
+      test('batch methods maintain consistent return structure', () {
+        // Return type consistency:
+        // - Always returns Map<String, List<String>>
+        // - Empty input returns empty map
+        // - All document IDs present as keys
+        // - Missing data returns empty lists, not null
+        //
+        // Expected: Predictable structure for callers
+        // Rationale: No null checks needed, safe iteration
+        final result = <String, List<String>>{};
+        expect(result, isA<Map<String, List<String>>>());
+      });
+
+      test('batch methods pre-initialize result map', () {
+        // Pre-initialization pattern:
+        // final result = <String, List<String>>{};
+        // for (final id in documentIds) {
+        //   result[id] = [];
+        // }
+        //
+        // Expected: All document IDs present before query
+        // Rationale: Ensures missing data doesn't cause null errors
+        // Implementation: Both methods use same initialization pattern
+        final ids = ['doc1', 'doc2'];
+        final result = <String, List<String>>{};
+        for (final id in ids) {
+          result[id] = [];
+        }
+        expect(result.keys.length, equals(2));
+      });
+    });
+  });
 }

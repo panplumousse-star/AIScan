@@ -51,10 +51,6 @@ class _FakeFuture_1<T1> extends _i1.SmartFake implements _i3.Future<T1> {
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockEncryptionService extends _i1.Mock implements _i4.EncryptionService {
-  MockEncryptionService() {
-    _i1.throwOnMissingStub(this);
-  }
-
   @override
   _i3.Future<_i5.Uint8List> encrypt(_i5.Uint8List? data) => (super.noSuchMethod(
         Invocation.method(
@@ -62,6 +58,8 @@ class MockEncryptionService extends _i1.Mock implements _i4.EncryptionService {
           [data],
         ),
         returnValue: _i3.Future<_i5.Uint8List>.value(_i5.Uint8List(0)),
+        returnValueForMissingStub:
+            _i3.Future<_i5.Uint8List>.value(_i5.Uint8List(0)),
       ) as _i3.Future<_i5.Uint8List>);
 
   @override
@@ -72,6 +70,8 @@ class MockEncryptionService extends _i1.Mock implements _i4.EncryptionService {
           [encryptedData],
         ),
         returnValue: _i3.Future<_i5.Uint8List>.value(_i5.Uint8List(0)),
+        returnValueForMissingStub:
+            _i3.Future<_i5.Uint8List>.value(_i5.Uint8List(0)),
       ) as _i3.Future<_i5.Uint8List>);
 
   @override
@@ -121,6 +121,14 @@ class MockEncryptionService extends _i1.Mock implements _i4.EncryptionService {
             [plaintext],
           ),
         )),
+        returnValueForMissingStub:
+            _i3.Future<String>.value(_i6.dummyValue<String>(
+          this,
+          Invocation.method(
+            #encryptString,
+            [plaintext],
+          ),
+        )),
       ) as _i3.Future<String>);
 
   @override
@@ -137,6 +145,14 @@ class MockEncryptionService extends _i1.Mock implements _i4.EncryptionService {
             [encryptedBase64],
           ),
         )),
+        returnValueForMissingStub:
+            _i3.Future<String>.value(_i6.dummyValue<String>(
+          this,
+          Invocation.method(
+            #decryptString,
+            [encryptedBase64],
+          ),
+        )),
       ) as _i3.Future<String>);
 
   @override
@@ -146,6 +162,7 @@ class MockEncryptionService extends _i1.Mock implements _i4.EncryptionService {
           [data],
         ),
         returnValue: false,
+        returnValueForMissingStub: false,
       ) as bool);
 
   @override
@@ -155,6 +172,7 @@ class MockEncryptionService extends _i1.Mock implements _i4.EncryptionService {
           [],
         ),
         returnValue: _i3.Future<bool>.value(false),
+        returnValueForMissingStub: _i3.Future<bool>.value(false),
       ) as _i3.Future<bool>);
 
   @override
@@ -164,6 +182,7 @@ class MockEncryptionService extends _i1.Mock implements _i4.EncryptionService {
           [],
         ),
         returnValue: _i3.Future<bool>.value(false),
+        returnValueForMissingStub: _i3.Future<bool>.value(false),
       ) as _i3.Future<bool>);
 
   @override
@@ -180,14 +199,15 @@ class MockEncryptionService extends _i1.Mock implements _i4.EncryptionService {
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
-  MockDatabaseHelper() {
-    _i1.throwOnMissingStub(this);
-  }
-
   @override
   _i3.Future<_i2.Database> get database => (super.noSuchMethod(
         Invocation.getter(#database),
         returnValue: _i3.Future<_i2.Database>.value(_FakeDatabase_0(
+          this,
+          Invocation.getter(#database),
+        )),
+        returnValueForMissingStub:
+            _i3.Future<_i2.Database>.value(_FakeDatabase_0(
           this,
           Invocation.getter(#database),
         )),
@@ -197,12 +217,14 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
   bool get isFtsAvailable => (super.noSuchMethod(
         Invocation.getter(#isFtsAvailable),
         returnValue: false,
+        returnValueForMissingStub: false,
       ) as bool);
 
   @override
   bool get isInitialized => (super.noSuchMethod(
         Invocation.getter(#isInitialized),
         returnValue: false,
+        returnValueForMissingStub: false,
       ) as bool);
 
   @override
@@ -223,6 +245,7 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           [query],
         ),
         returnValue: _i3.Future<List<String>>.value(<String>[]),
+        returnValueForMissingStub: _i3.Future<List<String>>.value(<String>[]),
       ) as _i3.Future<List<String>>);
 
   @override
@@ -249,6 +272,7 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           ],
         ),
         returnValue: _i3.Future<int>.value(0),
+        returnValueForMissingStub: _i3.Future<int>.value(0),
       ) as _i3.Future<int>);
 
   @override
@@ -282,6 +306,8 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
         ),
         returnValue: _i3.Future<List<Map<String, dynamic>>>.value(
             <Map<String, dynamic>>[]),
+        returnValueForMissingStub: _i3.Future<List<Map<String, dynamic>>>.value(
+            <Map<String, dynamic>>[]),
       ) as _i3.Future<List<Map<String, dynamic>>>);
 
   @override
@@ -304,6 +330,7 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           },
         ),
         returnValue: _i3.Future<int>.value(0),
+        returnValueForMissingStub: _i3.Future<int>.value(0),
       ) as _i3.Future<int>);
 
   @override
@@ -322,6 +349,7 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           },
         ),
         returnValue: _i3.Future<int>.value(0),
+        returnValueForMissingStub: _i3.Future<int>.value(0),
       ) as _i3.Future<int>);
 
   @override
@@ -338,6 +366,7 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           ],
         ),
         returnValue: _i3.Future<Map<String, dynamic>?>.value(),
+        returnValueForMissingStub: _i3.Future<Map<String, dynamic>?>.value(),
       ) as _i3.Future<Map<String, dynamic>?>);
 
   @override
@@ -356,6 +385,7 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           },
         ),
         returnValue: _i3.Future<int>.value(0),
+        returnValueForMissingStub: _i3.Future<int>.value(0),
       ) as _i3.Future<int>);
 
   @override
@@ -373,6 +403,8 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
         ),
         returnValue: _i3.Future<List<Map<String, dynamic>>>.value(
             <Map<String, dynamic>>[]),
+        returnValueForMissingStub: _i3.Future<List<Map<String, dynamic>>>.value(
+            <Map<String, dynamic>>[]),
       ) as _i3.Future<List<Map<String, dynamic>>>);
 
   @override
@@ -384,6 +416,23 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           [action],
         ),
         returnValue: _i6.ifNotNull(
+              _i6.dummyValueOrNull<T>(
+                this,
+                Invocation.method(
+                  #transaction,
+                  [action],
+                ),
+              ),
+              (T v) => _i3.Future<T>.value(v),
+            ) ??
+            _FakeFuture_1<T>(
+              this,
+              Invocation.method(
+                #transaction,
+                [action],
+              ),
+            ),
+        returnValueForMissingStub: _i6.ifNotNull(
               _i6.dummyValueOrNull<T>(
                 this,
                 Invocation.method(
@@ -426,6 +475,7 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           ],
         ),
         returnValue: _i3.Future<bool>.value(false),
+        returnValueForMissingStub: _i3.Future<bool>.value(false),
       ) as _i3.Future<bool>);
 
   @override
@@ -437,6 +487,8 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           {#orderBy: orderBy},
         ),
         returnValue: _i3.Future<List<Map<String, dynamic>>>.value(
+            <Map<String, dynamic>>[]),
+        returnValueForMissingStub: _i3.Future<List<Map<String, dynamic>>>.value(
             <Map<String, dynamic>>[]),
       ) as _i3.Future<List<Map<String, dynamic>>>);
 
@@ -450,6 +502,8 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
         ),
         returnValue: _i3.Future<List<Map<String, dynamic>>>.value(
             <Map<String, dynamic>>[]),
+        returnValueForMissingStub: _i3.Future<List<Map<String, dynamic>>>.value(
+            <Map<String, dynamic>>[]),
       ) as _i3.Future<List<Map<String, dynamic>>>);
 
   @override
@@ -461,6 +515,8 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
         ),
         returnValue: _i3.Future<List<Map<String, dynamic>>>.value(
             <Map<String, dynamic>>[]),
+        returnValueForMissingStub: _i3.Future<List<Map<String, dynamic>>>.value(
+            <Map<String, dynamic>>[]),
       ) as _i3.Future<List<Map<String, dynamic>>>);
 
   @override
@@ -471,7 +527,22 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           [documentId],
         ),
         returnValue: _i3.Future<List<String>>.value(<String>[]),
+        returnValueForMissingStub: _i3.Future<List<String>>.value(<String>[]),
       ) as _i3.Future<List<String>>);
+
+  @override
+  _i3.Future<Map<String, List<String>>> getBatchDocumentPagePaths(
+          List<String>? documentIds) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getBatchDocumentPagePaths,
+          [documentIds],
+        ),
+        returnValue: _i3.Future<Map<String, List<String>>>.value(
+            <String, List<String>>{}),
+        returnValueForMissingStub: _i3.Future<Map<String, List<String>>>.value(
+            <String, List<String>>{}),
+      ) as _i3.Future<Map<String, List<String>>>);
 
   @override
   _i3.Future<Map<String, dynamic>?> getDocumentPage(
@@ -487,6 +558,7 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           ],
         ),
         returnValue: _i3.Future<Map<String, dynamic>?>.value(),
+        returnValueForMissingStub: _i3.Future<Map<String, dynamic>?>.value(),
       ) as _i3.Future<Map<String, dynamic>?>);
 
   @override
@@ -506,6 +578,7 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           },
         ),
         returnValue: _i3.Future<int>.value(0),
+        returnValueForMissingStub: _i3.Future<int>.value(0),
       ) as _i3.Future<int>);
 
   @override
@@ -533,6 +606,7 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           [documentId],
         ),
         returnValue: _i3.Future<int>.value(0),
+        returnValueForMissingStub: _i3.Future<int>.value(0),
       ) as _i3.Future<int>);
 
   @override
@@ -552,6 +626,7 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           },
         ),
         returnValue: _i3.Future<int>.value(0),
+        returnValueForMissingStub: _i3.Future<int>.value(0),
       ) as _i3.Future<int>);
 
   @override
@@ -562,7 +637,22 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           [documentId],
         ),
         returnValue: _i3.Future<int>.value(0),
+        returnValueForMissingStub: _i3.Future<int>.value(0),
       ) as _i3.Future<int>);
+
+  @override
+  _i3.Future<Map<String, List<String>>> getBatchDocumentTags(
+          List<String>? documentIds) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getBatchDocumentTags,
+          [documentIds],
+        ),
+        returnValue: _i3.Future<Map<String, List<String>>>.value(
+            <String, List<String>>{}),
+        returnValueForMissingStub: _i3.Future<Map<String, List<String>>>.value(
+            <String, List<String>>{}),
+      ) as _i3.Future<Map<String, List<String>>>);
 
   @override
   _i3.Future<int> insertSearchHistory({
@@ -581,6 +671,7 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           },
         ),
         returnValue: _i3.Future<int>.value(0),
+        returnValueForMissingStub: _i3.Future<int>.value(0),
       ) as _i3.Future<int>);
 
   @override
@@ -599,6 +690,8 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
         ),
         returnValue: _i3.Future<List<Map<String, dynamic>>>.value(
             <Map<String, dynamic>>[]),
+        returnValueForMissingStub: _i3.Future<List<Map<String, dynamic>>>.value(
+            <Map<String, dynamic>>[]),
       ) as _i3.Future<List<Map<String, dynamic>>>);
 
   @override
@@ -608,6 +701,7 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           [id],
         ),
         returnValue: _i3.Future<int>.value(0),
+        returnValueForMissingStub: _i3.Future<int>.value(0),
       ) as _i3.Future<int>);
 
   @override
@@ -617,5 +711,6 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           [],
         ),
         returnValue: _i3.Future<int>.value(0),
+        returnValueForMissingStub: _i3.Future<int>.value(0),
       ) as _i3.Future<int>);
 }

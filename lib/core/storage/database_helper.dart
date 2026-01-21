@@ -902,6 +902,62 @@ class DatabaseHelper {
     return pages.map((p) => p[columnFilePath] as String).toList();
   }
 
+  /// Gets the file paths for all pages of multiple documents in a single query.
+  ///
+  /// This method eliminates N+1 query problems by fetching all pages for multiple
+  /// documents in one database query using an SQL IN clause.
+  ///
+  /// Parameters:
+  /// - [documentIds]: List of document IDs to fetch page paths for
+  ///
+  /// Returns a Map where:
+  /// - Key: document ID
+  /// - Value: List of file paths ordered by page number
+  ///
+  /// Documents with no pages will have an empty list in the result map.
+  ///
+  /// Example:
+  /// ```dart
+  /// final paths = await getBatchDocumentPagePaths(['doc1', 'doc2', 'doc3']);
+  /// // Returns: {'doc1': ['path1', 'path2'], 'doc2': ['path3'], 'doc3': []}
+  /// ```
+  Future<Map<String, List<String>>> getBatchDocumentPagePaths(
+    List<String> documentIds,
+  ) async {
+    // Return empty map for empty input
+    if (documentIds.isEmpty) {
+      return {};
+    }
+
+    final db = await database;
+
+    // Initialize result map with empty lists for all document IDs
+    final result = <String, List<String>>{};
+    for (final id in documentIds) {
+      result[id] = [];
+    }
+
+    // Build SQL IN clause with placeholders
+    final placeholders = List.filled(documentIds.length, '?').join(',');
+
+    // Query all pages for the given document IDs in a single query
+    final pages = await db.rawQuery('''
+      SELECT $columnDocumentId, $columnFilePath
+      FROM $tableDocumentPages
+      WHERE $columnDocumentId IN ($placeholders)
+      ORDER BY $columnDocumentId, $columnPageNumber ASC
+    ''', documentIds);
+
+    // Group pages by document ID
+    for (final page in pages) {
+      final docId = page[columnDocumentId] as String;
+      final filePath = page[columnFilePath] as String;
+      result[docId]!.add(filePath);
+    }
+
+    return result;
+  }
+
   /// Gets a single page by document ID and page number.
   Future<Map<String, dynamic>?> getDocumentPage(
     String documentId,
@@ -981,6 +1037,66 @@ class DatabaseHelper {
       [documentId],
     );
     return Sqflite.firstIntValue(result) ?? 0;
+  }
+
+  // ============================================================
+  // Document Tags CRUD Methods
+  // ============================================================
+
+  /// Gets the tag IDs for multiple documents in a single query.
+  ///
+  /// This method eliminates N+1 query problems by fetching all tags for multiple
+  /// documents in one database query using an SQL IN clause.
+  ///
+  /// Parameters:
+  /// - [documentIds]: List of document IDs to fetch tag IDs for
+  ///
+  /// Returns a Map where:
+  /// - Key: document ID
+  /// - Value: List of tag IDs
+  ///
+  /// Documents with no tags will have an empty list in the result map.
+  ///
+  /// Example:
+  /// ```dart
+  /// final tags = await getBatchDocumentTags(['doc1', 'doc2', 'doc3']);
+  /// // Returns: {'doc1': ['tag1', 'tag2'], 'doc2': ['tag1'], 'doc3': []}
+  /// ```
+  Future<Map<String, List<String>>> getBatchDocumentTags(
+    List<String> documentIds,
+  ) async {
+    // Return empty map for empty input
+    if (documentIds.isEmpty) {
+      return {};
+    }
+
+    final db = await database;
+
+    // Initialize result map with empty lists for all document IDs
+    final result = <String, List<String>>{};
+    for (final id in documentIds) {
+      result[id] = [];
+    }
+
+    // Build SQL IN clause with placeholders
+    final placeholders = List.filled(documentIds.length, '?').join(',');
+
+    // Query all tags for the given document IDs in a single query
+    final tags = await db.rawQuery('''
+      SELECT $columnDocumentId, $columnTagId
+      FROM $tableDocumentTags
+      WHERE $columnDocumentId IN ($placeholders)
+      ORDER BY $columnDocumentId
+    ''', documentIds);
+
+    // Group tags by document ID
+    for (final tag in tags) {
+      final docId = tag[columnDocumentId] as String;
+      final tagId = tag[columnTagId] as String;
+      result[docId]!.add(tagId);
+    }
+
+    return result;
   }
 
   // ============================================================

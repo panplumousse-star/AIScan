@@ -666,21 +666,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
         height: 180, // Reduced height for better fit
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: isDark 
-                ? [
-                    const Color(0xFF312E81), // Extra Deep Indigo
-                    const Color(0xFF3730A3), // Deep Indigo
-                    const Color(0xFF1E1B4B), // Midnight Indigo
-                  ]
-                : [
-                    const Color(0xFF6366F1), // Indigo
-                    const Color(0xFF4F46E5), // Primary
-                    const Color(0xFF3730A3), // Deep Indigo
-                  ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          gradient: AppGradients.scanner,
           borderRadius: BorderRadius.circular(32),
           border: Border.all(
             color: Colors.white.withValues(alpha: isDark ? 0.2 : 0.15),
@@ -689,7 +675,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
           boxShadow: [
             // Soft multi-layered shadow
             BoxShadow(
-              color: (isDark ? Colors.black : const Color(0xFF4F46E5)).withValues(alpha: isDark ? 0.3 : 0.2),
+              color: (isDark ? Colors.black : AppColors.primaryLight).withValues(alpha: isDark ? 0.3 : 0.2),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -744,7 +730,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                               border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFF4F46E5).withValues(alpha: 0.3),
+                                  color: AppColors.primaryLight.withValues(alpha: 0.3),
                                   blurRadius: 20,
                                   spreadRadius: 2,
                                 ),

@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "041-refactor-document-detail-screen-dart-to-reduce-com",
+  "spec": "038-split-monolithic-documents-screen-dart-into-smalle",
   "state": "building",
   "subtasks": {
-    "completed": 16,
-    "total": 17,
+    "completed": 12,
+    "total": 13,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Cleanup and Verification",
+    "current": "Compilation & Testing",
     "id": null,
-    "total": 4
+    "total": 3
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 18,
-    "started_at": "2026-01-20T06:47:43.454413"
+    "number": 14,
+    "started_at": "2026-01-20T18:50:41.229924"
   },
-  "last_update": "2026-01-20T07:32:32.676584"
+  "last_update": "2026-01-20T19:22:27.191917"
 }

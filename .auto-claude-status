@@ -3,7 +3,7 @@
   "spec": "042-persist-search-history-to-database",
   "state": "building",
   "subtasks": {
-    "completed": 3,
+    "completed": 5,
     "total": 8,
     "in_progress": 1,
     "failed": 0
@@ -18,8 +18,8 @@
     "max": 1
   },
   "session": {
-    "number": 5,
+    "number": 7,
     "started_at": "2026-01-21T13:52:07.861803"
   },
-  "last_update": "2026-01-21T14:01:49.448239"
+  "last_update": "2026-01-21T14:05:24.362793"
 }

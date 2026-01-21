@@ -1176,12 +1176,39 @@ void main() {
     test('clearRecentSearches removes all entries', () async {
       await searchService.initialize();
       when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => []);
+      when(mockDatabaseHelper.clearSearchHistory()).thenAnswer((_) async => 0);
+      when(mockDatabaseHelper.insertSearchHistory(
+        query: anyNamed('query'),
+        timestamp: anyNamed('timestamp'),
+        resultCount: anyNamed('resultCount'),
+      )).thenAnswer((_) async => 1);
 
       await searchService.search('query1');
       await searchService.search('query2');
 
       await searchService.clearRecentSearches();
 
+      expect(searchService.recentSearches, isEmpty);
+    });
+
+    test('clearRecentSearches persists to database', () async {
+      await searchService.initialize();
+      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => []);
+      when(mockDatabaseHelper.clearSearchHistory()).thenAnswer((_) async => 0);
+      when(mockDatabaseHelper.insertSearchHistory(
+        query: anyNamed('query'),
+        timestamp: anyNamed('timestamp'),
+        resultCount: anyNamed('resultCount'),
+      )).thenAnswer((_) async => 1);
+
+      await searchService.search('query1');
+      await searchService.search('query2');
+
+      await searchService.clearRecentSearches();
+
+      // Verify database method was called at least 3 times
+      // (once per search for persistence, once for clearRecentSearches)
+      verify(mockDatabaseHelper.clearSearchHistory()).called(3);
       expect(searchService.recentSearches, isEmpty);
     });
 

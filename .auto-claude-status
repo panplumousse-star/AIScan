@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "040-remove-dead-code-unused-bento-home-screen-old-dart",
-  "state": "building",
+  "spec": "036-implement-in-memory-thumbnail-cache-with-lru-evict",
+  "state": "planning",
   "subtasks": {
-    "completed": 2,
-    "total": 4,
+    "completed": 0,
+    "total": 0,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Dead Code Removal",
+    "current": "Thumbnail Cache Implementation",
     "id": null,
-    "total": 3
+    "total": 4
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 4,
-    "started_at": "2026-01-21T06:50:00.233982"
+    "number": 2,
+    "started_at": "2026-01-21T07:18:40.572395"
   },
-  "last_update": "2026-01-21T06:54:03.785454"
+  "last_update": "2026-01-21T07:22:41.842669"
 }

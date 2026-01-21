@@ -395,7 +395,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : Colors.white,
+            color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : AppColors.bentoCardWhite,
             borderRadius: BorderRadius.circular(32),
             border: Border.all(
               color: isDark 
@@ -416,7 +416,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEEF2FF),
+                  color: isDark ? AppColors.surfaceVariantDark : const Color(0xFFEEF2FF),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -437,14 +437,14 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                       style: GoogleFonts.outfit(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
+                        color: isDark ? AppColors.surfaceVariantLight : const Color(0xFF1E1B4B),
                       ),
                     ),
                     Text(
                       'Tout est sauvegardé localement',
                       style: GoogleFonts.outfit(
                         fontSize: 12,
-                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        color: isDark ? AppColors.neutralDark : AppColors.neutralLight,
                       ),
                     ),
                   ],
@@ -455,7 +455,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF5F3FF),
+                    color: isDark ? AppColors.surfaceVariantDark : const Color(0xFFF5F3FF),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: isDark 
@@ -508,17 +508,17 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                   Container(
                     height: 85,
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : Colors.white,
+                      color: isDark ? AppColors.surfaceDark.withValues(alpha: 0.6) : AppColors.surfaceLight,
                       borderRadius: BorderRadius.circular(16), // Reduced rounding
                       border: Border.all(
-                        color: isDark 
-                            ? const Color(0xFFFFFFFF).withValues(alpha: 0.1) 
+                        color: isDark
+                            ? AppColors.surfaceLight.withValues(alpha: 0.1)
                             : const Color(0xFFE2E8F0),
                         width: 1.5,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+                          color: AppColors.surfaceDark.withValues(alpha: isDark ? 0.2 : 0.05),
                           blurRadius: 16,
                           offset: const Offset(0, 4),
                         ),
@@ -550,7 +550,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                                   style: GoogleFonts.outfit(
                                     fontSize: (hasJustScanned || _isSleeping) ? 22 : 24,
                                     fontWeight: FontWeight.w800,
-                                    color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E293B),
+                                    color: isDark ? AppColors.surfaceVariantLight : AppColors.surfaceVariantDark,
                                     letterSpacing: -0.5,
                                   ),
                                 ),
@@ -565,7 +565,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.outfit(
                                 fontSize: 12,
-                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                color: isDark ? AppColors.neutralDark : AppColors.neutralLight,
                                 letterSpacing: 0.2,
                               ),
                             ),
@@ -577,14 +577,14 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                   
                   // The Bubble Tail (Pointing Right to Scanai)
                   Positioned(
-                    right: -10, 
+                    right: -10,
                     top: 12,    // Moved to top-right
                     child: CustomPaint(
                       size: const Size(12, 16),
                       painter: _BubbleTailPainter(
-                        color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : Colors.white,
-                        borderColor: isDark 
-                            ? const Color(0xFFFFFFFF).withValues(alpha: 0.1) 
+                        color: isDark ? AppColors.surfaceDark.withValues(alpha: 0.6) : AppColors.surfaceLight,
+                        borderColor: isDark
+                            ? AppColors.surfaceLight.withValues(alpha: 0.1)
                             : const Color(0xFFE2E8F0),
                       ),
                     ),
@@ -608,17 +608,17 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
       child: Container(
         height: 140,
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : const Color(0xFFF1F5F9), // Light grey or obsidian
+          color: isDark ? AppColors.surfaceDark.withValues(alpha: 0.6) : AppColors.surfaceVariantLight,
           borderRadius: BorderRadius.circular(32),
           border: Border.all(
-            color: isDark 
-                ? const Color(0xFFFFFFFF).withValues(alpha: 0.1) 
+            color: isDark
+                ? AppColors.surfaceLight.withValues(alpha: 0.1)
                 : const Color(0xFFE2E8F0),
             width: 1.5,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+              color: AppColors.surfaceDark.withValues(alpha: isDark ? 0.2 : 0.05),
               blurRadius: 16,
               offset: const Offset(0, 4),
             ),
@@ -666,21 +666,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
         height: 180, // Reduced height for better fit
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: isDark 
-                ? [
-                    const Color(0xFF312E81), // Extra Deep Indigo
-                    const Color(0xFF3730A3), // Deep Indigo
-                    const Color(0xFF1E1B4B), // Midnight Indigo
-                  ]
-                : [
-                    const Color(0xFF6366F1), // Indigo
-                    const Color(0xFF4F46E5), // Primary
-                    const Color(0xFF3730A3), // Deep Indigo
-                  ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          gradient: AppGradients.scanner,
           borderRadius: BorderRadius.circular(32),
           border: Border.all(
             color: Colors.white.withValues(alpha: isDark ? 0.2 : 0.15),
@@ -689,7 +675,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
           boxShadow: [
             // Soft multi-layered shadow
             BoxShadow(
-              color: (isDark ? Colors.black : const Color(0xFF4F46E5)).withValues(alpha: isDark ? 0.3 : 0.2),
+              color: (isDark ? Colors.black : AppColors.primaryLight).withValues(alpha: isDark ? 0.3 : 0.2),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -744,7 +730,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                               border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFF4F46E5).withValues(alpha: 0.3),
+                                  color: AppColors.primaryLight.withValues(alpha: 0.3),
                                   blurRadius: 20,
                                   spreadRadius: 2,
                                 ),
@@ -792,7 +778,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
         child: Container(
         height: 140,
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : Colors.white,
+          color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : AppColors.bentoCardWhite,
           borderRadius: BorderRadius.circular(32),
           border: Border.all(
             color: isDark 
@@ -819,7 +805,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEEF2FF),
+                      color: isDark ? AppColors.surfaceVariantDark : const Color(0xFFEEF2FF),
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
@@ -843,7 +829,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                         style: GoogleFonts.outfit(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
+                          color: isDark ? AppColors.surfaceVariantLight : const Color(0xFF1E1B4B),
                         ),
                       ),
                       Text(
@@ -851,7 +837,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                         style: GoogleFonts.outfit(
                           fontSize: 14,
                           color: isDark
-                              ? const Color(0xFF94A3B8)
+                              ? AppColors.neutralDark
                               : const Color(0xFF6366F1).withValues(alpha: 0.7),
                         ),
                         maxLines: 1,
@@ -870,7 +856,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
               child: Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEEF2FF).withValues(alpha: 0.5),
+                  color: isDark ? AppColors.surfaceVariantDark : const Color(0xFFEEF2FF).withValues(alpha: 0.5),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -885,7 +871,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
               Positioned.fill(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isDark ? Colors.black45 : const Color(0xFFFFF7ED).withValues(alpha: 0.5),
+                    color: isDark ? Colors.black45 : AppColors.bentoOrangePastel.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(32),
                   ),
                   child: const ScanaiLoader(size: 32),
@@ -934,12 +920,12 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
         height: 140,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : const Color(0xFFF8FAFC),
+          color: isDark ? AppColors.surfaceDark.withValues(alpha: 0.6) : AppColors.bentoBackground,
           borderRadius: BorderRadius.circular(32),
           border: Border.all(
-            color: isDark 
-                ? const Color(0xFFFFFFFF).withValues(alpha: 0.1) 
-                : const Color(0xFFFFFFFF).withValues(alpha: 0.6),
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.1)
+                : Colors.white.withValues(alpha: 0.6),
             width: 1.5,
           ),
           boxShadow: [
@@ -957,7 +943,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEEF2FF), // Soft Indigo background
+                color: isDark ? AppColors.surfaceVariantDark : const Color(0xFFEEF2FF), // Soft Indigo background
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -976,7 +962,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                   style: GoogleFonts.outfit(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B), // Deep Indigo / Off White
+                    color: isDark ? AppColors.surfaceVariantLight : const Color(0xFF1E1B4B), // Deep Indigo / Off White
                   ),
                 ),
                 Text(
@@ -985,8 +971,8 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.outfit(
                     fontSize: 11,
-                    color: isDark 
-                        ? const Color(0xFF94A3B8) 
+                    color: isDark
+                        ? AppColors.neutralDark
                         : const Color(0xFF6366F1).withValues(alpha: 0.6),
                   ),
                 ),

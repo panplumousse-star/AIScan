@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_mlkit_document_scanner/google_mlkit_document_scanner.dart';
-import 'package:hand_signature/signature.dart';
 import 'package:image/image.dart' as img;
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -25,7 +24,6 @@ import 'package:aiscan/features/folders/domain/folder_service.dart';
 import 'package:aiscan/features/ocr/domain/ocr_service.dart';
 import 'package:aiscan/features/scanner/domain/scanner_service.dart';
 import 'package:aiscan/features/search/domain/search_service.dart';
-import 'package:aiscan/features/signature/domain/signature_service.dart';
 
 import 'complete_user_flows_test.mocks.dart';
 
@@ -65,18 +63,6 @@ class MockDocumentScanningResult extends Mock
   String? get pdf => mockPdf;
 }
 
-/// Mock class for HandSignatureControl.
-class MockHandSignatureControl extends Mock implements HandSignatureControl {
-  bool _isEmpty = true;
-
-  void setHasSignature(bool hasSignature) {
-    _isEmpty = !hasSignature;
-  }
-
-  @override
-  bool get isEmpty => _isEmpty;
-}
-
 /// End-to-End Verification Tests
 ///
 /// These tests verify complete user flows through the AIScan application:
@@ -87,9 +73,8 @@ class MockHandSignatureControl extends Mock implements HandSignatureControl {
 /// 5. Run OCR and verify text extraction
 /// 6. Search for extracted text
 /// 7. Create folder and move document
-/// 8. Add signature to document
-/// 9. Export as PDF
-/// 10. Verify encrypted storage (no plaintext)
+/// 8. Export as PDF
+/// 9. Verify encrypted storage (no plaintext)
 ///
 /// CRITICAL: These tests verify the complete end-to-end user experience.
 @GenerateMocks([
@@ -100,7 +85,6 @@ class MockHandSignatureControl extends Mock implements HandSignatureControl {
   OcrService,
   SearchService,
   FolderService,
-  SignatureService,
   ImageProcessor,
   PDFGenerator,
   ImageExporter,
@@ -115,7 +99,6 @@ void main() {
   late MockOcrService mockOcrService;
   late MockSearchService mockSearchService;
   late MockFolderService mockFolderService;
-  late MockSignatureService mockSignatureService;
   late MockImageProcessor mockImageProcessor;
   late MockPDFGenerator mockPdfGenerator;
   late MockImageExporter mockImageExporter;
@@ -267,7 +250,6 @@ void main() {
     mockOcrService = MockOcrService();
     mockSearchService = MockSearchService();
     mockFolderService = MockFolderService();
-    mockSignatureService = MockSignatureService();
     mockImageProcessor = MockImageProcessor();
     mockPdfGenerator = MockPDFGenerator();
     mockImageExporter = MockImageExporter();
@@ -293,9 +275,6 @@ void main() {
 
     when(mockFolderService.isReady()).thenAnswer((_) async => true);
     when(mockFolderService.initialize()).thenAnswer((_) async => true);
-
-    when(mockSignatureService.isReady).thenReturn(true);
-    when(mockSignatureService.initialize()).thenAnswer((_) async => true);
 
     when(mockImageProcessor.isReady).thenReturn(true);
     when(mockPdfGenerator.isReady).thenReturn(true);
@@ -597,71 +576,7 @@ void main() {
       ).called(1);
     });
 
-    test('Flow 8: Add signature to document', () async {
-      // Arrange - Create signature
-      final signatureBytes = await createTestImageBytes(width: 150, height: 50);
-      final documentBytes = await createTestImageBytes(width: 800, height: 1000);
-
-      final capturedSignature = CapturedSignature(
-        pngBytes: signatureBytes,
-        svgData: '<svg>test</svg>',
-        width: 150,
-        height: 50,
-        strokeColor: Colors.black,
-      );
-
-      final signedDocument = SignedDocument(
-        imageBytes: documentBytes,
-        width: 800,
-        height: 1000,
-        signaturePosition: const Offset(100, 800),
-        signatureSize: const Size(200, 67),
-      );
-
-      when(mockSignatureService.captureSignature(any, options: anyNamed('options')))
-          .thenAnswer((_) async => capturedSignature);
-
-      when(
-        mockSignatureService.overlaySignatureOnDocument(
-          documentBytes: anyNamed('documentBytes'),
-          signatureBytes: anyNamed('signatureBytes'),
-          position: anyNamed('position'),
-          signatureWidth: anyNamed('signatureWidth'),
-          opacity: anyNamed('opacity'),
-        ),
-      ).thenAnswer((_) async => signedDocument);
-
-      // Act - Simulate signature capture from control
-      // Note: In real scenario, user draws on HandSignaturePad
-      final mockControl = MockHandSignatureControl();
-      mockControl.setHasSignature(true);
-
-      final captured = await mockSignatureService.captureSignature(
-        mockControl,
-        options: const SignatureOptions.document(),
-      );
-
-      // Assert - Signature captured
-      expect(captured, isNotNull);
-      expect(captured.pngBytes.isNotEmpty, isTrue);
-      expect(captured.width, equals(150));
-      expect(captured.height, equals(50));
-
-      // Act - Apply signature to document
-      final signed = await mockSignatureService.overlaySignatureOnDocument(
-        documentBytes: documentBytes,
-        signatureBytes: captured.pngBytes,
-        position: const Offset(100, 800),
-        signatureWidth: 200,
-      );
-
-      // Assert - Signature applied
-      expect(signed, isNotNull);
-      expect(signed.signaturePosition, equals(const Offset(100, 800)));
-      expect(signed.signatureSize.width, equals(200));
-    });
-
-    test('Flow 9: Export as PDF', () async {
+    test('Flow 8: Export as PDF', () async {
       // Arrange - Setup PDF generation
       final documentBytes = await createTestImageBytes();
       final pdfBytes = Uint8List.fromList([0x25, 0x50, 0x44, 0x46]); // PDF header
@@ -702,7 +617,7 @@ void main() {
       expect(pdf.bytes[3], equals(0x46)); // F
     });
 
-    test('Flow 10: Verify encrypted storage (no plaintext)', () async {
+    test('Flow 9: Verify encrypted storage (no plaintext)', () async {
       // Arrange - Create test content with recognizable patterns
       final sensitiveContent = utf8.encode(
         'CONFIDENTIAL: Invoice #12345 Tax ID: 123-45-6789',

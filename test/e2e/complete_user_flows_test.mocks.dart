@@ -4,27 +4,22 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i3;
-import 'dart:typed_data' as _i16;
-import 'dart:ui' as _i20;
+import 'dart:typed_data' as _i14;
 
-import 'package:aiscan/core/security/encryption_service.dart' as _i17;
-import 'package:aiscan/core/security/secure_storage_service.dart' as _i14;
-import 'package:aiscan/core/storage/database_helper.dart' as _i18;
-import 'package:aiscan/core/storage/document_repository.dart' as _i19;
+import 'package:aiscan/core/security/encryption_service.dart' as _i15;
+import 'package:aiscan/core/security/secure_storage_service.dart' as _i12;
+import 'package:aiscan/core/storage/database_helper.dart' as _i16;
+import 'package:aiscan/core/storage/document_repository.dart' as _i17;
 import 'package:aiscan/features/documents/domain/document_model.dart' as _i4;
-import 'package:aiscan/features/enhancement/domain/image_processor.dart'
-    as _i11;
-import 'package:aiscan/features/export/domain/image_exporter.dart' as _i13;
-import 'package:aiscan/features/export/domain/pdf_generator.dart' as _i12;
+import 'package:aiscan/features/enhancement/domain/image_processor.dart' as _i9;
+import 'package:aiscan/features/export/domain/image_exporter.dart' as _i11;
+import 'package:aiscan/features/export/domain/pdf_generator.dart' as _i10;
 import 'package:aiscan/features/folders/domain/folder_model.dart' as _i7;
 import 'package:aiscan/features/folders/domain/folder_service.dart' as _i8;
 import 'package:aiscan/features/ocr/domain/ocr_service.dart' as _i5;
 import 'package:aiscan/features/search/domain/search_service.dart' as _i6;
-import 'package:aiscan/features/signature/domain/signature_service.dart'
-    as _i10;
-import 'package:hand_signature/signature.dart' as _i9;
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:mockito/src/dummies.dart' as _i15;
+import 'package:mockito/src/dummies.dart' as _i13;
 import 'package:sqflite/sqflite.dart' as _i2;
 
 // ignore_for_file: type=lint
@@ -112,9 +107,9 @@ class _FakeFolderStats_6 extends _i1.SmartFake implements _i8.FolderStats {
         );
 }
 
-class _FakeHandSignatureControl_7 extends _i1.SmartFake
-    implements _i9.HandSignatureControl {
-  _FakeHandSignatureControl_7(
+class _FakeProcessedImage_7 extends _i1.SmartFake
+    implements _i9.ProcessedImage {
+  _FakeProcessedImage_7(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -123,9 +118,8 @@ class _FakeHandSignatureControl_7 extends _i1.SmartFake
         );
 }
 
-class _FakeCapturedSignature_8 extends _i1.SmartFake
-    implements _i10.CapturedSignature {
-  _FakeCapturedSignature_8(
+class _FakeImageInfo_8 extends _i1.SmartFake implements _i9.ImageInfo {
+  _FakeImageInfo_8(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -134,9 +128,8 @@ class _FakeCapturedSignature_8 extends _i1.SmartFake
         );
 }
 
-class _FakeSavedSignature_9 extends _i1.SmartFake
-    implements _i10.SavedSignature {
-  _FakeSavedSignature_9(
+class _FakeGeneratedPDF_9 extends _i1.SmartFake implements _i10.GeneratedPDF {
+  _FakeGeneratedPDF_9(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -145,9 +138,9 @@ class _FakeSavedSignature_9 extends _i1.SmartFake
         );
 }
 
-class _FakeSignedDocument_10 extends _i1.SmartFake
-    implements _i10.SignedDocument {
-  _FakeSignedDocument_10(
+class _FakeExportedImage_10 extends _i1.SmartFake
+    implements _i11.ExportedImage {
+  _FakeExportedImage_10(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -156,51 +149,9 @@ class _FakeSignedDocument_10 extends _i1.SmartFake
         );
 }
 
-class _FakeProcessedImage_11 extends _i1.SmartFake
-    implements _i11.ProcessedImage {
-  _FakeProcessedImage_11(
-    Object parent,
-    Invocation parentInvocation,
-  ) : super(
-          parent,
-          parentInvocation,
-        );
-}
-
-class _FakeImageInfo_12 extends _i1.SmartFake implements _i11.ImageInfo {
-  _FakeImageInfo_12(
-    Object parent,
-    Invocation parentInvocation,
-  ) : super(
-          parent,
-          parentInvocation,
-        );
-}
-
-class _FakeGeneratedPDF_13 extends _i1.SmartFake implements _i12.GeneratedPDF {
-  _FakeGeneratedPDF_13(
-    Object parent,
-    Invocation parentInvocation,
-  ) : super(
-          parent,
-          parentInvocation,
-        );
-}
-
-class _FakeExportedImage_14 extends _i1.SmartFake
-    implements _i13.ExportedImage {
-  _FakeExportedImage_14(
-    Object parent,
-    Invocation parentInvocation,
-  ) : super(
-          parent,
-          parentInvocation,
-        );
-}
-
-class _FakeBatchExportResult_15 extends _i1.SmartFake
-    implements _i13.BatchExportResult {
-  _FakeBatchExportResult_15(
+class _FakeBatchExportResult_11 extends _i1.SmartFake
+    implements _i11.BatchExportResult {
+  _FakeBatchExportResult_11(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -213,7 +164,7 @@ class _FakeBatchExportResult_15 extends _i1.SmartFake
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockSecureStorageService extends _i1.Mock
-    implements _i14.SecureStorageService {
+    implements _i12.SecureStorageService {
   MockSecureStorageService() {
     _i1.throwOnMissingStub(this);
   }
@@ -281,7 +232,7 @@ class MockSecureStorageService extends _i1.Mock
           #getOrCreateEncryptionKey,
           [],
         ),
-        returnValue: _i3.Future<String>.value(_i15.dummyValue<String>(
+        returnValue: _i3.Future<String>.value(_i13.dummyValue<String>(
           this,
           Invocation.method(
             #getOrCreateEncryptionKey,
@@ -296,7 +247,7 @@ class MockSecureStorageService extends _i1.Mock
           #getOrCreateInitializationVector,
           [],
         ),
-        returnValue: _i3.Future<String>.value(_i15.dummyValue<String>(
+        returnValue: _i3.Future<String>.value(_i13.dummyValue<String>(
           this,
           Invocation.method(
             #getOrCreateInitializationVector,
@@ -311,7 +262,7 @@ class MockSecureStorageService extends _i1.Mock
           #getOrCreateSalt,
           [],
         ),
-        returnValue: _i3.Future<String>.value(_i15.dummyValue<String>(
+        returnValue: _i3.Future<String>.value(_i13.dummyValue<String>(
           this,
           Invocation.method(
             #getOrCreateSalt,
@@ -395,21 +346,21 @@ class MockSecureStorageService extends _i1.Mock
       ) as _i3.Future<void>);
 
   @override
-  _i16.Uint8List decodeKey(String? base64Key) => (super.noSuchMethod(
+  _i14.Uint8List decodeKey(String? base64Key) => (super.noSuchMethod(
         Invocation.method(
           #decodeKey,
           [base64Key],
         ),
-        returnValue: _i16.Uint8List(0),
-      ) as _i16.Uint8List);
+        returnValue: _i14.Uint8List(0),
+      ) as _i14.Uint8List);
 
   @override
-  String encodeBytes(_i16.Uint8List? bytes) => (super.noSuchMethod(
+  String encodeBytes(_i14.Uint8List? bytes) => (super.noSuchMethod(
         Invocation.method(
           #encodeBytes,
           [bytes],
         ),
-        returnValue: _i15.dummyValue<String>(
+        returnValue: _i13.dummyValue<String>(
           this,
           Invocation.method(
             #encodeBytes,
@@ -422,30 +373,30 @@ class MockSecureStorageService extends _i1.Mock
 /// A class which mocks [EncryptionService].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockEncryptionService extends _i1.Mock implements _i17.EncryptionService {
+class MockEncryptionService extends _i1.Mock implements _i15.EncryptionService {
   MockEncryptionService() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i3.Future<_i16.Uint8List> encrypt(_i16.Uint8List? data) =>
+  _i3.Future<_i14.Uint8List> encrypt(_i14.Uint8List? data) =>
       (super.noSuchMethod(
         Invocation.method(
           #encrypt,
           [data],
         ),
-        returnValue: _i3.Future<_i16.Uint8List>.value(_i16.Uint8List(0)),
-      ) as _i3.Future<_i16.Uint8List>);
+        returnValue: _i3.Future<_i14.Uint8List>.value(_i14.Uint8List(0)),
+      ) as _i3.Future<_i14.Uint8List>);
 
   @override
-  _i3.Future<_i16.Uint8List> decrypt(_i16.Uint8List? encryptedData) =>
+  _i3.Future<_i14.Uint8List> decrypt(_i14.Uint8List? encryptedData) =>
       (super.noSuchMethod(
         Invocation.method(
           #decrypt,
           [encryptedData],
         ),
-        returnValue: _i3.Future<_i16.Uint8List>.value(_i16.Uint8List(0)),
-      ) as _i3.Future<_i16.Uint8List>);
+        returnValue: _i3.Future<_i14.Uint8List>.value(_i14.Uint8List(0)),
+      ) as _i3.Future<_i14.Uint8List>);
 
   @override
   _i3.Future<void> encryptFile(
@@ -487,7 +438,7 @@ class MockEncryptionService extends _i1.Mock implements _i17.EncryptionService {
           #encryptString,
           [plaintext],
         ),
-        returnValue: _i3.Future<String>.value(_i15.dummyValue<String>(
+        returnValue: _i3.Future<String>.value(_i13.dummyValue<String>(
           this,
           Invocation.method(
             #encryptString,
@@ -503,7 +454,7 @@ class MockEncryptionService extends _i1.Mock implements _i17.EncryptionService {
           #decryptString,
           [encryptedBase64],
         ),
-        returnValue: _i3.Future<String>.value(_i15.dummyValue<String>(
+        returnValue: _i3.Future<String>.value(_i13.dummyValue<String>(
           this,
           Invocation.method(
             #decryptString,
@@ -513,7 +464,7 @@ class MockEncryptionService extends _i1.Mock implements _i17.EncryptionService {
       ) as _i3.Future<String>);
 
   @override
-  bool isLikelyEncrypted(_i16.Uint8List? data) => (super.noSuchMethod(
+  bool isLikelyEncrypted(_i14.Uint8List? data) => (super.noSuchMethod(
         Invocation.method(
           #isLikelyEncrypted,
           [data],
@@ -552,7 +503,7 @@ class MockEncryptionService extends _i1.Mock implements _i17.EncryptionService {
 /// A class which mocks [DatabaseHelper].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockDatabaseHelper extends _i1.Mock implements _i18.DatabaseHelper {
+class MockDatabaseHelper extends _i1.Mock implements _i16.DatabaseHelper {
   MockDatabaseHelper() {
     _i1.throwOnMissingStub(this);
   }
@@ -567,26 +518,52 @@ class MockDatabaseHelper extends _i1.Mock implements _i18.DatabaseHelper {
       ) as _i3.Future<_i2.Database>);
 
   @override
+  bool get isFtsAvailable => (super.noSuchMethod(
+        Invocation.getter(#isFtsAvailable),
+        returnValue: false,
+      ) as bool);
+
+  @override
   bool get isInitialized => (super.noSuchMethod(
         Invocation.getter(#isInitialized),
         returnValue: false,
       ) as bool);
 
   @override
-  _i3.Future<bool> initialize() => (super.noSuchMethod(
+  _i3.Future<void> close() => (super.noSuchMethod(
         Invocation.method(
-          #initialize,
+          #close,
           [],
         ),
-        returnValue: _i3.Future<bool>.value(false),
-      ) as _i3.Future<bool>);
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
+
+  @override
+  _i3.Future<List<String>> searchDocuments(String? query) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #searchDocuments,
+          [query],
+        ),
+        returnValue: _i3.Future<List<String>>.value(<String>[]),
+      ) as _i3.Future<List<String>>);
+
+  @override
+  _i3.Future<void> rebuildFtsIndex() => (super.noSuchMethod(
+        Invocation.method(
+          #rebuildFtsIndex,
+          [],
+        ),
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
 
   @override
   _i3.Future<int> insert(
     String? table,
-    Map<String, dynamic>? values, {
-    _i2.ConflictAlgorithm? conflictAlgorithm,
-  }) =>
+    Map<String, dynamic>? values,
+  ) =>
       (super.noSuchMethod(
         Invocation.method(
           #insert,
@@ -594,7 +571,6 @@ class MockDatabaseHelper extends _i1.Mock implements _i18.DatabaseHelper {
             table,
             values,
           ],
-          {#conflictAlgorithm: conflictAlgorithm},
         ),
         returnValue: _i3.Future<int>.value(0),
       ) as _i3.Future<int>);
@@ -605,7 +581,7 @@ class MockDatabaseHelper extends _i1.Mock implements _i18.DatabaseHelper {
     bool? distinct,
     List<String>? columns,
     String? where,
-    List<Object?>? whereArgs,
+    List<dynamic>? whereArgs,
     String? groupBy,
     String? having,
     String? orderBy,
@@ -637,8 +613,7 @@ class MockDatabaseHelper extends _i1.Mock implements _i18.DatabaseHelper {
     String? table,
     Map<String, dynamic>? values, {
     String? where,
-    List<Object?>? whereArgs,
-    _i2.ConflictAlgorithm? conflictAlgorithm,
+    List<dynamic>? whereArgs,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -650,7 +625,6 @@ class MockDatabaseHelper extends _i1.Mock implements _i18.DatabaseHelper {
           {
             #where: where,
             #whereArgs: whereArgs,
-            #conflictAlgorithm: conflictAlgorithm,
           },
         ),
         returnValue: _i3.Future<int>.value(0),
@@ -660,7 +634,7 @@ class MockDatabaseHelper extends _i1.Mock implements _i18.DatabaseHelper {
   _i3.Future<int> delete(
     String? table, {
     String? where,
-    List<Object?>? whereArgs,
+    List<dynamic>? whereArgs,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -673,94 +647,6 @@ class MockDatabaseHelper extends _i1.Mock implements _i18.DatabaseHelper {
         ),
         returnValue: _i3.Future<int>.value(0),
       ) as _i3.Future<int>);
-
-  @override
-  _i3.Future<List<Map<String, dynamic>>> rawQuery(
-    String? sql, [
-    List<Object?>? arguments,
-  ]) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #rawQuery,
-          [
-            sql,
-            arguments,
-          ],
-        ),
-        returnValue: _i3.Future<List<Map<String, dynamic>>>.value(
-            <Map<String, dynamic>>[]),
-      ) as _i3.Future<List<Map<String, dynamic>>>);
-
-  @override
-  _i3.Future<int> rawExecute(
-    String? sql, [
-    List<Object?>? arguments,
-  ]) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #rawExecute,
-          [
-            sql,
-            arguments,
-          ],
-        ),
-        returnValue: _i3.Future<int>.value(0),
-      ) as _i3.Future<int>);
-
-  @override
-  _i3.Future<T> transaction<T>(
-          _i3.Future<T> Function(_i2.Transaction)? action) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #transaction,
-          [action],
-        ),
-        returnValue: _i15.ifNotNull(
-              _i15.dummyValueOrNull<T>(
-                this,
-                Invocation.method(
-                  #transaction,
-                  [action],
-                ),
-              ),
-              (T v) => _i3.Future<T>.value(v),
-            ) ??
-            _FakeFuture_1<T>(
-              this,
-              Invocation.method(
-                #transaction,
-                [action],
-              ),
-            ),
-      ) as _i3.Future<T>);
-
-  @override
-  _i3.Future<List<Object?>> batch(
-    void Function(_i2.Batch)? operations, {
-    bool? noResult,
-    bool? continueOnError,
-  }) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #batch,
-          [operations],
-          {
-            #noResult: noResult,
-            #continueOnError: continueOnError,
-          },
-        ),
-        returnValue: _i3.Future<List<Object?>>.value(<Object?>[]),
-      ) as _i3.Future<List<Object?>>);
-
-  @override
-  _i3.Future<List<String>> searchDocuments(String? query) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #searchDocuments,
-          [query],
-        ),
-        returnValue: _i3.Future<List<String>>.value(<String>[]),
-      ) as _i3.Future<List<String>>);
 
   @override
   _i3.Future<Map<String, dynamic>?> getById(
@@ -779,6 +665,78 @@ class MockDatabaseHelper extends _i1.Mock implements _i18.DatabaseHelper {
       ) as _i3.Future<Map<String, dynamic>?>);
 
   @override
+  _i3.Future<int> count(
+    String? table, {
+    String? where,
+    List<dynamic>? whereArgs,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #count,
+          [table],
+          {
+            #where: where,
+            #whereArgs: whereArgs,
+          },
+        ),
+        returnValue: _i3.Future<int>.value(0),
+      ) as _i3.Future<int>);
+
+  @override
+  _i3.Future<List<Map<String, dynamic>>> rawQuery(
+    String? sql, [
+    List<dynamic>? arguments,
+  ]) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #rawQuery,
+          [
+            sql,
+            arguments,
+          ],
+        ),
+        returnValue: _i3.Future<List<Map<String, dynamic>>>.value(
+            <Map<String, dynamic>>[]),
+      ) as _i3.Future<List<Map<String, dynamic>>>);
+
+  @override
+  _i3.Future<T> transaction<T>(
+          _i3.Future<T> Function(_i2.Transaction)? action) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #transaction,
+          [action],
+        ),
+        returnValue: _i13.ifNotNull(
+              _i13.dummyValueOrNull<T>(
+                this,
+                Invocation.method(
+                  #transaction,
+                  [action],
+                ),
+              ),
+              (T v) => _i3.Future<T>.value(v),
+            ) ??
+            _FakeFuture_1<T>(
+              this,
+              Invocation.method(
+                #transaction,
+                [action],
+              ),
+            ),
+      ) as _i3.Future<T>);
+
+  @override
+  _i3.Future<void> initialize() => (super.noSuchMethod(
+        Invocation.method(
+          #initialize,
+          [],
+        ),
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
+
+  @override
   _i3.Future<bool> exists(
     String? table,
     String? id,
@@ -795,88 +753,6 @@ class MockDatabaseHelper extends _i1.Mock implements _i18.DatabaseHelper {
       ) as _i3.Future<bool>);
 
   @override
-  _i3.Future<int> count(
-    String? table, {
-    String? where,
-    List<Object?>? whereArgs,
-  }) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #count,
-          [table],
-          {
-            #where: where,
-            #whereArgs: whereArgs,
-          },
-        ),
-        returnValue: _i3.Future<int>.value(0),
-      ) as _i3.Future<int>);
-
-  @override
-  _i3.Future<void> close() => (super.noSuchMethod(
-        Invocation.method(
-          #close,
-          [],
-        ),
-        returnValue: _i3.Future<void>.value(),
-        returnValueForMissingStub: _i3.Future<void>.value(),
-      ) as _i3.Future<void>);
-
-  @override
-  _i3.Future<void> deleteDatabase() => (super.noSuchMethod(
-        Invocation.method(
-          #deleteDatabase,
-          [],
-        ),
-        returnValue: _i3.Future<void>.value(),
-        returnValueForMissingStub: _i3.Future<void>.value(),
-      ) as _i3.Future<void>);
-
-  @override
-  _i3.Future<void> vacuum() => (super.noSuchMethod(
-        Invocation.method(
-          #vacuum,
-          [],
-        ),
-        returnValue: _i3.Future<void>.value(),
-        returnValueForMissingStub: _i3.Future<void>.value(),
-      ) as _i3.Future<void>);
-
-  @override
-  _i3.Future<void> rebuildFtsIndex() => (super.noSuchMethod(
-        Invocation.method(
-          #rebuildFtsIndex,
-          [],
-        ),
-        returnValue: _i3.Future<void>.value(),
-        returnValueForMissingStub: _i3.Future<void>.value(),
-      ) as _i3.Future<void>);
-
-  @override
-  _i3.Future<String> getDatabasePath() => (super.noSuchMethod(
-        Invocation.method(
-          #getDatabasePath,
-          [],
-        ),
-        returnValue: _i3.Future<String>.value(_i15.dummyValue<String>(
-          this,
-          Invocation.method(
-            #getDatabasePath,
-            [],
-          ),
-        )),
-      ) as _i3.Future<String>);
-
-  @override
-  _i3.Future<int> getDatabaseVersion() => (super.noSuchMethod(
-        Invocation.method(
-          #getDatabaseVersion,
-          [],
-        ),
-        returnValue: _i3.Future<int>.value(0),
-      ) as _i3.Future<int>);
-
-  @override
   _i3.Future<List<Map<String, dynamic>>> getAllTags({String? orderBy}) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -889,186 +765,212 @@ class MockDatabaseHelper extends _i1.Mock implements _i18.DatabaseHelper {
       ) as _i3.Future<List<Map<String, dynamic>>>);
 
   @override
-  _i3.Future<Map<String, dynamic>?> getTagByName(String? name) =>
+  _i3.Future<List<Map<String, dynamic>>> getAllFolders({String? orderBy}) =>
       (super.noSuchMethod(
         Invocation.method(
-          #getTagByName,
-          [name],
+          #getAllFolders,
+          [],
+          {#orderBy: orderBy},
+        ),
+        returnValue: _i3.Future<List<Map<String, dynamic>>>.value(
+            <Map<String, dynamic>>[]),
+      ) as _i3.Future<List<Map<String, dynamic>>>);
+
+  @override
+  _i3.Future<List<Map<String, dynamic>>> getDocumentPages(String? documentId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getDocumentPages,
+          [documentId],
+        ),
+        returnValue: _i3.Future<List<Map<String, dynamic>>>.value(
+            <Map<String, dynamic>>[]),
+      ) as _i3.Future<List<Map<String, dynamic>>>);
+
+  @override
+  _i3.Future<List<String>> getDocumentPagePaths(String? documentId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getDocumentPagePaths,
+          [documentId],
+        ),
+        returnValue: _i3.Future<List<String>>.value(<String>[]),
+      ) as _i3.Future<List<String>>);
+
+  @override
+  _i3.Future<Map<String, dynamic>?> getDocumentPage(
+    String? documentId,
+    int? pageNumber,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getDocumentPage,
+          [
+            documentId,
+            pageNumber,
+          ],
         ),
         returnValue: _i3.Future<Map<String, dynamic>?>.value(),
       ) as _i3.Future<Map<String, dynamic>?>);
 
   @override
-  _i3.Future<List<String>> getTagIdsForDocument(String? documentId) =>
+  _i3.Future<int> insertDocumentPage({
+    required String? documentId,
+    required int? pageNumber,
+    required String? filePath,
+  }) =>
       (super.noSuchMethod(
         Invocation.method(
-          #getTagIdsForDocument,
-          [documentId],
+          #insertDocumentPage,
+          [],
+          {
+            #documentId: documentId,
+            #pageNumber: pageNumber,
+            #filePath: filePath,
+          },
         ),
-        returnValue: _i3.Future<List<String>>.value(<String>[]),
-      ) as _i3.Future<List<String>>);
+        returnValue: _i3.Future<int>.value(0),
+      ) as _i3.Future<int>);
 
   @override
-  _i3.Future<List<Map<String, dynamic>>> getTagsForDocument(
-          String? documentId) =>
+  _i3.Future<void> insertDocumentPages(
+    String? documentId,
+    List<String>? filePaths,
+  ) =>
       (super.noSuchMethod(
         Invocation.method(
-          #getTagsForDocument,
+          #insertDocumentPages,
+          [
+            documentId,
+            filePaths,
+          ],
+        ),
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
+
+  @override
+  _i3.Future<int> deleteDocumentPages(String? documentId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #deleteDocumentPages,
           [documentId],
+        ),
+        returnValue: _i3.Future<int>.value(0),
+      ) as _i3.Future<int>);
+
+  @override
+  _i3.Future<int> updateDocumentPagePath({
+    required String? documentId,
+    required int? pageNumber,
+    required String? newFilePath,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateDocumentPagePath,
+          [],
+          {
+            #documentId: documentId,
+            #pageNumber: pageNumber,
+            #newFilePath: newFilePath,
+          },
+        ),
+        returnValue: _i3.Future<int>.value(0),
+      ) as _i3.Future<int>);
+
+  @override
+  _i3.Future<int> getDocumentPageCount(String? documentId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getDocumentPageCount,
+          [documentId],
+        ),
+        returnValue: _i3.Future<int>.value(0),
+      ) as _i3.Future<int>);
+
+  @override
+  _i3.Future<int> insertSearchHistory({
+    required String? query,
+    required String? timestamp,
+    required int? resultCount,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #insertSearchHistory,
+          [],
+          {
+            #query: query,
+            #timestamp: timestamp,
+            #resultCount: resultCount,
+          },
+        ),
+        returnValue: _i3.Future<int>.value(0),
+      ) as _i3.Future<int>);
+
+  @override
+  _i3.Future<List<Map<String, dynamic>>> getSearchHistory({
+    int? limit,
+    String? orderBy,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getSearchHistory,
+          [],
+          {
+            #limit: limit,
+            #orderBy: orderBy,
+          },
         ),
         returnValue: _i3.Future<List<Map<String, dynamic>>>.value(
             <Map<String, dynamic>>[]),
       ) as _i3.Future<List<Map<String, dynamic>>>);
 
   @override
-  _i3.Future<List<String>> getDocumentIdsForTag(String? tagId) =>
-      (super.noSuchMethod(
+  _i3.Future<int> deleteSearchHistory(int? id) => (super.noSuchMethod(
         Invocation.method(
-          #getDocumentIdsForTag,
-          [tagId],
+          #deleteSearchHistory,
+          [id],
         ),
-        returnValue: _i3.Future<List<String>>.value(<String>[]),
-      ) as _i3.Future<List<String>>);
+        returnValue: _i3.Future<int>.value(0),
+      ) as _i3.Future<int>);
 
   @override
-  _i3.Future<void> addTagToDocument(
-    String? documentId,
-    String? tagId,
-  ) =>
-      (super.noSuchMethod(
+  _i3.Future<int> clearSearchHistory() => (super.noSuchMethod(
         Invocation.method(
-          #addTagToDocument,
-          [
-            documentId,
-            tagId,
-          ],
-        ),
-        returnValue: _i3.Future<void>.value(),
-        returnValueForMissingStub: _i3.Future<void>.value(),
-      ) as _i3.Future<void>);
-
-  @override
-  _i3.Future<void> removeTagFromDocument(
-    String? documentId,
-    String? tagId,
-  ) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #removeTagFromDocument,
-          [
-            documentId,
-            tagId,
-          ],
-        ),
-        returnValue: _i3.Future<void>.value(),
-        returnValueForMissingStub: _i3.Future<void>.value(),
-      ) as _i3.Future<void>);
-
-  @override
-  _i3.Future<void> setDocumentTags(
-    String? documentId,
-    List<String>? tagIds,
-  ) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #setDocumentTags,
-          [
-            documentId,
-            tagIds,
-          ],
-        ),
-        returnValue: _i3.Future<void>.value(),
-        returnValueForMissingStub: _i3.Future<void>.value(),
-      ) as _i3.Future<void>);
-
-  @override
-  _i3.Future<Map<String, int>> getTagDocumentCounts() => (super.noSuchMethod(
-        Invocation.method(
-          #getTagDocumentCounts,
+          #clearSearchHistory,
           [],
         ),
-        returnValue: _i3.Future<Map<String, int>>.value(<String, int>{}),
-      ) as _i3.Future<Map<String, int>>);
-
-  @override
-  _i3.Future<List<Map<String, dynamic>>> getDocumentsWithAnyTag(
-          List<String>? tagIds) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #getDocumentsWithAnyTag,
-          [tagIds],
-        ),
-        returnValue: _i3.Future<List<Map<String, dynamic>>>.value(
-            <Map<String, dynamic>>[]),
-      ) as _i3.Future<List<Map<String, dynamic>>>);
-
-  @override
-  _i3.Future<List<Map<String, dynamic>>> getDocumentsWithAllTags(
-          List<String>? tagIds) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #getDocumentsWithAllTags,
-          [tagIds],
-        ),
-        returnValue: _i3.Future<List<Map<String, dynamic>>>.value(
-            <Map<String, dynamic>>[]),
-      ) as _i3.Future<List<Map<String, dynamic>>>);
-
-  @override
-  _i3.Future<bool> documentHasTag(
-    String? documentId,
-    String? tagId,
-  ) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #documentHasTag,
-          [
-            documentId,
-            tagId,
-          ],
-        ),
-        returnValue: _i3.Future<bool>.value(false),
-      ) as _i3.Future<bool>);
-
-  @override
-  _i3.Future<bool> tagNameExists(String? name) => (super.noSuchMethod(
-        Invocation.method(
-          #tagNameExists,
-          [name],
-        ),
-        returnValue: _i3.Future<bool>.value(false),
-      ) as _i3.Future<bool>);
+        returnValue: _i3.Future<int>.value(0),
+      ) as _i3.Future<int>);
 }
 
 /// A class which mocks [DocumentRepository].
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockDocumentRepository extends _i1.Mock
-    implements _i19.DocumentRepository {
+    implements _i17.DocumentRepository {
   MockDocumentRepository() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i3.Future<_i4.Document> createDocument({
+  _i3.Future<_i4.Document> createDocumentWithPages({
     required String? title,
-    required String? sourceFilePath,
+    required List<String>? sourceImagePaths,
     String? description,
     String? thumbnailSourcePath,
-    int? pageCount = 1,
     String? folderId,
     bool? isFavorite = false,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
-          #createDocument,
+          #createDocumentWithPages,
           [],
           {
             #title: title,
-            #sourceFilePath: sourceFilePath,
+            #sourceImagePaths: sourceImagePaths,
             #description: description,
             #thumbnailSourcePath: thumbnailSourcePath,
-            #pageCount: pageCount,
             #folderId: folderId,
             #isFavorite: isFavorite,
           },
@@ -1076,14 +978,13 @@ class MockDocumentRepository extends _i1.Mock
         returnValue: _i3.Future<_i4.Document>.value(_FakeDocument_2(
           this,
           Invocation.method(
-            #createDocument,
+            #createDocumentWithPages,
             [],
             {
               #title: title,
-              #sourceFilePath: sourceFilePath,
+              #sourceImagePaths: sourceImagePaths,
               #description: description,
               #thumbnailSourcePath: thumbnailSourcePath,
-              #pageCount: pageCount,
               #folderId: folderId,
               #isFavorite: isFavorite,
             },
@@ -1166,20 +1067,49 @@ class MockDocumentRepository extends _i1.Mock
       ) as _i3.Future<int>);
 
   @override
-  _i3.Future<String> getDecryptedFilePath(_i4.Document? document) =>
+  _i3.Future<String> getDecryptedPagePath(
+    _i4.Document? document, {
+    int? pageIndex = 0,
+  }) =>
       (super.noSuchMethod(
         Invocation.method(
-          #getDecryptedFilePath,
+          #getDecryptedPagePath,
           [document],
+          {#pageIndex: pageIndex},
         ),
-        returnValue: _i3.Future<String>.value(_i15.dummyValue<String>(
+        returnValue: _i3.Future<String>.value(_i13.dummyValue<String>(
           this,
           Invocation.method(
-            #getDecryptedFilePath,
+            #getDecryptedPagePath,
             [document],
+            {#pageIndex: pageIndex},
           ),
         )),
       ) as _i3.Future<String>);
+
+  @override
+  _i3.Future<List<String>> getDecryptedAllPages(_i4.Document? document) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getDecryptedAllPages,
+          [document],
+        ),
+        returnValue: _i3.Future<List<String>>.value(<String>[]),
+      ) as _i3.Future<List<String>>);
+
+  @override
+  _i3.Future<List<int>> getDecryptedPageBytes(
+    _i4.Document? document, {
+    int? pageIndex = 0,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getDecryptedPageBytes,
+          [document],
+          {#pageIndex: pageIndex},
+        ),
+        returnValue: _i3.Future<List<int>>.value(<int>[]),
+      ) as _i3.Future<List<int>>);
 
   @override
   _i3.Future<String?> getDecryptedThumbnailPath(_i4.Document? document) =>
@@ -1203,31 +1133,6 @@ class MockDocumentRepository extends _i1.Mock
           Invocation.method(
             #updateDocument,
             [document],
-          ),
-        )),
-      ) as _i3.Future<_i4.Document>);
-
-  @override
-  _i3.Future<_i4.Document> updateDocumentFile(
-    _i4.Document? document,
-    String? newSourceFilePath,
-  ) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #updateDocumentFile,
-          [
-            document,
-            newSourceFilePath,
-          ],
-        ),
-        returnValue: _i3.Future<_i4.Document>.value(_FakeDocument_2(
-          this,
-          Invocation.method(
-            #updateDocumentFile,
-            [
-              document,
-              newSourceFilePath,
-            ],
           ),
         )),
       ) as _i3.Future<_i4.Document>);
@@ -1348,16 +1253,6 @@ class MockDocumentRepository extends _i1.Mock
       ) as _i3.Future<void>);
 
   @override
-  _i3.Future<void> cleanupTempFiles() => (super.noSuchMethod(
-        Invocation.method(
-          #cleanupTempFiles,
-          [],
-        ),
-        returnValue: _i3.Future<void>.value(),
-        returnValueForMissingStub: _i3.Future<void>.value(),
-      ) as _i3.Future<void>);
-
-  @override
   _i3.Future<List<String>> getDocumentTags(String? documentId) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -1430,6 +1325,16 @@ class MockDocumentRepository extends _i1.Mock
       ) as _i3.Future<List<_i4.Document>>);
 
   @override
+  _i3.Future<void> cleanupTempFiles() => (super.noSuchMethod(
+        Invocation.method(
+          #cleanupTempFiles,
+          [],
+        ),
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
+
+  @override
   _i3.Future<bool> isReady() => (super.noSuchMethod(
         Invocation.method(
           #isReady,
@@ -1480,9 +1385,7 @@ class MockOcrService extends _i1.Mock implements _i5.OcrService {
 
   @override
   _i3.Future<bool> initialize(
-          {List<_i5.OcrLanguage>? languages = const [
-            _i5.OcrLanguage.english
-          ]}) =>
+          {List<_i5.OcrLanguage>? languages = const [_i5.OcrLanguage.latin]}) =>
       (super.noSuchMethod(
         Invocation.method(
           #initialize,
@@ -1524,7 +1427,7 @@ class MockOcrService extends _i1.Mock implements _i5.OcrService {
 
   @override
   _i3.Future<_i5.OcrResult> extractTextFromBytes(
-    _i16.Uint8List? bytes, {
+    _i14.Uint8List? bytes, {
     _i5.OcrOptions? options = _i5.OcrOptions.defaultDocument,
   }) =>
       (super.noSuchMethod(
@@ -1609,7 +1512,7 @@ class MockOcrService extends _i1.Mock implements _i5.OcrService {
   @override
   _i3.Future<bool> containsText(
     String? imagePath, {
-    _i5.OcrLanguage? language = _i5.OcrLanguage.english,
+    _i5.OcrLanguage? language = _i5.OcrLanguage.latin,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -1645,7 +1548,7 @@ class MockOcrService extends _i1.Mock implements _i5.OcrService {
           #getCacheSizeFormatted,
           [],
         ),
-        returnValue: _i3.Future<String>.value(_i15.dummyValue<String>(
+        returnValue: _i3.Future<String>.value(_i13.dummyValue<String>(
           this,
           Invocation.method(
             #getCacheSizeFormatted,
@@ -1653,6 +1556,16 @@ class MockOcrService extends _i1.Mock implements _i5.OcrService {
           ),
         )),
       ) as _i3.Future<String>);
+
+  @override
+  _i3.Future<void> dispose() => (super.noSuchMethod(
+        Invocation.method(
+          #dispose,
+          [],
+        ),
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
 }
 
 /// A class which mocks [SearchService].
@@ -2030,6 +1943,38 @@ class MockFolderService extends _i1.Mock implements _i8.FolderService {
       ) as _i3.Future<_i7.Folder>);
 
   @override
+  _i3.Future<_i7.Folder> toggleFavorite(String? folderId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #toggleFavorite,
+          [folderId],
+        ),
+        returnValue: _i3.Future<_i7.Folder>.value(_FakeFolder_5(
+          this,
+          Invocation.method(
+            #toggleFavorite,
+            [folderId],
+          ),
+        )),
+      ) as _i3.Future<_i7.Folder>);
+
+  @override
+  _i3.Future<List<_i7.Folder>> setFavoriteForFolders(
+    List<String>? folderIds,
+    bool? isFavorite,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #setFavoriteForFolders,
+          [
+            folderIds,
+            isFavorite,
+          ],
+        ),
+        returnValue: _i3.Future<List<_i7.Folder>>.value(<_i7.Folder>[]),
+      ) as _i3.Future<List<_i7.Folder>>);
+
+  @override
   _i3.Future<_i7.Folder> moveFolder(
     String? folderId, {
     String? newParentId,
@@ -2135,363 +2080,19 @@ class MockFolderService extends _i1.Mock implements _i8.FolderService {
       ) as _i3.Future<List<_i7.Folder>>);
 }
 
-/// A class which mocks [SignatureService].
-///
-/// See the documentation for Mockito's code generation for more information.
-class MockSignatureService extends _i1.Mock implements _i10.SignatureService {
-  MockSignatureService() {
-    _i1.throwOnMissingStub(this);
-  }
-
-  @override
-  bool get isReady => (super.noSuchMethod(
-        Invocation.getter(#isReady),
-        returnValue: false,
-      ) as bool);
-
-  @override
-  _i3.Future<bool> initialize() => (super.noSuchMethod(
-        Invocation.method(
-          #initialize,
-          [],
-        ),
-        returnValue: _i3.Future<bool>.value(false),
-      ) as _i3.Future<bool>);
-
-  @override
-  _i9.HandSignatureControl createControl(
-          {_i10.SignatureOptions? options =
-              const _i10.SignatureOptions.document()}) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #createControl,
-          [],
-          {#options: options},
-        ),
-        returnValue: _FakeHandSignatureControl_7(
-          this,
-          Invocation.method(
-            #createControl,
-            [],
-            {#options: options},
-          ),
-        ),
-      ) as _i9.HandSignatureControl);
-
-  @override
-  _i3.Future<_i10.CapturedSignature> captureSignature(
-    _i9.HandSignatureControl? control, {
-    _i10.SignatureOptions? options = const _i10.SignatureOptions.document(),
-  }) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #captureSignature,
-          [control],
-          {#options: options},
-        ),
-        returnValue:
-            _i3.Future<_i10.CapturedSignature>.value(_FakeCapturedSignature_8(
-          this,
-          Invocation.method(
-            #captureSignature,
-            [control],
-            {#options: options},
-          ),
-        )),
-      ) as _i3.Future<_i10.CapturedSignature>);
-
-  @override
-  _i3.Future<_i10.SavedSignature> saveSignature(
-    _i10.CapturedSignature? signature, {
-    required String? label,
-    bool? setAsDefault = false,
-  }) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #saveSignature,
-          [signature],
-          {
-            #label: label,
-            #setAsDefault: setAsDefault,
-          },
-        ),
-        returnValue:
-            _i3.Future<_i10.SavedSignature>.value(_FakeSavedSignature_9(
-          this,
-          Invocation.method(
-            #saveSignature,
-            [signature],
-            {
-              #label: label,
-              #setAsDefault: setAsDefault,
-            },
-          ),
-        )),
-      ) as _i3.Future<_i10.SavedSignature>);
-
-  @override
-  _i3.Future<List<_i10.SavedSignature>> getAllSignatures() =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #getAllSignatures,
-          [],
-        ),
-        returnValue: _i3.Future<List<_i10.SavedSignature>>.value(
-            <_i10.SavedSignature>[]),
-      ) as _i3.Future<List<_i10.SavedSignature>>);
-
-  @override
-  _i3.Future<_i10.SavedSignature?> getSignature(String? id) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #getSignature,
-          [id],
-        ),
-        returnValue: _i3.Future<_i10.SavedSignature?>.value(),
-      ) as _i3.Future<_i10.SavedSignature?>);
-
-  @override
-  _i3.Future<_i10.SavedSignature?> getDefaultSignature() => (super.noSuchMethod(
-        Invocation.method(
-          #getDefaultSignature,
-          [],
-        ),
-        returnValue: _i3.Future<_i10.SavedSignature?>.value(),
-      ) as _i3.Future<_i10.SavedSignature?>);
-
-  @override
-  _i3.Future<int> getSignatureCount() => (super.noSuchMethod(
-        Invocation.method(
-          #getSignatureCount,
-          [],
-        ),
-        returnValue: _i3.Future<int>.value(0),
-      ) as _i3.Future<int>);
-
-  @override
-  _i3.Future<_i10.SavedSignature> updateSignatureLabel(
-    String? id,
-    String? newLabel,
-  ) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #updateSignatureLabel,
-          [
-            id,
-            newLabel,
-          ],
-        ),
-        returnValue:
-            _i3.Future<_i10.SavedSignature>.value(_FakeSavedSignature_9(
-          this,
-          Invocation.method(
-            #updateSignatureLabel,
-            [
-              id,
-              newLabel,
-            ],
-          ),
-        )),
-      ) as _i3.Future<_i10.SavedSignature>);
-
-  @override
-  _i3.Future<_i10.SavedSignature> setDefaultSignature(String? id) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #setDefaultSignature,
-          [id],
-        ),
-        returnValue:
-            _i3.Future<_i10.SavedSignature>.value(_FakeSavedSignature_9(
-          this,
-          Invocation.method(
-            #setDefaultSignature,
-            [id],
-          ),
-        )),
-      ) as _i3.Future<_i10.SavedSignature>);
-
-  @override
-  _i3.Future<void> clearDefaultSignature() => (super.noSuchMethod(
-        Invocation.method(
-          #clearDefaultSignature,
-          [],
-        ),
-        returnValue: _i3.Future<void>.value(),
-        returnValueForMissingStub: _i3.Future<void>.value(),
-      ) as _i3.Future<void>);
-
-  @override
-  _i3.Future<void> deleteSignature(String? id) => (super.noSuchMethod(
-        Invocation.method(
-          #deleteSignature,
-          [id],
-        ),
-        returnValue: _i3.Future<void>.value(),
-        returnValueForMissingStub: _i3.Future<void>.value(),
-      ) as _i3.Future<void>);
-
-  @override
-  _i3.Future<void> deleteSignatures(List<String>? ids) => (super.noSuchMethod(
-        Invocation.method(
-          #deleteSignatures,
-          [ids],
-        ),
-        returnValue: _i3.Future<void>.value(),
-        returnValueForMissingStub: _i3.Future<void>.value(),
-      ) as _i3.Future<void>);
-
-  @override
-  _i3.Future<_i16.Uint8List> loadSignatureImage(
-          _i10.SavedSignature? signature) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #loadSignatureImage,
-          [signature],
-        ),
-        returnValue: _i3.Future<_i16.Uint8List>.value(_i16.Uint8List(0)),
-      ) as _i3.Future<_i16.Uint8List>);
-
-  @override
-  _i3.Future<_i10.SignedDocument> overlaySignatureOnDocument({
-    required _i16.Uint8List? documentBytes,
-    required _i16.Uint8List? signatureBytes,
-    required _i20.Offset? position,
-    required double? signatureWidth,
-    double? opacity = 1.0,
-  }) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #overlaySignatureOnDocument,
-          [],
-          {
-            #documentBytes: documentBytes,
-            #signatureBytes: signatureBytes,
-            #position: position,
-            #signatureWidth: signatureWidth,
-            #opacity: opacity,
-          },
-        ),
-        returnValue:
-            _i3.Future<_i10.SignedDocument>.value(_FakeSignedDocument_10(
-          this,
-          Invocation.method(
-            #overlaySignatureOnDocument,
-            [],
-            {
-              #documentBytes: documentBytes,
-              #signatureBytes: signatureBytes,
-              #position: position,
-              #signatureWidth: signatureWidth,
-              #opacity: opacity,
-            },
-          ),
-        )),
-      ) as _i3.Future<_i10.SignedDocument>);
-
-  @override
-  _i3.Future<_i10.SignedDocument> overlaySignatureOnDocumentById({
-    required _i16.Uint8List? documentBytes,
-    required String? signatureId,
-    required _i20.Offset? position,
-    required double? signatureWidth,
-    double? opacity = 1.0,
-  }) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #overlaySignatureOnDocumentById,
-          [],
-          {
-            #documentBytes: documentBytes,
-            #signatureId: signatureId,
-            #position: position,
-            #signatureWidth: signatureWidth,
-            #opacity: opacity,
-          },
-        ),
-        returnValue:
-            _i3.Future<_i10.SignedDocument>.value(_FakeSignedDocument_10(
-          this,
-          Invocation.method(
-            #overlaySignatureOnDocumentById,
-            [],
-            {
-              #documentBytes: documentBytes,
-              #signatureId: signatureId,
-              #position: position,
-              #signatureWidth: signatureWidth,
-              #opacity: opacity,
-            },
-          ),
-        )),
-      ) as _i3.Future<_i10.SignedDocument>);
-
-  @override
-  void clearControl(_i9.HandSignatureControl? control) => super.noSuchMethod(
-        Invocation.method(
-          #clearControl,
-          [control],
-        ),
-        returnValueForMissingStub: null,
-      );
-
-  @override
-  bool hasSignature(_i9.HandSignatureControl? control) => (super.noSuchMethod(
-        Invocation.method(
-          #hasSignature,
-          [control],
-        ),
-        returnValue: false,
-      ) as bool);
-
-  @override
-  _i3.Future<int> getStorageSize() => (super.noSuchMethod(
-        Invocation.method(
-          #getStorageSize,
-          [],
-        ),
-        returnValue: _i3.Future<int>.value(0),
-      ) as _i3.Future<int>);
-
-  @override
-  _i3.Future<String> getStorageSizeFormatted() => (super.noSuchMethod(
-        Invocation.method(
-          #getStorageSizeFormatted,
-          [],
-        ),
-        returnValue: _i3.Future<String>.value(_i15.dummyValue<String>(
-          this,
-          Invocation.method(
-            #getStorageSizeFormatted,
-            [],
-          ),
-        )),
-      ) as _i3.Future<String>);
-
-  @override
-  _i3.Future<void> clearAllSignatures() => (super.noSuchMethod(
-        Invocation.method(
-          #clearAllSignatures,
-          [],
-        ),
-        returnValue: _i3.Future<void>.value(),
-        returnValueForMissingStub: _i3.Future<void>.value(),
-      ) as _i3.Future<void>);
-}
-
 /// A class which mocks [ImageProcessor].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockImageProcessor extends _i1.Mock implements _i11.ImageProcessor {
+class MockImageProcessor extends _i1.Mock implements _i9.ImageProcessor {
   MockImageProcessor() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i3.Future<_i11.ProcessedImage> enhanceFromFile(
+  _i3.Future<_i9.ProcessedImage> enhanceFromFile(
     String? filePath, {
-    _i11.EnhancementOptions? options = _i11.EnhancementOptions.none,
-    _i11.ImageOutputFormat? outputFormat = _i11.ImageOutputFormat.jpeg,
+    _i9.EnhancementOptions? options = _i9.EnhancementOptions.none,
+    _i9.ImageOutputFormat? outputFormat = _i9.ImageOutputFormat.jpeg,
     int? quality = 90,
   }) =>
       (super.noSuchMethod(
@@ -2504,8 +2105,7 @@ class MockImageProcessor extends _i1.Mock implements _i11.ImageProcessor {
             #quality: quality,
           },
         ),
-        returnValue:
-            _i3.Future<_i11.ProcessedImage>.value(_FakeProcessedImage_11(
+        returnValue: _i3.Future<_i9.ProcessedImage>.value(_FakeProcessedImage_7(
           this,
           Invocation.method(
             #enhanceFromFile,
@@ -2517,13 +2117,13 @@ class MockImageProcessor extends _i1.Mock implements _i11.ImageProcessor {
             },
           ),
         )),
-      ) as _i3.Future<_i11.ProcessedImage>);
+      ) as _i3.Future<_i9.ProcessedImage>);
 
   @override
-  _i3.Future<_i11.ProcessedImage> enhanceFromBytes(
-    _i16.Uint8List? bytes, {
-    _i11.EnhancementOptions? options = _i11.EnhancementOptions.none,
-    _i11.ImageOutputFormat? outputFormat = _i11.ImageOutputFormat.jpeg,
+  _i3.Future<_i9.ProcessedImage> enhanceFromBytes(
+    _i14.Uint8List? bytes, {
+    _i9.EnhancementOptions? options = _i9.EnhancementOptions.none,
+    _i9.ImageOutputFormat? outputFormat = _i9.ImageOutputFormat.jpeg,
     int? quality = 90,
   }) =>
       (super.noSuchMethod(
@@ -2536,8 +2136,7 @@ class MockImageProcessor extends _i1.Mock implements _i11.ImageProcessor {
             #quality: quality,
           },
         ),
-        returnValue:
-            _i3.Future<_i11.ProcessedImage>.value(_FakeProcessedImage_11(
+        returnValue: _i3.Future<_i9.ProcessedImage>.value(_FakeProcessedImage_7(
           this,
           Invocation.method(
             #enhanceFromBytes,
@@ -2549,14 +2148,14 @@ class MockImageProcessor extends _i1.Mock implements _i11.ImageProcessor {
             },
           ),
         )),
-      ) as _i3.Future<_i11.ProcessedImage>);
+      ) as _i3.Future<_i9.ProcessedImage>);
 
   @override
-  _i3.Future<_i11.ProcessedImage> enhanceFromFileToFile(
+  _i3.Future<_i9.ProcessedImage> enhanceFromFileToFile(
     String? inputPath,
     String? outputPath, {
-    _i11.EnhancementOptions? options = _i11.EnhancementOptions.none,
-    _i11.ImageOutputFormat? outputFormat = _i11.ImageOutputFormat.jpeg,
+    _i9.EnhancementOptions? options = _i9.EnhancementOptions.none,
+    _i9.ImageOutputFormat? outputFormat = _i9.ImageOutputFormat.jpeg,
     int? quality = 90,
   }) =>
       (super.noSuchMethod(
@@ -2572,8 +2171,7 @@ class MockImageProcessor extends _i1.Mock implements _i11.ImageProcessor {
             #quality: quality,
           },
         ),
-        returnValue:
-            _i3.Future<_i11.ProcessedImage>.value(_FakeProcessedImage_11(
+        returnValue: _i3.Future<_i9.ProcessedImage>.value(_FakeProcessedImage_7(
           this,
           Invocation.method(
             #enhanceFromFileToFile,
@@ -2588,12 +2186,12 @@ class MockImageProcessor extends _i1.Mock implements _i11.ImageProcessor {
             },
           ),
         )),
-      ) as _i3.Future<_i11.ProcessedImage>);
+      ) as _i3.Future<_i9.ProcessedImage>);
 
   @override
-  _i3.Future<_i11.ProcessedImage> autoEnhance(
-    _i16.Uint8List? bytes, {
-    _i11.ImageOutputFormat? outputFormat = _i11.ImageOutputFormat.jpeg,
+  _i3.Future<_i9.ProcessedImage> autoEnhance(
+    _i14.Uint8List? bytes, {
+    _i9.ImageOutputFormat? outputFormat = _i9.ImageOutputFormat.jpeg,
     int? quality = 90,
   }) =>
       (super.noSuchMethod(
@@ -2605,8 +2203,7 @@ class MockImageProcessor extends _i1.Mock implements _i11.ImageProcessor {
             #quality: quality,
           },
         ),
-        returnValue:
-            _i3.Future<_i11.ProcessedImage>.value(_FakeProcessedImage_11(
+        returnValue: _i3.Future<_i9.ProcessedImage>.value(_FakeProcessedImage_7(
           this,
           Invocation.method(
             #autoEnhance,
@@ -2617,13 +2214,13 @@ class MockImageProcessor extends _i1.Mock implements _i11.ImageProcessor {
             },
           ),
         )),
-      ) as _i3.Future<_i11.ProcessedImage>);
+      ) as _i3.Future<_i9.ProcessedImage>);
 
   @override
-  _i3.Future<_i11.ProcessedImage> convertToGrayscale(
-    _i16.Uint8List? bytes, {
+  _i3.Future<_i9.ProcessedImage> convertToGrayscale(
+    _i14.Uint8List? bytes, {
     bool? enhanceContrast = true,
-    _i11.ImageOutputFormat? outputFormat = _i11.ImageOutputFormat.jpeg,
+    _i9.ImageOutputFormat? outputFormat = _i9.ImageOutputFormat.jpeg,
     int? quality = 90,
   }) =>
       (super.noSuchMethod(
@@ -2636,8 +2233,7 @@ class MockImageProcessor extends _i1.Mock implements _i11.ImageProcessor {
             #quality: quality,
           },
         ),
-        returnValue:
-            _i3.Future<_i11.ProcessedImage>.value(_FakeProcessedImage_11(
+        returnValue: _i3.Future<_i9.ProcessedImage>.value(_FakeProcessedImage_7(
           this,
           Invocation.method(
             #convertToGrayscale,
@@ -2649,13 +2245,13 @@ class MockImageProcessor extends _i1.Mock implements _i11.ImageProcessor {
             },
           ),
         )),
-      ) as _i3.Future<_i11.ProcessedImage>);
+      ) as _i3.Future<_i9.ProcessedImage>);
 
   @override
-  _i3.Future<_i11.ProcessedImage> sharpen(
-    _i16.Uint8List? bytes, {
+  _i3.Future<_i9.ProcessedImage> sharpen(
+    _i14.Uint8List? bytes, {
     int? amount = 50,
-    _i11.ImageOutputFormat? outputFormat = _i11.ImageOutputFormat.jpeg,
+    _i9.ImageOutputFormat? outputFormat = _i9.ImageOutputFormat.jpeg,
     int? quality = 90,
   }) =>
       (super.noSuchMethod(
@@ -2668,8 +2264,7 @@ class MockImageProcessor extends _i1.Mock implements _i11.ImageProcessor {
             #quality: quality,
           },
         ),
-        returnValue:
-            _i3.Future<_i11.ProcessedImage>.value(_FakeProcessedImage_11(
+        returnValue: _i3.Future<_i9.ProcessedImage>.value(_FakeProcessedImage_7(
           this,
           Invocation.method(
             #sharpen,
@@ -2681,13 +2276,13 @@ class MockImageProcessor extends _i1.Mock implements _i11.ImageProcessor {
             },
           ),
         )),
-      ) as _i3.Future<_i11.ProcessedImage>);
+      ) as _i3.Future<_i9.ProcessedImage>);
 
   @override
-  _i3.Future<_i11.ProcessedImage> adjustBrightness(
-    _i16.Uint8List? bytes, {
+  _i3.Future<_i9.ProcessedImage> adjustBrightness(
+    _i14.Uint8List? bytes, {
     required int? amount,
-    _i11.ImageOutputFormat? outputFormat = _i11.ImageOutputFormat.jpeg,
+    _i9.ImageOutputFormat? outputFormat = _i9.ImageOutputFormat.jpeg,
     int? quality = 90,
   }) =>
       (super.noSuchMethod(
@@ -2700,8 +2295,7 @@ class MockImageProcessor extends _i1.Mock implements _i11.ImageProcessor {
             #quality: quality,
           },
         ),
-        returnValue:
-            _i3.Future<_i11.ProcessedImage>.value(_FakeProcessedImage_11(
+        returnValue: _i3.Future<_i9.ProcessedImage>.value(_FakeProcessedImage_7(
           this,
           Invocation.method(
             #adjustBrightness,
@@ -2713,13 +2307,13 @@ class MockImageProcessor extends _i1.Mock implements _i11.ImageProcessor {
             },
           ),
         )),
-      ) as _i3.Future<_i11.ProcessedImage>);
+      ) as _i3.Future<_i9.ProcessedImage>);
 
   @override
-  _i3.Future<_i11.ProcessedImage> adjustContrast(
-    _i16.Uint8List? bytes, {
+  _i3.Future<_i9.ProcessedImage> adjustContrast(
+    _i14.Uint8List? bytes, {
     required int? amount,
-    _i11.ImageOutputFormat? outputFormat = _i11.ImageOutputFormat.jpeg,
+    _i9.ImageOutputFormat? outputFormat = _i9.ImageOutputFormat.jpeg,
     int? quality = 90,
   }) =>
       (super.noSuchMethod(
@@ -2732,8 +2326,7 @@ class MockImageProcessor extends _i1.Mock implements _i11.ImageProcessor {
             #quality: quality,
           },
         ),
-        returnValue:
-            _i3.Future<_i11.ProcessedImage>.value(_FakeProcessedImage_11(
+        returnValue: _i3.Future<_i9.ProcessedImage>.value(_FakeProcessedImage_7(
           this,
           Invocation.method(
             #adjustContrast,
@@ -2745,14 +2338,14 @@ class MockImageProcessor extends _i1.Mock implements _i11.ImageProcessor {
             },
           ),
         )),
-      ) as _i3.Future<_i11.ProcessedImage>);
+      ) as _i3.Future<_i9.ProcessedImage>);
 
   @override
-  _i3.Future<_i11.ProcessedImage> resize(
-    _i16.Uint8List? bytes, {
+  _i3.Future<_i9.ProcessedImage> resize(
+    _i14.Uint8List? bytes, {
     required int? maxWidth,
     required int? maxHeight,
-    _i11.ImageOutputFormat? outputFormat = _i11.ImageOutputFormat.jpeg,
+    _i9.ImageOutputFormat? outputFormat = _i9.ImageOutputFormat.jpeg,
     int? quality = 90,
   }) =>
       (super.noSuchMethod(
@@ -2766,8 +2359,7 @@ class MockImageProcessor extends _i1.Mock implements _i11.ImageProcessor {
             #quality: quality,
           },
         ),
-        returnValue:
-            _i3.Future<_i11.ProcessedImage>.value(_FakeProcessedImage_11(
+        returnValue: _i3.Future<_i9.ProcessedImage>.value(_FakeProcessedImage_7(
           this,
           Invocation.method(
             #resize,
@@ -2780,16 +2372,16 @@ class MockImageProcessor extends _i1.Mock implements _i11.ImageProcessor {
             },
           ),
         )),
-      ) as _i3.Future<_i11.ProcessedImage>);
+      ) as _i3.Future<_i9.ProcessedImage>);
 
   @override
-  _i3.Future<_i11.ProcessedImage> crop(
-    _i16.Uint8List? bytes, {
+  _i3.Future<_i9.ProcessedImage> crop(
+    _i14.Uint8List? bytes, {
     required int? x,
     required int? y,
     required int? width,
     required int? height,
-    _i11.ImageOutputFormat? outputFormat = _i11.ImageOutputFormat.jpeg,
+    _i9.ImageOutputFormat? outputFormat = _i9.ImageOutputFormat.jpeg,
     int? quality = 90,
   }) =>
       (super.noSuchMethod(
@@ -2805,8 +2397,7 @@ class MockImageProcessor extends _i1.Mock implements _i11.ImageProcessor {
             #quality: quality,
           },
         ),
-        returnValue:
-            _i3.Future<_i11.ProcessedImage>.value(_FakeProcessedImage_11(
+        returnValue: _i3.Future<_i9.ProcessedImage>.value(_FakeProcessedImage_7(
           this,
           Invocation.method(
             #crop,
@@ -2821,13 +2412,13 @@ class MockImageProcessor extends _i1.Mock implements _i11.ImageProcessor {
             },
           ),
         )),
-      ) as _i3.Future<_i11.ProcessedImage>);
+      ) as _i3.Future<_i9.ProcessedImage>);
 
   @override
-  _i3.Future<_i11.ProcessedImage> rotate(
-    _i16.Uint8List? bytes, {
+  _i3.Future<_i9.ProcessedImage> rotate(
+    _i14.Uint8List? bytes, {
     required double? angle,
-    _i11.ImageOutputFormat? outputFormat = _i11.ImageOutputFormat.jpeg,
+    _i9.ImageOutputFormat? outputFormat = _i9.ImageOutputFormat.jpeg,
     int? quality = 90,
   }) =>
       (super.noSuchMethod(
@@ -2840,8 +2431,7 @@ class MockImageProcessor extends _i1.Mock implements _i11.ImageProcessor {
             #quality: quality,
           },
         ),
-        returnValue:
-            _i3.Future<_i11.ProcessedImage>.value(_FakeProcessedImage_11(
+        returnValue: _i3.Future<_i9.ProcessedImage>.value(_FakeProcessedImage_7(
           this,
           Invocation.method(
             #rotate,
@@ -2853,37 +2443,37 @@ class MockImageProcessor extends _i1.Mock implements _i11.ImageProcessor {
             },
           ),
         )),
-      ) as _i3.Future<_i11.ProcessedImage>);
+      ) as _i3.Future<_i9.ProcessedImage>);
 
   @override
-  _i3.Future<_i11.ImageInfo> getImageInfo(_i16.Uint8List? bytes) =>
+  _i3.Future<_i9.ImageInfo> getImageInfo(_i14.Uint8List? bytes) =>
       (super.noSuchMethod(
         Invocation.method(
           #getImageInfo,
           [bytes],
         ),
-        returnValue: _i3.Future<_i11.ImageInfo>.value(_FakeImageInfo_12(
+        returnValue: _i3.Future<_i9.ImageInfo>.value(_FakeImageInfo_8(
           this,
           Invocation.method(
             #getImageInfo,
             [bytes],
           ),
         )),
-      ) as _i3.Future<_i11.ImageInfo>);
+      ) as _i3.Future<_i9.ImageInfo>);
 }
 
 /// A class which mocks [PDFGenerator].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockPDFGenerator extends _i1.Mock implements _i12.PDFGenerator {
+class MockPDFGenerator extends _i1.Mock implements _i10.PDFGenerator {
   MockPDFGenerator() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i3.Future<_i12.GeneratedPDF> generateFromBytes({
-    required List<_i16.Uint8List>? imageBytesList,
-    _i12.PDFGeneratorOptions? options = const _i12.PDFGeneratorOptions(),
+  _i3.Future<_i10.GeneratedPDF> generateFromBytes({
+    required List<_i14.Uint8List>? imageBytesList,
+    _i10.PDFGeneratorOptions? options = const _i10.PDFGeneratorOptions(),
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -2894,7 +2484,7 @@ class MockPDFGenerator extends _i1.Mock implements _i12.PDFGenerator {
             #options: options,
           },
         ),
-        returnValue: _i3.Future<_i12.GeneratedPDF>.value(_FakeGeneratedPDF_13(
+        returnValue: _i3.Future<_i10.GeneratedPDF>.value(_FakeGeneratedPDF_9(
           this,
           Invocation.method(
             #generateFromBytes,
@@ -2905,12 +2495,12 @@ class MockPDFGenerator extends _i1.Mock implements _i12.PDFGenerator {
             },
           ),
         )),
-      ) as _i3.Future<_i12.GeneratedPDF>);
+      ) as _i3.Future<_i10.GeneratedPDF>);
 
   @override
-  _i3.Future<_i12.GeneratedPDF> generateFromFiles({
+  _i3.Future<_i10.GeneratedPDF> generateFromFiles({
     required List<String>? imagePaths,
-    _i12.PDFGeneratorOptions? options = const _i12.PDFGeneratorOptions(),
+    _i10.PDFGeneratorOptions? options = const _i10.PDFGeneratorOptions(),
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -2921,7 +2511,7 @@ class MockPDFGenerator extends _i1.Mock implements _i12.PDFGenerator {
             #options: options,
           },
         ),
-        returnValue: _i3.Future<_i12.GeneratedPDF>.value(_FakeGeneratedPDF_13(
+        returnValue: _i3.Future<_i10.GeneratedPDF>.value(_FakeGeneratedPDF_9(
           this,
           Invocation.method(
             #generateFromFiles,
@@ -2932,12 +2522,12 @@ class MockPDFGenerator extends _i1.Mock implements _i12.PDFGenerator {
             },
           ),
         )),
-      ) as _i3.Future<_i12.GeneratedPDF>);
+      ) as _i3.Future<_i10.GeneratedPDF>);
 
   @override
-  _i3.Future<_i12.GeneratedPDF> generateFromPages({
-    required List<_i12.PDFPage>? pages,
-    _i12.PDFGeneratorOptions? options = const _i12.PDFGeneratorOptions(),
+  _i3.Future<_i10.GeneratedPDF> generateFromPages({
+    required List<_i10.PDFPage>? pages,
+    _i10.PDFGeneratorOptions? options = const _i10.PDFGeneratorOptions(),
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -2948,7 +2538,7 @@ class MockPDFGenerator extends _i1.Mock implements _i12.PDFGenerator {
             #options: options,
           },
         ),
-        returnValue: _i3.Future<_i12.GeneratedPDF>.value(_FakeGeneratedPDF_13(
+        returnValue: _i3.Future<_i10.GeneratedPDF>.value(_FakeGeneratedPDF_9(
           this,
           Invocation.method(
             #generateFromPages,
@@ -2959,13 +2549,13 @@ class MockPDFGenerator extends _i1.Mock implements _i12.PDFGenerator {
             },
           ),
         )),
-      ) as _i3.Future<_i12.GeneratedPDF>);
+      ) as _i3.Future<_i10.GeneratedPDF>);
 
   @override
-  _i3.Future<_i12.GeneratedPDF> generateToFile({
+  _i3.Future<_i10.GeneratedPDF> generateToFile({
     required List<String>? imagePaths,
     required String? outputPath,
-    _i12.PDFGeneratorOptions? options = const _i12.PDFGeneratorOptions(),
+    _i10.PDFGeneratorOptions? options = const _i10.PDFGeneratorOptions(),
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -2977,7 +2567,7 @@ class MockPDFGenerator extends _i1.Mock implements _i12.PDFGenerator {
             #options: options,
           },
         ),
-        returnValue: _i3.Future<_i12.GeneratedPDF>.value(_FakeGeneratedPDF_13(
+        returnValue: _i3.Future<_i10.GeneratedPDF>.value(_FakeGeneratedPDF_9(
           this,
           Invocation.method(
             #generateToFile,
@@ -2989,12 +2579,12 @@ class MockPDFGenerator extends _i1.Mock implements _i12.PDFGenerator {
             },
           ),
         )),
-      ) as _i3.Future<_i12.GeneratedPDF>);
+      ) as _i3.Future<_i10.GeneratedPDF>);
 
   @override
-  _i3.Future<_i12.GeneratedPDF> generateSinglePage({
-    required _i16.Uint8List? imageBytes,
-    _i12.PDFGeneratorOptions? options = const _i12.PDFGeneratorOptions(),
+  _i3.Future<_i10.GeneratedPDF> generateSinglePage({
+    required _i14.Uint8List? imageBytes,
+    _i10.PDFGeneratorOptions? options = const _i10.PDFGeneratorOptions(),
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -3005,7 +2595,7 @@ class MockPDFGenerator extends _i1.Mock implements _i12.PDFGenerator {
             #options: options,
           },
         ),
-        returnValue: _i3.Future<_i12.GeneratedPDF>.value(_FakeGeneratedPDF_13(
+        returnValue: _i3.Future<_i10.GeneratedPDF>.value(_FakeGeneratedPDF_9(
           this,
           Invocation.method(
             #generateSinglePage,
@@ -3016,12 +2606,12 @@ class MockPDFGenerator extends _i1.Mock implements _i12.PDFGenerator {
             },
           ),
         )),
-      ) as _i3.Future<_i12.GeneratedPDF>);
+      ) as _i3.Future<_i10.GeneratedPDF>);
 
   @override
-  _i3.Future<_i12.GeneratedPDF> generateSinglePageFromFile({
+  _i3.Future<_i10.GeneratedPDF> generateSinglePageFromFile({
     required String? imagePath,
-    _i12.PDFGeneratorOptions? options = const _i12.PDFGeneratorOptions(),
+    _i10.PDFGeneratorOptions? options = const _i10.PDFGeneratorOptions(),
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -3032,7 +2622,7 @@ class MockPDFGenerator extends _i1.Mock implements _i12.PDFGenerator {
             #options: options,
           },
         ),
-        returnValue: _i3.Future<_i12.GeneratedPDF>.value(_FakeGeneratedPDF_13(
+        returnValue: _i3.Future<_i10.GeneratedPDF>.value(_FakeGeneratedPDF_9(
           this,
           Invocation.method(
             #generateSinglePageFromFile,
@@ -3043,21 +2633,21 @@ class MockPDFGenerator extends _i1.Mock implements _i12.PDFGenerator {
             },
           ),
         )),
-      ) as _i3.Future<_i12.GeneratedPDF>);
+      ) as _i3.Future<_i10.GeneratedPDF>);
 }
 
 /// A class which mocks [ImageExporter].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockImageExporter extends _i1.Mock implements _i13.ImageExporter {
+class MockImageExporter extends _i1.Mock implements _i11.ImageExporter {
   MockImageExporter() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i3.Future<_i13.ExportedImage> exportFromBytes(
-    _i16.Uint8List? bytes, {
-    _i13.ImageExportOptions? options = const _i13.ImageExportOptions(),
+  _i3.Future<_i11.ExportedImage> exportFromBytes(
+    _i14.Uint8List? bytes, {
+    _i11.ImageExportOptions? options = const _i11.ImageExportOptions(),
     String? originalFileName,
   }) =>
       (super.noSuchMethod(
@@ -3069,7 +2659,7 @@ class MockImageExporter extends _i1.Mock implements _i13.ImageExporter {
             #originalFileName: originalFileName,
           },
         ),
-        returnValue: _i3.Future<_i13.ExportedImage>.value(_FakeExportedImage_14(
+        returnValue: _i3.Future<_i11.ExportedImage>.value(_FakeExportedImage_10(
           this,
           Invocation.method(
             #exportFromBytes,
@@ -3080,12 +2670,12 @@ class MockImageExporter extends _i1.Mock implements _i13.ImageExporter {
             },
           ),
         )),
-      ) as _i3.Future<_i13.ExportedImage>);
+      ) as _i3.Future<_i11.ExportedImage>);
 
   @override
-  _i3.Future<_i13.ExportedImage> exportFromFile(
+  _i3.Future<_i11.ExportedImage> exportFromFile(
     String? filePath, {
-    _i13.ImageExportOptions? options = const _i13.ImageExportOptions(),
+    _i11.ImageExportOptions? options = const _i11.ImageExportOptions(),
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -3093,7 +2683,7 @@ class MockImageExporter extends _i1.Mock implements _i13.ImageExporter {
           [filePath],
           {#options: options},
         ),
-        returnValue: _i3.Future<_i13.ExportedImage>.value(_FakeExportedImage_14(
+        returnValue: _i3.Future<_i11.ExportedImage>.value(_FakeExportedImage_10(
           this,
           Invocation.method(
             #exportFromFile,
@@ -3101,13 +2691,13 @@ class MockImageExporter extends _i1.Mock implements _i13.ImageExporter {
             {#options: options},
           ),
         )),
-      ) as _i3.Future<_i13.ExportedImage>);
+      ) as _i3.Future<_i11.ExportedImage>);
 
   @override
-  _i3.Future<_i13.ExportedImage> exportToFile(
-    _i16.Uint8List? bytes, {
+  _i3.Future<_i11.ExportedImage> exportToFile(
+    _i14.Uint8List? bytes, {
     required String? outputPath,
-    _i13.ImageExportOptions? options = const _i13.ImageExportOptions(),
+    _i11.ImageExportOptions? options = const _i11.ImageExportOptions(),
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -3118,7 +2708,7 @@ class MockImageExporter extends _i1.Mock implements _i13.ImageExporter {
             #options: options,
           },
         ),
-        returnValue: _i3.Future<_i13.ExportedImage>.value(_FakeExportedImage_14(
+        returnValue: _i3.Future<_i11.ExportedImage>.value(_FakeExportedImage_10(
           this,
           Invocation.method(
             #exportToFile,
@@ -3129,13 +2719,13 @@ class MockImageExporter extends _i1.Mock implements _i13.ImageExporter {
             },
           ),
         )),
-      ) as _i3.Future<_i13.ExportedImage>);
+      ) as _i3.Future<_i11.ExportedImage>);
 
   @override
-  _i3.Future<_i13.ExportedImage> exportFileToFile(
+  _i3.Future<_i11.ExportedImage> exportFileToFile(
     String? inputPath,
     String? outputPath, {
-    _i13.ImageExportOptions? options = const _i13.ImageExportOptions(),
+    _i11.ImageExportOptions? options = const _i11.ImageExportOptions(),
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -3146,7 +2736,7 @@ class MockImageExporter extends _i1.Mock implements _i13.ImageExporter {
           ],
           {#options: options},
         ),
-        returnValue: _i3.Future<_i13.ExportedImage>.value(_FakeExportedImage_14(
+        returnValue: _i3.Future<_i11.ExportedImage>.value(_FakeExportedImage_10(
           this,
           Invocation.method(
             #exportFileToFile,
@@ -3157,12 +2747,12 @@ class MockImageExporter extends _i1.Mock implements _i13.ImageExporter {
             {#options: options},
           ),
         )),
-      ) as _i3.Future<_i13.ExportedImage>);
+      ) as _i3.Future<_i11.ExportedImage>);
 
   @override
-  _i3.Future<_i13.BatchExportResult> exportBatch({
-    required List<_i16.Uint8List>? imageBytesList,
-    _i13.ImageExportOptions? options = const _i13.ImageExportOptions(),
+  _i3.Future<_i11.BatchExportResult> exportBatch({
+    required List<_i14.Uint8List>? imageBytesList,
+    _i11.ImageExportOptions? options = const _i11.ImageExportOptions(),
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -3174,7 +2764,7 @@ class MockImageExporter extends _i1.Mock implements _i13.ImageExporter {
           },
         ),
         returnValue:
-            _i3.Future<_i13.BatchExportResult>.value(_FakeBatchExportResult_15(
+            _i3.Future<_i11.BatchExportResult>.value(_FakeBatchExportResult_11(
           this,
           Invocation.method(
             #exportBatch,
@@ -3185,12 +2775,12 @@ class MockImageExporter extends _i1.Mock implements _i13.ImageExporter {
             },
           ),
         )),
-      ) as _i3.Future<_i13.BatchExportResult>);
+      ) as _i3.Future<_i11.BatchExportResult>);
 
   @override
-  _i3.Future<_i13.BatchExportResult> exportBatchFromFiles({
+  _i3.Future<_i11.BatchExportResult> exportBatchFromFiles({
     required List<String>? imagePaths,
-    _i13.ImageExportOptions? options = const _i13.ImageExportOptions(),
+    _i11.ImageExportOptions? options = const _i11.ImageExportOptions(),
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -3202,7 +2792,7 @@ class MockImageExporter extends _i1.Mock implements _i13.ImageExporter {
           },
         ),
         returnValue:
-            _i3.Future<_i13.BatchExportResult>.value(_FakeBatchExportResult_15(
+            _i3.Future<_i11.BatchExportResult>.value(_FakeBatchExportResult_11(
           this,
           Invocation.method(
             #exportBatchFromFiles,
@@ -3213,14 +2803,14 @@ class MockImageExporter extends _i1.Mock implements _i13.ImageExporter {
             },
           ),
         )),
-      ) as _i3.Future<_i13.BatchExportResult>);
+      ) as _i3.Future<_i11.BatchExportResult>);
 
   @override
-  _i3.Future<_i13.BatchExportResult> exportBatchToDirectory({
-    required List<_i16.Uint8List>? imageBytesList,
+  _i3.Future<_i11.BatchExportResult> exportBatchToDirectory({
+    required List<_i14.Uint8List>? imageBytesList,
     required String? outputDirectory,
     String? baseName = 'scan',
-    _i13.ImageExportOptions? options = const _i13.ImageExportOptions(),
+    _i11.ImageExportOptions? options = const _i11.ImageExportOptions(),
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -3234,7 +2824,7 @@ class MockImageExporter extends _i1.Mock implements _i13.ImageExporter {
           },
         ),
         returnValue:
-            _i3.Future<_i13.BatchExportResult>.value(_FakeBatchExportResult_15(
+            _i3.Future<_i11.BatchExportResult>.value(_FakeBatchExportResult_11(
           this,
           Invocation.method(
             #exportBatchToDirectory,
@@ -3247,11 +2837,11 @@ class MockImageExporter extends _i1.Mock implements _i13.ImageExporter {
             },
           ),
         )),
-      ) as _i3.Future<_i13.BatchExportResult>);
+      ) as _i3.Future<_i11.BatchExportResult>);
 
   @override
-  _i3.Future<_i13.ExportedImage> createThumbnail(
-    _i16.Uint8List? bytes, {
+  _i3.Future<_i11.ExportedImage> createThumbnail(
+    _i14.Uint8List? bytes, {
     int? maxWidth = 300,
     int? maxHeight = 300,
   }) =>
@@ -3264,7 +2854,7 @@ class MockImageExporter extends _i1.Mock implements _i13.ImageExporter {
             #maxHeight: maxHeight,
           },
         ),
-        returnValue: _i3.Future<_i13.ExportedImage>.value(_FakeExportedImage_14(
+        returnValue: _i3.Future<_i11.ExportedImage>.value(_FakeExportedImage_10(
           this,
           Invocation.method(
             #createThumbnail,
@@ -3275,11 +2865,11 @@ class MockImageExporter extends _i1.Mock implements _i13.ImageExporter {
             },
           ),
         )),
-      ) as _i3.Future<_i13.ExportedImage>);
+      ) as _i3.Future<_i11.ExportedImage>);
 
   @override
-  _i3.Future<_i13.ExportedImage> createPreview(
-    _i16.Uint8List? bytes, {
+  _i3.Future<_i11.ExportedImage> createPreview(
+    _i14.Uint8List? bytes, {
     int? maxWidth = 800,
     int? maxHeight = 800,
   }) =>
@@ -3292,7 +2882,7 @@ class MockImageExporter extends _i1.Mock implements _i13.ImageExporter {
             #maxHeight: maxHeight,
           },
         ),
-        returnValue: _i3.Future<_i13.ExportedImage>.value(_FakeExportedImage_14(
+        returnValue: _i3.Future<_i11.ExportedImage>.value(_FakeExportedImage_10(
           this,
           Invocation.method(
             #createPreview,
@@ -3303,13 +2893,13 @@ class MockImageExporter extends _i1.Mock implements _i13.ImageExporter {
             },
           ),
         )),
-      ) as _i3.Future<_i13.ExportedImage>);
+      ) as _i3.Future<_i11.ExportedImage>);
 
   @override
-  _i3.Future<_i13.ExportedImage> stitchVertical({
-    required List<_i16.Uint8List>? imageBytesList,
+  _i3.Future<_i11.ExportedImage> stitchVertical({
+    required List<_i14.Uint8List>? imageBytesList,
     int? spacing = 0,
-    _i13.ImageExportOptions? options = const _i13.ImageExportOptions(),
+    _i11.ImageExportOptions? options = const _i11.ImageExportOptions(),
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -3321,7 +2911,7 @@ class MockImageExporter extends _i1.Mock implements _i13.ImageExporter {
             #options: options,
           },
         ),
-        returnValue: _i3.Future<_i13.ExportedImage>.value(_FakeExportedImage_14(
+        returnValue: _i3.Future<_i11.ExportedImage>.value(_FakeExportedImage_10(
           this,
           Invocation.method(
             #stitchVertical,
@@ -3333,13 +2923,13 @@ class MockImageExporter extends _i1.Mock implements _i13.ImageExporter {
             },
           ),
         )),
-      ) as _i3.Future<_i13.ExportedImage>);
+      ) as _i3.Future<_i11.ExportedImage>);
 
   @override
-  _i3.Future<_i13.ExportedImage> stitchHorizontal({
-    required List<_i16.Uint8List>? imageBytesList,
+  _i3.Future<_i11.ExportedImage> stitchHorizontal({
+    required List<_i14.Uint8List>? imageBytesList,
     int? spacing = 0,
-    _i13.ImageExportOptions? options = const _i13.ImageExportOptions(),
+    _i11.ImageExportOptions? options = const _i11.ImageExportOptions(),
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -3351,7 +2941,7 @@ class MockImageExporter extends _i1.Mock implements _i13.ImageExporter {
             #options: options,
           },
         ),
-        returnValue: _i3.Future<_i13.ExportedImage>.value(_FakeExportedImage_14(
+        returnValue: _i3.Future<_i11.ExportedImage>.value(_FakeExportedImage_10(
           this,
           Invocation.method(
             #stitchHorizontal,
@@ -3363,5 +2953,5 @@ class MockImageExporter extends _i1.Mock implements _i13.ImageExporter {
             },
           ),
         )),
-      ) as _i3.Future<_i13.ExportedImage>);
+      ) as _i3.Future<_i11.ExportedImage>);
 }

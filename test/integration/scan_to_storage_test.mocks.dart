@@ -417,26 +417,52 @@ class MockDatabaseHelper extends _i1.Mock implements _i9.DatabaseHelper {
       ) as _i3.Future<_i2.Database>);
 
   @override
+  bool get isFtsAvailable => (super.noSuchMethod(
+        Invocation.getter(#isFtsAvailable),
+        returnValue: false,
+      ) as bool);
+
+  @override
   bool get isInitialized => (super.noSuchMethod(
         Invocation.getter(#isInitialized),
         returnValue: false,
       ) as bool);
 
   @override
-  _i3.Future<bool> initialize() => (super.noSuchMethod(
+  _i3.Future<void> close() => (super.noSuchMethod(
         Invocation.method(
-          #initialize,
+          #close,
           [],
         ),
-        returnValue: _i3.Future<bool>.value(false),
-      ) as _i3.Future<bool>);
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
+
+  @override
+  _i3.Future<List<String>> searchDocuments(String? query) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #searchDocuments,
+          [query],
+        ),
+        returnValue: _i3.Future<List<String>>.value(<String>[]),
+      ) as _i3.Future<List<String>>);
+
+  @override
+  _i3.Future<void> rebuildFtsIndex() => (super.noSuchMethod(
+        Invocation.method(
+          #rebuildFtsIndex,
+          [],
+        ),
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
 
   @override
   _i3.Future<int> insert(
     String? table,
-    Map<String, dynamic>? values, {
-    _i2.ConflictAlgorithm? conflictAlgorithm,
-  }) =>
+    Map<String, dynamic>? values,
+  ) =>
       (super.noSuchMethod(
         Invocation.method(
           #insert,
@@ -444,7 +470,6 @@ class MockDatabaseHelper extends _i1.Mock implements _i9.DatabaseHelper {
             table,
             values,
           ],
-          {#conflictAlgorithm: conflictAlgorithm},
         ),
         returnValue: _i3.Future<int>.value(0),
       ) as _i3.Future<int>);
@@ -455,7 +480,7 @@ class MockDatabaseHelper extends _i1.Mock implements _i9.DatabaseHelper {
     bool? distinct,
     List<String>? columns,
     String? where,
-    List<Object?>? whereArgs,
+    List<dynamic>? whereArgs,
     String? groupBy,
     String? having,
     String? orderBy,
@@ -487,8 +512,7 @@ class MockDatabaseHelper extends _i1.Mock implements _i9.DatabaseHelper {
     String? table,
     Map<String, dynamic>? values, {
     String? where,
-    List<Object?>? whereArgs,
-    _i2.ConflictAlgorithm? conflictAlgorithm,
+    List<dynamic>? whereArgs,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -500,7 +524,6 @@ class MockDatabaseHelper extends _i1.Mock implements _i9.DatabaseHelper {
           {
             #where: where,
             #whereArgs: whereArgs,
-            #conflictAlgorithm: conflictAlgorithm,
           },
         ),
         returnValue: _i3.Future<int>.value(0),
@@ -510,7 +533,7 @@ class MockDatabaseHelper extends _i1.Mock implements _i9.DatabaseHelper {
   _i3.Future<int> delete(
     String? table, {
     String? where,
-    List<Object?>? whereArgs,
+    List<dynamic>? whereArgs,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -525,9 +548,43 @@ class MockDatabaseHelper extends _i1.Mock implements _i9.DatabaseHelper {
       ) as _i3.Future<int>);
 
   @override
+  _i3.Future<Map<String, dynamic>?> getById(
+    String? table,
+    String? id,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getById,
+          [
+            table,
+            id,
+          ],
+        ),
+        returnValue: _i3.Future<Map<String, dynamic>?>.value(),
+      ) as _i3.Future<Map<String, dynamic>?>);
+
+  @override
+  _i3.Future<int> count(
+    String? table, {
+    String? where,
+    List<dynamic>? whereArgs,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #count,
+          [table],
+          {
+            #where: where,
+            #whereArgs: whereArgs,
+          },
+        ),
+        returnValue: _i3.Future<int>.value(0),
+      ) as _i3.Future<int>);
+
+  @override
   _i3.Future<List<Map<String, dynamic>>> rawQuery(
     String? sql, [
-    List<Object?>? arguments,
+    List<dynamic>? arguments,
   ]) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -540,22 +597,6 @@ class MockDatabaseHelper extends _i1.Mock implements _i9.DatabaseHelper {
         returnValue: _i3.Future<List<Map<String, dynamic>>>.value(
             <Map<String, dynamic>>[]),
       ) as _i3.Future<List<Map<String, dynamic>>>);
-
-  @override
-  _i3.Future<int> rawExecute(
-    String? sql, [
-    List<Object?>? arguments,
-  ]) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #rawExecute,
-          [
-            sql,
-            arguments,
-          ],
-        ),
-        returnValue: _i3.Future<int>.value(0),
-      ) as _i3.Future<int>);
 
   @override
   _i3.Future<T> transaction<T>(
@@ -585,48 +626,14 @@ class MockDatabaseHelper extends _i1.Mock implements _i9.DatabaseHelper {
       ) as _i3.Future<T>);
 
   @override
-  _i3.Future<List<Object?>> batch(
-    void Function(_i2.Batch)? operations, {
-    bool? noResult,
-    bool? continueOnError,
-  }) =>
-      (super.noSuchMethod(
+  _i3.Future<void> initialize() => (super.noSuchMethod(
         Invocation.method(
-          #batch,
-          [operations],
-          {
-            #noResult: noResult,
-            #continueOnError: continueOnError,
-          },
+          #initialize,
+          [],
         ),
-        returnValue: _i3.Future<List<Object?>>.value(<Object?>[]),
-      ) as _i3.Future<List<Object?>>);
-
-  @override
-  _i3.Future<List<String>> searchDocuments(String? query) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #searchDocuments,
-          [query],
-        ),
-        returnValue: _i3.Future<List<String>>.value(<String>[]),
-      ) as _i3.Future<List<String>>);
-
-  @override
-  _i3.Future<Map<String, dynamic>?> getById(
-    String? table,
-    String? id,
-  ) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #getById,
-          [
-            table,
-            id,
-          ],
-        ),
-        returnValue: _i3.Future<Map<String, dynamic>?>.value(),
-      ) as _i3.Future<Map<String, dynamic>?>);
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
 
   @override
   _i3.Future<bool> exists(
@@ -645,88 +652,6 @@ class MockDatabaseHelper extends _i1.Mock implements _i9.DatabaseHelper {
       ) as _i3.Future<bool>);
 
   @override
-  _i3.Future<int> count(
-    String? table, {
-    String? where,
-    List<Object?>? whereArgs,
-  }) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #count,
-          [table],
-          {
-            #where: where,
-            #whereArgs: whereArgs,
-          },
-        ),
-        returnValue: _i3.Future<int>.value(0),
-      ) as _i3.Future<int>);
-
-  @override
-  _i3.Future<void> close() => (super.noSuchMethod(
-        Invocation.method(
-          #close,
-          [],
-        ),
-        returnValue: _i3.Future<void>.value(),
-        returnValueForMissingStub: _i3.Future<void>.value(),
-      ) as _i3.Future<void>);
-
-  @override
-  _i3.Future<void> deleteDatabase() => (super.noSuchMethod(
-        Invocation.method(
-          #deleteDatabase,
-          [],
-        ),
-        returnValue: _i3.Future<void>.value(),
-        returnValueForMissingStub: _i3.Future<void>.value(),
-      ) as _i3.Future<void>);
-
-  @override
-  _i3.Future<void> vacuum() => (super.noSuchMethod(
-        Invocation.method(
-          #vacuum,
-          [],
-        ),
-        returnValue: _i3.Future<void>.value(),
-        returnValueForMissingStub: _i3.Future<void>.value(),
-      ) as _i3.Future<void>);
-
-  @override
-  _i3.Future<void> rebuildFtsIndex() => (super.noSuchMethod(
-        Invocation.method(
-          #rebuildFtsIndex,
-          [],
-        ),
-        returnValue: _i3.Future<void>.value(),
-        returnValueForMissingStub: _i3.Future<void>.value(),
-      ) as _i3.Future<void>);
-
-  @override
-  _i3.Future<String> getDatabasePath() => (super.noSuchMethod(
-        Invocation.method(
-          #getDatabasePath,
-          [],
-        ),
-        returnValue: _i3.Future<String>.value(_i6.dummyValue<String>(
-          this,
-          Invocation.method(
-            #getDatabasePath,
-            [],
-          ),
-        )),
-      ) as _i3.Future<String>);
-
-  @override
-  _i3.Future<int> getDatabaseVersion() => (super.noSuchMethod(
-        Invocation.method(
-          #getDatabaseVersion,
-          [],
-        ),
-        returnValue: _i3.Future<int>.value(0),
-      ) as _i3.Future<int>);
-
-  @override
   _i3.Future<List<Map<String, dynamic>>> getAllTags({String? orderBy}) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -739,155 +664,183 @@ class MockDatabaseHelper extends _i1.Mock implements _i9.DatabaseHelper {
       ) as _i3.Future<List<Map<String, dynamic>>>);
 
   @override
-  _i3.Future<Map<String, dynamic>?> getTagByName(String? name) =>
+  _i3.Future<List<Map<String, dynamic>>> getAllFolders({String? orderBy}) =>
       (super.noSuchMethod(
         Invocation.method(
-          #getTagByName,
-          [name],
+          #getAllFolders,
+          [],
+          {#orderBy: orderBy},
+        ),
+        returnValue: _i3.Future<List<Map<String, dynamic>>>.value(
+            <Map<String, dynamic>>[]),
+      ) as _i3.Future<List<Map<String, dynamic>>>);
+
+  @override
+  _i3.Future<List<Map<String, dynamic>>> getDocumentPages(String? documentId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getDocumentPages,
+          [documentId],
+        ),
+        returnValue: _i3.Future<List<Map<String, dynamic>>>.value(
+            <Map<String, dynamic>>[]),
+      ) as _i3.Future<List<Map<String, dynamic>>>);
+
+  @override
+  _i3.Future<List<String>> getDocumentPagePaths(String? documentId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getDocumentPagePaths,
+          [documentId],
+        ),
+        returnValue: _i3.Future<List<String>>.value(<String>[]),
+      ) as _i3.Future<List<String>>);
+
+  @override
+  _i3.Future<Map<String, dynamic>?> getDocumentPage(
+    String? documentId,
+    int? pageNumber,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getDocumentPage,
+          [
+            documentId,
+            pageNumber,
+          ],
         ),
         returnValue: _i3.Future<Map<String, dynamic>?>.value(),
       ) as _i3.Future<Map<String, dynamic>?>);
 
   @override
-  _i3.Future<List<String>> getTagIdsForDocument(String? documentId) =>
+  _i3.Future<int> insertDocumentPage({
+    required String? documentId,
+    required int? pageNumber,
+    required String? filePath,
+  }) =>
       (super.noSuchMethod(
         Invocation.method(
-          #getTagIdsForDocument,
-          [documentId],
+          #insertDocumentPage,
+          [],
+          {
+            #documentId: documentId,
+            #pageNumber: pageNumber,
+            #filePath: filePath,
+          },
         ),
-        returnValue: _i3.Future<List<String>>.value(<String>[]),
-      ) as _i3.Future<List<String>>);
+        returnValue: _i3.Future<int>.value(0),
+      ) as _i3.Future<int>);
 
   @override
-  _i3.Future<List<Map<String, dynamic>>> getTagsForDocument(
-          String? documentId) =>
+  _i3.Future<void> insertDocumentPages(
+    String? documentId,
+    List<String>? filePaths,
+  ) =>
       (super.noSuchMethod(
         Invocation.method(
-          #getTagsForDocument,
+          #insertDocumentPages,
+          [
+            documentId,
+            filePaths,
+          ],
+        ),
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
+
+  @override
+  _i3.Future<int> deleteDocumentPages(String? documentId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #deleteDocumentPages,
           [documentId],
+        ),
+        returnValue: _i3.Future<int>.value(0),
+      ) as _i3.Future<int>);
+
+  @override
+  _i3.Future<int> updateDocumentPagePath({
+    required String? documentId,
+    required int? pageNumber,
+    required String? newFilePath,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateDocumentPagePath,
+          [],
+          {
+            #documentId: documentId,
+            #pageNumber: pageNumber,
+            #newFilePath: newFilePath,
+          },
+        ),
+        returnValue: _i3.Future<int>.value(0),
+      ) as _i3.Future<int>);
+
+  @override
+  _i3.Future<int> getDocumentPageCount(String? documentId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getDocumentPageCount,
+          [documentId],
+        ),
+        returnValue: _i3.Future<int>.value(0),
+      ) as _i3.Future<int>);
+
+  @override
+  _i3.Future<int> insertSearchHistory({
+    required String? query,
+    required String? timestamp,
+    required int? resultCount,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #insertSearchHistory,
+          [],
+          {
+            #query: query,
+            #timestamp: timestamp,
+            #resultCount: resultCount,
+          },
+        ),
+        returnValue: _i3.Future<int>.value(0),
+      ) as _i3.Future<int>);
+
+  @override
+  _i3.Future<List<Map<String, dynamic>>> getSearchHistory({
+    int? limit,
+    String? orderBy,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getSearchHistory,
+          [],
+          {
+            #limit: limit,
+            #orderBy: orderBy,
+          },
         ),
         returnValue: _i3.Future<List<Map<String, dynamic>>>.value(
             <Map<String, dynamic>>[]),
       ) as _i3.Future<List<Map<String, dynamic>>>);
 
   @override
-  _i3.Future<List<String>> getDocumentIdsForTag(String? tagId) =>
-      (super.noSuchMethod(
+  _i3.Future<int> deleteSearchHistory(int? id) => (super.noSuchMethod(
         Invocation.method(
-          #getDocumentIdsForTag,
-          [tagId],
+          #deleteSearchHistory,
+          [id],
         ),
-        returnValue: _i3.Future<List<String>>.value(<String>[]),
-      ) as _i3.Future<List<String>>);
+        returnValue: _i3.Future<int>.value(0),
+      ) as _i3.Future<int>);
 
   @override
-  _i3.Future<void> addTagToDocument(
-    String? documentId,
-    String? tagId,
-  ) =>
-      (super.noSuchMethod(
+  _i3.Future<int> clearSearchHistory() => (super.noSuchMethod(
         Invocation.method(
-          #addTagToDocument,
-          [
-            documentId,
-            tagId,
-          ],
-        ),
-        returnValue: _i3.Future<void>.value(),
-        returnValueForMissingStub: _i3.Future<void>.value(),
-      ) as _i3.Future<void>);
-
-  @override
-  _i3.Future<void> removeTagFromDocument(
-    String? documentId,
-    String? tagId,
-  ) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #removeTagFromDocument,
-          [
-            documentId,
-            tagId,
-          ],
-        ),
-        returnValue: _i3.Future<void>.value(),
-        returnValueForMissingStub: _i3.Future<void>.value(),
-      ) as _i3.Future<void>);
-
-  @override
-  _i3.Future<void> setDocumentTags(
-    String? documentId,
-    List<String>? tagIds,
-  ) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #setDocumentTags,
-          [
-            documentId,
-            tagIds,
-          ],
-        ),
-        returnValue: _i3.Future<void>.value(),
-        returnValueForMissingStub: _i3.Future<void>.value(),
-      ) as _i3.Future<void>);
-
-  @override
-  _i3.Future<Map<String, int>> getTagDocumentCounts() => (super.noSuchMethod(
-        Invocation.method(
-          #getTagDocumentCounts,
+          #clearSearchHistory,
           [],
         ),
-        returnValue: _i3.Future<Map<String, int>>.value(<String, int>{}),
-      ) as _i3.Future<Map<String, int>>);
-
-  @override
-  _i3.Future<List<Map<String, dynamic>>> getDocumentsWithAnyTag(
-          List<String>? tagIds) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #getDocumentsWithAnyTag,
-          [tagIds],
-        ),
-        returnValue: _i3.Future<List<Map<String, dynamic>>>.value(
-            <Map<String, dynamic>>[]),
-      ) as _i3.Future<List<Map<String, dynamic>>>);
-
-  @override
-  _i3.Future<List<Map<String, dynamic>>> getDocumentsWithAllTags(
-          List<String>? tagIds) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #getDocumentsWithAllTags,
-          [tagIds],
-        ),
-        returnValue: _i3.Future<List<Map<String, dynamic>>>.value(
-            <Map<String, dynamic>>[]),
-      ) as _i3.Future<List<Map<String, dynamic>>>);
-
-  @override
-  _i3.Future<bool> documentHasTag(
-    String? documentId,
-    String? tagId,
-  ) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #documentHasTag,
-          [
-            documentId,
-            tagId,
-          ],
-        ),
-        returnValue: _i3.Future<bool>.value(false),
-      ) as _i3.Future<bool>);
-
-  @override
-  _i3.Future<bool> tagNameExists(String? name) => (super.noSuchMethod(
-        Invocation.method(
-          #tagNameExists,
-          [name],
-        ),
-        returnValue: _i3.Future<bool>.value(false),
-      ) as _i3.Future<bool>);
+        returnValue: _i3.Future<int>.value(0),
+      ) as _i3.Future<int>);
 }
 
 /// A class which mocks [DocumentRepository].
@@ -900,25 +853,23 @@ class MockDocumentRepository extends _i1.Mock
   }
 
   @override
-  _i3.Future<_i4.Document> createDocument({
+  _i3.Future<_i4.Document> createDocumentWithPages({
     required String? title,
-    required String? sourceFilePath,
+    required List<String>? sourceImagePaths,
     String? description,
     String? thumbnailSourcePath,
-    int? pageCount = 1,
     String? folderId,
     bool? isFavorite = false,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
-          #createDocument,
+          #createDocumentWithPages,
           [],
           {
             #title: title,
-            #sourceFilePath: sourceFilePath,
+            #sourceImagePaths: sourceImagePaths,
             #description: description,
             #thumbnailSourcePath: thumbnailSourcePath,
-            #pageCount: pageCount,
             #folderId: folderId,
             #isFavorite: isFavorite,
           },
@@ -926,14 +877,13 @@ class MockDocumentRepository extends _i1.Mock
         returnValue: _i3.Future<_i4.Document>.value(_FakeDocument_2(
           this,
           Invocation.method(
-            #createDocument,
+            #createDocumentWithPages,
             [],
             {
               #title: title,
-              #sourceFilePath: sourceFilePath,
+              #sourceImagePaths: sourceImagePaths,
               #description: description,
               #thumbnailSourcePath: thumbnailSourcePath,
-              #pageCount: pageCount,
               #folderId: folderId,
               #isFavorite: isFavorite,
             },
@@ -1016,20 +966,49 @@ class MockDocumentRepository extends _i1.Mock
       ) as _i3.Future<int>);
 
   @override
-  _i3.Future<String> getDecryptedFilePath(_i4.Document? document) =>
+  _i3.Future<String> getDecryptedPagePath(
+    _i4.Document? document, {
+    int? pageIndex = 0,
+  }) =>
       (super.noSuchMethod(
         Invocation.method(
-          #getDecryptedFilePath,
+          #getDecryptedPagePath,
           [document],
+          {#pageIndex: pageIndex},
         ),
         returnValue: _i3.Future<String>.value(_i6.dummyValue<String>(
           this,
           Invocation.method(
-            #getDecryptedFilePath,
+            #getDecryptedPagePath,
             [document],
+            {#pageIndex: pageIndex},
           ),
         )),
       ) as _i3.Future<String>);
+
+  @override
+  _i3.Future<List<String>> getDecryptedAllPages(_i4.Document? document) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getDecryptedAllPages,
+          [document],
+        ),
+        returnValue: _i3.Future<List<String>>.value(<String>[]),
+      ) as _i3.Future<List<String>>);
+
+  @override
+  _i3.Future<List<int>> getDecryptedPageBytes(
+    _i4.Document? document, {
+    int? pageIndex = 0,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getDecryptedPageBytes,
+          [document],
+          {#pageIndex: pageIndex},
+        ),
+        returnValue: _i3.Future<List<int>>.value(<int>[]),
+      ) as _i3.Future<List<int>>);
 
   @override
   _i3.Future<String?> getDecryptedThumbnailPath(_i4.Document? document) =>
@@ -1053,31 +1032,6 @@ class MockDocumentRepository extends _i1.Mock
           Invocation.method(
             #updateDocument,
             [document],
-          ),
-        )),
-      ) as _i3.Future<_i4.Document>);
-
-  @override
-  _i3.Future<_i4.Document> updateDocumentFile(
-    _i4.Document? document,
-    String? newSourceFilePath,
-  ) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #updateDocumentFile,
-          [
-            document,
-            newSourceFilePath,
-          ],
-        ),
-        returnValue: _i3.Future<_i4.Document>.value(_FakeDocument_2(
-          this,
-          Invocation.method(
-            #updateDocumentFile,
-            [
-              document,
-              newSourceFilePath,
-            ],
           ),
         )),
       ) as _i3.Future<_i4.Document>);
@@ -1198,16 +1152,6 @@ class MockDocumentRepository extends _i1.Mock
       ) as _i3.Future<void>);
 
   @override
-  _i3.Future<void> cleanupTempFiles() => (super.noSuchMethod(
-        Invocation.method(
-          #cleanupTempFiles,
-          [],
-        ),
-        returnValue: _i3.Future<void>.value(),
-        returnValueForMissingStub: _i3.Future<void>.value(),
-      ) as _i3.Future<void>);
-
-  @override
   _i3.Future<List<String>> getDocumentTags(String? documentId) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -1278,6 +1222,16 @@ class MockDocumentRepository extends _i1.Mock
         ),
         returnValue: _i3.Future<List<_i4.Document>>.value(<_i4.Document>[]),
       ) as _i3.Future<List<_i4.Document>>);
+
+  @override
+  _i3.Future<void> cleanupTempFiles() => (super.noSuchMethod(
+        Invocation.method(
+          #cleanupTempFiles,
+          [],
+        ),
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
 
   @override
   _i3.Future<bool> isReady() => (super.noSuchMethod(

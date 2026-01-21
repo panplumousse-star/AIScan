@@ -1,15 +1,15 @@
 {
   "active": true,
-  "spec": "038-split-monolithic-documents-screen-dart-into-smalle",
+  "spec": "040-remove-dead-code-unused-bento-home-screen-old-dart",
   "state": "building",
   "subtasks": {
-    "completed": 12,
-    "total": 13,
+    "completed": 2,
+    "total": 4,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Compilation & Testing",
+    "current": "Dead Code Removal",
     "id": null,
     "total": 3
   },
@@ -18,8 +18,8 @@
     "max": 1
   },
   "session": {
-    "number": 14,
-    "started_at": "2026-01-20T18:50:41.229924"
+    "number": 4,
+    "started_at": "2026-01-21T06:50:00.233982"
   },
-  "last_update": "2026-01-20T19:22:27.191917"
+  "last_update": "2026-01-21T06:54:03.785454"
 }

@@ -45,25 +45,23 @@ class MockDocumentRepository extends _i1.Mock
   }
 
   @override
-  _i4.Future<_i2.Document> createDocument({
+  _i4.Future<_i2.Document> createDocumentWithPages({
     required String? title,
-    required String? sourceFilePath,
+    required List<String>? sourceImagePaths,
     String? description,
     String? thumbnailSourcePath,
-    int? pageCount = 1,
     String? folderId,
     bool? isFavorite = false,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
-          #createDocument,
+          #createDocumentWithPages,
           [],
           {
             #title: title,
-            #sourceFilePath: sourceFilePath,
+            #sourceImagePaths: sourceImagePaths,
             #description: description,
             #thumbnailSourcePath: thumbnailSourcePath,
-            #pageCount: pageCount,
             #folderId: folderId,
             #isFavorite: isFavorite,
           },
@@ -71,14 +69,13 @@ class MockDocumentRepository extends _i1.Mock
         returnValue: _i4.Future<_i2.Document>.value(_FakeDocument_0(
           this,
           Invocation.method(
-            #createDocument,
+            #createDocumentWithPages,
             [],
             {
               #title: title,
-              #sourceFilePath: sourceFilePath,
+              #sourceImagePaths: sourceImagePaths,
               #description: description,
               #thumbnailSourcePath: thumbnailSourcePath,
-              #pageCount: pageCount,
               #folderId: folderId,
               #isFavorite: isFavorite,
             },
@@ -161,20 +158,49 @@ class MockDocumentRepository extends _i1.Mock
       ) as _i4.Future<int>);
 
   @override
-  _i4.Future<String> getDecryptedFilePath(_i2.Document? document) =>
+  _i4.Future<String> getDecryptedPagePath(
+    _i2.Document? document, {
+    int? pageIndex = 0,
+  }) =>
       (super.noSuchMethod(
         Invocation.method(
-          #getDecryptedFilePath,
+          #getDecryptedPagePath,
           [document],
+          {#pageIndex: pageIndex},
         ),
         returnValue: _i4.Future<String>.value(_i5.dummyValue<String>(
           this,
           Invocation.method(
-            #getDecryptedFilePath,
+            #getDecryptedPagePath,
             [document],
+            {#pageIndex: pageIndex},
           ),
         )),
       ) as _i4.Future<String>);
+
+  @override
+  _i4.Future<List<String>> getDecryptedAllPages(_i2.Document? document) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getDecryptedAllPages,
+          [document],
+        ),
+        returnValue: _i4.Future<List<String>>.value(<String>[]),
+      ) as _i4.Future<List<String>>);
+
+  @override
+  _i4.Future<List<int>> getDecryptedPageBytes(
+    _i2.Document? document, {
+    int? pageIndex = 0,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getDecryptedPageBytes,
+          [document],
+          {#pageIndex: pageIndex},
+        ),
+        returnValue: _i4.Future<List<int>>.value(<int>[]),
+      ) as _i4.Future<List<int>>);
 
   @override
   _i4.Future<String?> getDecryptedThumbnailPath(_i2.Document? document) =>
@@ -198,31 +224,6 @@ class MockDocumentRepository extends _i1.Mock
           Invocation.method(
             #updateDocument,
             [document],
-          ),
-        )),
-      ) as _i4.Future<_i2.Document>);
-
-  @override
-  _i4.Future<_i2.Document> updateDocumentFile(
-    _i2.Document? document,
-    String? newSourceFilePath,
-  ) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #updateDocumentFile,
-          [
-            document,
-            newSourceFilePath,
-          ],
-        ),
-        returnValue: _i4.Future<_i2.Document>.value(_FakeDocument_0(
-          this,
-          Invocation.method(
-            #updateDocumentFile,
-            [
-              document,
-              newSourceFilePath,
-            ],
           ),
         )),
       ) as _i4.Future<_i2.Document>);
@@ -343,16 +344,6 @@ class MockDocumentRepository extends _i1.Mock
       ) as _i4.Future<void>);
 
   @override
-  _i4.Future<void> cleanupTempFiles() => (super.noSuchMethod(
-        Invocation.method(
-          #cleanupTempFiles,
-          [],
-        ),
-        returnValue: _i4.Future<void>.value(),
-        returnValueForMissingStub: _i4.Future<void>.value(),
-      ) as _i4.Future<void>);
-
-  @override
   _i4.Future<List<String>> getDocumentTags(String? documentId) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -423,6 +414,16 @@ class MockDocumentRepository extends _i1.Mock
         ),
         returnValue: _i4.Future<List<_i2.Document>>.value(<_i2.Document>[]),
       ) as _i4.Future<List<_i2.Document>>);
+
+  @override
+  _i4.Future<void> cleanupTempFiles() => (super.noSuchMethod(
+        Invocation.method(
+          #cleanupTempFiles,
+          [],
+        ),
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
 
   @override
   _i4.Future<bool> isReady() => (super.noSuchMethod(

@@ -508,17 +508,17 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                   Container(
                     height: 85,
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : Colors.white,
+                      color: isDark ? AppColors.surfaceDark.withValues(alpha: 0.6) : AppColors.surfaceLight,
                       borderRadius: BorderRadius.circular(16), // Reduced rounding
                       border: Border.all(
-                        color: isDark 
-                            ? const Color(0xFFFFFFFF).withValues(alpha: 0.1) 
+                        color: isDark
+                            ? AppColors.surfaceLight.withValues(alpha: 0.1)
                             : const Color(0xFFE2E8F0),
                         width: 1.5,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+                          color: AppColors.surfaceDark.withValues(alpha: isDark ? 0.2 : 0.05),
                           blurRadius: 16,
                           offset: const Offset(0, 4),
                         ),
@@ -550,7 +550,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                                   style: GoogleFonts.outfit(
                                     fontSize: (hasJustScanned || _isSleeping) ? 22 : 24,
                                     fontWeight: FontWeight.w800,
-                                    color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E293B),
+                                    color: isDark ? AppColors.surfaceVariantLight : AppColors.surfaceVariantDark,
                                     letterSpacing: -0.5,
                                   ),
                                 ),
@@ -565,7 +565,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.outfit(
                                 fontSize: 12,
-                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                color: isDark ? AppColors.neutralDark : AppColors.neutralLight,
                                 letterSpacing: 0.2,
                               ),
                             ),
@@ -577,14 +577,14 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                   
                   // The Bubble Tail (Pointing Right to Scanai)
                   Positioned(
-                    right: -10, 
+                    right: -10,
                     top: 12,    // Moved to top-right
                     child: CustomPaint(
                       size: const Size(12, 16),
                       painter: _BubbleTailPainter(
-                        color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : Colors.white,
-                        borderColor: isDark 
-                            ? const Color(0xFFFFFFFF).withValues(alpha: 0.1) 
+                        color: isDark ? AppColors.surfaceDark.withValues(alpha: 0.6) : AppColors.surfaceLight,
+                        borderColor: isDark
+                            ? AppColors.surfaceLight.withValues(alpha: 0.1)
                             : const Color(0xFFE2E8F0),
                       ),
                     ),

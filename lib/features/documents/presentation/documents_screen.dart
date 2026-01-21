@@ -473,10 +473,22 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
     if (!mounted) return;
 
     try {
+      // Start performance measurement
+      final stopwatch = Stopwatch()..start();
+      debugPrint('📊 Starting parallel thumbnail decryption for ${documentsNeedingThumbnails.length} thumbnails...');
+
       // Load all thumbnails in parallel using batch method
       final decryptedThumbnails = await _repository.getBatchDecryptedThumbnailBytes(
         documentsNeedingThumbnails,
       );
+
+      // Stop measurement and log results
+      stopwatch.stop();
+      final elapsedMs = stopwatch.elapsedMilliseconds;
+      final avgMs = documentsNeedingThumbnails.isNotEmpty
+          ? (elapsedMs / documentsNeedingThumbnails.length).toStringAsFixed(1)
+          : '0';
+      debugPrint('✅ Parallel thumbnail decryption completed: ${documentsNeedingThumbnails.length} thumbnails in ${elapsedMs}ms (avg: ${avgMs}ms per thumbnail)');
 
       // Update state once with all results
       if (decryptedThumbnails.isNotEmpty && mounted) {

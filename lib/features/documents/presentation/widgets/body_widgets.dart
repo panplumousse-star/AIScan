@@ -228,7 +228,7 @@ class DocumentsSliverList extends StatelessWidget {
                           final doc = state.filteredDocuments[index];
                           return DocumentListItem(
                             document: doc,
-                            thumbnailPath: state.decryptedThumbnails[doc.id],
+                            thumbnailBytes: state.decryptedThumbnails[doc.id],
                             isSelected: state.selectedDocumentIds.contains(doc.id),
                             isSelectionMode: state.isSelectionMode,
                             onTap: () => onDocumentTap(doc),

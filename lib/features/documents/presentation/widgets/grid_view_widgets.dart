@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
 import '../../domain/document_model.dart';
@@ -19,7 +19,7 @@ class DocumentsGrid extends StatelessWidget {
   });
 
   final List<Document> documents;
-  final Map<String, String> thumbnails;
+  final Map<String, Uint8List> thumbnails;
   final Set<String> selectedIds;
   final bool isSelectionMode;
   final void Function(Document) onDocumentTap;
@@ -41,12 +41,12 @@ class DocumentsGrid extends StatelessWidget {
       itemCount: documents.length,
       itemBuilder: (context, index) {
         final document = documents[index];
-        final thumbnailPath = thumbnails[document.id];
+        final thumbnailBytes = thumbnails[document.id];
         final isSelected = selectedIds.contains(document.id);
 
         return DocumentGridItem(
           document: document,
-          thumbnailPath: thumbnailPath,
+          thumbnailBytes: thumbnailBytes,
           isSelected: isSelected,
           isSelectionMode: isSelectionMode,
           onTap: () => onDocumentTap(document),
@@ -65,7 +65,7 @@ class DocumentGridItem extends StatelessWidget {
   const DocumentGridItem({
     super.key,
     required this.document,
-    required this.thumbnailPath,
+    required this.thumbnailBytes,
     required this.isSelected,
     required this.isSelectionMode,
     required this.onTap,
@@ -76,7 +76,7 @@ class DocumentGridItem extends StatelessWidget {
   });
 
   final Document document;
-  final String? thumbnailPath;
+  final Uint8List? thumbnailBytes;
   final bool isSelected;
   final bool isSelectionMode;
   final VoidCallback onTap;
@@ -101,7 +101,7 @@ class DocumentGridItem extends StatelessWidget {
             // Thumbnail or placeholder
             Positioned.fill(
               child: _DocumentThumbnail(
-                thumbnailPath: thumbnailPath,
+                thumbnailBytes: thumbnailBytes,
                 theme: theme,
               ),
             ),
@@ -263,7 +263,7 @@ class DocumentsGridSliver extends StatelessWidget {
   });
 
   final List<Document> documents;
-  final Map<String, String> thumbnails;
+  final Map<String, Uint8List> thumbnails;
   final Set<String> selectedIds;
   final bool isSelectionMode;
   final void Function(Document) onDocumentTap;
@@ -284,12 +284,12 @@ class DocumentsGridSliver extends StatelessWidget {
       delegate: SliverChildBuilderDelegate(
         (context, index) {
           final document = documents[index];
-          final thumbnailPath = thumbnails[document.id];
+          final thumbnailBytes = thumbnails[document.id];
           final isSelected = selectedIds.contains(document.id);
 
           return DocumentGridItem(
             document: document,
-            thumbnailPath: thumbnailPath,
+            thumbnailBytes: thumbnailBytes,
             isSelected: isSelected,
             isSelectionMode: isSelectionMode,
             onTap: () => onDocumentTap(document),
@@ -310,16 +310,16 @@ class DocumentsGridSliver extends StatelessWidget {
 /// Uses cacheWidth/cacheHeight to limit memory usage.
 /// Thumbnails are typically displayed at ~150-200px width in grid view.
 class _DocumentThumbnail extends StatelessWidget {
-  const _DocumentThumbnail({required this.thumbnailPath, required this.theme});
+  const _DocumentThumbnail({required this.thumbnailBytes, required this.theme});
 
-  final String? thumbnailPath;
+  final Uint8List? thumbnailBytes;
   final ThemeData theme;
 
   @override
   Widget build(BuildContext context) {
-    if (thumbnailPath != null) {
-      return Image.file(
-        File(thumbnailPath!),
+    if (thumbnailBytes != null) {
+      return Image.memory(
+        thumbnailBytes!,
         fit: BoxFit.cover,
         // Cache at reasonable size for grid thumbnails (2x for retina)
         cacheWidth: 300,

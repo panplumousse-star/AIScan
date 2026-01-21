@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -91,8 +91,8 @@ class DocumentsScreenState {
   /// Whether multi-select mode is active.
   final bool isSelectionMode;
 
-  /// Map of document IDs to decrypted thumbnail paths.
-  final Map<String, String> decryptedThumbnails;
+  /// Map of document IDs to decrypted thumbnail bytes.
+  final Map<String, Uint8List> decryptedThumbnails;
 
   /// Whether we have any documents.
   bool get hasDocuments => documents.isNotEmpty;
@@ -191,7 +191,7 @@ class DocumentsScreenState {
     Set<String>? selectedDocumentIds,
     Set<String>? selectedFolderIds,
     bool? isSelectionMode,
-    Map<String, String>? decryptedThumbnails,
+    Map<String, Uint8List>? decryptedThumbnails,
     bool clearError = false,
     bool clearSelection = false,
     bool clearCurrentFolder = false,
@@ -465,14 +465,14 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
       if (document.thumbnailPath != null &&
           !state.decryptedThumbnails.containsKey(document.id)) {
         try {
-          final decryptedPath = await _repository.getDecryptedThumbnailPath(
+          final decryptedBytes = await _repository.getDecryptedThumbnailBytes(
             document,
           );
-          if (decryptedPath != null && mounted) {
+          if (decryptedBytes != null && mounted) {
             state = state.copyWith(
               decryptedThumbnails: {
                 ...state.decryptedThumbnails,
-                document.id: decryptedPath,
+                document.id: decryptedBytes,
               },
             );
           }
@@ -491,14 +491,14 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
     if (state.decryptedThumbnails.containsKey(document.id)) return;
 
     try {
-      final decryptedPath = await _repository.getDecryptedThumbnailPath(
+      final decryptedBytes = await _repository.getDecryptedThumbnailBytes(
         document,
       );
-      if (decryptedPath != null && mounted) {
+      if (decryptedBytes != null && mounted) {
         state = state.copyWith(
           decryptedThumbnails: {
             ...state.decryptedThumbnails,
-            document.id: decryptedPath,
+            document.id: decryptedBytes,
           },
         );
       }
@@ -915,26 +915,6 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
   /// Clears the current error.
   void clearError() {
     state = state.copyWith(clearError: true);
-  }
-
-  /// Cleans up decrypted thumbnails.
-  Future<void> cleanupThumbnails() async {
-    for (final path in state.decryptedThumbnails.values) {
-      try {
-        final file = File(path);
-        if (await file.exists()) {
-          await file.delete();
-        }
-      } catch (_) {
-        // Ignore cleanup errors
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    cleanupThumbnails();
-    super.dispose();
   }
 }
 

@@ -1,10 +1,10 @@
 {
   "active": true,
   "spec": "036-implement-in-memory-thumbnail-cache-with-lru-evict",
-  "state": "planning",
+  "state": "building",
   "subtasks": {
-    "completed": 0,
-    "total": 0,
+    "completed": 2,
+    "total": 6,
     "in_progress": 1,
     "failed": 0
   },
@@ -18,8 +18,8 @@
     "max": 1
   },
   "session": {
-    "number": 2,
+    "number": 4,
     "started_at": "2026-01-21T07:18:40.572395"
   },
-  "last_update": "2026-01-21T07:22:41.842669"
+  "last_update": "2026-01-21T07:27:14.954913"
 }

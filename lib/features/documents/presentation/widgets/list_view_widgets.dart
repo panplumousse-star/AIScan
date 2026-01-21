@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -21,7 +21,7 @@ class DocumentsList extends StatelessWidget {
   });
 
   final List<Document> documents;
-  final Map<String, String> thumbnails;
+  final Map<String, Uint8List> thumbnails;
   final Set<String> selectedIds;
   final bool isSelectionMode;
   final void Function(Document) onDocumentTap;
@@ -37,12 +37,12 @@ class DocumentsList extends StatelessWidget {
       itemCount: documents.length,
       itemBuilder: (context, index) {
         final document = documents[index];
-        final thumbnailPath = thumbnails[document.id];
+        final thumbnailBytes = thumbnails[document.id];
         final isSelected = selectedIds.contains(document.id);
 
         return DocumentListItem(
           document: document,
-          thumbnailPath: thumbnailPath,
+          thumbnailBytes: thumbnailBytes,
           isSelected: isSelected,
           isSelectionMode: isSelectionMode,
           onTap: () => onDocumentTap(document),
@@ -61,7 +61,7 @@ class DocumentListItem extends StatelessWidget {
   const DocumentListItem({
     super.key,
     required this.document,
-    required this.thumbnailPath,
+    required this.thumbnailBytes,
     required this.isSelected,
     required this.isSelectionMode,
     required this.onTap,
@@ -72,7 +72,7 @@ class DocumentListItem extends StatelessWidget {
   });
 
   final Document document;
-  final String? thumbnailPath;
+  final Uint8List? thumbnailBytes;
   final bool isSelected;
   final bool isSelectionMode;
   final VoidCallback onTap;
@@ -136,7 +136,7 @@ class DocumentListItem extends StatelessWidget {
               ),
               clipBehavior: Clip.antiAlias,
               child: _DocumentThumbnail(
-                thumbnailPath: thumbnailPath,
+                thumbnailBytes: thumbnailBytes,
                 theme: theme,
               ),
             ),
@@ -262,16 +262,16 @@ class DocumentListItem extends StatelessWidget {
 /// Uses cacheWidth/cacheHeight to limit memory usage.
 /// Thumbnails are typically displayed at ~56x72px in list view.
 class _DocumentThumbnail extends StatelessWidget {
-  const _DocumentThumbnail({required this.thumbnailPath, required this.theme});
+  const _DocumentThumbnail({required this.thumbnailBytes, required this.theme});
 
-  final String? thumbnailPath;
+  final Uint8List? thumbnailBytes;
   final ThemeData theme;
 
   @override
   Widget build(BuildContext context) {
-    if (thumbnailPath != null) {
-      return Image.file(
-        File(thumbnailPath!),
+    if (thumbnailBytes != null) {
+      return Image.memory(
+        thumbnailBytes!,
         fit: BoxFit.cover,
         // Cache at reasonable size for list thumbnails (2x for retina)
         cacheWidth: 112,

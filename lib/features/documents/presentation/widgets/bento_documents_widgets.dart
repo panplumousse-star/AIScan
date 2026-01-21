@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -661,7 +661,7 @@ class BentoDocumentCard extends StatefulWidget {
     super.key,
     required this.title,
     required this.subtitle,
-    required this.thumbnailPath,
+    required this.thumbnailBytes,
     required this.onTap,
     required this.onLongPress,
     required this.onFavoriteToggle,
@@ -673,7 +673,7 @@ class BentoDocumentCard extends StatefulWidget {
 
   final String title;
   final String subtitle;
-  final String? thumbnailPath;
+  final Uint8List? thumbnailBytes;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
   final VoidCallback onFavoriteToggle;
@@ -743,9 +743,9 @@ class _BentoDocumentCardState extends State<BentoDocumentCard>
                 ),
               ),
               clipBehavior: Clip.antiAlias,
-              child: widget.thumbnailPath != null
-                  ? Image.file(
-                      File(widget.thumbnailPath!),
+              child: widget.thumbnailBytes != null
+                  ? Image.memory(
+                      widget.thumbnailBytes!,
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => _buildPlaceholder(),
                     )

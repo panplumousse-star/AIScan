@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/storage/document_repository.dart';
+import '../../../core/utils/performance_utils.dart';
 import '../../folders/domain/folder_model.dart';
 import '../../folders/domain/folder_service.dart';
 import '../../sharing/domain/document_share_service.dart';
@@ -977,13 +978,17 @@ class DocumentsScreen extends ConsumerStatefulWidget {
   ConsumerState<DocumentsScreen> createState() => _DocumentsScreenState();
 }
 
-class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
+class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
+    with WidgetsBindingObserver {
   final _searchController = TextEditingController();
   final _searchFocusNode = FocusNode();
 
   @override
   void initState() {
     super.initState();
+
+    // Add lifecycle observer for cache management
+    WidgetsBinding.instance.addObserver(this);
 
     // Initialize after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -993,9 +998,60 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
 
   @override
   void dispose() {
+    // Remove lifecycle observer
+    WidgetsBinding.instance.removeObserver(this);
+
     _searchController.dispose();
     _searchFocusNode.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    // Handle cache lifecycle based on app state
+    _handleCacheLifecycle(state);
+  }
+
+  /// Manages thumbnail cache based on app lifecycle events.
+  ///
+  /// - When app goes to background (paused): Trim cache to 50% to free memory
+  /// - When app goes to inactive: Light trim to 75%
+  /// - When app resumes: No action needed (cache remains for fast return)
+  void _handleCacheLifecycle(AppLifecycleState state) {
+    final thumbnailCache = ref.read(thumbnailCacheProvider);
+
+    switch (state) {
+      case AppLifecycleState.paused:
+        // App is in background - aggressively trim cache to free memory
+        // Keep 50% for quick resume, but free up memory for system
+        final targetSize = (thumbnailCache.currentSizeBytes * 0.5).round();
+        thumbnailCache.trimToSize(targetSize);
+        break;
+
+      case AppLifecycleState.inactive:
+        // App is transitioning or partially visible - light trim
+        final targetSize = (thumbnailCache.currentSizeBytes * 0.75).round();
+        thumbnailCache.trimToSize(targetSize);
+        break;
+
+      case AppLifecycleState.resumed:
+        // App is back in foreground - no action needed
+        // Cache remains for fast thumbnail display
+        break;
+
+      case AppLifecycleState.detached:
+        // App is about to terminate - clear all cache
+        thumbnailCache.clearCache();
+        break;
+
+      case AppLifecycleState.hidden:
+        // App is hidden but still running - treat like inactive
+        final targetSize = (thumbnailCache.currentSizeBytes * 0.75).round();
+        thumbnailCache.trimToSize(targetSize);
+        break;
+    }
   }
 
   Future<void> _initializeScreen() async {

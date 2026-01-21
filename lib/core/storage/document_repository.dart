@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as path;
@@ -7,20 +8,24 @@ import 'package:uuid/uuid.dart';
 
 import '../../features/documents/domain/document_model.dart';
 import '../security/encryption_service.dart';
+import '../utils/performance_utils.dart';
 import 'database_helper.dart';
 
 /// Riverpod provider for [DocumentRepository].
 ///
 /// Provides a singleton instance of the document repository for
 /// dependency injection throughout the application.
-/// Depends on [EncryptionService] for file encryption and
-/// [DatabaseHelper] for metadata storage.
+/// Depends on [EncryptionService] for file encryption,
+/// [DatabaseHelper] for metadata storage, and [ThumbnailCacheService]
+/// for in-memory thumbnail caching.
 final documentRepositoryProvider = Provider<DocumentRepository>((ref) {
   final encryption = ref.read(encryptionServiceProvider);
   final database = ref.read(databaseHelperProvider);
+  final thumbnailCache = ref.read(thumbnailCacheProvider);
   return DocumentRepository(
     encryptionService: encryption,
     databaseHelper: database,
+    thumbnailCacheService: thumbnailCache,
   );
 });
 
@@ -96,9 +101,11 @@ class DocumentRepository {
   DocumentRepository({
     required EncryptionService encryptionService,
     required DatabaseHelper databaseHelper,
+    required ThumbnailCacheService thumbnailCacheService,
     Uuid? uuid,
   })  : _encryption = encryptionService,
         _database = databaseHelper,
+        _thumbnailCache = thumbnailCacheService,
         _uuid = uuid ?? const Uuid();
 
   /// The encryption service for file operations.
@@ -106,6 +113,9 @@ class DocumentRepository {
 
   /// The database helper for metadata operations.
   final DatabaseHelper _database;
+
+  /// The thumbnail cache service for in-memory caching.
+  final ThumbnailCacheService _thumbnailCache;
 
   /// UUID generator for document IDs.
   final Uuid _uuid;
@@ -651,6 +661,68 @@ class DocumentRepository {
     }
   }
 
+  /// Decrypts and returns document thumbnail bytes.
+  ///
+  /// This method first checks the in-memory cache for the thumbnail.
+  /// If not cached, it decrypts the thumbnail file and caches the bytes
+  /// for future access.
+  ///
+  /// Returns the decrypted thumbnail bytes, or `null` if the document
+  /// has no thumbnail.
+  ///
+  /// This is the preferred method for accessing thumbnails as it
+  /// eliminates repeated decryption operations.
+  ///
+  /// Throws [DocumentRepositoryException] if decryption fails.
+  Future<Uint8List?> getDecryptedThumbnailBytes(Document document) async {
+    if (document.thumbnailPath == null) {
+      return null;
+    }
+
+    try {
+      // Check cache first
+      final cachedBytes = _thumbnailCache.getCachedThumbnail(document.id);
+      if (cachedBytes != null) {
+        return cachedBytes;
+      }
+
+      // Not in cache - decrypt from disk
+      final encryptedFile = File(document.thumbnailPath!);
+      if (!await encryptedFile.exists()) {
+        return null;
+      }
+
+      // Decrypt to temp file
+      final tempDir = await _getTempDirectory();
+      final decryptedFileName =
+          '${document.id}_thumb_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final decryptedPath = path.join(tempDir.path, decryptedFileName);
+
+      await _encryption.decryptFile(document.thumbnailPath!, decryptedPath);
+
+      // Read bytes from decrypted file
+      final decryptedFile = File(decryptedPath);
+      final bytes = await decryptedFile.readAsBytes();
+
+      // Clean up temp file immediately
+      try {
+        await decryptedFile.delete();
+      } catch (_) {
+        // Ignore cleanup errors
+      }
+
+      // Cache the bytes for future access
+      _thumbnailCache.cacheThumbnail(document.id, bytes);
+
+      return bytes;
+    } catch (e) {
+      throw DocumentRepositoryException(
+        'Failed to decrypt thumbnail bytes: ${document.id}',
+        cause: e,
+      );
+    }
+  }
+
   /// Decrypts a document thumbnail to a temporary location.
   ///
   /// Returns the path to the decrypted thumbnail, or `null` if
@@ -659,6 +731,10 @@ class DocumentRepository {
   /// **Important**: The caller is responsible for deleting the returned
   /// file after use.
   ///
+  /// **Note**: This method now uses the thumbnail cache internally.
+  /// For better performance, consider using [getDecryptedThumbnailBytes]
+  /// instead, which returns bytes directly without creating temporary files.
+  ///
   /// Throws [DocumentRepositoryException] if decryption fails.
   Future<String?> getDecryptedThumbnailPath(Document document) async {
     if (document.thumbnailPath == null) {
@@ -666,20 +742,26 @@ class DocumentRepository {
     }
 
     try {
-      final encryptedFile = File(document.thumbnailPath!);
-      if (!await encryptedFile.exists()) {
+      // Get bytes from cache or decrypt
+      final bytes = await getDecryptedThumbnailBytes(document);
+      if (bytes == null) {
         return null;
       }
 
+      // Write bytes to temp file for backward compatibility
       final tempDir = await _getTempDirectory();
       final decryptedFileName =
           '${document.id}_thumb_${DateTime.now().millisecondsSinceEpoch}.jpg';
       final decryptedPath = path.join(tempDir.path, decryptedFileName);
 
-      await _encryption.decryptFile(document.thumbnailPath!, decryptedPath);
+      final decryptedFile = File(decryptedPath);
+      await decryptedFile.writeAsBytes(bytes);
 
       return decryptedPath;
     } catch (e) {
+      if (e is DocumentRepositoryException) {
+        rethrow;
+      }
       throw DocumentRepositoryException(
         'Failed to decrypt thumbnail: ${document.id}',
         cause: e,
@@ -913,9 +995,10 @@ class DocumentRepository {
   /// This method:
   /// 1. Deletes all encrypted page files
   /// 2. Deletes the encrypted thumbnail (if exists)
-  /// 3. Removes all tag associations
-  /// 4. Removes all page records
-  /// 5. Deletes the database record
+  /// 3. Removes thumbnail from cache
+  /// 4. Removes all tag associations
+  /// 5. Removes all page records
+  /// 6. Deletes the database record
   ///
   /// Throws [DocumentRepositoryException] if deletion fails.
   Future<void> deleteDocument(String documentId) async {
@@ -943,6 +1026,9 @@ class DocumentRepository {
           await thumbnailFile.delete();
         }
       }
+
+      // Remove thumbnail from cache
+      _thumbnailCache.removeThumbnail(documentId);
 
       // Delete page records (handled by CASCADE, but explicit for safety)
       await _database.deleteDocumentPages(documentId);

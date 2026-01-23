@@ -870,9 +870,10 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
           return newFolder;
         } catch (e) {
           if (context.mounted) {
+            final l10n = AppLocalizations.of(context);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                  content: Text('Erreur lors de la création du dossier: $e')),
+                  content: Text('${l10n?.folderCreationError ?? 'Error creating folder'}: $e')),
             );
           }
           return null;

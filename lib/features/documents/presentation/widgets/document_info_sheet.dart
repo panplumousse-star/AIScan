@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/widgets/bento_card.dart';
 import '../../../../core/widgets/bento_mascot.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../domain/document_model.dart';
 
 /// A bottom sheet that displays comprehensive document information.
@@ -48,6 +49,7 @@ class DocumentInfoSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = theme.brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     return Container(
       decoration: BoxDecoration(
@@ -116,13 +118,13 @@ class DocumentInfoSheet extends StatelessWidget {
                 ),
                 BentoInfoRow(
                   icon: Icons.calendar_today_rounded,
-                  label: 'Créé le',
+                  label: l10n?.createdAt ?? 'Created',
                   value: _formatFullDate(document.createdAt),
                   theme: theme,
                 ),
                 BentoInfoRow(
                   icon: Icons.history_rounded,
-                  label: 'Modifié le',
+                  label: l10n?.modifiedAt ?? 'Modified',
                   value: _formatFullDate(document.updatedAt),
                   theme: theme,
                 ),

@@ -702,10 +702,11 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
 
       if (result.isSuccess) {
         // Show success message with folder name
-        final folderName = result.folderDisplayName ?? 'stockage externe';
+        final l10n = AppLocalizations.of(context);
+        final folderName = result.folderDisplayName ?? 'external storage';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Document exporté vers $folderName'),
+            content: Text(l10n?.documentExportedTo(folderName) ?? 'Document exported to $folderName'),
             backgroundColor: Theme.of(context).colorScheme.primary,
             duration: const Duration(seconds: 2),
           ),
@@ -714,9 +715,10 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
         ref.read(hasJustScannedProvider.notifier).state = true;
         _navigateToDocuments(context);
       } else if (result.isFailed) {
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(result.errorMessage ?? 'Échec de l\'exportation'),
+            content: Text(result.errorMessage ?? (l10n?.exportFailed ?? 'Export failed')),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -953,7 +955,9 @@ class _ResultView extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     child: Center(
                       child: Text(
-                        isSaved ? 'Hop, c\'est dans la boîte !' : 'On l\'enregistre ?',
+                        isSaved
+                            ? (l10n?.scanSuccessMessage ?? 'Done, it\'s in the box!')
+                            : (l10n?.savePromptMessage ?? 'Shall we save it?'),
                         style: GoogleFonts.outfit(
                           fontSize: 14,
                           fontWeight: FontWeight.w800,
@@ -1429,8 +1433,9 @@ class _ActionWizardState extends State<_ActionWizard> with TickerProviderStateMi
                                         });
                                       } catch (e) {
                                         if (context.mounted) {
+                                          final l10n = AppLocalizations.of(context);
                                           ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text('Échec création dossier: $e')),
+                                            SnackBar(content: Text('${l10n?.folderCreationFailed ?? 'Folder creation failed'}: $e')),
                                           );
                                         }
                                       }

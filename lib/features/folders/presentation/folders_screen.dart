@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/widgets/bento_state_views.dart';
+import '../../../l10n/app_localizations.dart';
 import '../domain/folder_model.dart';
 import '../domain/folder_service.dart';
 import 'widgets/bento_folder_dialog.dart';
@@ -663,9 +664,10 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
     FoldersScreenNotifier notifier,
     ThemeData theme,
   ) {
+    final l10n = AppLocalizations.of(context);
     if (!state.isInitialized && state.isLoading) {
-      return const BentoLoadingView(
-        message: 'Chargement des dossiers...',
+      return BentoLoadingView(
+        message: l10n?.loading ?? 'Loading...',
       );
     }
 
@@ -712,11 +714,11 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
                 )
               : BentoEmptyView(
                   title: state.isAtRoot
-                      ? 'Aucun dossier pour le moment'
-                      : 'Ce dossier est vide',
-                  description: 'Créez un dossier pour organiser vos documents',
+                      ? (l10n?.noFoldersYet ?? 'No folders yet')
+                      : (l10n?.noDocuments ?? 'This folder is empty'),
+                  description: l10n?.createFolderToOrganize ?? 'Create a folder to organize your documents',
                   icon: Icons.folder_outlined,
-                  actionLabel: 'Créer un dossier',
+                  actionLabel: l10n?.createFolder ?? 'Create folder',
                   onAction: () => _showCreateDialog(context, notifier),
                 ),
         ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../l10n/app_localizations.dart';
 import '../../../folders/domain/folder_model.dart';
 import '../../../folders/domain/folder_service.dart';
 import '../../domain/document_model.dart';
@@ -185,6 +186,7 @@ class DocumentsSliverList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return RefreshIndicator(
       onRefresh: notifier.refresh,
       child: CustomScrollView(
@@ -263,10 +265,10 @@ class DocumentsSliverList extends StatelessWidget {
                     const SizedBox(height: 16),
                     Text(
                       state.hasSearch
-                          ? 'Aucun résultat pour "${state.searchQuery}"'
+                          ? (l10n?.noResultsFor(state.searchQuery) ?? 'No results for "${state.searchQuery}"')
                           : state.filter.favoritesOnly
-                              ? 'Aucun favori'
-                              : 'Aucun document correspondant',
+                              ? (l10n?.noFavorites ?? 'No favorites')
+                              : (l10n?.noDocuments ?? 'No documents'),
                       style: GoogleFonts.outfit(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -282,7 +284,7 @@ class DocumentsSliverList extends StatelessWidget {
                         }
                         notifier.clearFilters();
                       },
-                      child: const Text('Effacer les filtres'),
+                      child: Text(l10n?.clearAll ?? 'Clear filters'),
                     ),
                   ],
                 ),

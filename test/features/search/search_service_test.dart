@@ -1013,12 +1013,14 @@ void main() {
         options: const SearchOptions(field: SearchField.title),
       );
 
-      verify(
-        mockDatabaseHelper.rawQuery(
-          any,
-          argThat(contains('title:')),
-        ),
-      ).called(1);
+      // Verify the query args list contains 'title:' in the FTS query string
+      final captured = verify(
+        mockDatabaseHelper.rawQuery(any, captureAny),
+      ).captured;
+
+      expect(captured, hasLength(1));
+      final queryArgs = captured[0] as List;
+      expect(queryArgs[0].toString(), contains('title:'));
     });
 
     test('search falls back to LIKE on FTS failure', () async {
@@ -1043,21 +1045,8 @@ void main() {
     test('search filters by favorites', () async {
       await searchService.initialize();
 
-      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => [
-            {
-              'id': 'doc-1',
-              'title': 'Test',
-              'description': null,
-              'ocr_text': null,
-              'score': -1.0,
-            },
-          ]);
-
-      when(mockDocumentRepository.getDocument('doc-1'))
-          .thenAnswer((_) async => createTestDocument(
-                id: 'doc-1',
-                isFavorite: false,
-              ));
+      // SQL now filters, so return empty when no favorites match
+      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => []);
 
       final results = await searchService.search(
         'test',
@@ -1065,26 +1054,19 @@ void main() {
       );
 
       expect(results.results, isEmpty);
+
+      // Verify SQL includes the favorites filter
+      verify(mockDatabaseHelper.rawQuery(
+        argThat(contains('is_favorite = 1')),
+        any,
+      )).called(1);
     });
 
     test('search filters by hasOcrOnly', () async {
       await searchService.initialize();
 
-      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => [
-            {
-              'id': 'doc-1',
-              'title': 'Test',
-              'description': null,
-              'ocr_text': null,
-              'score': -1.0,
-            },
-          ]);
-
-      when(mockDocumentRepository.getDocument('doc-1'))
-          .thenAnswer((_) async => createTestDocument(
-                id: 'doc-1',
-                ocrText: null,
-              ));
+      // SQL now filters, so return empty when no documents with OCR match
+      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => []);
 
       final results = await searchService.search(
         'test',
@@ -1092,26 +1074,19 @@ void main() {
       );
 
       expect(results.results, isEmpty);
+
+      // Verify SQL includes the OCR filter
+      verify(mockDatabaseHelper.rawQuery(
+        argThat(contains('ocr_text IS NOT NULL')),
+        any,
+      )).called(1);
     });
 
     test('search filters by folderId', () async {
       await searchService.initialize();
 
-      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => [
-            {
-              'id': 'doc-1',
-              'title': 'Test',
-              'description': null,
-              'ocr_text': null,
-              'score': -1.0,
-            },
-          ]);
-
-      when(mockDocumentRepository.getDocument('doc-1'))
-          .thenAnswer((_) async => createTestDocument(
-                id: 'doc-1',
-                folderId: 'folder-1',
-              ));
+      // SQL now filters, so return empty when no documents in folder match
+      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((_) async => []);
 
       final results = await searchService.search(
         'test',
@@ -1119,6 +1094,18 @@ void main() {
       );
 
       expect(results.results, isEmpty);
+
+      // Verify SQL includes the folder filter with parameter
+      final captured = verify(
+        mockDatabaseHelper.rawQuery(
+          argThat(contains('folder_id = ?')),
+          captureAny,
+        ),
+      ).captured;
+
+      expect(captured, hasLength(1));
+      final queryArgs = captured[0] as List;
+      expect(queryArgs, contains('folder-2'));
     });
 
     test('getSuggestions throws if not initialized', () async {
@@ -1331,9 +1318,24 @@ void main() {
       when(mockDocumentRepository.getDocument('doc-2', includeTags: false))
           .thenAnswer((_) async => createTestDocument(id: 'doc-2'));
 
-      final results = await searchService.search('test');
+      // Use sortDescending: false to get best matches first (more negative scores)
+      final results = await searchService.search(
+        'test',
+        options: const SearchOptions(sortDescending: false),
+      );
 
-      // More negative score = better match, should be first
+      // Verify results are returned in relevance order (best match first)
+      expect(results.results, hasLength(2));
+
+      // Best match (doc-1 with score -2.0) should be first
+      expect(results.results[0].document.id, 'doc-1');
+      expect(results.results[0].score, -2.0);
+
+      // Second best match (doc-2 with score -1.0) should be second
+      expect(results.results[1].document.id, 'doc-2');
+      expect(results.results[1].score, -1.0);
+
+      // Verify: more negative score = better match, should be first
       expect(results.results[0].score, lessThan(results.results[1].score));
     });
 

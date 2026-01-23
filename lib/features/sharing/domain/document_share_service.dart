@@ -40,6 +40,11 @@ enum ShareFormat {
   ///
   /// All pages are combined into one PDF file.
   pdf,
+
+  /// Share as extracted OCR text.
+  ///
+  /// The document's OCR content is shared as plain text.
+  text,
 }
 
 /// Result of a share permission check.

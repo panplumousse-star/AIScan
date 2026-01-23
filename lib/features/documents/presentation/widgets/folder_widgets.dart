@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../l10n/app_localizations.dart';
 import '../../../folders/domain/folder_model.dart';
 
 /// Section displaying folders in a paginated 2x4 grid layout.
@@ -165,6 +166,7 @@ class AddFolderButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = theme.brightness == Brightness.dark;
     final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context);
 
     return Material(
       color: Colors.transparent,
@@ -200,7 +202,7 @@ class AddFolderButton extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                'Nouveau',
+                l10n?.newFolder ?? 'New',
                 style: GoogleFonts.outfit(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,

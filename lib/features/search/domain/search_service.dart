@@ -897,7 +897,28 @@ class SearchService {
     SearchOptions options,
   ) async {
     try {
-      // Query FTS table with ranking
+      // Build dynamic WHERE clause for filters
+      final whereConditions = <String>['${DatabaseHelper.tableDocumentsFts} MATCH ?'];
+      final queryArgs = <Object>[ftsQuery];
+
+      // Add filter conditions based on SearchOptions
+      if (options.favoritesOnly) {
+        whereConditions.add('d.${DatabaseHelper.columnIsFavorite} = 1');
+      }
+
+      if (options.hasOcrOnly) {
+        whereConditions.add('d.${DatabaseHelper.columnOcrText} IS NOT NULL');
+      }
+
+      if (options.folderId != null) {
+        whereConditions.add('d.${DatabaseHelper.columnFolderId} = ?');
+        queryArgs.add(options.folderId!);
+      }
+
+      // Combine WHERE conditions with AND
+      final whereClause = whereConditions.join(' AND ');
+
+      // Query FTS table with ranking and filters
       final sql = '''
         SELECT
           d.${DatabaseHelper.columnId} as id,
@@ -907,11 +928,11 @@ class SearchService {
           fts.rank as score
         FROM ${DatabaseHelper.tableDocuments} d
         INNER JOIN ${DatabaseHelper.tableDocumentsFts} fts ON d.rowid = fts.rowid
-        WHERE ${DatabaseHelper.tableDocumentsFts} MATCH ?
+        WHERE $whereClause
         ORDER BY fts.rank
       ''';
 
-      final results = await _database.rawQuery(sql, [ftsQuery]);
+      final results = await _database.rawQuery(sql, queryArgs);
 
       return results.map((row) {
         return _RawSearchResult(
@@ -945,9 +966,9 @@ class SearchService {
       return [];
     }
 
-    // Build LIKE conditions
+    // Build LIKE conditions for search terms
     final conditions = <String>[];
-    final args = <String>[];
+    final args = <Object>[];
 
     for (final term in terms) {
       final likePattern = '%$term%';
@@ -965,9 +986,29 @@ class SearchService {
       }
     }
 
-    final whereClause = conditions.join(
+    final searchCondition = conditions.join(
       options.matchMode == SearchMatchMode.anyWord ? ' OR ' : ' AND ',
     );
+
+    // Build WHERE clause with search and filter conditions
+    final whereConditions = <String>['($searchCondition)'];
+
+    // Add filter conditions based on SearchOptions
+    if (options.favoritesOnly) {
+      whereConditions.add('${DatabaseHelper.columnIsFavorite} = 1');
+    }
+
+    if (options.hasOcrOnly) {
+      whereConditions.add('${DatabaseHelper.columnOcrText} IS NOT NULL');
+    }
+
+    if (options.folderId != null) {
+      whereConditions.add('${DatabaseHelper.columnFolderId} = ?');
+      args.add(options.folderId!);
+    }
+
+    // Combine all WHERE conditions with AND
+    final whereClause = whereConditions.join(' AND ');
 
     final sql = '''
       SELECT

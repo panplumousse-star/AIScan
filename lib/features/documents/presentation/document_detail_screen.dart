@@ -9,6 +9,7 @@ import '../../../core/storage/document_repository.dart';
 import '../../../core/widgets/bento_background.dart';
 import '../../../core/widgets/bento_card.dart';
 import '../../../core/widgets/bento_mascot.dart';
+import '../../../core/widgets/bento_speech_bubble.dart';
 import '../../../core/widgets/bento_rename_document_dialog.dart';
 import '../../../core/widgets/bento_share_format_dialog.dart';
 import '../../../core/widgets/bento_state_views.dart';
@@ -393,55 +394,25 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 20),
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? Colors.white.withValues(alpha: 0.1)
-                                : Colors.white,
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(16),
-                              topRight: Radius.circular(16),
-                              bottomLeft: Radius.circular(16),
-                              bottomRight: Radius.circular(4),
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.05),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Text(
-                            'Besoin d\'aide ?',
-                            style: GoogleFonts.outfit(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: isDark
-                                  ? Colors.white
-                                  : const Color(0xFF1E1B4B),
-                            ),
-                          ),
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: BentoSpeechBubble(
+                      tailDirection: BubbleTailDirection.downRight,
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.1)
+                          : Colors.white,
+                      borderColor: Colors.transparent,
+                      borderWidth: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      child: Text(
+                        'Besoin d\'aide ?',
+                        style: GoogleFonts.outfit(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF1E1B4B),
                         ),
-                        Positioned(
-                          bottom: -8,
-                          right: 8,
-                          child: CustomPaint(
-                            size: const Size(12, 12),
-                            painter: BubbleTailPainterRight(
-                              color: isDark
-                                  ? Colors.white.withValues(alpha: 0.1)
-                                  : Colors.white,
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                   const SizedBox(width: 4),

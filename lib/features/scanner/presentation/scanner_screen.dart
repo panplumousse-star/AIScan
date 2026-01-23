@@ -26,6 +26,7 @@ import '../../../core/storage/document_repository.dart';
 import '../../../core/widgets/bento_background.dart';
 import '../../../core/widgets/bento_card.dart';
 import '../../../core/widgets/bento_mascot.dart';
+import '../../../core/widgets/bento_speech_bubble.dart';
 import '../../../core/widgets/bento_rename_document_dialog.dart';
 import '../../../core/widgets/bento_share_format_dialog.dart';
 import '../../../core/widgets/bento_state_views.dart';
@@ -922,53 +923,23 @@ class _ResultView extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                // Message Bubble
+                // Message Bubble using BentoSpeechBubble widget
                 Expanded(
                   flex: 6,
-                  child: Container(
-                    height: 40,
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: isDark 
-                            ? const Color(0xFFFFFFFF).withValues(alpha: 0.1) 
-                            : const Color(0xFFE2E8F0),
-                        width: 1.5,
+                  child: BentoSpeechBubble(
+                    tailDirection: BubbleTailDirection.left,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    child: Center(
+                      child: Text(
+                        isSaved ? 'Hop, c\'est dans la boîte !' : 'On l\'enregistre ?',
+                        style: GoogleFonts.outfit(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: isDark ? Colors.white : const Color(0xFF1E293B),
+                          letterSpacing: -0.5,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                    ),
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Center(
-                          child: Text(
-                            isSaved ? 'Hop, c\'est dans la boîte !' : 'On l\'enregistre ?',
-                            style: GoogleFonts.outfit(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w800,
-                              color: isDark ? Colors.white : const Color(0xFF1E293B),
-                              letterSpacing: -0.5,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                        // Bubble Tail pointing left towards Mascot
-                        Positioned(
-                          left: -6,
-                          top: 15,
-                          child: CustomPaint(
-                            size: const Size(10, 8),
-                            painter: _BubbleTailPainter(
-                              color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : Colors.white,
-                              borderColor: isDark 
-                                  ? const Color(0xFFFFFFFF).withValues(alpha: 0.1) 
-                                  : const Color(0xFFE2E8F0),
-                              pointRight: false,
-                            ),
-                          ),
-                        ),
-                      ],
                     ),
                   ),
                 ),
@@ -1888,50 +1859,4 @@ class _PageThumbnailStrip extends StatelessWidget {
       },
     );
   }
-}
-
-
-/// Painter for speech bubble tail.
-class _BubbleTailPainter extends CustomPainter {
-  final Color color;
-  final Color borderColor;
-  final bool pointRight;
-
-  _BubbleTailPainter({
-    required this.color, 
-    required this.borderColor,
-    this.pointRight = true,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-
-    final path = Path();
-    if (pointRight) {
-      path.moveTo(0, 0);
-      path.lineTo(size.width, size.height);
-      path.lineTo(0, size.height * 0.6);
-    } else {
-      path.moveTo(size.width, 0); 
-      path.lineTo(0, size.height); 
-      path.lineTo(size.width, size.height * 0.6);
-    }
-    path.close();
-
-    canvas.drawPath(path, paint);
-
-    if (borderColor != Colors.transparent) {
-      final borderPaint = Paint()
-        ..color = borderColor
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5;
-      canvas.drawPath(path, borderPaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

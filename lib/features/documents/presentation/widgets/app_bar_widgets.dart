@@ -3,8 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/widgets/bento_card.dart';
 import '../../../../core/widgets/bento_mascot.dart';
+import '../../../../core/widgets/bento_speech_bubble.dart';
 import '../documents_screen.dart' show DocumentsScreenState, DocumentsScreenNotifier;
-import 'custom_painters.dart';
 
 /// Top app bar widget for the documents screen.
 ///
@@ -122,46 +122,28 @@ class DocumentsBentoHeader extends StatelessWidget {
           // Speech Bubble (Left)
           Expanded(
             flex: 5,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                BentoCard(
-                  height: 64,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  backgroundColor: isDark
-                      ? const Color(0xFF1E293B).withValues(alpha: 0.6)
-                      : const Color(0xFFF1F5F9).withValues(alpha: 0.8),
-                  borderRadius: 20,
-                  child: Center(
-                    child: Text(
-                      'Que cherches-tu ?',
-                      style: GoogleFonts.outfit(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: theme.colorScheme.onSurface,
-                        letterSpacing: -0.5,
-                      ),
-                      textAlign: TextAlign.center,
+            child: SizedBox(
+              height: 64,
+              child: BentoSpeechBubble(
+                tailDirection: BubbleTailDirection.right,
+                color: isDark
+                    ? const Color(0xFF1E293B).withValues(alpha: 0.6)
+                    : const Color(0xFFF1F5F9).withValues(alpha: 0.8),
+                borderRadius: 20,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Center(
+                  child: Text(
+                    'Que cherches-tu ?',
+                    style: GoogleFonts.outfit(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: theme.colorScheme.onSurface,
+                      letterSpacing: -0.5,
                     ),
+                    textAlign: TextAlign.center,
                   ),
                 ),
-                // The Bubble Tail (Pointing Right to Mascot)
-                Positioned(
-                  right: -9,
-                  top: 12,
-                  child: CustomPaint(
-                    size: const Size(12, 16),
-                    painter: BubbleTailPainter(
-                      color: isDark
-                          ? const Color(0xFF1E293B).withValues(alpha: 0.6)
-                          : const Color(0xFFF1F5F9).withValues(alpha: 0.8),
-                      borderColor: isDark
-                          ? const Color(0xFFFFFFFF).withValues(alpha: 0.1)
-                          : const Color(0xFFE2E8F0),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
           const SizedBox(width: 16),

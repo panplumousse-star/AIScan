@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'bento_card.dart';
+import 'bento_speech_bubble.dart';
 
 /// Shows a dialog for renaming a document with mascot and speech bubble.
 ///
@@ -122,50 +123,26 @@ class _BentoRenameDocumentDialogState extends State<BentoRenameDocumentDialog> {
                         // Speech bubble
                         Expanded(
                           child: Padding(
-                            padding: const EdgeInsets.only(bottom: 20),
-                            child: Stack(
-                              clipBehavior: Clip.none,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                    vertical: 10,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: isDark
-                                        ? Colors.white.withValues(alpha: 0.1)
-                                        : const Color(0xFFEEF2FF),
-                                    borderRadius: const BorderRadius.only(
-                                      topLeft: Radius.circular(4),
-                                      topRight: Radius.circular(16),
-                                      bottomRight: Radius.circular(16),
-                                      bottomLeft: Radius.circular(16),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    'pshiit !!!',
-                                    style: GoogleFonts.outfit(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                      color: isDark
-                                          ? Colors.white
-                                          : const Color(0xFF1E1B4B),
-                                    ),
-                                  ),
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: BentoSpeechBubble(
+                              tailDirection: BubbleTailDirection.downLeft,
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.1)
+                                  : const Color(0xFFEEF2FF),
+                              borderColor: Colors.transparent,
+                              borderWidth: 0,
+                              showShadow: false,
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              child: Text(
+                                'pshiit !!!',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark
+                                      ? Colors.white
+                                      : const Color(0xFF1E1B4B),
                                 ),
-                                Positioned(
-                                  bottom: -6,
-                                  left: 8,
-                                  child: CustomPaint(
-                                    size: const Size(10, 10),
-                                    painter: _BubbleTailPainter(
-                                      color: isDark
-                                          ? Colors.white.withValues(alpha: 0.1)
-                                          : const Color(0xFFEEF2FF),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
                           ),
                         ),
@@ -259,29 +236,4 @@ class _BentoRenameDocumentDialogState extends State<BentoRenameDocumentDialog> {
       ),
     );
   }
-}
-
-/// Painter for speech bubble tail pointing toward mascot on the left.
-class _BubbleTailPainter extends CustomPainter {
-  final Color color;
-
-  _BubbleTailPainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-
-    final path = Path();
-    path.moveTo(size.width, 0);
-    path.lineTo(0, size.height);
-    path.lineTo(size.width, size.height * 0.6);
-    path.close();
-
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

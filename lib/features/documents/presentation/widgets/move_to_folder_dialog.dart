@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/widgets/bento_card.dart';
 import '../../../../core/widgets/bento_mascot.dart';
+import '../../../../core/widgets/bento_speech_bubble.dart';
 import '../../../folders/domain/folder_model.dart';
 import '../../../folders/presentation/widgets/bento_folder_dialog.dart';
 
@@ -151,51 +152,35 @@ class _MoveToFolderDialogState extends State<MoveToFolderDialog> {
                         ),
                         const SizedBox(width: 12),
                         // Mascot on right with speech bubble
-                        Stack(
-                          clipBehavior: Clip.none,
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
+                            BentoSpeechBubble(
+                              tailDirection: BubbleTailDirection.downRight,
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.15)
+                                  : const Color(0xFFEEF2FF),
+                              borderColor: Colors.transparent,
+                              borderWidth: 0,
+                              borderRadius: 12,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 6),
+                              child: Text(
+                                'Je range !',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark
+                                      ? Colors.white
+                                      : const Color(0xFF1E1B4B),
+                                ),
+                              ),
+                            ),
                             BentoLevitationWidget(
                               child: BentoMascot(
                                 height: 70,
                                 variant: BentoMascotVariant.folderEdit,
-                              ),
-                            ),
-                            // Speech bubble positioned above
-                            Positioned(
-                              top: -8,
-                              right: 60,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: isDark
-                                      ? Colors.white.withValues(alpha: 0.15)
-                                      : const Color(0xFFEEF2FF),
-                                  borderRadius: const BorderRadius.only(
-                                    topLeft: Radius.circular(12),
-                                    topRight: Radius.circular(12),
-                                    bottomLeft: Radius.circular(12),
-                                    bottomRight: Radius.circular(4),
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color:
-                                          Colors.black.withValues(alpha: 0.05),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: Text(
-                                  'Je range !',
-                                  style: GoogleFonts.outfit(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: isDark
-                                        ? Colors.white
-                                        : const Color(0xFF1E1B4B),
-                                  ),
-                                ),
                               ),
                             ),
                           ],

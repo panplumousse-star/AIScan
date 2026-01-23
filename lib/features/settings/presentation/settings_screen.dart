@@ -11,6 +11,7 @@ import '../../../core/widgets/bento_background.dart';
 import '../../../core/widgets/bento_card.dart';
 import '../../../core/widgets/scanai_loader.dart';
 import '../../../core/widgets/bento_mascot.dart';
+import '../../../core/widgets/bento_speech_bubble.dart';
 
 // ============================================================================
 // Theme Persistence Service
@@ -506,75 +507,38 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         height: 140, // Match mascot card height
         child: Align(
           alignment: Alignment.bottomCenter,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // The Bubble Body
-              Container(
-                height: 85,
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isDark 
-                        ? const Color(0xFFFFFFFF).withValues(alpha: 0.1) 
-                        : const Color(0xFFE2E8F0),
-                    width: 1.5,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
-                      blurRadius: 16,
-                      offset: const Offset(0, 4),
+          child: SizedBox(
+            height: 85,
+            child: BentoSpeechBubble(
+              tailDirection: BubbleTailDirection.right,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'On peaufine',
+                    style: GoogleFonts.outfit(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E293B),
+                      letterSpacing: -0.5,
+                      height: 1.1,
                     ),
-                  ],
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'On peaufine',
-                        style: GoogleFonts.outfit(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E293B),
-                          letterSpacing: -0.5,
-                          height: 1.1,
-                        ),
-                      ),
-                      Text(
-                        'notre application',
-                        style: GoogleFonts.outfit(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E293B),
-                          letterSpacing: -0.5,
-                          height: 1.1,
-                        ),
-                      ),
-                    ],
                   ),
-                ),
-              ),
-              
-              // The Bubble Tail (Pointing Right to Mascot)
-              Positioned(
-                right: -10, 
-                top: 12,
-                child: CustomPaint(
-                  size: const Size(12, 16),
-                  painter: _BubbleTailPainter(
-                    color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : Colors.white,
-                    borderColor: isDark 
-                        ? const Color(0xFFFFFFFF).withValues(alpha: 0.1) 
-                        : const Color(0xFFE2E8F0),
+                  Text(
+                    'notre application',
+                    style: GoogleFonts.outfit(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E293B),
+                      letterSpacing: -0.5,
+                      height: 1.1,
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -1186,45 +1150,6 @@ class _BentoInteractiveWrapperState extends State<_BentoInteractiveWrapper>
       ),
     );
   }
-}
-
-class _BubbleTailPainter extends CustomPainter {
-  final Color color;
-  final Color borderColor;
-
-  _BubbleTailPainter({required this.color, required this.borderColor});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-
-    final path = Path();
-    path.moveTo(0, 0);                 
-    path.quadraticBezierTo(size.width * 1.2, size.height / 2, 0, size.height);
-    path.close();
-
-    final shadowPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.03)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
-    canvas.drawPath(path.shift(const Offset(2, 4)), shadowPaint);
-
-    canvas.drawPath(path, paint);
-
-    final borderPaint = Paint()
-      ..color = borderColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-    
-    final borderPath = Path();
-    borderPath.moveTo(0, 0);
-    borderPath.quadraticBezierTo(size.width * 1.2, size.height / 2, 0, size.height);
-    canvas.drawPath(borderPath, borderPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 // ============================================================================

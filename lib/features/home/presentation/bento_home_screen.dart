@@ -19,6 +19,7 @@ import '../../scanner/presentation/scanner_screen.dart';
 import '../../settings/presentation/settings_screen.dart';
 import '../../../core/services/audio_service.dart';
 import '../../../core/widgets/bento_mascot.dart';
+import '../../../core/widgets/bento_speech_bubble.dart';
 import 'package:share_plus/share_plus.dart';
 
 /// Provider that gets the total document count.
@@ -508,95 +509,62 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
             child: AnimatedOpacity(
               duration: const Duration(milliseconds: 500),
               opacity: _isSleeping ? (0.8 + (_sleepMessageIndex % 2 == 0 ? 0.2 : 0.0)) : 1.0,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  // The Bubble Body
-                  Container(
-                    height: 85,
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.surfaceDark.withValues(alpha: 0.6) : AppColors.surfaceLight,
-                      borderRadius: BorderRadius.circular(16), // Reduced rounding
-                      border: Border.all(
-                        color: isDark
-                            ? AppColors.surfaceLight.withValues(alpha: 0.1)
-                            : const Color(0xFFE2E8F0),
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.surfaceDark.withValues(alpha: isDark ? 0.2 : 0.05),
-                          blurRadius: 16,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SizedBox(
-                            height: 32, // Fixed height to prevent vertical jumps
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  _isSleeping
-                                      ? [
-                                          "Zzz",
-                                          "Zzz .",
-                                          "Zzz ..",
-                                          "Zzz ...",
-                                          "Zzz ... Zzz"
-                                        ][_sleepMessageIndex]
-                                      : (hasJustScanned ? celebrationMessage : _getGreeting()),
-                                  style: GoogleFonts.outfit(
-                                    fontSize: (hasJustScanned || _isSleeping) ? 22 : 24,
-                                    fontWeight: FontWeight.w800,
-                                    color: isDark ? AppColors.surfaceVariantLight : AppColors.surfaceVariantDark,
-                                    letterSpacing: -0.5,
-                                  ),
-                                ),
+              child: SizedBox(
+                height: 85,
+                child: BentoSpeechBubble(
+                  tailDirection: BubbleTailDirection.right,
+                  color: isDark ? AppColors.surfaceDark.withValues(alpha: 0.6) : AppColors.surfaceLight,
+                  borderColor: isDark
+                      ? AppColors.surfaceLight.withValues(alpha: 0.1)
+                      : const Color(0xFFE2E8F0),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        height: 32, // Fixed height to prevent vertical jumps
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              _isSleeping
+                                  ? [
+                                      "Zzz",
+                                      "Zzz .",
+                                      "Zzz ..",
+                                      "Zzz ...",
+                                      "Zzz ... Zzz"
+                                    ][_sleepMessageIndex]
+                                  : (hasJustScanned ? celebrationMessage : _getGreeting()),
+                              style: GoogleFonts.outfit(
+                                fontSize: (hasJustScanned || _isSleeping) ? 22 : 24,
+                                fontWeight: FontWeight.w800,
+                                color: isDark ? AppColors.surfaceVariantLight : AppColors.surfaceVariantDark,
+                                letterSpacing: -0.5,
                               ),
                             ),
                           ),
-                          if (!hasJustScanned && !_isSleeping) ...[
-                            const SizedBox(height: 2),
-                            Text(
-                              greetingSubtitle,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.outfit(
-                                fontSize: 12,
-                                color: isDark ? AppColors.neutralDark : AppColors.neutralLight,
-                                letterSpacing: 0.2,
-                              ),
-                            ),
-                          ],
-                        ],
+                        ),
                       ),
-                    ),
+                      if (!hasJustScanned && !_isSleeping) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          greetingSubtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.outfit(
+                            fontSize: 12,
+                            color: isDark ? AppColors.neutralDark : AppColors.neutralLight,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
-                  
-                  // The Bubble Tail (Pointing Right to Scanai)
-                  Positioned(
-                    right: -10,
-                    top: 12,    // Moved to top-right
-                    child: CustomPaint(
-                      size: const Size(12, 16),
-                      painter: _BubbleTailPainter(
-                        color: isDark ? AppColors.surfaceDark.withValues(alpha: 0.6) : AppColors.surfaceLight,
-                        borderColor: isDark
-                            ? AppColors.surfaceLight.withValues(alpha: 0.1)
-                            : const Color(0xFFE2E8F0),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
@@ -1368,48 +1336,4 @@ class _BouncingWidgetState extends State<_BouncingWidget>
       child: widget.child,
     );
   }
-}
-
-
-class _BubbleTailPainter extends CustomPainter {
-  final Color color;
-  final Color borderColor;
-
-  _BubbleTailPainter({required this.color, required this.borderColor});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-
-    // Triangular path with rounded tip using a quadratic bezier
-    final path = Path();
-    path.moveTo(0, 0);                 
-    path.quadraticBezierTo(size.width * 1.2, size.height / 2, 0, size.height); // Much rounder, more friendly tip
-    path.close();
-
-    // 1. Shadow for the tail to match the card
-    final shadowPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.03)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
-    canvas.drawPath(path.shift(const Offset(2, 4)), shadowPaint);
-
-    // 2. Main fill
-    canvas.drawPath(path, paint);
-
-    // 3. More visible border stroke
-    final borderPaint = Paint()
-      ..color = borderColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-    
-    final borderPath = Path();
-    borderPath.moveTo(0, 0);
-    borderPath.quadraticBezierTo(size.width * 1.2, size.height / 2, 0, size.height);
-    canvas.drawPath(borderPath, borderPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

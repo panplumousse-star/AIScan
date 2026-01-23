@@ -11,14 +11,14 @@
       "Edit(./**)",
       "Glob(./**)",
       "Grep(./**)",
-      "Read(/home/plum_-/AIscan/aiscan/.auto-claude/worktrees/tasks/045-pdf-compression/**)",
-      "Write(/home/plum_-/AIscan/aiscan/.auto-claude/worktrees/tasks/045-pdf-compression/**)",
-      "Edit(/home/plum_-/AIscan/aiscan/.auto-claude/worktrees/tasks/045-pdf-compression/**)",
-      "Glob(/home/plum_-/AIscan/aiscan/.auto-claude/worktrees/tasks/045-pdf-compression/**)",
-      "Grep(/home/plum_-/AIscan/aiscan/.auto-claude/worktrees/tasks/045-pdf-compression/**)",
-      "Read(/home/plum_-/AIscan/aiscan/.auto-claude/worktrees/tasks/045-pdf-compression/.auto-claude/specs/045-pdf-compression/**)",
-      "Write(/home/plum_-/AIscan/aiscan/.auto-claude/worktrees/tasks/045-pdf-compression/.auto-claude/specs/045-pdf-compression/**)",
-      "Edit(/home/plum_-/AIscan/aiscan/.auto-claude/worktrees/tasks/045-pdf-compression/.auto-claude/specs/045-pdf-compression/**)",
+      "Read(/home/plum_-/AIscan/aiscan/.auto-claude/worktrees/tasks/044-optimize-app-performance-eliminate-lag/**)",
+      "Write(/home/plum_-/AIscan/aiscan/.auto-claude/worktrees/tasks/044-optimize-app-performance-eliminate-lag/**)",
+      "Edit(/home/plum_-/AIscan/aiscan/.auto-claude/worktrees/tasks/044-optimize-app-performance-eliminate-lag/**)",
+      "Glob(/home/plum_-/AIscan/aiscan/.auto-claude/worktrees/tasks/044-optimize-app-performance-eliminate-lag/**)",
+      "Grep(/home/plum_-/AIscan/aiscan/.auto-claude/worktrees/tasks/044-optimize-app-performance-eliminate-lag/**)",
+      "Read(/home/plum_-/AIscan/aiscan/.auto-claude/worktrees/tasks/044-optimize-app-performance-eliminate-lag/.auto-claude/specs/044-optimize-app-performance-eliminate-lag/**)",
+      "Write(/home/plum_-/AIscan/aiscan/.auto-claude/worktrees/tasks/044-optimize-app-performance-eliminate-lag/.auto-claude/specs/044-optimize-app-performance-eliminate-lag/**)",
+      "Edit(/home/plum_-/AIscan/aiscan/.auto-claude/worktrees/tasks/044-optimize-app-performance-eliminate-lag/.auto-claude/specs/044-optimize-app-performance-eliminate-lag/**)",
       "Read(/home/plum_-/AIscan/aiscan/.auto-claude/**)",
       "Write(/home/plum_-/AIscan/aiscan/.auto-claude/**)",
       "Edit(/home/plum_-/AIscan/aiscan/.auto-claude/**)",
@@ -29,7 +29,8 @@
       "WebSearch(*)",
       "mcp__context7__resolve-library-id(*)",
       "mcp__context7__get-library-docs(*)",
-      "mcp__context7__query-d(*)"
+      "mcp__context7__query-docs(*)",
+      "mcp__context7__*(*)"
     ]
   }
 }

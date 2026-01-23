@@ -1012,7 +1012,7 @@ class _ResultsViewState extends State<_ResultsView> {
           child: Stack(
             children: [
               // Main scrollable content
-          child: SingleChildScrollView(
+              SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             // Disable scroll in selection mode for precise text selection
             physics: _isSelectionMode
@@ -1140,7 +1140,6 @@ class _ResultsViewState extends State<_ResultsView> {
               ],
             ),
           ),
-        ),
               // Floating selection badge (doesn't affect layout)
               if (hasSelection)
                 Positioned(

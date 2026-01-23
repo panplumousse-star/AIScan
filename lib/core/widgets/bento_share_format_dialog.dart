@@ -7,28 +7,44 @@ import '../../features/sharing/domain/document_share_service.dart';
 import 'bento_card.dart';
 import 'bento_speech_bubble.dart';
 
-/// A reusable dialog for selecting share format (PDF or Images).
+/// A reusable dialog for selecting share format (PDF, Images, or Text).
 ///
 /// Features a mascot with speech bubble saying "J'envoie !" and
-/// presents two options: PDF (compressed single document) or
-/// Images (original quality PNG).
+/// presents share options: PDF (compressed single document),
+/// Images (original quality PNG), and optionally Text (OCR content).
+///
+/// The [ocrText] parameter, when provided and non-empty, enables
+/// the "Texte (OCR)" option for sharing extracted text content.
 ///
 /// Usage:
 /// ```dart
-/// final format = await showBentoShareFormatDialog(context);
+/// final format = await showBentoShareFormatDialog(
+///   context,
+///   ocrText: document.ocrText,
+/// );
 /// if (format != null) {
 ///   // User selected a format
 /// }
 /// ```
-Future<ShareFormat?> showBentoShareFormatDialog(BuildContext context) {
+Future<ShareFormat?> showBentoShareFormatDialog(
+  BuildContext context, {
+  String? ocrText,
+}) {
   return showDialog<ShareFormat>(
     context: context,
-    builder: (context) => const BentoShareFormatDialog(),
+    builder: (context) => BentoShareFormatDialog(ocrText: ocrText),
   );
 }
 
 class BentoShareFormatDialog extends StatelessWidget {
-  const BentoShareFormatDialog({super.key});
+  const BentoShareFormatDialog({
+    super.key,
+    this.ocrText,
+  });
+
+  /// The OCR text content to share. When non-null and non-empty,
+  /// enables the "Texte (OCR)" share option.
+  final String? ocrText;
 
   @override
   Widget build(BuildContext context) {
@@ -110,6 +126,18 @@ class BentoShareFormatDialog extends StatelessWidget {
                     onTap: () => Navigator.pop(context, ShareFormat.images),
                     theme: theme,
                   ),
+                  // OCR Text option (conditional)
+                  if (ocrText != null && ocrText!.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    _ShareOptionTile(
+                      icon: Icons.text_snippet_rounded,
+                      title: 'Texte (OCR)',
+                      subtitle: 'Contenu textuel extrait',
+                      color: const Color(0xFF3B82F6),
+                      onTap: () => Navigator.pop(context, ShareFormat.text),
+                      theme: theme,
+                    ),
+                  ],
                   const SizedBox(height: 24),
                   TextButton(
                     onPressed: () => Navigator.pop(context),

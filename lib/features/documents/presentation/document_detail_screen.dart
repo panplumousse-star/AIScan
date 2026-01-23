@@ -538,12 +538,26 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
   ) async {
     if (state.document == null) return;
 
-    // Show format selection dialog
-    final format = await showBentoShareFormatDialog(context);
+    // Show format selection dialog with OCR text if available
+    final format = await showBentoShareFormatDialog(
+      context,
+      ocrText: state.document!.hasOcrText ? state.document!.ocrText : null,
+    );
     if (format == null) return; // User cancelled
 
     try {
       final shareService = ref.read(documentShareServiceProvider);
+
+      // Handle text format separately (no file sharing needed)
+      if (format == ShareFormat.text) {
+        await shareService.shareText(
+          state.document!.ocrText!,
+          subject: state.document!.title,
+        );
+        return;
+      }
+
+      // Handle PDF and images formats
       final result = await shareService.shareDocument(
         state.document!,
         format: format,

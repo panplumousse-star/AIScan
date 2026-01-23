@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -40,6 +39,11 @@ enum ShareFormat {
   ///
   /// All pages are combined into one PDF file.
   pdf,
+
+  /// Share as extracted OCR text.
+  ///
+  /// The document's OCR content is shared as plain text.
+  text,
 }
 
 /// Result of a share permission check.
@@ -409,9 +413,11 @@ class DocumentShareService {
       final shareSubject = subject ?? _generateSubject(documents);
 
       // Share via native share sheet
-      await Share.shareXFiles(
-        xFiles,
-        subject: shareSubject,
+      await SharePlus.instance.share(
+        ShareParams(
+          files: xFiles,
+          subject: shareSubject,
+        ),
       );
 
       return ShareResult(
@@ -470,9 +476,11 @@ class DocumentShareService {
         name: fileName,
       );
 
-      await Share.shareXFiles(
-        [xFile],
-        subject: subject ?? fileName,
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [xFile],
+          subject: subject ?? fileName,
+        ),
       );
     } catch (e) {
       if (e is DocumentShareException) {
@@ -480,6 +488,43 @@ class DocumentShareService {
       }
       throw DocumentShareException(
         'Failed to share file',
+        cause: e,
+      );
+    }
+  }
+
+  /// Shares plain text content via the native share sheet.
+  ///
+  /// Use this method for sharing OCR extracted text or other
+  /// text-only content without file attachments.
+  ///
+  /// Parameters:
+  /// - [text]: The text content to share
+  /// - [subject]: Optional subject line for email sharing
+  ///
+  /// Throws [DocumentShareException] if sharing fails.
+  ///
+  /// ## Example
+  /// ```dart
+  /// await shareService.shareText(
+  ///   document.ocrText!,
+  ///   subject: document.title,
+  /// );
+  /// ```
+  Future<void> shareText(
+    String text, {
+    String? subject,
+  }) async {
+    try {
+      await SharePlus.instance.share(
+        ShareParams(
+          text: text,
+          subject: subject,
+        ),
+      );
+    } catch (e) {
+      throw DocumentShareException(
+        'Failed to share text',
         cause: e,
       );
     }
@@ -579,9 +624,6 @@ class DocumentShareService {
         options: PDFGeneratorOptions(
           title: document.title,
           imageQuality: 95,
-          pageSize: PDFPageSize.a4,
-          orientation: PDFOrientation.auto,
-          imageFit: PDFImageFit.contain,
         ),
       );
 

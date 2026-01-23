@@ -735,29 +735,46 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
   ) async {
     if (state.selectedText == null || state.selectedText!.isEmpty) return;
 
-    await Clipboard.setData(
-      ClipboardData(text: state.selectedText!),
-    );
-
-    // Count words in selected text
-    final wordCount = _countWords(state.selectedText!);
-
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Copied $wordCount ${wordCount == 1 ? 'word' : 'words'} to clipboard',
-          ),
-          action: SnackBarAction(
-            label: 'Dismiss',
-            onPressed: () {},
-          ),
-        ),
+    try {
+      await Clipboard.setData(
+        ClipboardData(text: state.selectedText!),
       );
-    }
 
-    // Clear selection after copying
-    notifier.clearSelectedText();
+      // Haptic feedback on successful copy
+      await HapticFeedback.mediumImpact();
+
+      // Count words in selected text
+      final wordCount = _countWords(state.selectedText!);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Copied $wordCount ${wordCount == 1 ? 'word' : 'words'} to clipboard',
+            ),
+            action: SnackBarAction(
+              label: 'Dismiss',
+              onPressed: () {},
+            ),
+          ),
+        );
+      }
+
+      // Clear selection after copying
+      notifier.clearSelectedText();
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Failed to copy text to clipboard'),
+            action: SnackBarAction(
+              label: 'Dismiss',
+              onPressed: () {},
+            ),
+          ),
+        );
+      }
+    }
   }
 
   /// Counts words in text.

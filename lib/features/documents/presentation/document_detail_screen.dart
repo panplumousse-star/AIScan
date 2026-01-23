@@ -14,6 +14,7 @@ import '../../../core/widgets/bento_rename_document_dialog.dart';
 import '../../../core/widgets/bento_share_format_dialog.dart';
 import '../../../core/widgets/bento_state_views.dart';
 import '../../folders/domain/folder_service.dart';
+import '../../ocr/domain/ocr_service.dart';
 import '../../sharing/domain/document_share_service.dart';
 import '../domain/document_model.dart';
 import 'state/document_detail_notifier.dart';
@@ -548,10 +549,74 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
     try {
       final shareService = ref.read(documentShareServiceProvider);
 
-      // Handle text format separately (no file sharing needed)
+      // Handle text format - run OCR if needed
       if (format == ShareFormat.text) {
+        String? textToShare = state.document!.ocrText;
+
+        // If no OCR text, run OCR first
+        if (textToShare == null || textToShare.isEmpty) {
+          if (!mounted) return;
+
+          // Show loading indicator
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Row(
+                children: [
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  SizedBox(width: 16),
+                  Text('Extraction du texte en cours...'),
+                ],
+              ),
+              duration: Duration(seconds: 30),
+            ),
+          );
+
+          // Run OCR
+          final ocrService = ref.read(ocrServiceProvider);
+          final notifier = ref.read(documentDetailScreenProvider.notifier);
+          final imageBytes = await notifier.loadImageBytes();
+
+          if (imageBytes == null) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Impossible de charger l\'image')),
+              );
+            }
+            return;
+          }
+
+          final ocrResult = await ocrService.extractTextFromBytes(imageBytes);
+          textToShare = ocrResult.text;
+
+          // Save OCR result to document
+          if (textToShare.isNotEmpty) {
+            final repository = ref.read(documentRepositoryProvider);
+            await repository.updateDocumentOcr(state.document!.id, textToShare);
+            // Refresh document
+            await notifier.loadDocument(state.document!.id);
+          }
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          }
+
+          if (textToShare.isEmpty) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Aucun texte détecté dans le document')),
+              );
+            }
+            return;
+          }
+        }
+
         await shareService.shareText(
-          state.document!.ocrText!,
+          textToShare,
           subject: state.document!.title,
         );
         return;
@@ -568,9 +633,10 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
       await shareService.cleanupTempFiles(result.tempFilePaths);
     } catch (e) {
       if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Failed to share: $e')));
+        ).showSnackBar(SnackBar(content: Text('Erreur de partage: $e')));
       }
     }
   }

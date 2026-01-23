@@ -376,8 +376,14 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
         if (state.document!.hasOcrText)
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-            child:
-                OcrTextPanel(ocrText: state.document!.ocrText!, theme: theme),
+            child: OcrTextPanel(
+              ocrText: state.document!.ocrText!,
+              theme: theme,
+              onSelectionChanged: (selectedText) {
+                // Selection is handled internally by OcrTextPanel for haptic feedback.
+                // Parent can extend this to track selection state if needed.
+              },
+            ),
           ),
 
         const SizedBox(height: 12),

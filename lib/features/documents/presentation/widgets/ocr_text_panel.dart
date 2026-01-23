@@ -29,6 +29,7 @@ class OcrTextPanel extends StatefulWidget {
     super.key,
     required this.ocrText,
     required this.theme,
+    this.onSelectionChanged,
   });
 
   /// The OCR text to display.
@@ -36,6 +37,12 @@ class OcrTextPanel extends StatefulWidget {
 
   /// The theme to use for styling.
   final ThemeData theme;
+
+  /// Callback when text selection changes.
+  ///
+  /// Called with the selected text when user selects text,
+  /// or null when selection is cleared.
+  final void Function(String?)? onSelectionChanged;
 
   @override
   State<OcrTextPanel> createState() => _OcrTextPanelState();
@@ -50,8 +57,8 @@ class _OcrTextPanelState extends State<OcrTextPanel> {
 
   /// Handles selection changes, triggering haptic feedback only when selection starts.
   void _onSelectionChanged(dynamic selectedContent) {
-    final hasSelection = selectedContent != null &&
-                         (selectedContent.plainText as String).isNotEmpty;
+    final selectedText = selectedContent?.plainText as String?;
+    final hasSelection = selectedText != null && selectedText.isNotEmpty;
 
     if (hasSelection && !_hasTriggeredSelectionHaptic) {
       // Selection just started - trigger haptic feedback once
@@ -61,6 +68,9 @@ class _OcrTextPanelState extends State<OcrTextPanel> {
       // Selection cleared - reset flag for next selection
       _hasTriggeredSelectionHaptic = false;
     }
+
+    // Notify parent of selection change
+    widget.onSelectionChanged?.call(hasSelection ? selectedText : null);
   }
 
   @override

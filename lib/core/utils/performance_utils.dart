@@ -147,7 +147,7 @@ class DevicePerformance {
       case DeviceTier.medium:
         return 200;
       case DeviceTier.high:
-        return 300;
+        return 200;
     }
   }
 

@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -414,9 +413,11 @@ class DocumentShareService {
       final shareSubject = subject ?? _generateSubject(documents);
 
       // Share via native share sheet
-      await Share.shareXFiles(
-        xFiles,
-        subject: shareSubject,
+      await SharePlus.instance.share(
+        ShareParams(
+          files: xFiles,
+          subject: shareSubject,
+        ),
       );
 
       return ShareResult(
@@ -475,9 +476,11 @@ class DocumentShareService {
         name: fileName,
       );
 
-      await Share.shareXFiles(
-        [xFile],
-        subject: subject ?? fileName,
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [xFile],
+          subject: subject ?? fileName,
+        ),
       );
     } catch (e) {
       if (e is DocumentShareException) {
@@ -513,9 +516,11 @@ class DocumentShareService {
     String? subject,
   }) async {
     try {
-      await Share.share(
-        text,
-        subject: subject,
+      await SharePlus.instance.share(
+        ShareParams(
+          text: text,
+          subject: subject,
+        ),
       );
     } catch (e) {
       throw DocumentShareException(
@@ -619,9 +624,6 @@ class DocumentShareService {
         options: PDFGeneratorOptions(
           title: document.title,
           imageQuality: 95,
-          pageSize: PDFPageSize.a4,
-          orientation: PDFOrientation.auto,
-          imageFit: PDFImageFit.contain,
         ),
       );
 

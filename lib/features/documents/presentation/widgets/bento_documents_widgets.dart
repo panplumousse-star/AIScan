@@ -104,17 +104,17 @@ class BentoStatsHeader extends StatelessWidget {
 }
 
 class _StatChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final bool isDark;
-
   const _StatChip({
     required this.icon,
     required this.label,
     required this.color,
     required this.isDark,
   });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {

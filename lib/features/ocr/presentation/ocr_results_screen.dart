@@ -1034,8 +1034,6 @@ class _ResultsView extends StatelessWidget {
                       height: 1.8, // Increased line height for easier selection
                       color: theme.colorScheme.onSurface,
                     ),
-                    // Enable magnifier for precise selection on mobile
-                    magnifierConfiguration: TextMagnifierConfiguration.enabled,
                     contextMenuBuilder: (context, editableTextState) {
                       // Custom context menu: Copy, Share, Select All
                       // (removes system "Read aloud" option)

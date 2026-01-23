@@ -137,8 +137,6 @@ class _OcrTextPanelState extends State<OcrTextPanel> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: SelectionArea(
                 onSelectionChanged: _onSelectionChanged,
-                // Enable magnifier for precise selection
-                magnifierConfiguration: TextMagnifierConfiguration.enabled,
                 contextMenuBuilder: (context, selectableRegionState) {
                   // Custom context menu: Copy, Share, Select All
                   // (removes system "Read aloud" option)

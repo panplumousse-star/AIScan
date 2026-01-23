@@ -926,20 +926,25 @@ ProcessedImage _processImageIsolate(_ProcessingParams params) {
     operations.add('auto_enhance');
   }
 
-  // Apply brightness adjustment
-  if (options.brightness != 0) {
-    // Scale from -100..100 to -255..255 for image package
+  // Apply brightness and contrast adjustments in a single call
+  if (options.brightness != 0 || options.contrast != 0) {
+    // Scale brightness from -100..100 to -255..255 for image package
     final adjustedBrightness = (options.brightness * 2.55).round();
-    processed = _adjustBrightness(processed, adjustedBrightness);
-    operations.add('brightness:${options.brightness}');
-  }
-
-  // Apply contrast adjustment
-  if (options.contrast != 0) {
-    // Scale from -100..100 to multiplier (0.5 to 2.0)
+    // Scale contrast from -100..100 to multiplier (0.5 to 2.0)
     final contrastFactor = 1.0 + (options.contrast / 100.0);
-    processed = img.adjustColor(processed, contrast: contrastFactor);
-    operations.add('contrast:${options.contrast}');
+
+    processed = img.adjustColor(
+      processed,
+      brightness: adjustedBrightness,
+      contrast: contrastFactor,
+    );
+
+    if (options.brightness != 0) {
+      operations.add('brightness:${options.brightness}');
+    }
+    if (options.contrast != 0) {
+      operations.add('contrast:${options.contrast}');
+    }
   }
 
   // Apply saturation adjustment (before grayscale)

@@ -938,7 +938,7 @@ ProcessedImage _processImageIsolate(_ProcessingParams params) {
   if (options.contrast != 0) {
     // Scale from -100..100 to multiplier (0.5 to 2.0)
     final contrastFactor = 1.0 + (options.contrast / 100.0);
-    processed = _adjustContrast(processed, contrastFactor);
+    processed = img.adjustColor(processed, contrast: contrastFactor);
     operations.add('contrast:${options.contrast}');
   }
 
@@ -1150,28 +1150,6 @@ img.Image _adjustBrightness(img.Image image, int amount) {
   // adjustColor expects brightness offset in range suitable for direct application
   return img.adjustColor(image, brightness: amount);
 }
-
-/// Adjusts contrast of an image.
-img.Image _adjustContrast(img.Image image, double factor) {
-  // Create a copy to avoid modifying the original
-  final result = img.Image.from(image);
-
-  for (var y = 0; y < result.height; y++) {
-    for (var x = 0; x < result.width; x++) {
-      final pixel = result.getPixel(x, y);
-
-      // Apply contrast formula: newValue = factor * (value - 128) + 128
-      final r = (factor * (pixel.r - 128) + 128).clamp(0, 255).toInt();
-      final g = (factor * (pixel.g - 128) + 128).clamp(0, 255).toInt();
-      final b = (factor * (pixel.b - 128) + 128).clamp(0, 255).toInt();
-
-      result.setPixelRgba(x, y, r, g, b, pixel.a.toInt());
-    }
-  }
-
-  return result;
-}
-
 /// Applies unsharp mask sharpening to an image.
 img.Image _sharpenImage(img.Image image, double amount) {
   // Apply unsharp mask: sharpened = original + amount * (original - blurred)

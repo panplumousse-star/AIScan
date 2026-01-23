@@ -7,20 +7,29 @@ import '../../features/sharing/domain/document_share_service.dart';
 import 'bento_card.dart';
 import 'bento_speech_bubble.dart';
 
-/// A reusable dialog for selecting share format (PDF or Images).
+/// A reusable dialog for selecting share format (PDF, Images, or Text).
 ///
 /// Features a mascot with speech bubble saying "J'envoie !" and
-/// presents two options: PDF (compressed single document) or
-/// Images (original quality PNG).
+/// presents share options: PDF (compressed single document),
+/// Images (original quality PNG), and optionally Text (OCR content).
+///
+/// The [ocrText] parameter, when provided and non-empty, enables
+/// the "Texte (OCR)" option for sharing extracted text content.
 ///
 /// Usage:
 /// ```dart
-/// final format = await showBentoShareFormatDialog(context);
+/// final format = await showBentoShareFormatDialog(
+///   context,
+///   ocrText: document.ocrText,
+/// );
 /// if (format != null) {
 ///   // User selected a format
 /// }
 /// ```
-Future<ShareFormat?> showBentoShareFormatDialog(BuildContext context) {
+Future<ShareFormat?> showBentoShareFormatDialog(
+  BuildContext context, {
+  String? ocrText,
+}) {
   return showDialog<ShareFormat>(
     context: context,
     builder: (context) => const BentoShareFormatDialog(),

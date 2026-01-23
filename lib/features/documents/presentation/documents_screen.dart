@@ -572,11 +572,18 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
     }
   }
 
-  /// Loads decrypted thumbnails for documents in parallel.
+  /// Loads decrypted thumbnails for documents in parallel with async decryption.
   ///
   /// Only loads first batch of thumbnails to reduce initial memory usage.
   /// Additional thumbnails are loaded as needed (lazy loading).
   /// Uses parallel decryption to reduce loading time from ~1000ms to ~200ms.
+  ///
+  /// ## Performance Optimization
+  /// - Thumbnail decryption happens asynchronously in the repository
+  /// - File-based decryption uses native code (OpenSSL/CommonCrypto) for performance
+  /// - Results are cached in ThumbnailCacheService to avoid redundant decryption
+  /// - Parallel loading with Future.wait for concurrent I/O operations
+  /// - On devices with 4+ cores, decryption operations don't block UI thread
   Future<void> _loadThumbnails(List<Document> documents) async {
     // Limit initial thumbnail load to reduce memory spike
     const maxInitialLoad = 12; // ~2 rows of grid

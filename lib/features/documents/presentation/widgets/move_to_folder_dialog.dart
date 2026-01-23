@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/widgets/bento_card.dart';
 import '../../../../core/widgets/bento_mascot.dart';
 import '../../../../core/widgets/bento_speech_bubble.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../folders/domain/folder_model.dart';
 import '../../../folders/presentation/widgets/bento_folder_dialog.dart';
 
@@ -96,6 +97,7 @@ class _MoveToFolderDialogState extends State<MoveToFolderDialog> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
@@ -131,7 +133,7 @@ class _MoveToFolderDialogState extends State<MoveToFolderDialog> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Enregistrer sous...',
+                                l10n?.saveUnder ?? 'Save under...',
                                 style: GoogleFonts.outfit(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w700,
@@ -140,7 +142,7 @@ class _MoveToFolderDialogState extends State<MoveToFolderDialog> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Choisis un dossier de destination',
+                                l10n?.chooseDestinationFolder ?? 'Choose a destination folder',
                                 style: GoogleFonts.outfit(
                                   fontSize: 12,
                                   color: theme.colorScheme.onSurface
@@ -167,7 +169,7 @@ class _MoveToFolderDialogState extends State<MoveToFolderDialog> {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 10, vertical: 6),
                               child: Text(
-                                'Je range !',
+                                l10n?.save ?? 'Save',
                                 style: GoogleFonts.outfit(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
@@ -203,7 +205,7 @@ class _MoveToFolderDialogState extends State<MoveToFolderDialog> {
                               onTap: () =>
                                   setState(() => _selectedFolderId = null),
                               icon: Icons.description_rounded,
-                              title: 'Mes Documents',
+                              title: l10n?.myDocuments ?? 'My Documents',
                               color: const Color(0xFF4F46E5),
                               isSelected: _selectedFolderId == null,
                               theme: theme,
@@ -253,7 +255,7 @@ class _MoveToFolderDialogState extends State<MoveToFolderDialog> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
-                                'Nouveau Dossier',
+                                l10n?.createNewFolder ?? 'New Folder',
                                 style: GoogleFonts.outfit(
                                   fontWeight: FontWeight.w600,
                                   color: theme.colorScheme.primary
@@ -280,7 +282,7 @@ class _MoveToFolderDialogState extends State<MoveToFolderDialog> {
                                   borderRadius: BorderRadius.circular(14)),
                             ),
                             child: Text(
-                              'Annuler',
+                              l10n?.cancel ?? 'Cancel',
                               style: GoogleFonts.outfit(
                                 fontWeight: FontWeight.w600,
                                 color: theme.colorScheme.onSurface
@@ -304,7 +306,7 @@ class _MoveToFolderDialogState extends State<MoveToFolderDialog> {
                                 borderRadius: BorderRadius.circular(14),
                                 child: Center(
                                   child: Text(
-                                    'Enregistrer',
+                                    l10n?.save ?? 'Save',
                                     style: GoogleFonts.outfit(
                                       fontWeight: FontWeight.w700,
                                       color: theme.colorScheme.onPrimary,

@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/widgets/bento_card.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// An expandable panel that displays OCR text extracted from a document.
 ///
@@ -77,6 +78,7 @@ class _OcrTextPanelState extends State<OcrTextPanel> {
   @override
   Widget build(BuildContext context) {
     final isDark = widget.theme.brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     return BentoCard(
       padding: EdgeInsets.zero,
@@ -102,7 +104,7 @@ class _OcrTextPanelState extends State<OcrTextPanel> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Texte OCR',
+                      l10n?.ocrText ?? 'OCR Text',
                       style: GoogleFonts.outfit(
                         fontWeight: FontWeight.w700,
                         color: widget.theme.colorScheme.onSurface,
@@ -144,13 +146,13 @@ class _OcrTextPanelState extends State<OcrTextPanel> {
                     anchors: selectableRegionState.contextMenuAnchors,
                     buttonItems: [
                       ContextMenuButtonItem(
-                        label: 'Copier',
+                        label: l10n?.copy ?? 'Copy',
                         onPressed: () {
                           selectableRegionState.copySelection(SelectionChangedCause.toolbar);
                         },
                       ),
                       ContextMenuButtonItem(
-                        label: 'Partager',
+                        label: l10n?.share ?? 'Share',
                         onPressed: () {
                           // Get selected text and share it
                           selectableRegionState.copySelection(SelectionChangedCause.toolbar);
@@ -162,7 +164,7 @@ class _OcrTextPanelState extends State<OcrTextPanel> {
                         },
                       ),
                       ContextMenuButtonItem(
-                        label: 'Tout sélectionner',
+                        label: l10n?.selectAll ?? 'Select all',
                         onPressed: () {
                           selectableRegionState.selectAll(SelectionChangedCause.toolbar);
                         },

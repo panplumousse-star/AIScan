@@ -188,6 +188,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
     ThemeData theme,
   ) {
     final isDark = theme.brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     return Positioned(
       top: 0,

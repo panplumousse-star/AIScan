@@ -1035,33 +1035,17 @@ class SearchService {
   }
 
   /// Applies additional filters to raw search results.
+  ///
+  /// This method is kept for API compatibility and future extensibility,
+  /// but currently returns results unchanged since all filters
+  /// (favoritesOnly, hasOcrOnly, folderId) are now applied in the SQL query.
   Future<List<_RawSearchResult>> _applyFilters(
     List<_RawSearchResult> results,
     SearchOptions options,
   ) async {
-    if (!options.favoritesOnly &&
-        !options.hasOcrOnly &&
-        options.folderId == null) {
-      return results;
-    }
-
-    final filtered = <_RawSearchResult>[];
-
-    for (final result in results) {
-      final document = await _documentRepository.getDocument(result.documentId);
-      if (document == null) continue;
-
-      // Apply filters
-      if (options.favoritesOnly && !document.isFavorite) continue;
-      if (options.hasOcrOnly && !document.hasOcrText) continue;
-      if (options.folderId != null && document.folderId != options.folderId) {
-        continue;
-      }
-
-      filtered.add(result);
-    }
-
-    return filtered;
+    // All filters are now applied in the SQL query in _executeSearch(),
+    // so we just return the results unchanged to avoid O(n) database lookups.
+    return results;
   }
 
   /// Builds full search results with documents and snippets.

@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:math';
-import 'dart:typed_data';
 
 import 'package:aes_encrypt_file/aes_encrypt_file.dart';
 import 'package:encrypt/encrypt.dart' as enc;
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'secure_storage_service.dart';
@@ -37,6 +37,70 @@ class EncryptionException implements Exception {
       return 'EncryptionException: $message (caused by: $cause)';
     }
     return 'EncryptionException: $message';
+  }
+}
+
+/// Parameters for isolate-based decryption.
+///
+/// Contains the encrypted data and encryption key needed for
+/// decryption in a separate isolate.
+class _DecryptParams {
+  /// Creates decryption parameters with the given [encryptedData] and [keyBytes].
+  const _DecryptParams({
+    required this.encryptedData,
+    required this.keyBytes,
+  });
+
+  /// The encrypted data to decrypt (includes IV prefix).
+  final Uint8List encryptedData;
+
+  /// The AES-256 encryption key as raw bytes.
+  final Uint8List keyBytes;
+}
+
+/// Top-level function for isolate-based decryption.
+///
+/// This function must be top-level (not a class method) to be used
+/// with Flutter's `compute()` function for isolate execution.
+///
+/// Returns the decrypted data as [Uint8List].
+///
+/// Throws [EncryptionException] if decryption fails.
+Uint8List _decryptInIsolate(_DecryptParams params) {
+  const ivSizeBytes = 16;
+
+  if (params.encryptedData.isEmpty) {
+    throw const EncryptionException('Cannot decrypt empty data');
+  }
+
+  if (params.encryptedData.length <= ivSizeBytes) {
+    throw const EncryptionException(
+      'Invalid encrypted data: too short to contain IV',
+    );
+  }
+
+  try {
+    final key = enc.Key(params.keyBytes);
+
+    // Extract IV from the beginning of encrypted data
+    final ivBytes = params.encryptedData.sublist(0, ivSizeBytes);
+    final iv = enc.IV(ivBytes);
+
+    // Extract actual encrypted data
+    final cipherBytes = params.encryptedData.sublist(ivSizeBytes);
+
+    final encrypter = enc.Encrypter(
+      enc.AES(key, mode: enc.AESMode.cbc),
+    );
+
+    final encrypted = enc.Encrypted(cipherBytes);
+    final decrypted = encrypter.decryptBytes(encrypted, iv: iv);
+
+    return Uint8List.fromList(decrypted);
+  } on EncryptionException {
+    rethrow;
+  } catch (e) {
+    throw EncryptionException('Failed to decrypt data', cause: e);
   }
 }
 
@@ -125,7 +189,7 @@ class EncryptionService {
       final iv = enc.IV(ivBytes);
 
       final encrypter = enc.Encrypter(
-        enc.AES(key, mode: enc.AESMode.cbc, padding: 'PKCS7'),
+        enc.AES(key, mode: enc.AESMode.cbc),
       );
 
       final encrypted = encrypter.encryptBytes(data.toList(), iv: iv);
@@ -174,13 +238,55 @@ class EncryptionService {
       final cipherBytes = encryptedData.sublist(_ivSizeBytes);
 
       final encrypter = enc.Encrypter(
-        enc.AES(key, mode: enc.AESMode.cbc, padding: 'PKCS7'),
+        enc.AES(key, mode: enc.AESMode.cbc),
       );
 
       final encrypted = enc.Encrypted(cipherBytes);
       final decrypted = encrypter.decryptBytes(encrypted, iv: iv);
 
       return Uint8List.fromList(decrypted);
+    } on EncryptionException {
+      rethrow;
+    } catch (e) {
+      throw EncryptionException('Failed to decrypt data', cause: e);
+    }
+  }
+
+  /// Decrypts data asynchronously in a separate isolate using [compute].
+  ///
+  /// This method runs the decryption operation in a separate isolate
+  /// to prevent blocking the UI thread. Use this for decrypting larger
+  /// data sets (e.g., > 100KB) or when decryption is happening on the
+  /// main thread and may cause UI lag.
+  ///
+  /// For small data (< 100KB), the overhead of spawning an isolate
+  /// may outweigh the benefits. Use [decrypt] for small data instead.
+  ///
+  /// Expects the encrypted data to have the structure:
+  /// `[16-byte IV][encrypted data]`
+  ///
+  /// Returns the decrypted data as [Uint8List].
+  ///
+  /// Throws [EncryptionException] if decryption fails.
+  Future<Uint8List> decryptAsync(Uint8List encryptedData) async {
+    if (encryptedData.isEmpty) {
+      throw const EncryptionException('Cannot decrypt empty data');
+    }
+
+    if (encryptedData.length <= _ivSizeBytes) {
+      throw const EncryptionException(
+        'Invalid encrypted data: too short to contain IV',
+      );
+    }
+
+    try {
+      final keyBytes = await _getEncryptionKeyBytes();
+      final params = _DecryptParams(
+        encryptedData: encryptedData,
+        keyBytes: keyBytes,
+      );
+
+      return await compute(_decryptInIsolate, params);
     } on EncryptionException {
       rethrow;
     } catch (e) {

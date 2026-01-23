@@ -960,7 +960,7 @@ class _ProcessingView extends StatelessWidget {
 }
 
 /// View showing OCR results with selectable, copyable text.
-class _ResultsView extends StatelessWidget {
+class _ResultsView extends StatefulWidget {
   const _ResultsView({
     required this.result,
     required this.searchQuery,
@@ -975,6 +975,13 @@ class _ResultsView extends StatelessWidget {
   final void Function(String?) onTextSelected;
   final String? selectedText;
 
+  @override
+  State<_ResultsView> createState() => _ResultsViewState();
+}
+
+class _ResultsViewState extends State<_ResultsView> {
+  bool _isSelectionMode = false;
+
   /// Counts words in selected text.
   int _countSelectedWords(String text) {
     final trimmed = text.trim();
@@ -984,13 +991,21 @@ class _ResultsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasSelection = selectedText != null && selectedText!.isNotEmpty;
-    final selectedWordCount = hasSelection ? _countSelectedWords(selectedText!) : 0;
+    final hasSelection = widget.selectedText != null && widget.selectedText!.isNotEmpty;
+    final selectedWordCount = hasSelection ? _countSelectedWords(widget.selectedText!) : 0;
 
     return Column(
       children: [
-        // Metadata bar
-        _MetadataBar(result: result, theme: theme),
+        // Metadata bar with selection mode toggle
+        _MetadataBar(
+          result: widget.result,
+          theme: widget.theme,
+          isSelectionMode: _isSelectionMode,
+          onSelectionModeToggle: () {
+            setState(() => _isSelectionMode = !_isSelectionMode);
+            HapticFeedback.selectionClick();
+          },
+        ),
 
         // Word count badge for selected text
         AnimatedSize(
@@ -1002,7 +1017,7 @@ class _ResultsView extends StatelessWidget {
             child: hasSelection
                 ? _SelectionBadge(
                     wordCount: selectedWordCount,
-                    theme: theme,
+                    theme: widget.theme,
                   )
                 : const SizedBox.shrink(),
           ),
@@ -1012,34 +1027,66 @@ class _ResultsView extends StatelessWidget {
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
-            // ClampingScrollPhysics reduces scroll interference during selection
-            physics: const ClampingScrollPhysics(),
+            // Disable scroll in selection mode for precise text selection
+            physics: _isSelectionMode
+                ? const NeverScrollableScrollPhysics()
+                : const ClampingScrollPhysics(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Selection mode indicator
+                if (_isSelectionMode)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: widget.theme.colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.touch_app,
+                          size: 16,
+                          color: widget.theme.colorScheme.onPrimaryContainer,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Mode sélection actif - scroll désactivé',
+                          style: widget.theme.textTheme.labelMedium?.copyWith(
+                            color: widget.theme.colorScheme.onPrimaryContainer,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 // Selectable text with optional highlighting
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerLowest,
+                    color: widget.theme.colorScheme.surfaceContainerLowest,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: theme.colorScheme.outlineVariant.withOpacity(0.5),
+                      color: _isSelectionMode
+                          ? widget.theme.colorScheme.primary.withValues(alpha: 0.5)
+                          : widget.theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+                      width: _isSelectionMode ? 2 : 1,
                     ),
                   ),
                   child: SelectableText(
-                    result.trimmedText,
-                    style: theme.textTheme.bodyLarge?.copyWith(
+                    widget.result.trimmedText,
+                    style: widget.theme.textTheme.bodyLarge?.copyWith(
                       height: 1.8, // Increased line height for easier selection
-                      color: theme.colorScheme.onSurface,
+                      color: widget.theme.colorScheme.onSurface,
                     ),
                     contextMenuBuilder: (context, editableTextState) {
                       // Custom context menu: Copy, Share, Select All
                       // (removes system "Read aloud" option)
                       final selection = editableTextState.textEditingValue.selection;
                       final selectedText = selection.isValid && !selection.isCollapsed
-                          ? result.trimmedText.substring(selection.start, selection.end)
+                          ? widget.result.trimmedText.substring(selection.start, selection.end)
                           : null;
 
                       return AdaptiveTextSelectionToolbar.buttonItems(
@@ -1070,13 +1117,13 @@ class _ResultsView extends StatelessWidget {
                     },
                     onSelectionChanged: (selection, cause) {
                       if (selection.isCollapsed) {
-                        onTextSelected(null);
+                        widget.onTextSelected(null);
                       } else {
-                        final selectedText = result.trimmedText.substring(
+                        final selectedText = widget.result.trimmedText.substring(
                           selection.start,
                           selection.end,
                         );
-                        onTextSelected(selectedText);
+                        widget.onTextSelected(selectedText);
                       }
                     },
                   ),
@@ -1090,13 +1137,15 @@ class _ResultsView extends StatelessWidget {
                     Icon(
                       Icons.info_outline,
                       size: 16,
-                      color: theme.colorScheme.onSurfaceVariant,
+                      color: widget.theme.colorScheme.onSurfaceVariant,
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Long press to select and copy text',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                      _isSelectionMode
+                          ? 'Sélectionnez le texte facilement'
+                          : 'Appui long pour sélectionner',
+                      style: widget.theme.textTheme.bodySmall?.copyWith(
+                        color: widget.theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -1115,53 +1164,104 @@ class _MetadataBar extends StatelessWidget {
   const _MetadataBar({
     required this.result,
     required this.theme,
+    this.isSelectionMode = false,
+    this.onSelectionModeToggle,
   });
 
   final OcrResult result;
   final ThemeData theme;
+  final bool isSelectionMode;
+  final VoidCallback? onSelectionModeToggle;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         border: Border(
           bottom: BorderSide(
-            color: theme.colorScheme.outlineVariant.withOpacity(0.5),
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
           ),
         ),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _MetadataItem(
-            icon: Icons.text_fields,
-            label: 'Words',
-            value: '${result.wordCount ?? 0}',
-            theme: theme,
-          ),
-          _MetadataItem(
-            icon: Icons.format_line_spacing,
-            label: 'Lines',
-            value: '${result.lineCount ?? 0}',
-            theme: theme,
-          ),
-          _MetadataItem(
-            icon: Icons.timer_outlined,
-            label: 'Time',
-            value: result.processingTimeMs != null
-                ? '${(result.processingTimeMs! / 1000).toStringAsFixed(1)}s'
-                : 'N/A',
-            theme: theme,
-          ),
-          if (result.confidence != null)
-            _MetadataItem(
-              icon: Icons.check_circle_outline,
-              label: 'Confidence',
-              value: result.confidencePercent,
-              theme: theme,
+          // Selection mode toggle button
+          if (onSelectionModeToggle != null)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Material(
+                color: isSelectionMode
+                    ? theme.colorScheme.primaryContainer
+                    : theme.colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(8),
+                child: InkWell(
+                  onTap: onSelectionModeToggle,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isSelectionMode ? Icons.touch_app : Icons.touch_app_outlined,
+                          size: 16,
+                          color: isSelectionMode
+                              ? theme.colorScheme.onPrimaryContainer
+                              : theme.colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Sélection',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: isSelectionMode
+                                ? theme.colorScheme.onPrimaryContainer
+                                : theme.colorScheme.onSurfaceVariant,
+                            fontWeight: isSelectionMode ? FontWeight.w600 : null,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ),
+          // Stats
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _MetadataItem(
+                  icon: Icons.text_fields,
+                  label: 'Mots',
+                  value: '${result.wordCount ?? 0}',
+                  theme: theme,
+                ),
+                _MetadataItem(
+                  icon: Icons.format_line_spacing,
+                  label: 'Lignes',
+                  value: '${result.lineCount ?? 0}',
+                  theme: theme,
+                ),
+                _MetadataItem(
+                  icon: Icons.timer_outlined,
+                  label: 'Temps',
+                  value: result.processingTimeMs != null
+                      ? '${(result.processingTimeMs! / 1000).toStringAsFixed(1)}s'
+                      : 'N/A',
+                  theme: theme,
+                ),
+                if (result.confidence != null)
+                  _MetadataItem(
+                    icon: Icons.check_circle_outline,
+                    label: 'Confiance',
+                    value: result.confidencePercent,
+                    theme: theme,
+                  ),
+              ],
+            ),
+          ),
         ],
       ),
     );

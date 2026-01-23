@@ -1007,24 +1007,11 @@ class _ResultsViewState extends State<_ResultsView> {
           },
         ),
 
-        // Word count badge for selected text
-        AnimatedSize(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOutCubic,
-          child: AnimatedOpacity(
-            duration: const Duration(milliseconds: 150),
-            opacity: hasSelection ? 1.0 : 0.0,
-            child: hasSelection
-                ? _SelectionBadge(
-                    wordCount: selectedWordCount,
-                    theme: widget.theme,
-                  )
-                : const SizedBox.shrink(),
-          ),
-        ),
-
-        // Text content
+        // Text content with overlaid selection badge
         Expanded(
+          child: Stack(
+            children: [
+              // Main scrollable content
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             // Disable scroll in selection mode for precise text selection
@@ -1152,6 +1139,26 @@ class _ResultsViewState extends State<_ResultsView> {
                 ),
               ],
             ),
+          ),
+        ),
+              // Floating selection badge (doesn't affect layout)
+              if (hasSelection)
+                Positioned(
+                  top: 8,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 150),
+                      opacity: hasSelection ? 1.0 : 0.0,
+                      child: _SelectionBadge(
+                        wordCount: selectedWordCount,
+                        theme: widget.theme,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ],

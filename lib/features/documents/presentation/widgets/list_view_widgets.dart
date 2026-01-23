@@ -40,16 +40,18 @@ class DocumentsList extends StatelessWidget {
         final thumbnailBytes = thumbnails[document.id];
         final isSelected = selectedIds.contains(document.id);
 
-        return DocumentListItem(
-          document: document,
-          thumbnailBytes: thumbnailBytes,
-          isSelected: isSelected,
-          isSelectionMode: isSelectionMode,
-          onTap: () => onDocumentTap(document),
-          onLongPress: () => onDocumentLongPress(document),
-          onFavoriteToggle: () => onFavoriteToggle(document.id),
-          onRename: () => onRename(document.id, document.title),
-          theme: theme,
+        return RepaintBoundary(
+          child: DocumentListItem(
+            document: document,
+            thumbnailBytes: thumbnailBytes,
+            isSelected: isSelected,
+            isSelectionMode: isSelectionMode,
+            onTap: () => onDocumentTap(document),
+            onLongPress: () => onDocumentLongPress(document),
+            onFavoriteToggle: () => onFavoriteToggle(document.id),
+            onRename: () => onRename(document.id, document.title),
+            theme: theme,
+          ),
         );
       },
     );

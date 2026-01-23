@@ -32,12 +32,19 @@ Future<ShareFormat?> showBentoShareFormatDialog(
 }) {
   return showDialog<ShareFormat>(
     context: context,
-    builder: (context) => const BentoShareFormatDialog(),
+    builder: (context) => BentoShareFormatDialog(ocrText: ocrText),
   );
 }
 
 class BentoShareFormatDialog extends StatelessWidget {
-  const BentoShareFormatDialog({super.key});
+  const BentoShareFormatDialog({
+    super.key,
+    this.ocrText,
+  });
+
+  /// The OCR text content to share. When non-null and non-empty,
+  /// enables the "Texte (OCR)" share option.
+  final String? ocrText;
 
   @override
   Widget build(BuildContext context) {

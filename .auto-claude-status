@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "044-optimize-app-performance-eliminate-lag",
+  "spec": "047-share-ocr",
   "state": "building",
   "subtasks": {
-    "completed": 9,
+    "completed": 3,
     "total": 10,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Integration & Performance Verification",
+    "current": "Share Dialog Widget",
     "id": null,
-    "total": 1
+    "total": 3
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 10,
-    "started_at": "2026-01-23T07:50:14.977819"
+    "number": 4,
+    "started_at": "2026-01-23T09:26:15.152537"
   },
-  "last_update": "2026-01-23T08:12:59.820251"
+  "last_update": "2026-01-23T09:29:32.850849"
 }

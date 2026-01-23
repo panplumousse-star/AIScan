@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../core/permissions/camera_permission_service.dart';
 import '../../../core/permissions/contact_permission_dialog.dart';
 import '../../../core/permissions/permission_dialog.dart';
@@ -556,12 +557,13 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     ScannerScreenNotifier notifier,
     ThemeData theme,
   ) {
+    final l10n = AppLocalizations.of(context);
     if (state.isScanning) {
-      return const BentoLoadingView(message: 'Ouverture du scanner...');
+      return BentoLoadingView(message: l10n?.openingScanner ?? 'Opening scanner...');
     }
 
     if (state.isSaving && !state.hasResult && !state.hasSavedDocument) {
-      return const BentoLoadingView(message: 'Enregistrement du document...');
+      return BentoLoadingView(message: l10n?.savingDocument ?? 'Saving document...');
     }
 
     if (state.hasResult || state.hasSavedDocument) {
@@ -591,7 +593,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     }
 
     // Fallback: show loading while auto-scan starts
-    return const BentoLoadingView(message: 'Lancement du scanner...');
+    return BentoLoadingView(message: l10n?.launchingScanner ?? 'Launching scanner...');
   }
 
   Widget? _buildFab(
@@ -838,24 +840,25 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
   }
 
   Future<bool?> _showDiscardDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Abandonner le scan ?'),
-        content: const Text(
-          'Êtes-vous sûr de vouloir abandonner ce scan ? Cette action est irréversible.',
+        title: Text(l10n?.abandonScanTitle ?? 'Abandon scan?'),
+        content: Text(
+          l10n?.abandonScanMessage ?? 'Are you sure you want to abandon this scan? This action cannot be undone.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Annuler'),
+            child: Text(l10n?.cancel ?? 'Cancel'),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.error,
             ),
-            child: const Text('Abandonner'),
+            child: Text(l10n?.abandon ?? 'Abandon'),
           ),
         ],
       ),
@@ -895,6 +898,7 @@ class _ResultView extends ConsumerWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isSaved = savedDocument != null;
+    final l10n = AppLocalizations.of(context);
     
     final now = DateTime.now();
     final timestamp = 'scanai_${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_'
@@ -1215,6 +1219,7 @@ class _ActionWizardState extends State<_ActionWizard> with TickerProviderStateMi
 
   Widget _buildRenameStep() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -1239,7 +1244,7 @@ class _ActionWizardState extends State<_ActionWizard> with TickerProviderStateMi
               color: isDark ? Colors.white : const Color(0xFF1E293B),
             ),
             decoration: InputDecoration(
-              labelText: 'Nom du document',
+              labelText: l10n?.documentName ?? 'Document name',
               labelStyle: GoogleFonts.outfit(
                 color: isDark ? Colors.white60 : Colors.black45,
                 fontWeight: FontWeight.w600,
@@ -1283,7 +1288,7 @@ class _ActionWizardState extends State<_ActionWizard> with TickerProviderStateMi
             children: [
               Expanded(
                 child: _buildSimpleButton(
-                  label: 'Supprimer',
+                  label: l10n?.delete ?? 'Delete',
                   icon: Icons.delete_outline_rounded,
                   onTap: widget.onDelete,
                   color: Colors.redAccent,
@@ -1293,7 +1298,7 @@ class _ActionWizardState extends State<_ActionWizard> with TickerProviderStateMi
               const SizedBox(width: 12),
                   Expanded(
                     child: _buildSimpleButton(
-                      label: 'Continuer',
+                      label: l10n?.save ?? 'Save',
                       icon: Icons.arrow_forward_rounded,
                       onTap: _handleNextWithFlip,
                       color: const Color(0xFF4F46E5),
@@ -1309,6 +1314,7 @@ class _ActionWizardState extends State<_ActionWizard> with TickerProviderStateMi
 
   Widget _buildFolderStep() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
     return Consumer(
       builder: (context, ref, _) {
         final folderService = ref.read(folderServiceProvider);
@@ -1355,7 +1361,7 @@ class _ActionWizardState extends State<_ActionWizard> with TickerProviderStateMi
                             onChanged: (value) => setState(() => _folderSearchQuery = value),
                             style: GoogleFonts.outfit(fontSize: 13),
                             decoration: InputDecoration(
-                              hintText: 'Rechercher un dossier...',
+                              hintText: l10n?.searchFolder ?? 'Search folder...',
                               hintStyle: GoogleFonts.outfit(color: isDark ? Colors.white30 : Colors.black38, fontSize: 13),
                               prefixIcon: const Icon(Icons.search_rounded, size: 18),
                               border: InputBorder.none,
@@ -1403,7 +1409,7 @@ class _ActionWizardState extends State<_ActionWizard> with TickerProviderStateMi
                                 // Create New Folder
                                 return _buildFolderOption(
                                   icon: Icons.create_new_folder_outlined,
-                                  label: 'Nouveau',
+                                  label: l10n?.newFolder ?? 'New',
                                   isSelected: false,
                                   onTap: () async {
                                     final result = await showDialog<BentoFolderDialogResult>(
@@ -1437,7 +1443,7 @@ class _ActionWizardState extends State<_ActionWizard> with TickerProviderStateMi
                                 final isSelected = _selectedFolderId == null;
                                 return _buildFolderOption(
                                   icon: Icons.home_outlined,
-                                  label: 'Mes Docs',
+                                  label: l10n?.myDocs ?? 'My Docs',
                                   isSelected: isSelected,
                                   onTap: () => setState(() => _selectedFolderId = null),
                                 );
@@ -1497,7 +1503,7 @@ class _ActionWizardState extends State<_ActionWizard> with TickerProviderStateMi
                       }
                       
                       return _buildSimpleButton(
-                        label: 'Enregistrer ici',
+                        label: l10n?.saveHere ?? 'Save here',
                         icon: Icons.check_circle_rounded,
                         onTap: _handleSaveWithFlip,
                         color: btnColor,
@@ -1568,6 +1574,7 @@ class _ActionWizardState extends State<_ActionWizard> with TickerProviderStateMi
   }
 
   Widget _buildFinalActions() {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: EdgeInsets.zero,
       child: GridView.count(
@@ -1580,25 +1587,25 @@ class _ActionWizardState extends State<_ActionWizard> with TickerProviderStateMi
         children: [
           _buildActionTile(
             icon: Icons.share_rounded,
-            label: 'Partager',
+            label: l10n?.share ?? 'Share',
             onTap: widget.onShare,
             color: const Color(0xFF6366F1),
           ),
           _buildActionTile(
             icon: Icons.save_alt_rounded,
-            label: 'Exporter',
+            label: l10n?.export ?? 'Export',
             onTap: widget.onExport,
             color: const Color(0xFF10B981),
           ),
           _buildActionTile(
             icon: Icons.auto_fix_high_rounded,
-            label: 'OCR',
+            label: l10n?.ocr ?? 'OCR',
             onTap: widget.onOcr,
             color: const Color(0xFFF59E0B),
           ),
           _buildActionTile(
             icon: Icons.check_circle_rounded,
-            label: 'Terminer',
+            label: l10n?.finish ?? 'Finish',
             onTap: widget.onDone,
             color: const Color(0xFF4F46E5),
           ),

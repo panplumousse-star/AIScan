@@ -153,19 +153,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get greetingEvening => 'Good evening';
 
   @override
-  String get randomMessage1 => 'Ready to scan?';
+  String get randomMessage1 => 'Need a PDF?';
 
   @override
-  String get randomMessage2 => 'Your documents are safe';
+  String get randomMessage2 => 'Let\'s Go?';
 
   @override
-  String get randomMessage3 => 'Scan to preserve';
+  String get randomMessage3 => 'Awaiting your orders!';
 
   @override
-  String get randomMessage4 => 'Everything under control';
-
-  @override
-  String get randomMessage5 => 'Simplicity first';
+  String get randomMessage4 => 'Let\'s go!';
 
   @override
   String get ocrResults => 'OCR Results';
@@ -177,7 +174,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get metadata => 'Metadata';
 
   @override
-  String get copyText => 'Copy text';
+  String get copyText => 'Copy';
 
   @override
   String get textCopied => 'Text copied';
@@ -246,7 +243,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ocrLanguageDevanagari => 'Devanagari';
 
   @override
-  String get scanDocument => 'Scan document';
+  String get scanDocument => 'Scan a\ndocument';
 
   @override
   String get camera => 'Camera';
@@ -258,7 +255,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recentScans => 'Recent scans';
 
   @override
-  String get allDocuments => 'All documents';
+  String get allDocuments => 'View my files';
 
   @override
   String get searchDocuments => 'Search documents';
@@ -323,4 +320,297 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get languageSettings => 'Language settings';
+
+  @override
+  String get openingScanner => 'Opening scanner...';
+
+  @override
+  String get savingDocument => 'Saving document...';
+
+  @override
+  String get launchingScanner => 'Launching scanner...';
+
+  @override
+  String documentExportedTo(String folder) {
+    return 'Document exported to $folder';
+  }
+
+  @override
+  String get abandonScanTitle => 'Abandon scan?';
+
+  @override
+  String get abandonScanMessage =>
+      'Are you sure you want to abandon this scan? This action cannot be undone.';
+
+  @override
+  String get abandon => 'Abandon';
+
+  @override
+  String get scanSuccessMessage => 'Done, it\'s in the box!';
+
+  @override
+  String get savePromptMessage => 'Shall we save it?';
+
+  @override
+  String get searchFolder => 'Search folder...';
+
+  @override
+  String get newFolder => 'New';
+
+  @override
+  String get folderCreationFailed => 'Folder creation failed';
+
+  @override
+  String get myDocs => 'My Docs';
+
+  @override
+  String get saveHere => 'Save here';
+
+  @override
+  String get export => 'Export';
+
+  @override
+  String get ocr => 'OCR';
+
+  @override
+  String get finish => 'Finish';
+
+  @override
+  String get move => 'Move';
+
+  @override
+  String get decrypting => 'Decrypting...';
+
+  @override
+  String get loading => 'Loading...';
+
+  @override
+  String get unableToLoadImage => 'Unable to load image';
+
+  @override
+  String get noTextDetected => 'No text detected in document';
+
+  @override
+  String get noTextToShare => 'No text to share';
+
+  @override
+  String get shareError => 'Share error';
+
+  @override
+  String get folderCreationError => 'Error creating folder';
+
+  @override
+  String get favoriteUpdateFailed => 'Failed to update favorites';
+
+  @override
+  String get documentExported => 'Document exported';
+
+  @override
+  String documentsExported(int count) {
+    return '$count documents exported';
+  }
+
+  @override
+  String get title => 'Title';
+
+  @override
+  String get pages => 'Pages';
+
+  @override
+  String get format => 'Format';
+
+  @override
+  String get justNow => 'Just now';
+
+  @override
+  String minutesAgo(int minutes) {
+    return '$minutes min ago';
+  }
+
+  @override
+  String hoursAgo(int hours) {
+    return '${hours}h ago';
+  }
+
+  @override
+  String daysAgo(int days) {
+    return '$days days ago';
+  }
+
+  @override
+  String get lastUpdated => 'Last updated';
+
+  @override
+  String folderSelected(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count folders selected',
+      one: '1 folder selected',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String documentSelected(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count documents selected',
+      one: '1 document selected',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get currentFolder => 'Current folder';
+
+  @override
+  String noResultsFor(String query) {
+    return 'No results for \"$query\"';
+  }
+
+  @override
+  String get noFavorites => 'No favorites';
+
+  @override
+  String get copy => 'Copy';
+
+  @override
+  String get selectAll => 'Select all';
+
+  @override
+  String get selectionModeActive => 'Selection mode active';
+
+  @override
+  String get longPressToSelect => 'Long press to select';
+
+  @override
+  String get selectTextEasily => 'Select text easily';
+
+  @override
+  String get selection => 'Selection';
+
+  @override
+  String wordSelected(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count words selected',
+      one: '1 word selected',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get renameDocument => 'Rename document';
+
+  @override
+  String get newTitle => 'New title...';
+
+  @override
+  String get saveUnder => 'Save under...';
+
+  @override
+  String moveDocuments(int count) {
+    return 'Move $count documents';
+  }
+
+  @override
+  String get chooseDestinationFolder => 'Choose a destination folder';
+
+  @override
+  String get rootFolder => 'Root (no folder)';
+
+  @override
+  String get createNewFolder => 'Create new folder';
+
+  @override
+  String get singleDocumentCompressed => 'Single compressed document';
+
+  @override
+  String get originalQualityPng => 'Original quality (PNG)';
+
+  @override
+  String get pleaseWait => 'Please wait...';
+
+  @override
+  String get somethingWentWrong => 'Oops! Something went wrong';
+
+  @override
+  String get editFolder => 'Edit folder';
+
+  @override
+  String get folderName => 'Folder name...';
+
+  @override
+  String get create => 'Create';
+
+  @override
+  String get nameCannotBeEmpty => 'Name cannot be empty';
+
+  @override
+  String get createFolderToOrganize =>
+      'Create a folder to organize your documents';
+
+  @override
+  String get createFolder => 'Create folder';
+
+  @override
+  String get appIsLocked => 'Scanai is locked';
+
+  @override
+  String get authenticateToAccess =>
+      'Authenticate to access your secured documents.';
+
+  @override
+  String get unlock => 'Unlock';
+
+  @override
+  String get preparingImage => 'Preparing image...';
+
+  @override
+  String get celebrationMessage1 => 'Easy!';
+
+  @override
+  String get celebrationMessage2 => 'Again?!';
+
+  @override
+  String get celebrationMessage3 => 'Need me again?';
+
+  @override
+  String get celebrationMessage4 => 'One more done!';
+
+  @override
+  String get celebrationMessage5 => 'Work done!';
+
+  @override
+  String get celebrationMessage6 => 'Next!';
+
+  @override
+  String get shareAppText =>
+      'I use Scanai to secure and organize my important documents. It\'s fast, secure and smooth!';
+
+  @override
+  String get shareAppSubject => 'Scanai: Your secure pocket scanner';
+
+  @override
+  String get secureYourDocuments => 'Secure your documents';
+
+  @override
+  String get savedLocally => 'Everything saved locally';
+
+  @override
+  String documentsSecured(int count) {
+    return '$count documents secured';
+  }
+
+  @override
+  String get preferences => 'Preferences';
+
+  @override
+  String get interface => 'Interface';
+
+  @override
+  String get textRecognition => 'Text recognition';
 }

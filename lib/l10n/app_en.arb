@@ -39,19 +39,24 @@
   "noDocuments": "No documents",
   "scanYourFirstDocument": "Scan your first document",
   "documentCount": "{count, plural, =0{No documents} =1{1 document} other{{count} documents}}",
+  "@documentCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
   "pageCount": "{count, plural, =1{1 page} other{{count} pages}}",
+  "@pageCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
   "greetingMorning": "Good morning",
   "greetingAfternoon": "Good afternoon",
   "greetingEvening": "Good evening",
-  "randomMessage1": "Ready to scan?",
-  "randomMessage2": "Your documents are safe",
-  "randomMessage3": "Scan to preserve",
-  "randomMessage4": "Everything under control",
-  "randomMessage5": "Simplicity first",
+  "randomMessage1": "Need a PDF?",
+  "randomMessage2": "Let's Go?",
+  "randomMessage3": "Awaiting your orders!",
+  "randomMessage4": "Let's go!",
   "ocrResults": "OCR Results",
   "text": "Text",
   "metadata": "Metadata",
-  "copyText": "Copy text",
+  "copyText": "Copy",
   "textCopied": "Text copied",
   "noTextExtracted": "No text extracted",
   "language": "Language",
@@ -74,11 +79,11 @@
   "ocrLanguageJapanese": "Japanese",
   "ocrLanguageKorean": "Korean",
   "ocrLanguageDevanagari": "Devanagari",
-  "scanDocument": "Scan document",
+  "scanDocument": "Scan a\ndocument",
   "camera": "Camera",
   "gallery": "Gallery",
   "recentScans": "Recent scans",
-  "allDocuments": "All documents",
+  "allDocuments": "View my files",
   "searchDocuments": "Search documents",
   "sortByDate": "Sort by date",
   "sortByName": "Sort by name",
@@ -99,5 +104,122 @@
   "modifiedAt": "Modified",
   "size": "Size",
   "selectLanguage": "Select language",
-  "languageSettings": "Language settings"
+  "languageSettings": "Language settings",
+
+  "openingScanner": "Opening scanner...",
+  "savingDocument": "Saving document...",
+  "launchingScanner": "Launching scanner...",
+  "documentExportedTo": "Document exported to {folder}",
+  "@documentExportedTo": {
+    "placeholders": { "folder": { "type": "String" } }
+  },
+  "abandonScanTitle": "Abandon scan?",
+  "abandonScanMessage": "Are you sure you want to abandon this scan? This action cannot be undone.",
+  "abandon": "Abandon",
+  "scanSuccessMessage": "Done, it's in the box!",
+  "savePromptMessage": "Shall we save it?",
+  "searchFolder": "Search folder...",
+  "newFolder": "New",
+  "folderCreationFailed": "Folder creation failed",
+  "myDocs": "My Docs",
+  "saveHere": "Save here",
+  "export": "Export",
+  "ocr": "OCR",
+  "finish": "Finish",
+  "move": "Move",
+  "decrypting": "Decrypting...",
+  "loading": "Loading...",
+  "unableToLoadImage": "Unable to load image",
+  "noTextDetected": "No text detected in document",
+  "noTextToShare": "No text to share",
+  "shareError": "Share error",
+  "folderCreationError": "Error creating folder",
+  "favoriteUpdateFailed": "Failed to update favorites",
+  "documentExported": "Document exported",
+  "documentsExported": "{count} documents exported",
+  "@documentsExported": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "title": "Title",
+  "pages": "Pages",
+  "format": "Format",
+  "justNow": "Just now",
+  "minutesAgo": "{minutes} min ago",
+  "@minutesAgo": {
+    "placeholders": { "minutes": { "type": "int" } }
+  },
+  "hoursAgo": "{hours}h ago",
+  "@hoursAgo": {
+    "placeholders": { "hours": { "type": "int" } }
+  },
+  "daysAgo": "{days} days ago",
+  "@daysAgo": {
+    "placeholders": { "days": { "type": "int" } }
+  },
+  "lastUpdated": "Last updated",
+  "folderSelected": "{count, plural, =1{1 folder selected} other{{count} folders selected}}",
+  "@folderSelected": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "documentSelected": "{count, plural, =1{1 document selected} other{{count} documents selected}}",
+  "@documentSelected": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "currentFolder": "Current folder",
+  "noResultsFor": "No results for \"{query}\"",
+  "@noResultsFor": {
+    "placeholders": { "query": { "type": "String" } }
+  },
+  "noFavorites": "No favorites",
+  "copy": "Copy",
+  "selectAll": "Select all",
+  "selectionModeActive": "Selection mode active",
+  "longPressToSelect": "Long press to select",
+  "selectTextEasily": "Select text easily",
+  "selection": "Selection",
+  "wordSelected": "{count, plural, =1{1 word selected} other{{count} words selected}}",
+  "@wordSelected": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "renameDocument": "Rename document",
+  "newTitle": "New title...",
+  "saveUnder": "Save under...",
+  "moveDocuments": "Move {count} documents",
+  "@moveDocuments": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "chooseDestinationFolder": "Choose a destination folder",
+  "rootFolder": "Root (no folder)",
+  "createNewFolder": "Create new folder",
+  "singleDocumentCompressed": "Single compressed document",
+  "originalQualityPng": "Original quality (PNG)",
+  "pleaseWait": "Please wait...",
+  "somethingWentWrong": "Oops! Something went wrong",
+  "editFolder": "Edit folder",
+  "folderName": "Folder name...",
+  "create": "Create",
+  "nameCannotBeEmpty": "Name cannot be empty",
+  "createFolderToOrganize": "Create a folder to organize your documents",
+  "createFolder": "Create folder",
+  "appIsLocked": "Scanai is locked",
+  "authenticateToAccess": "Authenticate to access your secured documents.",
+  "unlock": "Unlock",
+  "preparingImage": "Preparing image...",
+  "celebrationMessage1": "Easy!",
+  "celebrationMessage2": "Again?!",
+  "celebrationMessage3": "Need me again?",
+  "celebrationMessage4": "One more done!",
+  "celebrationMessage5": "Work done!",
+  "celebrationMessage6": "Next!",
+  "shareAppText": "I use Scanai to secure and organize my important documents. It's fast, secure and smooth!",
+  "shareAppSubject": "Scanai: Your secure pocket scanner",
+  "secureYourDocuments": "Secure your documents",
+  "savedLocally": "Everything saved locally",
+  "documentsSecured": "{count} documents secured",
+  "@documentsSecured": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "preferences": "Preferences",
+  "interface": "Interface",
+  "textRecognition": "Text recognition"
 }

@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/bento_background.dart';
 import '../../../core/widgets/bento_card.dart';
+import '../../../l10n/app_localizations.dart';
 import '../domain/app_lock_service.dart';
 import '../../../core/widgets/bento_mascot.dart';
 
@@ -206,6 +207,7 @@ class _LockScreenState extends ConsumerState<LockScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(lockScreenProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -253,7 +255,7 @@ class _LockScreenState extends ConsumerState<LockScreen> {
                           ),
                           const SizedBox(height: 24),
                           Text(
-                            'Scanaï est verrouillé',
+                            l10n?.appIsLocked ?? 'Scanai is locked',
                             textAlign: TextAlign.center,
                             style: GoogleFonts.outfit(
                               fontSize: 22,
@@ -263,7 +265,7 @@ class _LockScreenState extends ConsumerState<LockScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Authentifiez-vous pour accéder à vos documents sécurisés.',
+                            l10n?.authenticateToAccess ?? 'Authenticate to access your secured documents.',
                             textAlign: TextAlign.center,
                             style: GoogleFonts.outfit(
                               fontSize: 14,
@@ -383,7 +385,7 @@ class _UnlockButtonState extends State<_UnlockButton> with SingleTickerProviderS
               const Icon(Icons.fingerprint_rounded, color: Colors.white, size: 20),
               const SizedBox(width: 8),
               Text(
-                'Déverrouiller',
+                AppLocalizations.of(context)?.unlock ?? 'Unlock',
                 style: GoogleFonts.outfit(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,

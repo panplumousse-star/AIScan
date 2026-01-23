@@ -98,599 +98,1091 @@ abstract class AppLocalizations {
     Locale('fr')
   ];
 
-  /// The application title
+  /// No description provided for @appTitle.
   ///
   /// In fr, this message translates to:
   /// **'Scanai'**
   String get appTitle;
 
-  /// Settings screen title
+  /// No description provided for @settings.
   ///
   /// In fr, this message translates to:
   /// **'Reglages'**
   String get settings;
 
-  /// Appearance section title
+  /// No description provided for @appearance.
   ///
   /// In fr, this message translates to:
   /// **'Apparence'**
   String get appearance;
 
-  /// Light theme option
+  /// No description provided for @themeLight.
   ///
   /// In fr, this message translates to:
   /// **'Clair'**
   String get themeLight;
 
-  /// Dark theme option
+  /// No description provided for @themeDark.
   ///
   /// In fr, this message translates to:
   /// **'Sombre'**
   String get themeDark;
 
-  /// Auto/System theme option
+  /// No description provided for @themeAuto.
   ///
   /// In fr, this message translates to:
   /// **'Auto'**
   String get themeAuto;
 
-  /// Security/Lock section title
+  /// No description provided for @security.
   ///
   /// In fr, this message translates to:
   /// **'Verrouillage'**
   String get security;
 
-  /// Enabled state label
+  /// No description provided for @enabled.
   ///
   /// In fr, this message translates to:
   /// **'Active'**
   String get enabled;
 
-  /// Disabled state label
+  /// No description provided for @disabled.
   ///
   /// In fr, this message translates to:
   /// **'Desactive'**
   String get disabled;
 
-  /// Enable lock dialog title
+  /// No description provided for @enableLockTitle.
   ///
   /// In fr, this message translates to:
   /// **'Activer le verrouillage ?'**
   String get enableLockTitle;
 
-  /// Enable lock dialog message
+  /// No description provided for @enableLockMessage.
   ///
   /// In fr, this message translates to:
   /// **'Souhaitez-vous securiser l\'acces a vos documents avec votre empreinte digitale ?'**
   String get enableLockMessage;
 
-  /// Cancel button label
+  /// No description provided for @cancel.
   ///
   /// In fr, this message translates to:
   /// **'Annuler'**
   String get cancel;
 
-  /// Enable button label
+  /// No description provided for @enable.
   ///
   /// In fr, this message translates to:
   /// **'Activer'**
   String get enable;
 
-  /// Immediate lock timeout
+  /// No description provided for @lockTimeoutImmediate.
   ///
   /// In fr, this message translates to:
   /// **'Immediat'**
   String get lockTimeoutImmediate;
 
-  /// 1 minute lock timeout
+  /// No description provided for @lockTimeout1Min.
   ///
   /// In fr, this message translates to:
   /// **'1 min'**
   String get lockTimeout1Min;
 
-  /// 5 minutes lock timeout
+  /// No description provided for @lockTimeout5Min.
   ///
   /// In fr, this message translates to:
   /// **'5 min'**
   String get lockTimeout5Min;
 
-  /// 30 minutes lock timeout
+  /// No description provided for @lockTimeout30Min.
   ///
   /// In fr, this message translates to:
   /// **'30 min'**
   String get lockTimeout30Min;
 
-  /// About section title
+  /// No description provided for @about.
   ///
   /// In fr, this message translates to:
   /// **'A propos'**
   String get about;
 
-  /// Developed with love text
+  /// No description provided for @developedWith.
   ///
   /// In fr, this message translates to:
   /// **'Developpee avec le'**
   String get developedWith;
 
-  /// Security details hint
+  /// No description provided for @securityDetails.
   ///
   /// In fr, this message translates to:
   /// **'Details securite'**
   String get securityDetails;
 
-  /// Security info title
+  /// No description provided for @securityTitle.
   ///
   /// In fr, this message translates to:
   /// **'Securite'**
   String get securityTitle;
 
-  /// AES-256 encryption label
+  /// No description provided for @aes256.
   ///
   /// In fr, this message translates to:
   /// **'AES-256'**
   String get aes256;
 
-  /// Local encryption description
+  /// No description provided for @localEncryption.
   ///
   /// In fr, this message translates to:
   /// **'Chiffrement local'**
   String get localEncryption;
 
-  /// Zero-Knowledge label
+  /// No description provided for @zeroKnowledge.
   ///
   /// In fr, this message translates to:
   /// **'Zero-Knowledge'**
   String get zeroKnowledge;
 
-  /// Exclusive access description
+  /// No description provided for @exclusiveAccess.
   ///
   /// In fr, this message translates to:
   /// **'Acces exclusif'**
   String get exclusiveAccess;
 
-  /// Offline label
+  /// No description provided for @offline.
   ///
   /// In fr, this message translates to:
   /// **'Hors-ligne'**
   String get offline;
 
-  /// 100% secured description
+  /// No description provided for @securedPercent.
   ///
   /// In fr, this message translates to:
   /// **'100% securise'**
   String get securedPercent;
 
-  /// Settings mascot speech bubble line 1
+  /// No description provided for @settingsSpeechBubbleLine1.
   ///
   /// In fr, this message translates to:
   /// **'On peaufine'**
   String get settingsSpeechBubbleLine1;
 
-  /// Settings mascot speech bubble line 2
+  /// No description provided for @settingsSpeechBubbleLine2.
   ///
   /// In fr, this message translates to:
   /// **'notre application'**
   String get settingsSpeechBubbleLine2;
 
-  /// Dismiss/close button label
+  /// No description provided for @dismiss.
   ///
   /// In fr, this message translates to:
   /// **'Fermer'**
   String get dismiss;
 
-  /// My documents label
+  /// No description provided for @myDocuments.
   ///
   /// In fr, this message translates to:
   /// **'Mes documents'**
   String get myDocuments;
 
-  /// Scan action label
+  /// No description provided for @scan.
   ///
   /// In fr, this message translates to:
   /// **'Scanner'**
   String get scan;
 
-  /// Share action label
+  /// No description provided for @share.
   ///
   /// In fr, this message translates to:
   /// **'Partager'**
   String get share;
 
-  /// Delete action label
+  /// No description provided for @delete.
   ///
   /// In fr, this message translates to:
   /// **'Supprimer'**
   String get delete;
 
-  /// Rename action label
+  /// No description provided for @rename.
   ///
   /// In fr, this message translates to:
   /// **'Renommer'**
   String get rename;
 
-  /// No documents message
+  /// No description provided for @noDocuments.
   ///
   /// In fr, this message translates to:
   /// **'Aucun document'**
   String get noDocuments;
 
-  /// Prompt to scan first document
+  /// No description provided for @scanYourFirstDocument.
   ///
   /// In fr, this message translates to:
   /// **'Scannez votre premier document'**
   String get scanYourFirstDocument;
 
-  /// Document count with plural forms
+  /// No description provided for @documentCount.
   ///
   /// In fr, this message translates to:
   /// **'{count, plural, =0{Aucun document} =1{1 document} other{{count} documents}}'**
   String documentCount(int count);
 
-  /// Page count with plural forms
+  /// No description provided for @pageCount.
   ///
   /// In fr, this message translates to:
   /// **'{count, plural, =1{1 page} other{{count} pages}}'**
   String pageCount(int count);
 
-  /// Morning greeting
+  /// No description provided for @greetingMorning.
   ///
   /// In fr, this message translates to:
   /// **'Bonjour'**
   String get greetingMorning;
 
-  /// Afternoon greeting
+  /// No description provided for @greetingAfternoon.
   ///
   /// In fr, this message translates to:
   /// **'Bon apres-midi'**
   String get greetingAfternoon;
 
-  /// Evening greeting
+  /// No description provided for @greetingEvening.
   ///
   /// In fr, this message translates to:
   /// **'Bonsoir'**
   String get greetingEvening;
 
-  /// Random motivational message 1
+  /// No description provided for @randomMessage1.
   ///
   /// In fr, this message translates to:
-  /// **'Pret a numeriser ?'**
+  /// **'Besoin d\'un PDF ?'**
   String get randomMessage1;
 
-  /// Random motivational message 2
+  /// No description provided for @randomMessage2.
   ///
   /// In fr, this message translates to:
-  /// **'Vos documents en securite'**
+  /// **'Let\'s Go ?'**
   String get randomMessage2;
 
-  /// Random motivational message 3
+  /// No description provided for @randomMessage3.
   ///
   /// In fr, this message translates to:
-  /// **'Scanner, c\'est preserver'**
+  /// **'J\'attends tes ordres !'**
   String get randomMessage3;
 
-  /// Random motivational message 4
+  /// No description provided for @randomMessage4.
   ///
   /// In fr, this message translates to:
-  /// **'Tout est sous controle'**
+  /// **'Allons-y !'**
   String get randomMessage4;
 
-  /// Random motivational message 5
-  ///
-  /// In fr, this message translates to:
-  /// **'La simplicite avant tout'**
-  String get randomMessage5;
-
-  /// OCR results screen title
+  /// No description provided for @ocrResults.
   ///
   /// In fr, this message translates to:
   /// **'Resultats OCR'**
   String get ocrResults;
 
-  /// Text tab label
+  /// No description provided for @text.
   ///
   /// In fr, this message translates to:
   /// **'Texte'**
   String get text;
 
-  /// Metadata tab label
+  /// No description provided for @metadata.
   ///
   /// In fr, this message translates to:
   /// **'Metadonnees'**
   String get metadata;
 
-  /// Copy text action
+  /// No description provided for @copyText.
   ///
   /// In fr, this message translates to:
-  /// **'Copier le texte'**
+  /// **'Copier'**
   String get copyText;
 
-  /// Text copied confirmation
+  /// No description provided for @textCopied.
   ///
   /// In fr, this message translates to:
   /// **'Texte copie'**
   String get textCopied;
 
-  /// No text extracted message
+  /// No description provided for @noTextExtracted.
   ///
   /// In fr, this message translates to:
   /// **'Aucun texte extrait'**
   String get noTextExtracted;
 
-  /// Language label
+  /// No description provided for @language.
   ///
   /// In fr, this message translates to:
   /// **'Langue'**
   String get language;
 
-  /// Processing time label
+  /// No description provided for @processingTime.
   ///
   /// In fr, this message translates to:
   /// **'Temps de traitement'**
   String get processingTime;
 
-  /// Word count label
+  /// No description provided for @wordCount.
   ///
   /// In fr, this message translates to:
   /// **'Nombre de mots'**
   String get wordCount;
 
-  /// Line count label
+  /// No description provided for @lineCount.
   ///
   /// In fr, this message translates to:
   /// **'Nombre de lignes'**
   String get lineCount;
 
-  /// Confidence score label
+  /// No description provided for @confidence.
   ///
   /// In fr, this message translates to:
   /// **'Confiance'**
   String get confidence;
 
-  /// Share as dialog title
+  /// No description provided for @shareAs.
   ///
   /// In fr, this message translates to:
-  /// **'Partager comme'**
+  /// **'Partager au format'**
   String get shareAs;
 
-  /// PDF format label
+  /// No description provided for @pdf.
   ///
   /// In fr, this message translates to:
   /// **'PDF'**
   String get pdf;
 
-  /// Images format label
+  /// No description provided for @images.
   ///
   /// In fr, this message translates to:
   /// **'Images'**
   String get images;
 
-  /// OCR text format label
+  /// No description provided for @ocrText.
   ///
   /// In fr, this message translates to:
   /// **'Texte OCR'**
   String get ocrText;
 
-  /// App language setting title
+  /// No description provided for @appLanguage.
   ///
   /// In fr, this message translates to:
   /// **'Langue de l\'application'**
   String get appLanguage;
 
-  /// OCR language setting title
+  /// No description provided for @ocrLanguage.
   ///
   /// In fr, this message translates to:
   /// **'Langue OCR'**
   String get ocrLanguage;
 
-  /// System language option
+  /// No description provided for @systemLanguage.
   ///
   /// In fr, this message translates to:
   /// **'Systeme'**
   String get systemLanguage;
 
-  /// French language name
+  /// No description provided for @french.
   ///
   /// In fr, this message translates to:
   /// **'Francais'**
   String get french;
 
-  /// English language name
+  /// No description provided for @english.
   ///
   /// In fr, this message translates to:
   /// **'English'**
   String get english;
 
-  /// Automatic OCR language detection
+  /// No description provided for @ocrLanguageAuto.
   ///
   /// In fr, this message translates to:
   /// **'Automatique'**
   String get ocrLanguageAuto;
 
-  /// Latin script OCR option
+  /// No description provided for @ocrLanguageLatin.
   ///
   /// In fr, this message translates to:
   /// **'Latin (FR, EN, ES...)'**
   String get ocrLanguageLatin;
 
-  /// Chinese script OCR option
+  /// No description provided for @ocrLanguageChinese.
   ///
   /// In fr, this message translates to:
   /// **'Chinois'**
   String get ocrLanguageChinese;
 
-  /// Japanese script OCR option
+  /// No description provided for @ocrLanguageJapanese.
   ///
   /// In fr, this message translates to:
   /// **'Japonais'**
   String get ocrLanguageJapanese;
 
-  /// Korean script OCR option
+  /// No description provided for @ocrLanguageKorean.
   ///
   /// In fr, this message translates to:
   /// **'Coreen'**
   String get ocrLanguageKorean;
 
-  /// Devanagari script OCR option
+  /// No description provided for @ocrLanguageDevanagari.
   ///
   /// In fr, this message translates to:
   /// **'Devanagari'**
   String get ocrLanguageDevanagari;
 
-  /// Scan document action
+  /// No description provided for @scanDocument.
   ///
   /// In fr, this message translates to:
-  /// **'Scanner un document'**
+  /// **'Scanner un\ndocument'**
   String get scanDocument;
 
-  /// Camera option
+  /// No description provided for @camera.
   ///
   /// In fr, this message translates to:
   /// **'Camera'**
   String get camera;
 
-  /// Gallery option
+  /// No description provided for @gallery.
   ///
   /// In fr, this message translates to:
   /// **'Galerie'**
   String get gallery;
 
-  /// Recent scans label
+  /// No description provided for @recentScans.
   ///
   /// In fr, this message translates to:
   /// **'Scans recents'**
   String get recentScans;
 
-  /// All documents label
+  /// No description provided for @allDocuments.
   ///
   /// In fr, this message translates to:
-  /// **'Tous les documents'**
+  /// **'Voir mes fichiers'**
   String get allDocuments;
 
-  /// Search documents placeholder
+  /// No description provided for @searchDocuments.
   ///
   /// In fr, this message translates to:
   /// **'Rechercher des documents'**
   String get searchDocuments;
 
-  /// Sort by date option
+  /// No description provided for @sortByDate.
   ///
   /// In fr, this message translates to:
   /// **'Trier par date'**
   String get sortByDate;
 
-  /// Sort by name option
+  /// No description provided for @sortByName.
   ///
   /// In fr, this message translates to:
   /// **'Trier par nom'**
   String get sortByName;
 
-  /// Delete confirmation dialog title
+  /// No description provided for @deleteConfirmTitle.
   ///
   /// In fr, this message translates to:
   /// **'Supprimer le document ?'**
   String get deleteConfirmTitle;
 
-  /// Delete confirmation dialog message
+  /// No description provided for @deleteConfirmMessage.
   ///
   /// In fr, this message translates to:
   /// **'Cette action est irreversible. Le document sera definitivement supprime.'**
   String get deleteConfirmMessage;
 
-  /// Generic error message
+  /// No description provided for @errorOccurred.
   ///
   /// In fr, this message translates to:
   /// **'Une erreur est survenue'**
   String get errorOccurred;
 
-  /// Retry action label
+  /// No description provided for @retry.
   ///
   /// In fr, this message translates to:
   /// **'Reessayer'**
   String get retry;
 
-  /// OK button label
+  /// No description provided for @ok.
   ///
   /// In fr, this message translates to:
   /// **'OK'**
   String get ok;
 
-  /// Yes button label
+  /// No description provided for @yes.
   ///
   /// In fr, this message translates to:
   /// **'Oui'**
   String get yes;
 
-  /// No button label
+  /// No description provided for @no.
   ///
   /// In fr, this message translates to:
   /// **'Non'**
   String get no;
 
-  /// Save action label
+  /// No description provided for @save.
   ///
   /// In fr, this message translates to:
   /// **'Enregistrer'**
   String get save;
 
-  /// Close action label
+  /// No description provided for @close.
   ///
   /// In fr, this message translates to:
   /// **'Fermer'**
   String get close;
 
-  /// Extract text OCR action
+  /// No description provided for @extractText.
   ///
   /// In fr, this message translates to:
   /// **'Extraire le texte'**
   String get extractText;
 
-  /// Extracting text loading message
+  /// No description provided for @extractingText.
   ///
   /// In fr, this message translates to:
   /// **'Extraction du texte...'**
   String get extractingText;
 
-  /// Document name field label
+  /// No description provided for @documentName.
   ///
   /// In fr, this message translates to:
   /// **'Nom du document'**
   String get documentName;
 
-  /// Document name field placeholder
+  /// No description provided for @enterDocumentName.
   ///
   /// In fr, this message translates to:
   /// **'Entrez le nom du document'**
   String get enterDocumentName;
 
-  /// Created at label
+  /// No description provided for @createdAt.
   ///
   /// In fr, this message translates to:
   /// **'Cree le'**
   String get createdAt;
 
-  /// Modified at label
+  /// No description provided for @modifiedAt.
   ///
   /// In fr, this message translates to:
   /// **'Modifie le'**
   String get modifiedAt;
 
-  /// File size label
+  /// No description provided for @size.
   ///
   /// In fr, this message translates to:
   /// **'Taille'**
   String get size;
 
-  /// Select language dialog title
+  /// No description provided for @selectLanguage.
   ///
   /// In fr, this message translates to:
   /// **'Selectionner la langue'**
   String get selectLanguage;
 
-  /// Language settings section title
+  /// No description provided for @languageSettings.
   ///
   /// In fr, this message translates to:
   /// **'Parametres de langue'**
   String get languageSettings;
+
+  /// No description provided for @openingScanner.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ouverture du scanner...'**
+  String get openingScanner;
+
+  /// No description provided for @savingDocument.
+  ///
+  /// In fr, this message translates to:
+  /// **'Enregistrement du document...'**
+  String get savingDocument;
+
+  /// No description provided for @launchingScanner.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lancement du scanner...'**
+  String get launchingScanner;
+
+  /// No description provided for @documentExportedTo.
+  ///
+  /// In fr, this message translates to:
+  /// **'Document exporte vers {folder}'**
+  String documentExportedTo(String folder);
+
+  /// No description provided for @abandonScanTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Abandonner le scan ?'**
+  String get abandonScanTitle;
+
+  /// No description provided for @abandonScanMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Etes-vous sur de vouloir abandonner ce scan ? Cette action est irreversible.'**
+  String get abandonScanMessage;
+
+  /// No description provided for @abandon.
+  ///
+  /// In fr, this message translates to:
+  /// **'Abandonner'**
+  String get abandon;
+
+  /// No description provided for @scanSuccessMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Hop, c\'est dans la boite !'**
+  String get scanSuccessMessage;
+
+  /// No description provided for @savePromptMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'On l\'enregistre ?'**
+  String get savePromptMessage;
+
+  /// No description provided for @searchFolder.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rechercher un dossier...'**
+  String get searchFolder;
+
+  /// No description provided for @newFolder.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouveau'**
+  String get newFolder;
+
+  /// No description provided for @folderCreationFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Echec creation dossier'**
+  String get folderCreationFailed;
+
+  /// No description provided for @myDocs.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mes Docs'**
+  String get myDocs;
+
+  /// No description provided for @saveHere.
+  ///
+  /// In fr, this message translates to:
+  /// **'Enregistrer ici'**
+  String get saveHere;
+
+  /// No description provided for @export.
+  ///
+  /// In fr, this message translates to:
+  /// **'Exporter'**
+  String get export;
+
+  /// No description provided for @ocr.
+  ///
+  /// In fr, this message translates to:
+  /// **'OCR'**
+  String get ocr;
+
+  /// No description provided for @finish.
+  ///
+  /// In fr, this message translates to:
+  /// **'Terminer'**
+  String get finish;
+
+  /// No description provided for @move.
+  ///
+  /// In fr, this message translates to:
+  /// **'Deplacer'**
+  String get move;
+
+  /// No description provided for @decrypting.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dechiffrement...'**
+  String get decrypting;
+
+  /// No description provided for @loading.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chargement...'**
+  String get loading;
+
+  /// No description provided for @unableToLoadImage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de charger l\'image'**
+  String get unableToLoadImage;
+
+  /// No description provided for @noTextDetected.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun texte detecte dans le document'**
+  String get noTextDetected;
+
+  /// No description provided for @noTextToShare.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun texte a partager'**
+  String get noTextToShare;
+
+  /// No description provided for @shareError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Erreur de partage'**
+  String get shareError;
+
+  /// No description provided for @folderCreationError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Erreur lors de la creation du dossier'**
+  String get folderCreationError;
+
+  /// No description provided for @favoriteUpdateFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Echec de la mise a jour des favoris'**
+  String get favoriteUpdateFailed;
+
+  /// No description provided for @documentExported.
+  ///
+  /// In fr, this message translates to:
+  /// **'Document exporte'**
+  String get documentExported;
+
+  /// No description provided for @documentsExported.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count} documents exportes'**
+  String documentsExported(int count);
+
+  /// No description provided for @title.
+  ///
+  /// In fr, this message translates to:
+  /// **'Titre'**
+  String get title;
+
+  /// No description provided for @pages.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pages'**
+  String get pages;
+
+  /// No description provided for @format.
+  ///
+  /// In fr, this message translates to:
+  /// **'Format'**
+  String get format;
+
+  /// No description provided for @justNow.
+  ///
+  /// In fr, this message translates to:
+  /// **'A l\'instant'**
+  String get justNow;
+
+  /// No description provided for @minutesAgo.
+  ///
+  /// In fr, this message translates to:
+  /// **'Il y a {minutes} min'**
+  String minutesAgo(int minutes);
+
+  /// No description provided for @hoursAgo.
+  ///
+  /// In fr, this message translates to:
+  /// **'Il y a {hours}h'**
+  String hoursAgo(int hours);
+
+  /// No description provided for @daysAgo.
+  ///
+  /// In fr, this message translates to:
+  /// **'Il y a {days} jours'**
+  String daysAgo(int days);
+
+  /// No description provided for @lastUpdated.
+  ///
+  /// In fr, this message translates to:
+  /// **'Derniere mise a jour'**
+  String get lastUpdated;
+
+  /// No description provided for @folderSelected.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 dossier selectionne} other{{count} dossiers selectionnes}}'**
+  String folderSelected(int count);
+
+  /// No description provided for @documentSelected.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 document selectionne} other{{count} documents selectionnes}}'**
+  String documentSelected(int count);
+
+  /// No description provided for @currentFolder.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dossier actuel'**
+  String get currentFolder;
+
+  /// No description provided for @noResultsFor.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun resultat pour \"{query}\"'**
+  String noResultsFor(String query);
+
+  /// No description provided for @noFavorites.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun favori'**
+  String get noFavorites;
+
+  /// No description provided for @copy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Copier'**
+  String get copy;
+
+  /// No description provided for @selectAll.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout selectionner'**
+  String get selectAll;
+
+  /// No description provided for @selectionModeActive.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mode selection actif'**
+  String get selectionModeActive;
+
+  /// No description provided for @longPressToSelect.
+  ///
+  /// In fr, this message translates to:
+  /// **'Appui long pour selectionner'**
+  String get longPressToSelect;
+
+  /// No description provided for @selectTextEasily.
+  ///
+  /// In fr, this message translates to:
+  /// **'Selectionnez le texte facilement'**
+  String get selectTextEasily;
+
+  /// No description provided for @selection.
+  ///
+  /// In fr, this message translates to:
+  /// **'Selection'**
+  String get selection;
+
+  /// No description provided for @wordSelected.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 mot selectionne} other{{count} mots selectionnes}}'**
+  String wordSelected(int count);
+
+  /// No description provided for @renameDocument.
+  ///
+  /// In fr, this message translates to:
+  /// **'Renommer le document'**
+  String get renameDocument;
+
+  /// No description provided for @newTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouveau titre...'**
+  String get newTitle;
+
+  /// No description provided for @saveUnder.
+  ///
+  /// In fr, this message translates to:
+  /// **'Enregistrer sous...'**
+  String get saveUnder;
+
+  /// No description provided for @moveDocuments.
+  ///
+  /// In fr, this message translates to:
+  /// **'Deplacer {count} documents'**
+  String moveDocuments(int count);
+
+  /// No description provided for @chooseDestinationFolder.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisis un dossier de destination'**
+  String get chooseDestinationFolder;
+
+  /// No description provided for @rootFolder.
+  ///
+  /// In fr, this message translates to:
+  /// **'Racine (sans dossier)'**
+  String get rootFolder;
+
+  /// No description provided for @createNewFolder.
+  ///
+  /// In fr, this message translates to:
+  /// **'Creer un nouveau dossier'**
+  String get createNewFolder;
+
+  /// No description provided for @singleDocumentCompressed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Document unique compresse'**
+  String get singleDocumentCompressed;
+
+  /// No description provided for @originalQualityPng.
+  ///
+  /// In fr, this message translates to:
+  /// **'Qualite originale (PNG)'**
+  String get originalQualityPng;
+
+  /// No description provided for @pleaseWait.
+  ///
+  /// In fr, this message translates to:
+  /// **'Un instant s\'il vous plait...'**
+  String get pleaseWait;
+
+  /// No description provided for @somethingWentWrong.
+  ///
+  /// In fr, this message translates to:
+  /// **'Oups ! Quelque chose a mal tourne'**
+  String get somethingWentWrong;
+
+  /// No description provided for @editFolder.
+  ///
+  /// In fr, this message translates to:
+  /// **'Modifier le dossier'**
+  String get editFolder;
+
+  /// No description provided for @folderName.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nom du dossier...'**
+  String get folderName;
+
+  /// No description provided for @create.
+  ///
+  /// In fr, this message translates to:
+  /// **'Creer'**
+  String get create;
+
+  /// No description provided for @nameCannotBeEmpty.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le nom ne peut pas etre vide'**
+  String get nameCannotBeEmpty;
+
+  /// No description provided for @createFolderToOrganize.
+  ///
+  /// In fr, this message translates to:
+  /// **'Creez un dossier pour organiser vos documents'**
+  String get createFolderToOrganize;
+
+  /// No description provided for @createFolder.
+  ///
+  /// In fr, this message translates to:
+  /// **'Creer un dossier'**
+  String get createFolder;
+
+  /// No description provided for @appIsLocked.
+  ///
+  /// In fr, this message translates to:
+  /// **'Scanai est verrouille'**
+  String get appIsLocked;
+
+  /// No description provided for @authenticateToAccess.
+  ///
+  /// In fr, this message translates to:
+  /// **'Authentifiez-vous pour acceder a vos documents securises.'**
+  String get authenticateToAccess;
+
+  /// No description provided for @unlock.
+  ///
+  /// In fr, this message translates to:
+  /// **'Deverrouiller'**
+  String get unlock;
+
+  /// No description provided for @preparingImage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Preparation de l\'image...'**
+  String get preparingImage;
+
+  /// No description provided for @celebrationMessage1.
+  ///
+  /// In fr, this message translates to:
+  /// **'Easy !'**
+  String get celebrationMessage1;
+
+  /// No description provided for @celebrationMessage2.
+  ///
+  /// In fr, this message translates to:
+  /// **'On r\'commence ?!'**
+  String get celebrationMessage2;
+
+  /// No description provided for @celebrationMessage3.
+  ///
+  /// In fr, this message translates to:
+  /// **'Encore besoin de moi ?'**
+  String get celebrationMessage3;
+
+  /// No description provided for @celebrationMessage4.
+  ///
+  /// In fr, this message translates to:
+  /// **'Et hop, un de plus !'**
+  String get celebrationMessage4;
+
+  /// No description provided for @celebrationMessage5.
+  ///
+  /// In fr, this message translates to:
+  /// **'Travail termine !'**
+  String get celebrationMessage5;
+
+  /// No description provided for @celebrationMessage6.
+  ///
+  /// In fr, this message translates to:
+  /// **'Au suivant!'**
+  String get celebrationMessage6;
+
+  /// No description provided for @shareAppText.
+  ///
+  /// In fr, this message translates to:
+  /// **'J\'utilise Scanai pour securiser et classer mes documents importants. C\'est rapide, securise et ultra-fluide !'**
+  String get shareAppText;
+
+  /// No description provided for @shareAppSubject.
+  ///
+  /// In fr, this message translates to:
+  /// **'Scanai : Ton scanner de poche securise'**
+  String get shareAppSubject;
+
+  /// No description provided for @secureYourDocuments.
+  ///
+  /// In fr, this message translates to:
+  /// **'Securisez vos documents'**
+  String get secureYourDocuments;
+
+  /// No description provided for @savedLocally.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout est sauvegarde localement'**
+  String get savedLocally;
+
+  /// No description provided for @documentsSecured.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count} documents securises'**
+  String documentsSecured(int count);
+
+  /// No description provided for @preferences.
+  ///
+  /// In fr, this message translates to:
+  /// **'Preferences'**
+  String get preferences;
+
+  /// No description provided for @interface.
+  ///
+  /// In fr, this message translates to:
+  /// **'Interface'**
+  String get interface;
+
+  /// No description provided for @textRecognition.
+  ///
+  /// In fr, this message translates to:
+  /// **'Reconnaissance texte'**
+  String get textRecognition;
 }
 
 class _AppLocalizationsDelegate

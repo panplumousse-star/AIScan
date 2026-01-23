@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../features/sharing/domain/document_share_service.dart';
+import '../../l10n/app_localizations.dart';
 import 'bento_card.dart';
 import 'bento_speech_bubble.dart';
 
@@ -50,6 +51,7 @@ class BentoShareFormatDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
@@ -86,7 +88,7 @@ class BentoShareFormatDialog extends StatelessWidget {
                             tailDirection: BubbleTailDirection.downLeft,
                             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                             child: Text(
-                              'J\'envoie !',
+                              l10n?.share ?? 'Share',
                               style: GoogleFonts.outfit(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
@@ -101,7 +103,7 @@ class BentoShareFormatDialog extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Partager au format',
+                    l10n?.shareAs ?? 'Share as',
                     style: GoogleFonts.outfit(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
@@ -111,8 +113,8 @@ class BentoShareFormatDialog extends StatelessWidget {
                   const SizedBox(height: 16),
                   _ShareOptionTile(
                     icon: Icons.picture_as_pdf_rounded,
-                    title: 'PDF',
-                    subtitle: 'Document unique compressé',
+                    title: l10n?.pdf ?? 'PDF',
+                    subtitle: l10n?.singleDocumentCompressed ?? 'Single compressed document',
                     color: Colors.redAccent,
                     onTap: () => Navigator.pop(context, ShareFormat.pdf),
                     theme: theme,
@@ -120,8 +122,8 @@ class BentoShareFormatDialog extends StatelessWidget {
                   const SizedBox(height: 12),
                   _ShareOptionTile(
                     icon: Icons.image_rounded,
-                    title: 'Images',
-                    subtitle: 'Qualité originale (PNG)',
+                    title: l10n?.images ?? 'Images',
+                    subtitle: l10n?.originalQualityPng ?? 'Original quality (PNG)',
                     color: const Color(0xFF4F46E5),
                     onTap: () => Navigator.pop(context, ShareFormat.images),
                     theme: theme,
@@ -130,10 +132,10 @@ class BentoShareFormatDialog extends StatelessWidget {
                   // OCR Text option (always visible)
                   _ShareOptionTile(
                     icon: Icons.text_snippet_rounded,
-                    title: 'Texte (OCR)',
+                    title: l10n?.ocrText ?? 'OCR Text',
                     subtitle: (ocrText != null && ocrText!.isNotEmpty)
-                        ? 'Contenu textuel extrait'
-                        : 'Extraction automatique',
+                        ? (l10n?.textCopied ?? 'Text extracted')
+                        : (l10n?.extractText ?? 'Auto extraction'),
                     color: const Color(0xFF10B981),
                     onTap: () => Navigator.pop(context, ShareFormat.text),
                     theme: theme,
@@ -142,7 +144,7 @@ class BentoShareFormatDialog extends StatelessWidget {
                   TextButton(
                     onPressed: () => Navigator.pop(context),
                     child: Text(
-                      'Annuler',
+                      l10n?.cancel ?? 'Cancel',
                       style: GoogleFonts.outfit(
                         color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                       ),

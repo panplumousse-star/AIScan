@@ -30,31 +30,17 @@ final totalDocumentCountProvider = FutureProvider.autoDispose<int>((ref) async {
   return documents.length;
 });
 
-/// Provider for a random greeting subtitle to avoid monotony.
-final greetingSubtitleProvider = Provider.autoDispose<String>((ref) {
-  final messages = [
-    "Besoin d'un PDF ?",
-    "Let's Go ?",
-    "J'attends tes ordres !",
-    "Allons-y !",
-  ];
-  return messages[Random().nextInt(messages.length)];
+/// Provider for a random greeting subtitle index.
+final greetingSubtitleIndexProvider = Provider.autoDispose<int>((ref) {
+  return Random().nextInt(4);
 });
 
 /// Provider to track if a scan has just been completed.
 final hasJustScannedProvider = StateProvider<bool>((ref) => false);
 
-/// Provider for celebratory messages after a scan.
-final celebrationMessageProvider = Provider.autoDispose<String>((ref) {
-  final messages = [
-    "Easy !",
-    "On r'commence ?!",
-    "Encore besoin de moi ?",
-    "Et hop, un de plus !",
-    "Travail terminé !",
-    "Au suivant!",
-  ];
-  return messages[Random().nextInt(messages.length)];
+/// Provider for celebratory messages index after a scan.
+final celebrationMessageIndexProvider = Provider.autoDispose<int>((ref) {
+  return Random().nextInt(6);
 });
 
 /// Provider for the number of documents secured in the current month.
@@ -260,9 +246,10 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
 
   void _handleAppShare(BuildContext context) {
     HapticFeedback.mediumImpact();
+    final l10n = AppLocalizations.of(context);
     Share.share(
-      'J\'utilise Scanai pour sécuriser et classer mes documents importants. C\'est rapide, sécurisé et ultra-fluide ! 🚀📂 #Scanai',
-      subject: 'Scanai : Ton scanner de poche sécurisé',
+      l10n?.shareAppText ?? 'I use Scanai to secure and organize my important documents.',
+      subject: l10n?.shareAppSubject ?? 'Scanai: Your secure pocket scanner',
     );
   }
 
@@ -444,8 +431,8 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                   children: [
                     Text(
                       monthlyScans > 0
-                          ? (l10n?.documentCount(monthlyScans) ?? '$monthlyScans documents')
-                          : (l10n?.scanYourFirstDocument ?? 'Securisez vos documents'),
+                          ? (l10n?.documentsSecured(monthlyScans) ?? '$monthlyScans documents secured')
+                          : (l10n?.secureYourDocuments ?? 'Secure your documents'),
                       style: GoogleFonts.outfit(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
@@ -453,7 +440,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                       ),
                     ),
                     Text(
-                      l10n?.offline ?? 'Tout est sauvegarde localement',
+                      l10n?.savedLocally ?? 'Everything saved locally',
                       style: GoogleFonts.outfit(
                         fontSize: 12,
                         color: isDark ? AppColors.neutralDark : AppColors.neutralLight,
@@ -493,9 +480,30 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
 
   Widget _buildGreetingCard() {
     final hasJustScanned = ref.watch(hasJustScannedProvider);
-    final greetingSubtitle = ref.watch(greetingSubtitleProvider);
-    final celebrationMessage = ref.watch(celebrationMessageProvider);
+    final greetingSubtitleIndex = ref.watch(greetingSubtitleIndexProvider);
+    final celebrationMessageIndex = ref.watch(celebrationMessageIndexProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
+
+    // Localized greeting subtitles
+    final greetingSubtitles = [
+      l10n?.randomMessage1 ?? "Besoin d'un PDF ?",
+      l10n?.randomMessage2 ?? "Let's Go ?",
+      l10n?.randomMessage3 ?? "J'attends tes ordres !",
+      l10n?.randomMessage4 ?? "Allons-y !",
+    ];
+    final greetingSubtitle = greetingSubtitles[greetingSubtitleIndex];
+
+    // Localized celebration messages
+    final celebrationMessages = [
+      l10n?.celebrationMessage1 ?? "Easy !",
+      l10n?.celebrationMessage2 ?? "On r'commence ?!",
+      l10n?.celebrationMessage3 ?? "Encore besoin de moi ?",
+      l10n?.celebrationMessage4 ?? "Et hop, un de plus !",
+      l10n?.celebrationMessage5 ?? "Travail termine !",
+      l10n?.celebrationMessage6 ?? "Au suivant!",
+    ];
+    final celebrationMessage = celebrationMessages[celebrationMessageIndex];
 
     return BentoAnimatedEntry(
       delay: const Duration(milliseconds: 0),

@@ -137,6 +137,8 @@ class _OcrTextPanelState extends State<OcrTextPanel> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: SelectionArea(
                 onSelectionChanged: _onSelectionChanged,
+                // Enable magnifier for precise selection
+                magnifierConfiguration: TextMagnifierConfiguration.enabled,
                 contextMenuBuilder: (context, selectableRegionState) {
                   // Custom context menu: Copy, Share, Select All
                   // (removes system "Read aloud" option)
@@ -171,13 +173,18 @@ class _OcrTextPanelState extends State<OcrTextPanel> {
                   );
                 },
                 child: SingleChildScrollView(
-                  child: Text(
-                    widget.ocrText,
-                    style: GoogleFonts.outfit(
-                      fontSize: 13,
-                      color: widget.theme.colorScheme.onSurface
-                          .withValues(alpha: 0.7),
-                      height: 1.5,
+                  // ClampingScrollPhysics reduces interference during selection
+                  physics: const ClampingScrollPhysics(),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Text(
+                      widget.ocrText,
+                      style: GoogleFonts.outfit(
+                        fontSize: 14, // Slightly larger for easier selection
+                        color: widget.theme.colorScheme.onSurface
+                            .withValues(alpha: 0.7),
+                        height: 1.7, // Increased line height
+                      ),
                     ),
                   ),
                 ),

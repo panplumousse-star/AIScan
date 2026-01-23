@@ -1012,13 +1012,15 @@ class _ResultsView extends StatelessWidget {
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
+            // ClampingScrollPhysics reduces scroll interference during selection
+            physics: const ClampingScrollPhysics(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Selectable text with optional highlighting
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.surfaceContainerLowest,
                     borderRadius: BorderRadius.circular(12),
@@ -1029,9 +1031,11 @@ class _ResultsView extends StatelessWidget {
                   child: SelectableText(
                     result.trimmedText,
                     style: theme.textTheme.bodyLarge?.copyWith(
-                      height: 1.6,
+                      height: 1.8, // Increased line height for easier selection
                       color: theme.colorScheme.onSurface,
                     ),
+                    // Enable magnifier for precise selection on mobile
+                    magnifierConfiguration: TextMagnifierConfiguration.enabled,
                     contextMenuBuilder: (context, editableTextState) {
                       // Custom context menu: Copy, Share, Select All
                       // (removes system "Read aloud" option)

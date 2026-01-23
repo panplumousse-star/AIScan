@@ -97,19 +97,24 @@ class _OcrTextPanelState extends State<OcrTextPanel> {
           ),
 
           // Content
+          // Using SelectionArea wrapper pattern to fix scroll/selection gesture conflict.
+          // SelectionArea properly handles gesture priority, allowing scrolling to work
+          // while still enabling text selection via long-press.
           AnimatedCrossFade(
             firstChild: const SizedBox.shrink(),
             secondChild: Container(
               constraints: const BoxConstraints(maxHeight: 200),
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: SingleChildScrollView(
-                child: SelectableText(
-                  widget.ocrText,
-                  style: GoogleFonts.outfit(
-                    fontSize: 13,
-                    color: widget.theme.colorScheme.onSurface
-                        .withValues(alpha: 0.7),
-                    height: 1.5,
+              child: SelectionArea(
+                child: SingleChildScrollView(
+                  child: Text(
+                    widget.ocrText,
+                    style: GoogleFonts.outfit(
+                      fontSize: 13,
+                      color: widget.theme.colorScheme.onSurface
+                          .withValues(alpha: 0.7),
+                      height: 1.5,
+                    ),
                   ),
                 ),
               ),

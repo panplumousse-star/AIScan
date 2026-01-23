@@ -1125,10 +1125,14 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
     with WidgetsBindingObserver {
   final _searchController = TextEditingController();
   final _searchFocusNode = FocusNode();
+  late final Debouncer _searchDebouncer;
 
   @override
   void initState() {
     super.initState();
+
+    // Initialize search debouncer with 300ms delay
+    _searchDebouncer = Debouncer(duration: const Duration(milliseconds: 300));
 
     // Add lifecycle observer for cache management
     WidgetsBinding.instance.addObserver(this);
@@ -1144,6 +1148,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
     // Remove lifecycle observer
     WidgetsBinding.instance.removeObserver(this);
 
+    _searchDebouncer.dispose();
     _searchController.dispose();
     _searchFocusNode.dispose();
     super.dispose();
@@ -1305,7 +1310,11 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
                 child: BentoSearchBar(
                   controller: _searchController,
                   focusNode: _searchFocusNode,
-                  onChanged: notifier.setSearchQuery,
+                  onChanged: (query) {
+                    _searchDebouncer.run(() {
+                      notifier.setSearchQuery(query);
+                    });
+                  },
                   onClear: () {
                     _searchController.clear();
                     notifier.clearSearch();

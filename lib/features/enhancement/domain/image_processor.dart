@@ -1151,11 +1151,28 @@ img.Image _adjustBrightness(img.Image image, int amount) {
   return img.adjustColor(image, brightness: amount);
 }
 /// Applies unsharp mask sharpening to an image.
+///
+/// Uses the unsharp mask algorithm which provides high-quality sharpening
+/// by enhancing edges while preserving detail. The algorithm:
+/// 1. Creates a blurred version using optimized [img.gaussianBlur]
+/// 2. Calculates the difference between original and blurred (the "mask")
+/// 3. Adds the scaled mask back to the original
+///
+/// Formula: sharpened = original + amount * (original - blurred)
+///
+/// Note: While the image package provides [img.convolution] and [img.smooth]
+/// functions, the unsharp mask approach used here produces superior results
+/// for document sharpening, with better edge enhancement and fewer artifacts.
+/// The [img.gaussianBlur] call is already using an optimized built-in method.
 img.Image _sharpenImage(img.Image image, double amount) {
-  // Apply unsharp mask: sharpened = original + amount * (original - blurred)
+  // Step 1: Create blurred version using optimized built-in function
   final blurred = img.gaussianBlur(image, radius: 1);
   final result = img.Image.from(image);
 
+  // Step 2 & 3: Apply unsharp mask formula
+  // The image package doesn't provide image arithmetic operations,
+  // so we need to iterate through pixels to calculate:
+  // result = original + amount * (original - blurred)
   for (var y = 0; y < result.height; y++) {
     for (var x = 0; x < result.width; x++) {
       final original = image.getPixel(x, y);

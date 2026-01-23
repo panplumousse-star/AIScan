@@ -836,4 +836,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get exportFailed => 'Export failed';
+
+  @override
+  String get whatAreYouLookingFor => 'What are you looking for?';
 }

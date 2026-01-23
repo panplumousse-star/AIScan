@@ -1531,6 +1531,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Echec de l\'exportation'**
   String get exportFailed;
+
+  /// No description provided for @whatAreYouLookingFor.
+  ///
+  /// In fr, this message translates to:
+  /// **'Que cherches-tu ?'**
+  String get whatAreYouLookingFor;
 }
 
 class _AppLocalizationsDelegate

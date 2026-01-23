@@ -310,5 +310,6 @@
   "shareTextTooltip": "Partager le texte",
 
   "loadingDocuments": "Chargement de vos documents...",
-  "exportFailed": "Echec de l'exportation"
+  "exportFailed": "Echec de l'exportation",
+  "whatAreYouLookingFor": "Que cherches-tu ?"
 }

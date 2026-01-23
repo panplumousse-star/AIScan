@@ -310,5 +310,6 @@
   "shareTextTooltip": "Share text",
 
   "loadingDocuments": "Loading your documents...",
-  "exportFailed": "Export failed"
+  "exportFailed": "Export failed",
+  "whatAreYouLookingFor": "What are you looking for?"
 }

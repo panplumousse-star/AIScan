@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/widgets/bento_card.dart';
 import '../../../../core/widgets/bento_mascot.dart';
 import '../../../../core/widgets/bento_speech_bubble.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../documents_screen.dart' show DocumentsScreenState, DocumentsScreenNotifier;
 
 /// Top app bar widget for the documents screen.
@@ -35,6 +36,7 @@ class DocumentsAppBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = theme.brightness == Brightness.dark;
     final isInFolder = !state.isAtRoot && state.currentFolder != null;
+    final l10n = AppLocalizations.of(context);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
@@ -68,9 +70,9 @@ class DocumentsAppBar extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          // Titre toujours "Mes Documents"
+          // Title always "My Documents"
           Text(
-            'Mes Documents',
+            l10n?.myDocuments ?? 'My Documents',
             style: GoogleFonts.outfit(
               fontSize: 20,
               fontWeight: FontWeight.w700,
@@ -113,6 +115,7 @@ class DocumentsBentoHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = theme.brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
@@ -133,7 +136,7 @@ class DocumentsBentoHeader extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Center(
                   child: Text(
-                    'Que cherches-tu ?',
+                    l10n?.whatAreYouLookingFor ?? 'What are you looking for?',
                     style: GoogleFonts.outfit(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,

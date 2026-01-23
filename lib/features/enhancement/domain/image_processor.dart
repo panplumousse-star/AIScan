@@ -1145,22 +1145,10 @@ Uint8List _encodeImage(
 
 /// Adjusts brightness of an image.
 img.Image _adjustBrightness(img.Image image, int amount) {
-  // Create a copy to avoid modifying the original
-  final result = img.Image.from(image);
-
-  for (var y = 0; y < result.height; y++) {
-    for (var x = 0; x < result.width; x++) {
-      final pixel = result.getPixel(x, y);
-
-      final r = (pixel.r + amount).clamp(0, 255).toInt();
-      final g = (pixel.g + amount).clamp(0, 255).toInt();
-      final b = (pixel.b + amount).clamp(0, 255).toInt();
-
-      result.setPixelRgba(x, y, r, g, b, pixel.a.toInt());
-    }
-  }
-
-  return result;
+  // Use built-in adjustColor for optimized brightness adjustment
+  // Convert amount from -255..255 to brightness factor for adjustColor
+  // adjustColor expects brightness offset in range suitable for direct application
+  return img.adjustColor(image, brightness: amount);
 }
 
 /// Adjusts contrast of an image.

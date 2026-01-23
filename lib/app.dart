@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/providers/locale_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'features/app_lock/domain/app_lock_service.dart';
 import 'features/app_lock/presentation/lock_screen.dart';
 import 'features/home/presentation/bento_home_screen.dart';
+import 'l10n/app_localizations.dart';
 
 
 /// The root widget of the Scanaï application.
@@ -18,6 +21,9 @@ class AIScanApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Watch the theme mode provider for reactive updates
     final themeMode = ref.watch(themeModeProvider);
+
+    // Watch the locale provider for reactive updates
+    final locale = ref.watch(flutterLocaleProvider);
 
     // Configure page transitions for smooth navigation
     final pageTransitionsTheme = const PageTransitionsTheme(
@@ -37,8 +43,18 @@ class AIScanApp extends ConsumerWidget {
     );
 
     return MaterialApp(
-      title: 'Scanaï',
+      title: 'Scanai',
       debugShowCheckedModeBanner: false,
+
+      // Localization configuration
+      locale: locale,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
 
       // Theme configuration using centralized AppTheme with page transitions
       theme: AppTheme.lightTheme.copyWith(

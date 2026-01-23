@@ -1,0 +1,508 @@
+{
+  "@@locale": "fr",
+
+  "appTitle": "Scanai",
+  "@appTitle": {
+    "description": "The application title"
+  },
+
+  "settings": "Reglages",
+  "@settings": {
+    "description": "Settings screen title"
+  },
+
+  "appearance": "Apparence",
+  "@appearance": {
+    "description": "Appearance section title"
+  },
+
+  "themeLight": "Clair",
+  "@themeLight": {
+    "description": "Light theme option"
+  },
+
+  "themeDark": "Sombre",
+  "@themeDark": {
+    "description": "Dark theme option"
+  },
+
+  "themeAuto": "Auto",
+  "@themeAuto": {
+    "description": "Auto/System theme option"
+  },
+
+  "security": "Verrouillage",
+  "@security": {
+    "description": "Security/Lock section title"
+  },
+
+  "enabled": "Active",
+  "@enabled": {
+    "description": "Enabled state label"
+  },
+
+  "disabled": "Desactive",
+  "@disabled": {
+    "description": "Disabled state label"
+  },
+
+  "enableLockTitle": "Activer le verrouillage ?",
+  "@enableLockTitle": {
+    "description": "Enable lock dialog title"
+  },
+
+  "enableLockMessage": "Souhaitez-vous securiser l'acces a vos documents avec votre empreinte digitale ?",
+  "@enableLockMessage": {
+    "description": "Enable lock dialog message"
+  },
+
+  "cancel": "Annuler",
+  "@cancel": {
+    "description": "Cancel button label"
+  },
+
+  "enable": "Activer",
+  "@enable": {
+    "description": "Enable button label"
+  },
+
+  "lockTimeoutImmediate": "Immediat",
+  "@lockTimeoutImmediate": {
+    "description": "Immediate lock timeout"
+  },
+
+  "lockTimeout1Min": "1 min",
+  "@lockTimeout1Min": {
+    "description": "1 minute lock timeout"
+  },
+
+  "lockTimeout5Min": "5 min",
+  "@lockTimeout5Min": {
+    "description": "5 minutes lock timeout"
+  },
+
+  "lockTimeout30Min": "30 min",
+  "@lockTimeout30Min": {
+    "description": "30 minutes lock timeout"
+  },
+
+  "about": "A propos",
+  "@about": {
+    "description": "About section title"
+  },
+
+  "developedWith": "Developpee avec le",
+  "@developedWith": {
+    "description": "Developed with love text"
+  },
+
+  "securityDetails": "Details securite",
+  "@securityDetails": {
+    "description": "Security details hint"
+  },
+
+  "securityTitle": "Securite",
+  "@securityTitle": {
+    "description": "Security info title"
+  },
+
+  "aes256": "AES-256",
+  "@aes256": {
+    "description": "AES-256 encryption label"
+  },
+
+  "localEncryption": "Chiffrement local",
+  "@localEncryption": {
+    "description": "Local encryption description"
+  },
+
+  "zeroKnowledge": "Zero-Knowledge",
+  "@zeroKnowledge": {
+    "description": "Zero-Knowledge label"
+  },
+
+  "exclusiveAccess": "Acces exclusif",
+  "@exclusiveAccess": {
+    "description": "Exclusive access description"
+  },
+
+  "offline": "Hors-ligne",
+  "@offline": {
+    "description": "Offline label"
+  },
+
+  "securedPercent": "100% securise",
+  "@securedPercent": {
+    "description": "100% secured description"
+  },
+
+  "settingsSpeechBubbleLine1": "On peaufine",
+  "@settingsSpeechBubbleLine1": {
+    "description": "Settings mascot speech bubble line 1"
+  },
+
+  "settingsSpeechBubbleLine2": "notre application",
+  "@settingsSpeechBubbleLine2": {
+    "description": "Settings mascot speech bubble line 2"
+  },
+
+  "dismiss": "Fermer",
+  "@dismiss": {
+    "description": "Dismiss/close button label"
+  },
+
+  "myDocuments": "Mes documents",
+  "@myDocuments": {
+    "description": "My documents label"
+  },
+
+  "scan": "Scanner",
+  "@scan": {
+    "description": "Scan action label"
+  },
+
+  "share": "Partager",
+  "@share": {
+    "description": "Share action label"
+  },
+
+  "delete": "Supprimer",
+  "@delete": {
+    "description": "Delete action label"
+  },
+
+  "rename": "Renommer",
+  "@rename": {
+    "description": "Rename action label"
+  },
+
+  "noDocuments": "Aucun document",
+  "@noDocuments": {
+    "description": "No documents message"
+  },
+
+  "scanYourFirstDocument": "Scannez votre premier document",
+  "@scanYourFirstDocument": {
+    "description": "Prompt to scan first document"
+  },
+
+  "documentCount": "{count, plural, =0{Aucun document} =1{1 document} other{{count} documents}}",
+  "@documentCount": {
+    "description": "Document count with plural forms",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "pageCount": "{count, plural, =1{1 page} other{{count} pages}}",
+  "@pageCount": {
+    "description": "Page count with plural forms",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "greetingMorning": "Bonjour",
+  "@greetingMorning": {
+    "description": "Morning greeting"
+  },
+
+  "greetingAfternoon": "Bon apres-midi",
+  "@greetingAfternoon": {
+    "description": "Afternoon greeting"
+  },
+
+  "greetingEvening": "Bonsoir",
+  "@greetingEvening": {
+    "description": "Evening greeting"
+  },
+
+  "randomMessage1": "Pret a numeriser ?",
+  "@randomMessage1": {
+    "description": "Random motivational message 1"
+  },
+
+  "randomMessage2": "Vos documents en securite",
+  "@randomMessage2": {
+    "description": "Random motivational message 2"
+  },
+
+  "randomMessage3": "Scanner, c'est preserver",
+  "@randomMessage3": {
+    "description": "Random motivational message 3"
+  },
+
+  "randomMessage4": "Tout est sous controle",
+  "@randomMessage4": {
+    "description": "Random motivational message 4"
+  },
+
+  "randomMessage5": "La simplicite avant tout",
+  "@randomMessage5": {
+    "description": "Random motivational message 5"
+  },
+
+  "ocrResults": "Resultats OCR",
+  "@ocrResults": {
+    "description": "OCR results screen title"
+  },
+
+  "text": "Texte",
+  "@text": {
+    "description": "Text tab label"
+  },
+
+  "metadata": "Metadonnees",
+  "@metadata": {
+    "description": "Metadata tab label"
+  },
+
+  "copyText": "Copier le texte",
+  "@copyText": {
+    "description": "Copy text action"
+  },
+
+  "textCopied": "Texte copie",
+  "@textCopied": {
+    "description": "Text copied confirmation"
+  },
+
+  "noTextExtracted": "Aucun texte extrait",
+  "@noTextExtracted": {
+    "description": "No text extracted message"
+  },
+
+  "language": "Langue",
+  "@language": {
+    "description": "Language label"
+  },
+
+  "processingTime": "Temps de traitement",
+  "@processingTime": {
+    "description": "Processing time label"
+  },
+
+  "wordCount": "Nombre de mots",
+  "@wordCount": {
+    "description": "Word count label"
+  },
+
+  "lineCount": "Nombre de lignes",
+  "@lineCount": {
+    "description": "Line count label"
+  },
+
+  "confidence": "Confiance",
+  "@confidence": {
+    "description": "Confidence score label"
+  },
+
+  "shareAs": "Partager comme",
+  "@shareAs": {
+    "description": "Share as dialog title"
+  },
+
+  "pdf": "PDF",
+  "@pdf": {
+    "description": "PDF format label"
+  },
+
+  "images": "Images",
+  "@images": {
+    "description": "Images format label"
+  },
+
+  "ocrText": "Texte OCR",
+  "@ocrText": {
+    "description": "OCR text format label"
+  },
+
+  "appLanguage": "Langue de l'application",
+  "@appLanguage": {
+    "description": "App language setting title"
+  },
+
+  "ocrLanguage": "Langue OCR",
+  "@ocrLanguage": {
+    "description": "OCR language setting title"
+  },
+
+  "systemLanguage": "Systeme",
+  "@systemLanguage": {
+    "description": "System language option"
+  },
+
+  "french": "Francais",
+  "@french": {
+    "description": "French language name"
+  },
+
+  "english": "English",
+  "@english": {
+    "description": "English language name"
+  },
+
+  "ocrLanguageAuto": "Automatique",
+  "@ocrLanguageAuto": {
+    "description": "Automatic OCR language detection"
+  },
+
+  "ocrLanguageLatin": "Latin (FR, EN, ES...)",
+  "@ocrLanguageLatin": {
+    "description": "Latin script OCR option"
+  },
+
+  "ocrLanguageChinese": "Chinois",
+  "@ocrLanguageChinese": {
+    "description": "Chinese script OCR option"
+  },
+
+  "ocrLanguageJapanese": "Japonais",
+  "@ocrLanguageJapanese": {
+    "description": "Japanese script OCR option"
+  },
+
+  "ocrLanguageKorean": "Coreen",
+  "@ocrLanguageKorean": {
+    "description": "Korean script OCR option"
+  },
+
+  "ocrLanguageDevanagari": "Devanagari",
+  "@ocrLanguageDevanagari": {
+    "description": "Devanagari script OCR option"
+  },
+
+  "scanDocument": "Scanner un document",
+  "@scanDocument": {
+    "description": "Scan document action"
+  },
+
+  "camera": "Camera",
+  "@camera": {
+    "description": "Camera option"
+  },
+
+  "gallery": "Galerie",
+  "@gallery": {
+    "description": "Gallery option"
+  },
+
+  "recentScans": "Scans recents",
+  "@recentScans": {
+    "description": "Recent scans label"
+  },
+
+  "allDocuments": "Tous les documents",
+  "@allDocuments": {
+    "description": "All documents label"
+  },
+
+  "searchDocuments": "Rechercher des documents",
+  "@searchDocuments": {
+    "description": "Search documents placeholder"
+  },
+
+  "sortByDate": "Trier par date",
+  "@sortByDate": {
+    "description": "Sort by date option"
+  },
+
+  "sortByName": "Trier par nom",
+  "@sortByName": {
+    "description": "Sort by name option"
+  },
+
+  "deleteConfirmTitle": "Supprimer le document ?",
+  "@deleteConfirmTitle": {
+    "description": "Delete confirmation dialog title"
+  },
+
+  "deleteConfirmMessage": "Cette action est irreversible. Le document sera definitivement supprime.",
+  "@deleteConfirmMessage": {
+    "description": "Delete confirmation dialog message"
+  },
+
+  "errorOccurred": "Une erreur est survenue",
+  "@errorOccurred": {
+    "description": "Generic error message"
+  },
+
+  "retry": "Reessayer",
+  "@retry": {
+    "description": "Retry action label"
+  },
+
+  "ok": "OK",
+  "@ok": {
+    "description": "OK button label"
+  },
+
+  "yes": "Oui",
+  "@yes": {
+    "description": "Yes button label"
+  },
+
+  "no": "Non",
+  "@no": {
+    "description": "No button label"
+  },
+
+  "save": "Enregistrer",
+  "@save": {
+    "description": "Save action label"
+  },
+
+  "close": "Fermer",
+  "@close": {
+    "description": "Close action label"
+  },
+
+  "extractText": "Extraire le texte",
+  "@extractText": {
+    "description": "Extract text OCR action"
+  },
+
+  "extractingText": "Extraction du texte...",
+  "@extractingText": {
+    "description": "Extracting text loading message"
+  },
+
+  "documentName": "Nom du document",
+  "@documentName": {
+    "description": "Document name field label"
+  },
+
+  "enterDocumentName": "Entrez le nom du document",
+  "@enterDocumentName": {
+    "description": "Document name field placeholder"
+  },
+
+  "createdAt": "Cree le",
+  "@createdAt": {
+    "description": "Created at label"
+  },
+
+  "modifiedAt": "Modifie le",
+  "@modifiedAt": {
+    "description": "Modified at label"
+  },
+
+  "size": "Taille",
+  "@size": {
+    "description": "File size label"
+  },
+
+  "selectLanguage": "Selectionner la langue",
+  "@selectLanguage": {
+    "description": "Select language dialog title"
+  },
+
+  "languageSettings": "Parametres de langue",
+  "@languageSettings": {
+    "description": "Language settings section title"
+  }
+}

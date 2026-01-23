@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/permissions/camera_permission_service.dart';
 import '../../../core/permissions/permission_dialog.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../app_lock/domain/app_lock_service.dart';
 import '../../../core/storage/document_repository.dart';
 import '../../../core/theme/app_theme.dart';
@@ -265,10 +266,12 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
     );
   }
 
-  String _getGreeting() {
+  String _getGreeting(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final hour = DateTime.now().hour;
-    if (hour < 18) return 'Bonjour !';
-    return 'Bonsoir !';
+    if (hour < 12) return l10n?.greetingMorning ?? 'Bonjour';
+    if (hour < 18) return l10n?.greetingAfternoon ?? 'Bon apres-midi';
+    return l10n?.greetingEvening ?? 'Bonsoir';
   }
 
   @override
@@ -395,6 +398,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
   Widget _buildInteractiveFooter(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final monthlyScans = ref.watch(monthlyScanCountProvider).value ?? 0;
+    final l10n = AppLocalizations.of(context);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
@@ -439,9 +443,9 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      monthlyScans > 0 
-                          ? '$monthlyScans documents sécurisés'
-                          : 'Sécurisez vos documents',
+                      monthlyScans > 0
+                          ? (l10n?.documentCount(monthlyScans) ?? '$monthlyScans documents')
+                          : (l10n?.scanYourFirstDocument ?? 'Securisez vos documents'),
                       style: GoogleFonts.outfit(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
@@ -449,7 +453,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                       ),
                     ),
                     Text(
-                      'Tout est sauvegardé localement',
+                      l10n?.offline ?? 'Tout est sauvegarde localement',
                       style: GoogleFonts.outfit(
                         fontSize: 12,
                         color: isDark ? AppColors.neutralDark : AppColors.neutralLight,
@@ -538,7 +542,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                                       "Zzz ...",
                                       "Zzz ... Zzz"
                                     ][_sleepMessageIndex]
-                                  : (hasJustScanned ? celebrationMessage : _getGreeting()),
+                                  : (hasJustScanned ? celebrationMessage : _getGreeting(context)),
                               style: GoogleFonts.outfit(
                                 fontSize: (hasJustScanned || _isSleeping) ? 22 : 24,
                                 fontWeight: FontWeight.w800,
@@ -634,6 +638,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
 
   Widget _buildScanCard(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
     return _ShakeableWrapper(
       onTap: () => _navigateToScanner(context, ref),
       child: Container(
@@ -681,7 +686,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Scanner un\ndocument',
+                      l10n?.scanDocument ?? 'Scanner un\ndocument',
                       style: GoogleFonts.outfit(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -712,7 +717,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                               ],
                             ),
                             child: Text(
-                              'Tap pour démarrer',
+                              l10n?.scan ?? 'Scanner',
                               style: GoogleFonts.outfit(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
@@ -736,6 +741,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
   Widget _buildDocumentsCard(BuildContext context, int count, {bool isLoading = false}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isEmpty = count == 0 && !isLoading;
+    final l10n = AppLocalizations.of(context);
 
     return Opacity(
       opacity: isEmpty ? 0.5 : 1.0,
@@ -800,7 +806,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Documents',
+                        l10n?.myDocuments ?? 'Documents',
                         style: GoogleFonts.outfit(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -808,7 +814,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                         ),
                       ),
                       Text(
-                        count > 0 ? 'Voir mes fichiers' : 'Aucun document',
+                        count > 0 ? (l10n?.allDocuments ?? 'Voir mes fichiers') : (l10n?.noDocuments ?? 'Aucun document'),
                         style: GoogleFonts.outfit(
                           fontSize: 14,
                           color: isDark
@@ -883,6 +889,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
 
   Widget _buildSettingsCard(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
     return _BentoInteractiveWrapper(
       onTap: () {
         HapticFeedback.selectionClick();
@@ -931,7 +938,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Réglages',
+                  l10n?.settings ?? 'Reglages',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.outfit(
@@ -941,7 +948,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                   ),
                 ),
                 Text(
-                  'Préférences',
+                  l10n?.appearance ?? 'Preferences',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.outfit(

@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
 import 'core/permissions/camera_permission_service.dart';
+import 'core/providers/locale_provider.dart';
+import 'core/providers/ocr_language_provider.dart';
 import 'features/app_lock/domain/app_lock_service.dart';
 import 'features/settings/presentation/settings_screen.dart';
 
@@ -43,6 +45,12 @@ void main() async {
 
   // Initialize theme preference from storage
   await initializeTheme(container);
+
+  // Initialize locale preference from storage
+  await initializeLocale(container);
+
+  // Initialize OCR language preference from storage
+  await initializeOcrLanguage(container);
 
   // Run the application wrapped with Riverpod for state management
   runApp(

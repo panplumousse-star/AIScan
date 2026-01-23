@@ -571,7 +571,8 @@ class _BentoFolderCardState extends State<BentoFolderCard>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final pastelBg = _getPastelColor();
 
-    return BentoCard(
+    return RepaintBoundary(
+      child: BentoCard(
       onTap: widget.onTap,
       onLongPress: widget.onLongPress,
       padding: EdgeInsets.zero,
@@ -651,6 +652,7 @@ class _BentoFolderCardState extends State<BentoFolderCard>
             ),
         ],
       ),
+      ),
     );
   }
 }
@@ -713,9 +715,10 @@ class _BentoDocumentCardState extends State<BentoDocumentCard>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: BentoCard(
+    return RepaintBoundary(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        child: BentoCard(
         onTap: widget.onTap,
         onLongPress: widget.onLongPress,
         padding: const EdgeInsets.all(12),
@@ -850,6 +853,7 @@ class _BentoDocumentCardState extends State<BentoDocumentCard>
               ],
             ),
           ],
+        ),
         ),
       ),
     );

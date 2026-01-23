@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../l10n/app_localizations.dart';
 import 'bento_card.dart';
 import 'bento_speech_bubble.dart';
 
@@ -91,6 +92,7 @@ class _BentoRenameDocumentDialogState extends State<BentoRenameDocumentDialog> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
@@ -150,7 +152,7 @@ class _BentoRenameDocumentDialogState extends State<BentoRenameDocumentDialog> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      widget.dialogTitle ?? 'Renommer le document',
+                      widget.dialogTitle ?? (l10n?.renameDocument ?? 'Rename document'),
                       style: GoogleFonts.outfit(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
@@ -162,7 +164,7 @@ class _BentoRenameDocumentDialogState extends State<BentoRenameDocumentDialog> {
                       controller: _controller,
                       autofocus: true,
                       decoration: InputDecoration(
-                        hintText: widget.hintText ?? 'Nouveau titre...',
+                        hintText: widget.hintText ?? (l10n?.newTitle ?? 'New title...'),
                         filled: true,
                         fillColor: isDark
                             ? Colors.white.withValues(alpha: 0.05)
@@ -190,7 +192,7 @@ class _BentoRenameDocumentDialogState extends State<BentoRenameDocumentDialog> {
                               padding: const EdgeInsets.symmetric(vertical: 14),
                             ),
                             child: Text(
-                              'Annuler',
+                              l10n?.cancel ?? 'Cancel',
                               style: GoogleFonts.outfit(
                                 color: theme.colorScheme.onSurface
                                     .withValues(alpha: 0.5),
@@ -213,7 +215,7 @@ class _BentoRenameDocumentDialogState extends State<BentoRenameDocumentDialog> {
                                 borderRadius: BorderRadius.circular(14),
                                 child: Center(
                                   child: Text(
-                                    widget.confirmButtonText ?? 'Enregistrer',
+                                    widget.confirmButtonText ?? (l10n?.save ?? 'Save'),
                                     style: GoogleFonts.outfit(
                                       fontWeight: FontWeight.w700,
                                       color: theme.colorScheme.onPrimary,

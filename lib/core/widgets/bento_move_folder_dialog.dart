@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../features/folders/domain/folder_model.dart';
 import '../../features/folders/presentation/widgets/bento_folder_dialog.dart';
+import '../../l10n/app_localizations.dart';
 import 'bento_card.dart';
 import 'bento_mascot.dart';
 
@@ -89,17 +90,18 @@ class _BentoMoveToFolderDialogState extends State<BentoMoveToFolderDialog> {
     }
   }
 
-  String get _defaultTitle {
+  String _getDefaultTitle(AppLocalizations? l10n) {
     if (widget.selectedCount == 1) {
-      return 'Enregistrer sous...';
+      return l10n?.saveUnder ?? 'Save under...';
     }
-    return 'Déplacer ${widget.selectedCount} documents';
+    return l10n?.moveDocuments(widget.selectedCount) ?? 'Move ${widget.selectedCount} documents';
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
@@ -134,7 +136,7 @@ class _BentoMoveToFolderDialogState extends State<BentoMoveToFolderDialog> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                widget.title ?? _defaultTitle,
+                                widget.title ?? _getDefaultTitle(l10n),
                                 style: GoogleFonts.outfit(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w700,
@@ -143,7 +145,7 @@ class _BentoMoveToFolderDialogState extends State<BentoMoveToFolderDialog> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                widget.subtitle ?? 'Choisis un dossier de destination',
+                                widget.subtitle ?? (l10n?.chooseDestinationFolder ?? 'Choose a destination folder'),
                                 style: GoogleFonts.outfit(
                                   fontSize: 12,
                                   color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
@@ -181,8 +183,8 @@ class _BentoMoveToFolderDialogState extends State<BentoMoveToFolderDialog> {
                           // Root folder option
                           _FolderOption(
                             icon: Icons.home_rounded,
-                            name: 'Mes Documents',
-                            subtitle: 'Racine (sans dossier)',
+                            name: l10n?.myDocuments ?? 'My Documents',
+                            subtitle: l10n?.rootFolder ?? 'Root (no folder)',
                             color: theme.colorScheme.primary,
                             isSelected: _selectedFolderId == null,
                             onTap: () => setState(() => _selectedFolderId = null),
@@ -216,7 +218,7 @@ class _BentoMoveToFolderDialogState extends State<BentoMoveToFolderDialog> {
                     OutlinedButton.icon(
                       onPressed: _showCreateFolderDialog,
                       icon: const Icon(Icons.create_new_folder_outlined),
-                      label: const Text('Créer un nouveau dossier'),
+                      label: Text(l10n?.createNewFolder ?? 'Create new folder'),
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 48),
                         shape: RoundedRectangleBorder(
@@ -240,7 +242,7 @@ class _BentoMoveToFolderDialogState extends State<BentoMoveToFolderDialog> {
                               ),
                             ),
                             child: Text(
-                              'Annuler',
+                              l10n?.cancel ?? 'Cancel',
                               style: GoogleFonts.outfit(
                                 fontWeight: FontWeight.w600,
                                 color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
@@ -260,7 +262,7 @@ class _BentoMoveToFolderDialogState extends State<BentoMoveToFolderDialog> {
                               ),
                             ),
                             child: Text(
-                              widget.selectedCount == 1 ? 'Enregistrer' : 'Déplacer',
+                              widget.selectedCount == 1 ? (l10n?.save ?? 'Save') : (l10n?.move ?? 'Move'),
                               style: GoogleFonts.outfit(
                                 fontWeight: FontWeight.w700,
                               ),

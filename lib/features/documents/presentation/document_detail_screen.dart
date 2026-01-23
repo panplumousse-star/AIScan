@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../core/storage/document_repository.dart';
 import '../../../core/widgets/bento_background.dart';
 import '../../../core/widgets/bento_card.dart';
@@ -132,6 +133,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
     final state = ref.watch(documentDetailScreenProvider);
     final notifier = ref.read(documentDetailScreenProvider.notifier);
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     // Listen for errors and show snackbar
     ref.listen<DocumentDetailScreenState>(documentDetailScreenProvider, (
@@ -143,7 +145,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
           SnackBar(
             content: Text(next.error!),
             action: SnackBarAction(
-              label: 'Dismiss',
+              label: l10n?.dismiss ?? 'Dismiss',
               onPressed: notifier.clearError,
             ),
           ),
@@ -278,7 +280,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                   children: [
                     Flexible(
                       child: Text(
-                        state.document?.title ?? 'Chargement...',
+                        state.document?.title ?? (l10n?.loading ?? 'Loading...'),
                         style: GoogleFonts.outfit(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
@@ -311,9 +313,10 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
     DocumentDetailScreenNotifier notifier,
     ThemeData theme,
   ) {
+    final l10n = AppLocalizations.of(context);
     if (state.isLoading || state.isDecrypting) {
       return BentoLoadingView(
-        message: state.isDecrypting ? 'Déchiffrement...' : 'Chargement...',
+        message: state.isDecrypting ? (l10n?.decrypting ?? 'Decrypting...') : (l10n?.loading ?? 'Loading...'),
       );
     }
 
@@ -446,6 +449,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
     ThemeData theme,
   ) {
     final isDark = theme.brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     return ClipRect(
       child: BackdropFilter(
@@ -474,32 +478,32 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
             children: [
               DocumentActionButton(
                 icon: Icons.share_rounded,
-                label: 'Partager',
+                label: l10n?.share ?? 'Share',
                 onPressed: () => _handleShare(context, state),
                 theme: theme,
               ),
               DocumentActionButton(
                 icon: Icons.save_alt_rounded,
-                label: 'Exporter',
+                label: l10n?.export ?? 'Export',
                 onPressed: () => _handleExport(context, state),
                 theme: theme,
               ),
               DocumentActionButton(
                 icon: Icons.drive_file_move_rounded,
-                label: 'Déplacer',
+                label: l10n?.move ?? 'Move',
                 onPressed: () => _showMoveToFolderDialog(context, state),
                 theme: theme,
               ),
               DocumentActionButton(
                 icon: Icons.text_snippet_rounded,
-                label: 'OCR',
+                label: l10n?.ocr ?? 'OCR',
                 onPressed: () => _handleOcr(context, state),
                 badge: state.document!.hasOcrText ? null : '!',
                 theme: theme,
               ),
               DocumentActionButton(
                 icon: Icons.auto_fix_high_rounded,
-                label: 'Magie',
+                label: 'Magic',
                 onPressed: () => _handleEnhance(context, state),
                 theme: theme,
                 isPrimary: true,
@@ -584,7 +588,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
             if (mounted) {
               ScaffoldMessenger.of(context).hideCurrentSnackBar();
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Impossible de charger l\'image')),
+                SnackBar(content: Text(AppLocalizations.of(context)?.unableToLoadImage ?? 'Unable to load image')),
               );
             }
             return;
@@ -601,7 +605,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
           if (textToShare == null || textToShare.isEmpty) {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Aucun texte détecté dans le document')),
+                SnackBar(content: Text(AppLocalizations.of(context)?.noTextDetected ?? 'No text detected in document')),
               );
             }
             return;
@@ -618,7 +622,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
         if (textToShare == null || textToShare.isEmpty) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Aucun texte à partager')),
+              SnackBar(content: Text(AppLocalizations.of(context)?.noTextToShare ?? 'No text to share')),
             );
           }
           return;
@@ -769,7 +773,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Supprimer le document ?',
+                      AppLocalizations.of(context)?.deleteConfirmTitle ?? 'Delete document?',
                       style: GoogleFonts.outfit(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
@@ -778,7 +782,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Cette action est irréversible. Le document sera définitivement supprimé.',
+                      AppLocalizations.of(context)?.deleteConfirmMessage ?? 'This action cannot be undone. The document will be permanently deleted.',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.outfit(
                         color:
@@ -791,7 +795,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                         Expanded(
                           child: TextButton(
                             onPressed: () => Navigator.of(context).pop(false),
-                            child: Text('Annuler', style: GoogleFonts.outfit()),
+                            child: Text(AppLocalizations.of(context)?.cancel ?? 'Cancel', style: GoogleFonts.outfit()),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -810,7 +814,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                               ),
                               child: Center(
                                 child: Text(
-                                  'Supprimer',
+                                  AppLocalizations.of(context)?.delete ?? 'Delete',
                                   style: GoogleFonts.outfit(
                                     fontWeight: FontWeight.w700,
                                     color: Colors.redAccent,

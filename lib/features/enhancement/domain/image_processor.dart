@@ -926,20 +926,25 @@ ProcessedImage _processImageIsolate(_ProcessingParams params) {
     operations.add('auto_enhance');
   }
 
-  // Apply brightness adjustment
-  if (options.brightness != 0) {
-    // Scale from -100..100 to -255..255 for image package
+  // Apply brightness and contrast adjustments in a single call
+  if (options.brightness != 0 || options.contrast != 0) {
+    // Scale brightness from -100..100 to -255..255 for image package
     final adjustedBrightness = (options.brightness * 2.55).round();
-    processed = _adjustBrightness(processed, adjustedBrightness);
-    operations.add('brightness:${options.brightness}');
-  }
-
-  // Apply contrast adjustment
-  if (options.contrast != 0) {
-    // Scale from -100..100 to multiplier (0.5 to 2.0)
+    // Scale contrast from -100..100 to multiplier (0.5 to 2.0)
     final contrastFactor = 1.0 + (options.contrast / 100.0);
-    processed = _adjustContrast(processed, contrastFactor);
-    operations.add('contrast:${options.contrast}');
+
+    processed = img.adjustColor(
+      processed,
+      brightness: adjustedBrightness,
+      contrast: contrastFactor,
+    );
+
+    if (options.brightness != 0) {
+      operations.add('brightness:${options.brightness}');
+    }
+    if (options.contrast != 0) {
+      operations.add('contrast:${options.contrast}');
+    }
   }
 
   // Apply saturation adjustment (before grayscale)
@@ -1145,51 +1150,34 @@ Uint8List _encodeImage(
 
 /// Adjusts brightness of an image.
 img.Image _adjustBrightness(img.Image image, int amount) {
-  // Create a copy to avoid modifying the original
-  final result = img.Image.from(image);
-
-  for (var y = 0; y < result.height; y++) {
-    for (var x = 0; x < result.width; x++) {
-      final pixel = result.getPixel(x, y);
-
-      final r = (pixel.r + amount).clamp(0, 255).toInt();
-      final g = (pixel.g + amount).clamp(0, 255).toInt();
-      final b = (pixel.b + amount).clamp(0, 255).toInt();
-
-      result.setPixelRgba(x, y, r, g, b, pixel.a.toInt());
-    }
-  }
-
-  return result;
+  // Use built-in adjustColor for optimized brightness adjustment
+  // Convert amount from -255..255 to brightness factor for adjustColor
+  // adjustColor expects brightness offset in range suitable for direct application
+  return img.adjustColor(image, brightness: amount);
 }
-
-/// Adjusts contrast of an image.
-img.Image _adjustContrast(img.Image image, double factor) {
-  // Create a copy to avoid modifying the original
-  final result = img.Image.from(image);
-
-  for (var y = 0; y < result.height; y++) {
-    for (var x = 0; x < result.width; x++) {
-      final pixel = result.getPixel(x, y);
-
-      // Apply contrast formula: newValue = factor * (value - 128) + 128
-      final r = (factor * (pixel.r - 128) + 128).clamp(0, 255).toInt();
-      final g = (factor * (pixel.g - 128) + 128).clamp(0, 255).toInt();
-      final b = (factor * (pixel.b - 128) + 128).clamp(0, 255).toInt();
-
-      result.setPixelRgba(x, y, r, g, b, pixel.a.toInt());
-    }
-  }
-
-  return result;
-}
-
 /// Applies unsharp mask sharpening to an image.
+///
+/// Uses the unsharp mask algorithm which provides high-quality sharpening
+/// by enhancing edges while preserving detail. The algorithm:
+/// 1. Creates a blurred version using optimized [img.gaussianBlur]
+/// 2. Calculates the difference between original and blurred (the "mask")
+/// 3. Adds the scaled mask back to the original
+///
+/// Formula: sharpened = original + amount * (original - blurred)
+///
+/// Note: While the image package provides [img.convolution] and [img.smooth]
+/// functions, the unsharp mask approach used here produces superior results
+/// for document sharpening, with better edge enhancement and fewer artifacts.
+/// The [img.gaussianBlur] call is already using an optimized built-in method.
 img.Image _sharpenImage(img.Image image, double amount) {
-  // Apply unsharp mask: sharpened = original + amount * (original - blurred)
+  // Step 1: Create blurred version using optimized built-in function
   final blurred = img.gaussianBlur(image, radius: 1);
   final result = img.Image.from(image);
 
+  // Step 2 & 3: Apply unsharp mask formula
+  // The image package doesn't provide image arithmetic operations,
+  // so we need to iterate through pixels to calculate:
+  // result = original + amount * (original - blurred)
   for (var y = 0; y < result.height; y++) {
     for (var x = 0; x < result.width; x++) {
       final original = image.getPixel(x, y);

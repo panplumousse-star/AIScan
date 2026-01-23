@@ -55,6 +55,21 @@ class AIScanApp extends ConsumerWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: AppLocalizations.supportedLocales,
+      // Fallback to English for unsupported languages
+      localeResolutionCallback: (deviceLocale, supportedLocales) {
+        // If user explicitly set a locale, use it
+        if (locale != null) {
+          return locale;
+        }
+        // Check if device locale is supported
+        for (final supportedLocale in supportedLocales) {
+          if (supportedLocale.languageCode == deviceLocale?.languageCode) {
+            return supportedLocale;
+          }
+        }
+        // Fallback to English for unsupported languages
+        return const Locale('en');
+      },
 
       // Theme configuration using centralized AppTheme with page transitions
       theme: AppTheme.lightTheme.copyWith(

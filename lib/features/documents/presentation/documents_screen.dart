@@ -263,11 +263,99 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
     this._repository,
     this._folderService,
     this._shareService,
-  ) : super(const DocumentsScreenState());
+  ) : super(const DocumentsScreenState()) {
+    // Initialize LazyLoader for document pagination
+    _initializeLazyLoader();
+  }
 
   final DocumentRepository _repository;
   final FolderService _folderService;
   final DocumentShareService _shareService;
+
+  /// Lazy loader for document pagination (20 documents per page).
+  late LazyLoader<Document> _lazyLoader;
+
+  /// Initializes the lazy loader with appropriate configuration.
+  void _initializeLazyLoader() {
+    _lazyLoader = LazyLoader<Document>(
+      pageSize: 20, // Load 20 documents per page
+      loadPage: _loadDocumentPage,
+      // preloadThreshold defaults to 0.8 (loads when scrolled 80% through current items)
+    );
+  }
+
+  /// Loads a single page of documents based on current state.
+  ///
+  /// This method adapts based on filters, folder context, and search query.
+  /// Note: Pagination only works for getAllDocuments. For favorites and folders,
+  /// all documents are loaded at once (these typically have smaller result sets).
+  Future<List<Document>> _loadDocumentPage(int offset, int limit) async {
+    List<Document> documents;
+    final filter = state.filter;
+
+    // Load documents based on current context
+    if (filter.favoritesOnly) {
+      // Load favorite documents (no pagination support in repository yet)
+      // Only return results for first page to simulate pagination
+      if (offset > 0) return [];
+      documents = await _repository.getFavoriteDocuments(includeTags: true);
+    } else if (state.currentFolderId != null) {
+      // Inside a folder (no pagination support in repository yet)
+      // Only return results for first page to simulate pagination
+      if (offset > 0) return [];
+      documents = await _repository.getDocumentsInFolder(
+        state.currentFolderId,
+        includeTags: true,
+        orderBy: _getOrderByClause(state.sortBy),
+      );
+    } else if (filter.folderId != null) {
+      // Specific folder filter (no pagination support in repository yet)
+      // Only return results for first page to simulate pagination
+      if (offset > 0) return [];
+      documents = await _repository.getDocumentsInFolder(
+        filter.folderId,
+        includeTags: true,
+        orderBy: _getOrderByClause(state.sortBy),
+      );
+    } else {
+      // At root or search/filter mode - use full pagination support
+      documents = await _repository.getAllDocuments(
+        includeTags: true,
+        orderBy: _getOrderByClause(state.sortBy),
+        limit: limit,
+        offset: offset,
+      );
+    }
+
+    // Apply client-side filters
+    if (filter.hasOcrOnly) {
+      documents = documents.where((doc) => doc.hasOcrText).toList();
+    }
+    if (filter.tagIds.isNotEmpty) {
+      documents = documents.withAnyTag(filter.tagIds);
+    }
+
+    // Apply sorting for cases where repository doesn't handle it
+    documents = _sortDocuments(documents, state.sortBy);
+
+    return documents;
+  }
+
+  /// Converts DocumentsSortBy enum to SQL ORDER BY clause.
+  String _getOrderByClause(DocumentsSortBy sortBy) {
+    switch (sortBy) {
+      case DocumentsSortBy.createdDesc:
+        return 'created_at DESC';
+      case DocumentsSortBy.createdAsc:
+        return 'created_at ASC';
+      case DocumentsSortBy.title:
+        return 'title COLLATE NOCASE ASC';
+      case DocumentsSortBy.size:
+        return 'size_bytes DESC';
+      case DocumentsSortBy.updatedDesc:
+        return 'updated_at DESC';
+    }
+  }
 
   /// Initializes the screen and loads documents.
   Future<void> initialize() async {
@@ -295,13 +383,15 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
   }
 
   /// Loads documents and folders from the repository.
+  ///
+  /// Uses LazyLoader for pagination - initially loads first 20 documents.
+  /// Call [loadMoreDocuments] to load additional pages.
   Future<void> loadDocuments() async {
     if (!state.isInitialized) return;
 
     state = state.copyWith(isLoading: true, clearError: true);
 
     try {
-      List<Document> documents;
       List<Folder> folders = [];
       final filter = state.filter;
 
@@ -318,19 +408,14 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
         folders = allFolders.roots.sortedByName();
       }
 
-      // Load documents based on current context
+      // Load favorite folders when favorites filter is active
       if (filter.favoritesOnly) {
-        documents = await _repository.getFavoriteDocuments(includeTags: true);
-        // Also load favorite folders
         final allFolders = await _folderService.getAllFolders();
         folders = allFolders.favorites.sortedByName();
-      } else if (state.currentFolderId != null) {
-        // Inside a folder - load folder's documents
-        documents = await _repository.getDocumentsInFolder(
-          state.currentFolderId,
-          includeTags: true,
-        );
-        // Also load subfolders and refresh current folder
+      }
+
+      // Load subfolders when inside a folder
+      if (state.currentFolderId != null) {
         final allFolders = await _folderService.getAllFolders();
         folders = allFolders.childrenOf(state.currentFolderId!).sortedByName();
         // Refresh current folder to get updated favorite status
@@ -338,26 +423,11 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
         if (refreshedFolder != null) {
           state = state.copyWith(currentFolder: refreshedFolder);
         }
-      } else if (filter.folderId != null) {
-        documents = await _repository.getDocumentsInFolder(
-          filter.folderId,
-          includeTags: true,
-        );
-      } else {
-        // At root or search/filter mode - load ALL documents
-        documents = await _repository.getAllDocuments(includeTags: true);
       }
 
-      // Apply client-side filters
-      if (filter.hasOcrOnly) {
-        documents = documents.where((doc) => doc.hasOcrText).toList();
-      }
-      if (filter.tagIds.isNotEmpty) {
-        documents = documents.withAnyTag(filter.tagIds);
-      }
-
-      // Apply sorting
-      documents = _sortDocuments(documents, state.sortBy);
+      // Reset lazy loader and load first page of documents
+      _lazyLoader.clear();
+      final documents = await _lazyLoader.loadMore();
 
       state = state.copyWith(
         documents: documents,
@@ -378,6 +448,52 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
         error: 'Failed to load documents: $e',
       );
     }
+  }
+
+  /// Loads the next page of documents.
+  ///
+  /// Called when user scrolls near the bottom of the document list.
+  /// Returns true if more documents were loaded, false if no more documents available.
+  Future<bool> loadMoreDocuments() async {
+    if (!state.isInitialized) return false;
+    if (!_lazyLoader.hasMore) return false;
+    if (_lazyLoader.isLoading) return false;
+
+    try {
+      final newDocuments = await _lazyLoader.loadMore();
+
+      if (newDocuments.isEmpty) {
+        return false;
+      }
+
+      // Update state with all loaded documents from lazy loader
+      state = state.copyWith(
+        documents: _lazyLoader.items,
+      );
+
+      // Load thumbnails for new documents
+      _loadThumbnails(newDocuments);
+
+      return true;
+    } on DocumentRepositoryException catch (e) {
+      state = state.copyWith(
+        error: 'Failed to load more documents: ${e.message}',
+      );
+      return false;
+    } catch (e) {
+      state = state.copyWith(
+        error: 'Failed to load more documents: $e',
+      );
+      return false;
+    }
+  }
+
+  /// Checks if more documents should be loaded based on scroll position.
+  ///
+  /// [visibleIndex] is the index of the currently visible document.
+  /// Returns true if loadMoreDocuments should be called.
+  bool shouldLoadMore(int visibleIndex) {
+    return _lazyLoader.shouldLoadMore(visibleIndex);
   }
 
   /// Enters a folder to view its contents.
@@ -439,12 +555,16 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
   }
 
   /// Refreshes the document list.
+  ///
+  /// Resets pagination and loads from the beginning.
   Future<void> refresh() async {
     if (!state.isInitialized) return;
 
     state = state.copyWith(isRefreshing: true, clearError: true);
 
     try {
+      // Reset lazy loader to start fresh
+      _lazyLoader.clear();
       await loadDocuments();
       state = state.copyWith(isRefreshing: false);
     } catch (_) {
@@ -561,11 +681,14 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
   }
 
   /// Sets the sort option.
-  void setSortBy(DocumentsSortBy sortBy) {
+  ///
+  /// Reloads documents with the new sort order.
+  Future<void> setSortBy(DocumentsSortBy sortBy) async {
     if (sortBy == state.sortBy) return;
 
-    final sortedDocuments = _sortDocuments(state.documents, sortBy);
-    state = state.copyWith(sortBy: sortBy, documents: sortedDocuments);
+    state = state.copyWith(sortBy: sortBy);
+    // Reload documents with new sort order
+    await loadDocuments();
   }
 
   /// Sets the filter.

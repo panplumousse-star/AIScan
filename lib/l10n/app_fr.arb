@@ -311,5 +311,6 @@
 
   "loadingDocuments": "Chargement de vos documents...",
   "exportFailed": "Echec de l'exportation",
-  "whatAreYouLookingFor": "Que cherches-tu ?"
+  "whatAreYouLookingFor": "Que cherches-tu ?",
+  "needHelp": "Besoin d'aide ?"
 }

@@ -840,4 +840,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get whatAreYouLookingFor => 'Que cherches-tu ?';
+
+  @override
+  String get needHelp => 'Besoin d\'aide ?';
 }

@@ -1537,6 +1537,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Que cherches-tu ?'**
   String get whatAreYouLookingFor;
+
+  /// No description provided for @needHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Besoin d\'aide ?'**
+  String get needHelp;
 }
 
 class _AppLocalizationsDelegate

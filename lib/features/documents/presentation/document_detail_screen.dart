@@ -398,6 +398,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
         Builder(
           builder: (context) {
             final isDark = theme.brightness == Brightness.dark;
+            final l10n = AppLocalizations.of(context);
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
@@ -415,7 +416,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                       borderWidth: 0,
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       child: Text(
-                        'Besoin d\'aide ?',
+                        l10n?.needHelp ?? 'Need help?',
                         style: GoogleFonts.outfit(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,

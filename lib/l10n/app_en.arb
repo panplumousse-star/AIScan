@@ -311,5 +311,6 @@
 
   "loadingDocuments": "Loading your documents...",
   "exportFailed": "Export failed",
-  "whatAreYouLookingFor": "What are you looking for?"
+  "whatAreYouLookingFor": "What are you looking for?",
+  "needHelp": "Need help?"
 }

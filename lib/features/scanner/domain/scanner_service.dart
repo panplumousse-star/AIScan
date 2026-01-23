@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,7 +9,6 @@ import 'package:path/path.dart' as path;
 
 import '../../../core/storage/document_repository.dart';
 import '../../documents/domain/document_model.dart';
-import '../../export/domain/pdf_generator.dart';
 
 /// Riverpod provider for [ScannerService].
 ///
@@ -26,10 +24,8 @@ final scannerServiceProvider = Provider<ScannerService>((ref) {
 /// dependencies for saving scanned documents to encrypted storage.
 final scannerStorageServiceProvider = Provider<ScannerStorageService>((ref) {
   final documentRepository = ref.watch(documentRepositoryProvider);
-  final pdfGenerator = ref.watch(pdfGeneratorProvider);
   return ScannerStorageService(
     documentRepository: documentRepository,
-    pdfGenerator: pdfGenerator,
   );
 });
 
@@ -71,9 +67,7 @@ class ScanResult {
   /// Creates a [ScanResult] from ML Kit's [DocumentScanningResult].
   factory ScanResult.fromMlKitResult(DocumentScanningResult result) {
     return ScanResult(
-      pages: result.images
-          .map((path) => ScannedPage(imagePath: path))
-          .toList(),
+      pages: result.images.map((path) => ScannedPage(imagePath: path)).toList(),
       pdf: result.pdf?.uri,
     );
   }
@@ -268,7 +262,8 @@ class ScannerOptions {
       case ScanMode.base:
         return ScannerMode.base;
       case ScanMode.baseWithFilter:
-        return ScannerMode.base; // baseWithFilter not available, fallback to base
+        return ScannerMode
+            .base; // baseWithFilter not available, fallback to base
     }
   }
 
@@ -449,12 +444,7 @@ class ScannerService {
     try {
       final result = await scanner.scanDocument();
 
-      // Null result indicates user cancellation
-      if (result == null) {
-        return null;
-      }
-
-      // Empty result (no pages) also indicates cancellation
+      // Empty result (no pages) indicates cancellation
       if (result.images.isEmpty) {
         return null;
       }
@@ -651,8 +641,7 @@ class SavedScanResult {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(document, pagesProcessed, thumbnailGenerated);
+  int get hashCode => Object.hash(document, pagesProcessed, thumbnailGenerated);
 
   @override
   String toString() =>
@@ -703,15 +692,10 @@ class ScannerStorageService {
   /// Creates a [ScannerStorageService] with the required dependencies.
   ScannerStorageService({
     required DocumentRepository documentRepository,
-    required PDFGenerator pdfGenerator,
-  })  : _documentRepository = documentRepository,
-        _pdfGenerator = pdfGenerator;
+  }) : _documentRepository = documentRepository;
 
   /// The document repository for encrypted storage operations.
   final DocumentRepository _documentRepository;
-
-  /// The PDF generator for combining multiple pages.
-  final PDFGenerator _pdfGenerator;
 
   /// Default thumbnail width in pixels.
   static const int _thumbnailWidth = 300;
@@ -863,7 +847,7 @@ class ScannerStorageService {
   ) async {
     try {
       final sourceBytes = await page.readBytes();
-      
+
       // Use compute to offload heavy image processing to a background isolate
       // to avoid blocking the main UI thread.
       final pngBytes = await compute(_processPngIsolate, sourceBytes);
@@ -929,11 +913,7 @@ class ScannerStorageService {
   /// final result = await storageService.saveQuickScan(scanResult);
   /// ```
   Future<SavedScanResult> saveQuickScan(ScanResult scanResult) async {
-    return saveScanResult(
-      scanResult,
-      generateThumbnail: true,
-      cleanupAfterSave: true,
-    );
+    return saveScanResult(scanResult);
   }
 
   /// Checks if the storage service is ready for use.
@@ -983,7 +963,7 @@ class ScannerStorageService {
 
       // Read the source image
       final bytes = await sourceFile.readAsBytes();
-      
+
       // Use compute to offload heavy image processing to a background isolate
       final thumbnailBytes = await compute(_processThumbnailIsolate, {
         'bytes': bytes,
@@ -1043,12 +1023,12 @@ Uint8List _processThumbnailIsolate(Map<String, dynamic> params) {
   final bytes = params['bytes'] as Uint8List;
   final width = params['width'] as int;
   final quality = params['quality'] as int;
-  
+
   final image = img.decodeImage(bytes);
   if (image == null) throw Exception('Failed to decode image for thumbnail');
-  
+
   final thumbnail = img.copyResize(
-    image, 
+    image,
     width: width,
     interpolation: img.Interpolation.linear,
   );

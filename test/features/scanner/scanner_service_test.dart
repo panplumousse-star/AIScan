@@ -16,11 +16,15 @@ import 'scanner_service_test.mocks.dart';
 /// Mock class for DocumentScanner from ML Kit.
 class MockDocumentScanner extends Mock implements DocumentScanner {
   @override
-  Future<DocumentScanningResult?> scanDocument() async {
+  Future<DocumentScanningResult> scanDocument() async {
     return super.noSuchMethod(
       Invocation.method(#scanDocument, []),
-      returnValue: Future<DocumentScanningResult?>.value(null),
-      returnValueForMissingStub: Future<DocumentScanningResult?>.value(null),
+      returnValue: Future<DocumentScanningResult>.value(
+        MockDocumentScanningResult(),
+      ),
+      returnValueForMissingStub: Future<DocumentScanningResult>.value(
+        MockDocumentScanningResult(),
+      ),
     );
   }
 
@@ -34,22 +38,37 @@ class MockDocumentScanner extends Mock implements DocumentScanner {
   }
 }
 
+/// Mock class for DocumentScanningResultPdf from ML Kit.
+class MockDocumentScanningResultPdf extends Mock
+    implements DocumentScanningResultPdf {
+  MockDocumentScanningResultPdf(this.mockUri);
+
+  final String mockUri;
+
+  @override
+  String get uri => mockUri;
+
+  @override
+  int get pageCount => 1;
+}
+
 /// Mock class for DocumentScanningResult from ML Kit.
 class MockDocumentScanningResult extends Mock
     implements DocumentScanningResult {
   MockDocumentScanningResult({
     this.mockImages = const [],
-    this.mockPdf,
+    this.mockPdfPath,
   });
 
   final List<String> mockImages;
-  final String? mockPdf;
+  final String? mockPdfPath;
 
   @override
   List<String> get images => mockImages;
 
   @override
-  String? get pdf => mockPdf;
+  DocumentScanningResultPdf? get pdf =>
+      mockPdfPath != null ? MockDocumentScanningResultPdf(mockPdfPath!) : null;
 }
 
 @GenerateMocks([DocumentRepository])
@@ -67,10 +86,9 @@ void main() {
   final testDocument = Document(
     id: 'doc-123',
     title: 'Test Document',
-    filePath: '/encrypted/doc.enc',
+    pagesPaths: const ['/encrypted/doc_page_0.png.enc'],
     thumbnailPath: '/encrypted/thumb.enc',
     originalFileName: 'scan.jpg',
-    pageCount: 1,
     fileSize: 1024,
     mimeType: 'image/jpeg',
     ocrStatus: OcrStatus.pending,
@@ -87,12 +105,11 @@ void main() {
     // Default mock behavior for repository
     when(mockRepository.isReady()).thenAnswer((_) async => true);
     when(mockRepository.initialize()).thenAnswer((_) async => true);
-    when(mockRepository.createDocument(
+    when(mockRepository.createDocumentWithPages(
       title: anyNamed('title'),
-      sourceFilePath: anyNamed('sourceFilePath'),
+      sourceImagePaths: anyNamed('sourceImagePaths'),
       description: anyNamed('description'),
       thumbnailSourcePath: anyNamed('thumbnailSourcePath'),
-      pageCount: anyNamed('pageCount'),
       folderId: anyNamed('folderId'),
       isFavorite: anyNamed('isFavorite'),
     )).thenAnswer((_) async => testDocument);
@@ -202,7 +219,7 @@ void main() {
       // Arrange
       final mlKitResult = MockDocumentScanningResult(
         mockImages: [testImagePath1, testImagePath2],
-        mockPdf: testPdfPath,
+        mockPdfPath: testPdfPath,
       );
 
       // Act
@@ -453,12 +470,12 @@ void main() {
       const baseOptions = ScannerOptions(scannerMode: ScanMode.base);
       expect(baseOptions.toMlKitOptions().mode, equals(ScannerMode.base));
 
-      // BaseWithFilter mode
+      // BaseWithFilter mode (maps to base in ML Kit)
       const baseWithFilterOptions =
           ScannerOptions(scannerMode: ScanMode.baseWithFilter);
       expect(
         baseWithFilterOptions.toMlKitOptions().mode,
-        equals(ScannerMode.baseWithFilter),
+        equals(ScannerMode.base),
       );
     });
   });
@@ -493,8 +510,10 @@ void main() {
       });
 
       test('should return null when user cancels (null result)', () async {
-        // Arrange
-        when(mockScanner.scanDocument()).thenAnswer((_) async => null);
+        // Arrange - Return empty result to simulate cancellation
+        final mlKitResult = MockDocumentScanningResult(mockImages: []);
+        when(mockScanner.scanDocument())
+            .thenAnswer((_) async => mlKitResult);
 
         // Act
         final result = await scannerService.scanDocument();
@@ -550,7 +569,7 @@ void main() {
         // Arrange
         final mlKitResult = MockDocumentScanningResult(
           mockImages: [testImagePath1],
-          mockPdf: testPdfPath,
+          mockPdfPath: testPdfPath,
         );
         when(mockScanner.scanDocument())
             .thenAnswer((_) async => mlKitResult);
@@ -585,8 +604,10 @@ void main() {
       });
 
       test('should return null on cancellation', () async {
-        // Arrange
-        when(mockScanner.scanDocument()).thenAnswer((_) async => null);
+        // Arrange - Return empty result to simulate cancellation
+        final mlKitResult = MockDocumentScanningResult(mockImages: []);
+        when(mockScanner.scanDocument())
+            .thenAnswer((_) async => mlKitResult);
 
         // Act
         final result = await scannerService.quickScan();
@@ -650,7 +671,7 @@ void main() {
         // Arrange
         final mlKitResult = MockDocumentScanningResult(
           mockImages: [testImagePath1],
-          mockPdf: testPdfPath,
+          mockPdfPath: testPdfPath,
         );
         when(mockScanner.scanDocument())
             .thenAnswer((_) async => mlKitResult);
@@ -862,12 +883,11 @@ void main() {
           );
 
           // Mock repository to throw
-          when(mockRepository.createDocument(
+          when(mockRepository.createDocumentWithPages(
             title: anyNamed('title'),
-            sourceFilePath: anyNamed('sourceFilePath'),
+            sourceImagePaths: anyNamed('sourceImagePaths'),
             description: anyNamed('description'),
             thumbnailSourcePath: anyNamed('thumbnailSourcePath'),
-            pageCount: anyNamed('pageCount'),
             folderId: anyNamed('folderId'),
             isFavorite: anyNamed('isFavorite'),
           )).thenThrow(const DocumentRepositoryException('Database error'));
@@ -1023,7 +1043,7 @@ void main() {
       // Arrange
       final mlKitResult = MockDocumentScanningResult(
         mockImages: [testImagePath1, testImagePath2],
-        mockPdf: testPdfPath,
+        mockPdfPath: testPdfPath,
       );
       when(mockScanner.scanDocument())
           .thenAnswer((_) async => mlKitResult);
@@ -1044,8 +1064,10 @@ void main() {
     });
 
     test('should handle cancelled scan gracefully', () async {
-      // Arrange
-      when(mockScanner.scanDocument()).thenAnswer((_) async => null);
+      // Arrange - Return empty result to simulate cancellation
+      final mlKitResult = MockDocumentScanningResult(mockImages: []);
+      when(mockScanner.scanDocument())
+          .thenAnswer((_) async => mlKitResult);
 
       // Act
       final result = await scannerService.quickScan();
@@ -1076,7 +1098,7 @@ void main() {
       // Arrange
       final mlKitResult = MockDocumentScanningResult(
         mockImages: [testImagePath1, testImagePath2],
-        mockPdf: testPdfPath,
+        mockPdfPath: testPdfPath,
       );
       when(mockScanner.scanDocument())
           .thenAnswer((_) async => mlKitResult);

@@ -614,13 +614,31 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
   Future<void> _handleShare(BuildContext context, ScannerScreenState state) async {
     if (state.savedDocument == null) return;
 
-    // Show format selection dialog
-    final format = await showBentoShareFormatDialog(context);
+    // Show format selection dialog with OCR text if available
+    final format = await showBentoShareFormatDialog(
+      context,
+      ocrText: state.savedDocument!.hasOcrText ? state.savedDocument!.ocrText : null,
+    );
     if (format == null) return; // User cancelled
 
     final shareService = ref.read(documentShareServiceProvider);
 
     try {
+      // Handle text format separately (no file sharing needed)
+      if (format == ShareFormat.text) {
+        await shareService.shareText(
+          state.savedDocument!.ocrText!,
+          subject: state.savedDocument!.title,
+        );
+        // Navigate to documents after sharing
+        if (context.mounted) {
+          ref.read(hasJustScannedProvider.notifier).state = true;
+          _navigateToDocuments(context);
+        }
+        return;
+      }
+
+      // Handle PDF and images formats
       final result = await shareService.shareDocuments(
         [state.savedDocument!],
         format: format,

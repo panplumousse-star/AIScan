@@ -542,6 +542,10 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
       }
     });
 
+    // Determine if we should show the Copy Selection FAB
+    final hasSelection =
+        state.selectedText != null && state.selectedText!.isNotEmpty;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(state.documentTitle ?? 'OCR Results'),
@@ -610,6 +614,15 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
         ],
       ),
       body: _buildBody(context, state, notifier, theme),
+      // Conditional Copy Selection FAB - appears only when text is selected
+      floatingActionButton: hasSelection
+          ? FloatingActionButton.extended(
+              onPressed: () => _copySelectedText(context, state, notifier),
+              icon: const Icon(Icons.copy),
+              label: const Text('Copy Selection'),
+              tooltip: 'Copy selected text to clipboard',
+            )
+          : null,
     );
   }
 
@@ -712,6 +725,46 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
         ),
       );
     }
+  }
+
+  /// Copies the selected text to clipboard.
+  Future<void> _copySelectedText(
+    BuildContext context,
+    OcrResultsScreenState state,
+    OcrResultsScreenNotifier notifier,
+  ) async {
+    if (state.selectedText == null || state.selectedText!.isEmpty) return;
+
+    await Clipboard.setData(
+      ClipboardData(text: state.selectedText!),
+    );
+
+    // Count words in selected text
+    final wordCount = _countWords(state.selectedText!);
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Copied $wordCount ${wordCount == 1 ? 'word' : 'words'} to clipboard',
+          ),
+          action: SnackBarAction(
+            label: 'Dismiss',
+            onPressed: () {},
+          ),
+        ),
+      );
+    }
+
+    // Clear selection after copying
+    notifier.clearSelectedText();
+  }
+
+  /// Counts words in text.
+  int _countWords(String text) {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return 0;
+    return trimmed.split(RegExp(r'\s+')).length;
   }
 
   Future<void> _shareText(

@@ -490,6 +490,41 @@ class DocumentShareService {
     }
   }
 
+  /// Shares plain text content via the native share sheet.
+  ///
+  /// Use this method for sharing OCR extracted text or other
+  /// text-only content without file attachments.
+  ///
+  /// Parameters:
+  /// - [text]: The text content to share
+  /// - [subject]: Optional subject line for email sharing
+  ///
+  /// Throws [DocumentShareException] if sharing fails.
+  ///
+  /// ## Example
+  /// ```dart
+  /// await shareService.shareText(
+  ///   document.ocrText!,
+  ///   subject: document.title,
+  /// );
+  /// ```
+  Future<void> shareText(
+    String text, {
+    String? subject,
+  }) async {
+    try {
+      await Share.share(
+        text,
+        subject: subject,
+      );
+    } catch (e) {
+      throw DocumentShareException(
+        'Failed to share text',
+        cause: e,
+      );
+    }
+  }
+
   // ============================================================
   // Cleanup Operations
   // ============================================================

@@ -593,19 +593,12 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
           final ocrResult = await ocrService.extractTextFromBytes(imageBytes);
           textToShare = ocrResult.text;
 
-          // Save OCR result to document
-          if (textToShare.isNotEmpty) {
-            final repository = ref.read(documentRepositoryProvider);
-            await repository.updateDocumentOcr(state.document!.id, textToShare);
-            // Refresh document
-            await notifier.loadDocument(state.document!.id);
-          }
-
           if (mounted) {
             ScaffoldMessenger.of(context).hideCurrentSnackBar();
           }
 
-          if (textToShare.isEmpty) {
+          // Check if OCR found any text
+          if (textToShare == null || textToShare.isEmpty) {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Aucun texte détecté dans le document')),
@@ -613,6 +606,22 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
             }
             return;
           }
+
+          // Save OCR result to document
+          final repository = ref.read(documentRepositoryProvider);
+          await repository.updateDocumentOcr(state.document!.id, textToShare);
+          // Refresh document
+          await notifier.loadDocument(state.document!.id);
+        }
+
+        // Final null check before sharing
+        if (textToShare == null || textToShare.isEmpty) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Aucun texte à partager')),
+            );
+          }
+          return;
         }
 
         await shareService.shareText(

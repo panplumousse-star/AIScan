@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/storage/database_helper.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../folders/domain/folder_model.dart';
 import '../../../folders/domain/folder_service.dart';
 import '../../domain/document_model.dart';
@@ -94,6 +95,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context);
 
     return DraggableScrollableSheet(
       initialChildSize: 0.7,
@@ -125,7 +127,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                 child: Row(
                   children: [
                     Text(
-                      'Sort & Filter',
+                      l10n?.sortAndFilter ?? 'Sort & Filter',
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -134,7 +136,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                     if (_hasActiveFilters)
                       TextButton(
                         onPressed: _clearAllFilters,
-                        child: const Text('Clear all'),
+                        child: Text(l10n?.clearAll ?? 'Clear all'),
                       ),
                   ],
                 ),
@@ -147,29 +149,29 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   children: [
                     // Sort section
-                    _buildSectionHeader(context, 'Sort by', Icons.sort),
+                    _buildSectionHeader(context, l10n?.sortBy ?? 'Sort by', Icons.sort),
                     const SizedBox(height: 8),
                     _buildSortOptions(context),
                     const SizedBox(height: 24),
 
                     // Quick filters section
                     _buildSectionHeader(
-                        context, 'Quick Filters', Icons.filter_list),
+                        context, l10n?.quickFilters ?? 'Quick Filters', Icons.filter_list),
                     const SizedBox(height: 8),
-                    _buildQuickFilters(context),
+                    _buildQuickFilters(context, l10n),
                     const SizedBox(height: 24),
 
                     // Folder filter section
                     _buildSectionHeader(
-                        context, 'Folder', Icons.folder_outlined),
+                        context, l10n?.folder ?? 'Folder', Icons.folder_outlined),
                     const SizedBox(height: 8),
-                    _buildFolderFilter(context),
+                    _buildFolderFilter(context, l10n),
                     const SizedBox(height: 24),
 
                     // Tag filter section
-                    _buildSectionHeader(context, 'Tags', Icons.label_outline),
+                    _buildSectionHeader(context, l10n?.tags ?? 'Tags', Icons.label_outline),
                     const SizedBox(height: 8),
-                    _buildTagFilter(context),
+                    _buildTagFilter(context, l10n),
                     const SizedBox(height: 32),
                   ],
                 ),
@@ -191,7 +193,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                     width: double.infinity,
                     child: FilledButton(
                       onPressed: _applyChanges,
-                      child: const Text('Apply'),
+                      child: Text(l10n?.apply ?? 'Apply'),
                     ),
                   ),
                 ),
@@ -268,7 +270,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
     );
   }
 
-  Widget _buildQuickFilters(BuildContext context) {
+  Widget _buildQuickFilters(BuildContext context, AppLocalizations? l10n) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -277,8 +279,8 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
         // Favorites filter
         _buildFilterTile(
           context: context,
-          title: 'Favorites only',
-          subtitle: 'Show only documents marked as favorite',
+          title: l10n?.favoritesOnly ?? 'Favorites only',
+          subtitle: l10n?.favoritesOnlyDescription ?? 'Show only documents marked as favorite',
           icon: Icons.favorite,
           iconColor: colorScheme.error,
           isSelected: _selectedFilter.favoritesOnly,
@@ -292,8 +294,8 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
         // OCR filter
         _buildFilterTile(
           context: context,
-          title: 'Has OCR text',
-          subtitle: 'Show only documents with extracted text',
+          title: l10n?.hasOcrText ?? 'Has OCR text',
+          subtitle: l10n?.hasOcrTextDescription ?? 'Show only documents with extracted text',
           icon: Icons.text_fields,
           iconColor: colorScheme.tertiary,
           isSelected: _selectedFilter.hasOcrOnly,
@@ -371,7 +373,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
     );
   }
 
-  Widget _buildFolderFilter(BuildContext context) {
+  Widget _buildFolderFilter(BuildContext context, AppLocalizations? l10n) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final foldersAsync = ref.watch(_filterFoldersProvider);
@@ -384,7 +386,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
         ),
       ),
       error: (error, stack) => Text(
-        'Failed to load folders',
+        l10n?.failedToLoadFolders ?? 'Failed to load folders',
         style: TextStyle(color: colorScheme.error),
       ),
       data: (folders) {
@@ -403,7 +405,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'No folders created yet',
+                  l10n?.noFoldersYet ?? 'No folders created yet',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
@@ -419,7 +421,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
             // All documents option
             _buildFolderOption(
               context: context,
-              title: 'All Documents',
+              title: l10n?.allDocumentsFilter ?? 'All Documents',
               icon: Icons.folder_open,
               isSelected: _selectedFilter.folderId == null,
               onTap: () {
@@ -510,7 +512,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
     );
   }
 
-  Widget _buildTagFilter(BuildContext context) {
+  Widget _buildTagFilter(BuildContext context, AppLocalizations? l10n) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final tagsAsync = ref.watch(_filterTagsProvider);
@@ -523,7 +525,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
         ),
       ),
       error: (error, stack) => Text(
-        'Failed to load tags',
+        l10n?.failedToLoadTags ?? 'Failed to load tags',
         style: TextStyle(color: colorScheme.error),
       ),
       data: (tags) {
@@ -542,7 +544,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'No tags created yet',
+                  l10n?.noTagsYet ?? 'No tags created yet',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),

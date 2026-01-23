@@ -221,5 +221,94 @@
   },
   "preferences": "Preferences",
   "interface": "Interface",
-  "textRecognition": "Text recognition"
+  "textRecognition": "Text recognition",
+
+  "search": "Search...",
+  "nDocumentsLabel": "{count} documents",
+  "@nDocumentsLabel": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "nFoldersLabel": "{count, plural, =1{1 folder} other{{count} folders}}",
+  "@nFoldersLabel": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "nDocs": "{count} docs",
+  "@nDocs": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "foldersAndDocs": "{folders, plural, =1{1 folder} other{{folders} folders}}, {documents, plural, =1{1 document} other{{documents} documents}}",
+  "@foldersAndDocs": {
+    "placeholders": {
+      "folders": { "type": "int" },
+      "documents": { "type": "int" }
+    }
+  },
+  "scanner": "Scan",
+
+  "sortAndFilter": "Sort & Filter",
+  "clearAll": "Clear all",
+  "sortBy": "Sort by",
+  "quickFilters": "Quick Filters",
+  "folder": "Folder",
+  "tags": "Tags",
+  "apply": "Apply",
+  "favoritesOnly": "Favorites only",
+  "favoritesOnlyDescription": "Show only documents marked as favorite",
+  "hasOcrText": "Has OCR text",
+  "hasOcrTextDescription": "Show only documents with extracted text",
+  "failedToLoadFolders": "Failed to load folders",
+  "noFoldersYet": "No folders created yet",
+  "allDocumentsFilter": "All Documents",
+  "failedToLoadTags": "Failed to load tags",
+  "noTagsYet": "No tags created yet",
+
+  "initializingOcr": "Initializing OCR...",
+  "ocrSaved": "OCR text saved to document",
+  "copiedWords": "Copied {count, plural, =1{1 word} other{{count} words}} to clipboard",
+  "@copiedWords": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "failedToCopyText": "Failed to copy text to clipboard",
+  "searchInText": "Search in text...",
+  "matchesFound": "{count, plural, =1{1 match found} other{{count} matches found}}",
+  "@matchesFound": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "done": "Done",
+  "extractingTextProgress": "Extracting text...",
+  "processingPage": "Processing page {current} of {total}",
+  "@processingPage": {
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "thisMayTakeAMoment": "This may take a moment",
+  "scrollDisabledInSelectionMode": "Selection mode active - scroll disabled",
+  "words": "Words",
+  "lines": "Lines",
+  "time": "Time",
+  "noTextFound": "No text found",
+  "noTextFoundDescription": "The image may not contain readable text,\nor the quality may be too low.",
+  "tryAgain": "Try Again",
+  "extractTextTitle": "Extract Text",
+  "extractTextDescription": "Run OCR to extract readable text\nfrom this document.",
+  "runOcr": "Run OCR",
+  "allProcessingLocal": "All processing happens locally on your device",
+  "ocrOptions": "OCR Options",
+  "documentType": "Document Type",
+  "auto": "Auto",
+  "singleColumn": "Single Column",
+  "singleBlock": "Single Block",
+  "sparseText": "Sparse Text",
+  "rerunOcr": "Re-run OCR",
+  "saveToDocument": "Save to Document",
+  "copySelection": "Copy Selection",
+  "copySelectionTooltip": "Copy selected text to clipboard",
+  "searchInTextTooltip": "Search in text",
+  "copyAllTextTooltip": "Copy all text",
+  "shareTextTooltip": "Share text",
+
+  "loadingDocuments": "Loading your documents...",
+  "exportFailed": "Export failed"
 }

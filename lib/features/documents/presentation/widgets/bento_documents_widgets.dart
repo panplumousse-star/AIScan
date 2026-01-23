@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/documents_ui_models.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/bento_card.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Bento-style header card showing document statistics.
 class BentoStatsHeader extends StatelessWidget {
@@ -20,21 +21,22 @@ class BentoStatsHeader extends StatelessWidget {
   final int folderCount;
   final DateTime? lastUpdated;
 
-  String _formatLastUpdated() {
+  String _formatLastUpdated(AppLocalizations? l10n) {
     if (lastUpdated == null) return '';
     final now = DateTime.now();
     final diff = now.difference(lastUpdated!);
 
-    if (diff.inMinutes < 1) return 'À l\'instant';
-    if (diff.inMinutes < 60) return 'Il y a ${diff.inMinutes} min';
-    if (diff.inHours < 24) return 'Il y a ${diff.inHours}h';
-    if (diff.inDays < 7) return 'Il y a ${diff.inDays} jours';
+    if (diff.inMinutes < 1) return l10n?.justNow ?? 'Just now';
+    if (diff.inMinutes < 60) return l10n?.minutesAgo(diff.inMinutes) ?? '${diff.inMinutes} min ago';
+    if (diff.inHours < 24) return l10n?.hoursAgo(diff.inHours) ?? '${diff.inHours}h ago';
+    if (diff.inDays < 7) return l10n?.daysAgo(diff.inDays) ?? '${diff.inDays} days ago';
     return '${lastUpdated!.day}/${lastUpdated!.month}/${lastUpdated!.year}';
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     return BentoCard(
       blur: 10,
@@ -52,7 +54,7 @@ class BentoStatsHeader extends StatelessWidget {
                   children: [
                     _StatChip(
                       icon: Icons.description_outlined,
-                      label: '$documentCount documents',
+                      label: l10n?.nDocumentsLabel(documentCount) ?? '$documentCount documents',
                       color: isDark
                           ? const Color(0xFF93C5FD)
                           : AppColors.bentoButtonBlue,
@@ -61,7 +63,7 @@ class BentoStatsHeader extends StatelessWidget {
                     const SizedBox(width: 8),
                     _StatChip(
                       icon: Icons.folder_outlined,
-                      label: '$folderCount dossiers',
+                      label: l10n?.nFoldersLabel(folderCount) ?? '$folderCount folders',
                       color: isDark
                           ? const Color(0xFFFDBA74)
                           : Colors.orange[700]!,
@@ -72,7 +74,7 @@ class BentoStatsHeader extends StatelessWidget {
                 if (lastUpdated != null) ...[
                   const SizedBox(height: 12),
                   Text(
-                    'Dernière mise à jour: ${_formatLastUpdated()}',
+                    '${l10n?.lastUpdated ?? 'Last updated'}: ${_formatLastUpdated(l10n)}',
                     style: TextStyle(
                       fontSize: 13,
                       color: Colors.grey[600],
@@ -292,6 +294,7 @@ class _BentoSearchBarState extends State<BentoSearchBar>
   }
 
   Widget _buildSearchSide(bool isDark, ThemeData theme) {
+    final l10n = AppLocalizations.of(context);
     return BentoCard(
       height: 56,
       blur: 15,
@@ -313,7 +316,7 @@ class _BentoSearchBarState extends State<BentoSearchBar>
                 fontSize: 15,
               ),
               decoration: InputDecoration(
-                hintText: 'Rechercher...',
+                hintText: l10n?.search ?? 'Search...',
                 hintStyle: GoogleFonts.outfit(
                   color: isDark ? Colors.white38 : Colors.grey[500],
                   fontSize: 15,
@@ -382,29 +385,24 @@ class _BentoSearchBarState extends State<BentoSearchBar>
     );
   }
 
-  String _buildSelectionText() {
+  String _buildSelectionText(AppLocalizations? l10n) {
     final docs = widget.selectedDocumentCount;
     final folders = widget.selectedFolderCount;
 
     if (folders > 0 && docs > 0) {
-      // Les deux types sélectionnés
-      final folderText = folders == 1 ? '1 dossier' : '$folders dossiers';
-      final docText = docs == 1 ? '1 document' : '$docs documents';
-      return '$folderText, $docText';
+      // Both types selected
+      return l10n?.foldersAndDocs(folders, docs) ?? '$folders folders, $docs documents';
     } else if (folders > 0) {
-      // Seulement des dossiers
-      return folders == 1
-          ? '1 dossier sélectionné'
-          : '$folders dossiers sélectionnés';
+      // Only folders
+      return l10n?.folderSelected(folders) ?? '$folders folders selected';
     } else {
-      // Seulement des documents
-      return docs == 1
-          ? '1 document sélectionné'
-          : '$docs documents sélectionnés';
+      // Only documents
+      return l10n?.documentSelected(docs) ?? '$docs documents selected';
     }
   }
 
   Widget _buildSelectionSide(bool isDark, ThemeData theme) {
+    final l10n = AppLocalizations.of(context);
     return BentoCard(
       height: 56,
       blur: 15,
@@ -432,7 +430,7 @@ class _BentoSearchBarState extends State<BentoSearchBar>
           const SizedBox(width: 12),
           Flexible(
             child: Text(
-              _buildSelectionText(),
+              _buildSelectionText(l10n),
               style: GoogleFonts.outfit(
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
@@ -570,6 +568,7 @@ class _BentoFolderCardState extends State<BentoFolderCard>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final pastelBg = _getPastelColor();
+    final l10n = AppLocalizations.of(context);
 
     return RepaintBoundary(
       child: BentoCard(
@@ -615,7 +614,7 @@ class _BentoFolderCardState extends State<BentoFolderCard>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${widget.documentCount} docs',
+                  l10n?.nDocs(widget.documentCount) ?? '${widget.documentCount} docs',
                   style: GoogleFonts.outfit(
                     fontSize: 12,
                     color: isDark ? Colors.white38 : Colors.grey[500],
@@ -781,25 +780,30 @@ class _BentoDocumentCardState extends State<BentoDocumentCard>
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? Colors.white.withValues(alpha: 0.05)
-                              : Colors.black.withValues(alpha: 0.03),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          '${widget.pageCount} page${widget.pageCount > 1 ? 's' : ''}',
-                          style: GoogleFonts.outfit(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: isDark ? Colors.white54 : Colors.grey[600],
-                          ),
-                        ),
+                      Builder(
+                        builder: (context) {
+                          final l10n = AppLocalizations.of(context);
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.05)
+                                  : Colors.black.withValues(alpha: 0.03),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              l10n?.pageCount(widget.pageCount) ?? '${widget.pageCount} page${widget.pageCount > 1 ? 's' : ''}',
+                              style: GoogleFonts.outfit(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: isDark ? Colors.white54 : Colors.grey[600],
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -928,24 +932,29 @@ class _BentoScanFabState extends State<BentoScanFab>
             ),
           ],
         ),
-        child: FloatingActionButton.extended(
-          onPressed: widget.onPressed,
-          backgroundColor: AppColors.bentoButtonBlue,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          icon: const Icon(Icons.document_scanner_rounded),
-          label: Text(
-            'Scanner',
-            style: GoogleFonts.outfit(
-              fontWeight: FontWeight.w700,
-              fontSize: 16,
-              letterSpacing: 0.2,
+        child: Builder(
+        builder: (context) {
+          final l10n = AppLocalizations.of(context);
+          return FloatingActionButton.extended(
+            onPressed: widget.onPressed,
+            backgroundColor: AppColors.bentoButtonBlue,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
-          ),
-        ),
+            icon: const Icon(Icons.document_scanner_rounded),
+            label: Text(
+              l10n?.scanner ?? 'Scan',
+              style: GoogleFonts.outfit(
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                letterSpacing: 0.2,
+              ),
+            ),
+          );
+        },
+      ),
       ),
     );
   }

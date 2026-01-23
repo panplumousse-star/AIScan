@@ -21,6 +21,7 @@ import '../../../core/widgets/bento_background.dart';
 import '../../../core/widgets/bento_card.dart';
 import '../../../core/widgets/bento_share_format_dialog.dart';
 import '../../../core/widgets/bento_state_views.dart';
+import '../../../l10n/app_localizations.dart';
 
 // View models have been moved to models/documents_ui_models.dart
 
@@ -872,7 +873,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: 'Échec de la mise à jour des favoris : $e',
+        error: 'Failed to update favorites: $e',
       );
     }
   }
@@ -892,7 +893,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
         await _shareService.shareDocuments(documents);
       }
     } catch (e) {
-      state = state.copyWith(error: 'Échec du partage : $e');
+      state = state.copyWith(error: 'Share failed: $e');
     }
   }
 
@@ -1267,8 +1268,9 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
   ) {
     // Show loading while initializing (before first load completes)
     if (!state.isInitialized) {
-      return const BentoLoadingView(
-        message: 'Chargement de vos documents...',
+      final l10n = AppLocalizations.of(context);
+      return BentoLoadingView(
+        message: l10n?.loadingDocuments ?? 'Loading your documents...',
       );
     }
 
@@ -1291,8 +1293,9 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
 
     // Still loading documents
     if (state.isLoading && !state.hasDocuments && !state.hasFolders) {
-      return const BentoLoadingView(
-        message: 'Chargement de vos documents...',
+      final l10n = AppLocalizations.of(context);
+      return BentoLoadingView(
+        message: l10n?.loadingDocuments ?? 'Loading your documents...',
       );
     }
 
@@ -1566,15 +1569,17 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
       if (!context.mounted) return;
 
       if (result.isSuccess) {
+        final l10n = AppLocalizations.of(context);
         final message = result.exportedCount == 1
-            ? 'Document exporté'
-            : '${result.exportedCount} documents exportés';
+            ? (l10n?.documentExported ?? 'Document exported')
+            : (l10n?.documentsExported(result.exportedCount) ?? '${result.exportedCount} documents exported');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message)),
         );
       } else if (result.isFailed) {
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result.errorMessage ?? 'Échec de l\'exportation')),
+          SnackBar(content: Text(result.errorMessage ?? (l10n?.exportFailed ?? 'Export failed'))),
         );
       }
       // If cancelled, do nothing

@@ -613,4 +613,227 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get textRecognition => 'Text recognition';
+
+  @override
+  String get search => 'Search...';
+
+  @override
+  String nDocumentsLabel(int count) {
+    return '$count documents';
+  }
+
+  @override
+  String nFoldersLabel(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count folders',
+      one: '1 folder',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String nDocs(int count) {
+    return '$count docs';
+  }
+
+  @override
+  String foldersAndDocs(int folders, int documents) {
+    String _temp0 = intl.Intl.pluralLogic(
+      folders,
+      locale: localeName,
+      other: '$folders folders',
+      one: '1 folder',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      documents,
+      locale: localeName,
+      other: '$documents documents',
+      one: '1 document',
+    );
+    return '$_temp0, $_temp1';
+  }
+
+  @override
+  String get scanner => 'Scan';
+
+  @override
+  String get sortAndFilter => 'Sort & Filter';
+
+  @override
+  String get clearAll => 'Clear all';
+
+  @override
+  String get sortBy => 'Sort by';
+
+  @override
+  String get quickFilters => 'Quick Filters';
+
+  @override
+  String get folder => 'Folder';
+
+  @override
+  String get tags => 'Tags';
+
+  @override
+  String get apply => 'Apply';
+
+  @override
+  String get favoritesOnly => 'Favorites only';
+
+  @override
+  String get favoritesOnlyDescription =>
+      'Show only documents marked as favorite';
+
+  @override
+  String get hasOcrText => 'Has OCR text';
+
+  @override
+  String get hasOcrTextDescription => 'Show only documents with extracted text';
+
+  @override
+  String get failedToLoadFolders => 'Failed to load folders';
+
+  @override
+  String get noFoldersYet => 'No folders created yet';
+
+  @override
+  String get allDocumentsFilter => 'All Documents';
+
+  @override
+  String get failedToLoadTags => 'Failed to load tags';
+
+  @override
+  String get noTagsYet => 'No tags created yet';
+
+  @override
+  String get initializingOcr => 'Initializing OCR...';
+
+  @override
+  String get ocrSaved => 'OCR text saved to document';
+
+  @override
+  String copiedWords(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count words',
+      one: '1 word',
+    );
+    return 'Copied $_temp0 to clipboard';
+  }
+
+  @override
+  String get failedToCopyText => 'Failed to copy text to clipboard';
+
+  @override
+  String get searchInText => 'Search in text...';
+
+  @override
+  String matchesFound(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count matches found',
+      one: '1 match found',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get done => 'Done';
+
+  @override
+  String get extractingTextProgress => 'Extracting text...';
+
+  @override
+  String processingPage(int current, int total) {
+    return 'Processing page $current of $total';
+  }
+
+  @override
+  String get thisMayTakeAMoment => 'This may take a moment';
+
+  @override
+  String get scrollDisabledInSelectionMode =>
+      'Selection mode active - scroll disabled';
+
+  @override
+  String get words => 'Words';
+
+  @override
+  String get lines => 'Lines';
+
+  @override
+  String get time => 'Time';
+
+  @override
+  String get noTextFound => 'No text found';
+
+  @override
+  String get noTextFoundDescription =>
+      'The image may not contain readable text,\nor the quality may be too low.';
+
+  @override
+  String get tryAgain => 'Try Again';
+
+  @override
+  String get extractTextTitle => 'Extract Text';
+
+  @override
+  String get extractTextDescription =>
+      'Run OCR to extract readable text\nfrom this document.';
+
+  @override
+  String get runOcr => 'Run OCR';
+
+  @override
+  String get allProcessingLocal =>
+      'All processing happens locally on your device';
+
+  @override
+  String get ocrOptions => 'OCR Options';
+
+  @override
+  String get documentType => 'Document Type';
+
+  @override
+  String get auto => 'Auto';
+
+  @override
+  String get singleColumn => 'Single Column';
+
+  @override
+  String get singleBlock => 'Single Block';
+
+  @override
+  String get sparseText => 'Sparse Text';
+
+  @override
+  String get rerunOcr => 'Re-run OCR';
+
+  @override
+  String get saveToDocument => 'Save to Document';
+
+  @override
+  String get copySelection => 'Copy Selection';
+
+  @override
+  String get copySelectionTooltip => 'Copy selected text to clipboard';
+
+  @override
+  String get searchInTextTooltip => 'Search in text';
+
+  @override
+  String get copyAllTextTooltip => 'Copy all text';
+
+  @override
+  String get shareTextTooltip => 'Share text';
+
+  @override
+  String get loadingDocuments => 'Loading your documents...';
+
+  @override
+  String get exportFailed => 'Export failed';
 }

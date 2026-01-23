@@ -1183,6 +1183,354 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Reconnaissance texte'**
   String get textRecognition;
+
+  /// No description provided for @search.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rechercher...'**
+  String get search;
+
+  /// No description provided for @nDocumentsLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count} documents'**
+  String nDocumentsLabel(int count);
+
+  /// No description provided for @nFoldersLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 dossier} other{{count} dossiers}}'**
+  String nFoldersLabel(int count);
+
+  /// No description provided for @nDocs.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count} docs'**
+  String nDocs(int count);
+
+  /// No description provided for @foldersAndDocs.
+  ///
+  /// In fr, this message translates to:
+  /// **'{folders, plural, =1{1 dossier} other{{folders} dossiers}}, {documents, plural, =1{1 document} other{{documents} documents}}'**
+  String foldersAndDocs(int folders, int documents);
+
+  /// No description provided for @scanner.
+  ///
+  /// In fr, this message translates to:
+  /// **'Scanner'**
+  String get scanner;
+
+  /// No description provided for @sortAndFilter.
+  ///
+  /// In fr, this message translates to:
+  /// **'Trier et Filtrer'**
+  String get sortAndFilter;
+
+  /// No description provided for @clearAll.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout effacer'**
+  String get clearAll;
+
+  /// No description provided for @sortBy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Trier par'**
+  String get sortBy;
+
+  /// No description provided for @quickFilters.
+  ///
+  /// In fr, this message translates to:
+  /// **'Filtres rapides'**
+  String get quickFilters;
+
+  /// No description provided for @folder.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dossier'**
+  String get folder;
+
+  /// No description provided for @tags.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tags'**
+  String get tags;
+
+  /// No description provided for @apply.
+  ///
+  /// In fr, this message translates to:
+  /// **'Appliquer'**
+  String get apply;
+
+  /// No description provided for @favoritesOnly.
+  ///
+  /// In fr, this message translates to:
+  /// **'Favoris uniquement'**
+  String get favoritesOnly;
+
+  /// No description provided for @favoritesOnlyDescription.
+  ///
+  /// In fr, this message translates to:
+  /// **'Afficher uniquement les documents marques comme favoris'**
+  String get favoritesOnlyDescription;
+
+  /// No description provided for @hasOcrText.
+  ///
+  /// In fr, this message translates to:
+  /// **'Contient du texte OCR'**
+  String get hasOcrText;
+
+  /// No description provided for @hasOcrTextDescription.
+  ///
+  /// In fr, this message translates to:
+  /// **'Afficher uniquement les documents avec du texte extrait'**
+  String get hasOcrTextDescription;
+
+  /// No description provided for @failedToLoadFolders.
+  ///
+  /// In fr, this message translates to:
+  /// **'Echec du chargement des dossiers'**
+  String get failedToLoadFolders;
+
+  /// No description provided for @noFoldersYet.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun dossier cree'**
+  String get noFoldersYet;
+
+  /// No description provided for @allDocumentsFilter.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tous les documents'**
+  String get allDocumentsFilter;
+
+  /// No description provided for @failedToLoadTags.
+  ///
+  /// In fr, this message translates to:
+  /// **'Echec du chargement des tags'**
+  String get failedToLoadTags;
+
+  /// No description provided for @noTagsYet.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun tag cree'**
+  String get noTagsYet;
+
+  /// No description provided for @initializingOcr.
+  ///
+  /// In fr, this message translates to:
+  /// **'Initialisation OCR...'**
+  String get initializingOcr;
+
+  /// No description provided for @ocrSaved.
+  ///
+  /// In fr, this message translates to:
+  /// **'Texte OCR sauvegarde dans le document'**
+  String get ocrSaved;
+
+  /// No description provided for @copiedWords.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 mot copie} other{{count} mots copies}} dans le presse-papiers'**
+  String copiedWords(int count);
+
+  /// No description provided for @failedToCopyText.
+  ///
+  /// In fr, this message translates to:
+  /// **'Echec de la copie du texte'**
+  String get failedToCopyText;
+
+  /// No description provided for @searchInText.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rechercher dans le texte...'**
+  String get searchInText;
+
+  /// No description provided for @matchesFound.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 resultat trouve} other{{count} resultats trouves}}'**
+  String matchesFound(int count);
+
+  /// No description provided for @done.
+  ///
+  /// In fr, this message translates to:
+  /// **'Termine'**
+  String get done;
+
+  /// No description provided for @extractingTextProgress.
+  ///
+  /// In fr, this message translates to:
+  /// **'Extraction du texte...'**
+  String get extractingTextProgress;
+
+  /// No description provided for @processingPage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Traitement de la page {current} sur {total}'**
+  String processingPage(int current, int total);
+
+  /// No description provided for @thisMayTakeAMoment.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cela peut prendre un moment'**
+  String get thisMayTakeAMoment;
+
+  /// No description provided for @scrollDisabledInSelectionMode.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mode selection actif - defilement desactive'**
+  String get scrollDisabledInSelectionMode;
+
+  /// No description provided for @words.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mots'**
+  String get words;
+
+  /// No description provided for @lines.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lignes'**
+  String get lines;
+
+  /// No description provided for @time.
+  ///
+  /// In fr, this message translates to:
+  /// **'Temps'**
+  String get time;
+
+  /// No description provided for @noTextFound.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun texte trouve'**
+  String get noTextFound;
+
+  /// No description provided for @noTextFoundDescription.
+  ///
+  /// In fr, this message translates to:
+  /// **'L\'image ne contient peut-etre pas de texte lisible,\nou la qualite est trop basse.'**
+  String get noTextFoundDescription;
+
+  /// No description provided for @tryAgain.
+  ///
+  /// In fr, this message translates to:
+  /// **'Reessayer'**
+  String get tryAgain;
+
+  /// No description provided for @extractTextTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Extraire le texte'**
+  String get extractTextTitle;
+
+  /// No description provided for @extractTextDescription.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lancez l\'OCR pour extraire le texte\nde ce document.'**
+  String get extractTextDescription;
+
+  /// No description provided for @runOcr.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lancer OCR'**
+  String get runOcr;
+
+  /// No description provided for @allProcessingLocal.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout le traitement se fait localement sur votre appareil'**
+  String get allProcessingLocal;
+
+  /// No description provided for @ocrOptions.
+  ///
+  /// In fr, this message translates to:
+  /// **'Options OCR'**
+  String get ocrOptions;
+
+  /// No description provided for @documentType.
+  ///
+  /// In fr, this message translates to:
+  /// **'Type de document'**
+  String get documentType;
+
+  /// No description provided for @auto.
+  ///
+  /// In fr, this message translates to:
+  /// **'Auto'**
+  String get auto;
+
+  /// No description provided for @singleColumn.
+  ///
+  /// In fr, this message translates to:
+  /// **'Colonne unique'**
+  String get singleColumn;
+
+  /// No description provided for @singleBlock.
+  ///
+  /// In fr, this message translates to:
+  /// **'Bloc unique'**
+  String get singleBlock;
+
+  /// No description provided for @sparseText.
+  ///
+  /// In fr, this message translates to:
+  /// **'Texte epars'**
+  String get sparseText;
+
+  /// No description provided for @rerunOcr.
+  ///
+  /// In fr, this message translates to:
+  /// **'Relancer OCR'**
+  String get rerunOcr;
+
+  /// No description provided for @saveToDocument.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sauvegarder dans le document'**
+  String get saveToDocument;
+
+  /// No description provided for @copySelection.
+  ///
+  /// In fr, this message translates to:
+  /// **'Copier la selection'**
+  String get copySelection;
+
+  /// No description provided for @copySelectionTooltip.
+  ///
+  /// In fr, this message translates to:
+  /// **'Copier le texte selectionne'**
+  String get copySelectionTooltip;
+
+  /// No description provided for @searchInTextTooltip.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rechercher dans le texte'**
+  String get searchInTextTooltip;
+
+  /// No description provided for @copyAllTextTooltip.
+  ///
+  /// In fr, this message translates to:
+  /// **'Copier tout le texte'**
+  String get copyAllTextTooltip;
+
+  /// No description provided for @shareTextTooltip.
+  ///
+  /// In fr, this message translates to:
+  /// **'Partager le texte'**
+  String get shareTextTooltip;
+
+  /// No description provided for @loadingDocuments.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chargement de vos documents...'**
+  String get loadingDocuments;
+
+  /// No description provided for @exportFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Echec de l\'exportation'**
+  String get exportFailed;
 }
 
 class _AppLocalizationsDelegate

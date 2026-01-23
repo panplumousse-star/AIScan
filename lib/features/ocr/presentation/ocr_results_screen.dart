@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 
+import '../../../l10n/app_localizations.dart';
 import '../../documents/domain/document_model.dart';
 import '../domain/ocr_service.dart';
 
@@ -526,6 +527,7 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
     final state = ref.watch(ocrResultsScreenProvider);
     final notifier = ref.read(ocrResultsScreenProvider.notifier);
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     // Listen for errors and show snackbar
     ref.listen<OcrResultsScreenState>(ocrResultsScreenProvider, (prev, next) {
@@ -534,7 +536,7 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
           SnackBar(
             content: Text(next.error!),
             action: SnackBarAction(
-              label: 'Dismiss',
+              label: l10n?.dismiss ?? 'Dismiss',
               onPressed: notifier.clearError,
             ),
           ),
@@ -548,11 +550,11 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(state.documentTitle ?? 'OCR Results'),
+        title: Text(state.documentTitle ?? (l10n?.ocrResults ?? 'OCR Results')),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.of(context).pop(),
-          tooltip: 'Close',
+          tooltip: l10n?.close ?? 'Close',
         ),
         actions: [
           if (state.hasResult) ...[
@@ -560,7 +562,7 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
             IconButton(
               icon: const Icon(Icons.search),
               onPressed: () => _showSearchSheet(context, state, theme),
-              tooltip: 'Search in text',
+              tooltip: l10n?.searchInTextTooltip ?? 'Search in text',
             ),
             // Copy all button
             IconButton(
@@ -568,7 +570,7 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
               onPressed: state.canCopy
                   ? () => _copyAllText(context, state)
                   : null,
-              tooltip: 'Copy all text',
+              tooltip: l10n?.copyAllTextTooltip ?? 'Copy all text',
             ),
             // Share button
             IconButton(
@@ -576,36 +578,36 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
               onPressed: state.canCopy
                   ? () => _shareText(context, state)
                   : null,
-              tooltip: 'Share text',
+              tooltip: l10n?.shareTextTooltip ?? 'Share text',
             ),
           ],
           // More options menu
           PopupMenuButton<String>(
-            onSelected: (value) => _handleMenuAction(value, state, notifier),
+            onSelected: (value) => _handleMenuAction(value, state, notifier, l10n),
             itemBuilder: (context) => [
               if (state.canRunOcr)
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'rerun',
                   child: ListTile(
-                    leading: Icon(Icons.refresh),
-                    title: Text('Re-run OCR'),
+                    leading: const Icon(Icons.refresh),
+                    title: Text(l10n?.rerunOcr ?? 'Re-run OCR'),
                     contentPadding: EdgeInsets.zero,
                   ),
                 ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'options',
                 child: ListTile(
-                  leading: Icon(Icons.tune),
-                  title: Text('OCR Options'),
+                  leading: const Icon(Icons.tune),
+                  title: Text(l10n?.ocrOptions ?? 'OCR Options'),
                   contentPadding: EdgeInsets.zero,
                 ),
               ),
               if (state.hasResult && widget.onSaveRequested != null)
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'save',
                   child: ListTile(
-                    leading: Icon(Icons.save),
-                    title: Text('Save to Document'),
+                    leading: const Icon(Icons.save),
+                    title: Text(l10n?.saveToDocument ?? 'Save to Document'),
                     contentPadding: EdgeInsets.zero,
                   ),
                 ),
@@ -619,8 +621,8 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
           ? FloatingActionButton.extended(
               onPressed: () => _copySelectedText(context, state, notifier),
               icon: const Icon(Icons.copy),
-              label: const Text('Copy Selection'),
-              tooltip: 'Copy selected text to clipboard',
+              label: Text(l10n?.copySelection ?? 'Copy Selection'),
+              tooltip: l10n?.copySelectionTooltip ?? 'Copy selected text to clipboard',
             )
           : null,
     );
@@ -632,14 +634,15 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
     OcrResultsScreenNotifier notifier,
     ThemeData theme,
   ) {
+    final l10n = AppLocalizations.of(context);
     if (state.isInitializing) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Initializing OCR...'),
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            Text(l10n?.initializingOcr ?? 'Initializing OCR...'),
           ],
         ),
       );
@@ -683,6 +686,7 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
     String action,
     OcrResultsScreenState state,
     OcrResultsScreenNotifier notifier,
+    AppLocalizations? l10n,
   ) {
     switch (action) {
       case 'rerun':
@@ -695,7 +699,7 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
         if (state.ocrResult != null) {
           widget.onSaveRequested?.call(state.ocrResult!.trimmedText);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('OCR text saved to document')),
+            SnackBar(content: Text(l10n?.ocrSaved ?? 'OCR text saved to document')),
           );
         }
         break;
@@ -707,6 +711,7 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
     OcrResultsScreenState state,
   ) async {
     if (state.ocrResult == null) return;
+    final l10n = AppLocalizations.of(context);
 
     await Clipboard.setData(
       ClipboardData(text: state.ocrResult!.trimmedText),
@@ -716,10 +721,10 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Copied ${state.ocrResult!.wordCount} words to clipboard',
+            l10n?.copiedWords(state.ocrResult!.wordCount ?? 0) ?? 'Copied ${state.ocrResult!.wordCount} words to clipboard',
           ),
           action: SnackBarAction(
-            label: 'Dismiss',
+            label: l10n?.dismiss ?? 'Dismiss',
             onPressed: () {},
           ),
         ),
@@ -734,6 +739,7 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
     OcrResultsScreenNotifier notifier,
   ) async {
     if (state.selectedText == null || state.selectedText!.isEmpty) return;
+    final l10n = AppLocalizations.of(context);
 
     try {
       await Clipboard.setData(
@@ -750,10 +756,10 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Copied $wordCount ${wordCount == 1 ? 'word' : 'words'} to clipboard',
+              l10n?.copiedWords(wordCount) ?? 'Copied $wordCount ${wordCount == 1 ? 'word' : 'words'} to clipboard',
             ),
             action: SnackBarAction(
-              label: 'Dismiss',
+              label: l10n?.dismiss ?? 'Dismiss',
               onPressed: () {},
             ),
           ),
@@ -766,9 +772,9 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Failed to copy text to clipboard'),
+            content: Text(l10n?.failedToCopyText ?? 'Failed to copy text to clipboard'),
             action: SnackBarAction(
-              label: 'Dismiss',
+              label: l10n?.dismiss ?? 'Dismiss',
               onPressed: () {},
             ),
           ),
@@ -812,6 +818,7 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
     OcrResultsScreenState state,
     ThemeData theme,
   ) {
+    final l10n = AppLocalizations.of(context);
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -828,7 +835,7 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
             TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Search in text...',
+                hintText: l10n?.searchInText ?? 'Search in text...',
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.clear),
@@ -849,7 +856,7 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
             const SizedBox(height: 16),
             if (_searchQuery.isNotEmpty && state.ocrResult != null)
               Text(
-                '${_countOccurrences(state.ocrResult!.text, _searchQuery)} matches found',
+                l10n?.matchesFound(_countOccurrences(state.ocrResult!.text, _searchQuery)) ?? '${_countOccurrences(state.ocrResult!.text, _searchQuery)} matches found',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -857,7 +864,7 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
             const SizedBox(height: 8),
             FilledButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Done'),
+              child: Text(l10n?.done ?? 'Done'),
             ),
           ],
         ),
@@ -908,6 +915,7 @@ class _ProcessingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -920,20 +928,20 @@ class _ProcessingView extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              'Extracting text...',
+              l10n?.extractingTextProgress ?? 'Extracting text...',
               style: theme.textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
             if (totalPages > 1)
               Text(
-                'Processing page $currentPage of $totalPages',
+                l10n?.processingPage(currentPage, totalPages) ?? 'Processing page $currentPage of $totalPages',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               )
             else
               Text(
-                'This may take a moment',
+                l10n?.thisMayTakeAMoment ?? 'This may take a moment',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -1023,30 +1031,35 @@ class _ResultsViewState extends State<_ResultsView> {
               children: [
                 // Selection mode indicator
                 if (_isSelectionMode)
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: widget.theme.colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.touch_app,
-                          size: 16,
-                          color: widget.theme.colorScheme.onPrimaryContainer,
+                  Builder(
+                    builder: (context) {
+                      final l10n = AppLocalizations.of(context);
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: widget.theme.colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Mode sélection actif - scroll désactivé',
-                          style: widget.theme.textTheme.labelMedium?.copyWith(
-                            color: widget.theme.colorScheme.onPrimaryContainer,
-                          ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.touch_app,
+                              size: 16,
+                              color: widget.theme.colorScheme.onPrimaryContainer,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              l10n?.scrollDisabledInSelectionMode ?? 'Selection mode active - scroll disabled',
+                              style: widget.theme.textTheme.labelMedium?.copyWith(
+                                color: widget.theme.colorScheme.onPrimaryContainer,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
                 // Selectable text with optional highlighting
                 Container(
@@ -1071,6 +1084,7 @@ class _ResultsViewState extends State<_ResultsView> {
                     contextMenuBuilder: (context, editableTextState) {
                       // Custom context menu: Copy, Share, Select All
                       // (removes system "Read aloud" option)
+                      final l10n = AppLocalizations.of(context);
                       final selection = editableTextState.textEditingValue.selection;
                       final selectedText = selection.isValid && !selection.isCollapsed
                           ? widget.result.trimmedText.substring(selection.start, selection.end)
@@ -1080,21 +1094,21 @@ class _ResultsViewState extends State<_ResultsView> {
                         anchors: editableTextState.contextMenuAnchors,
                         buttonItems: [
                           ContextMenuButtonItem(
-                            label: 'Copier',
+                            label: l10n?.copy ?? 'Copy',
                             onPressed: () {
                               editableTextState.copySelection(SelectionChangedCause.toolbar);
                             },
                           ),
                           if (selectedText != null)
                             ContextMenuButtonItem(
-                              label: 'Partager',
+                              label: l10n?.share ?? 'Share',
                               onPressed: () {
                                 editableTextState.hideToolbar();
                                 Share.share(selectedText);
                               },
                             ),
                           ContextMenuButtonItem(
-                            label: 'Tout sélectionner',
+                            label: l10n?.selectAll ?? 'Select all',
                             onPressed: () {
                               editableTextState.selectAll(SelectionChangedCause.toolbar);
                             },
@@ -1118,24 +1132,29 @@ class _ResultsViewState extends State<_ResultsView> {
                 const SizedBox(height: 16),
 
                 // Copy hint
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.info_outline,
-                      size: 16,
-                      color: widget.theme.colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      _isSelectionMode
-                          ? 'Sélectionnez le texte facilement'
-                          : 'Appui long pour sélectionner',
-                      style: widget.theme.textTheme.bodySmall?.copyWith(
-                        color: widget.theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
+                Builder(
+                  builder: (context) {
+                    final l10n = AppLocalizations.of(context);
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: 16,
+                          color: widget.theme.colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _isSelectionMode
+                              ? (l10n?.selectTextEasily ?? 'Select text easily')
+                              : (l10n?.longPressToSelect ?? 'Long press to select'),
+                          style: widget.theme.textTheme.bodySmall?.copyWith(
+                            color: widget.theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ],
             ),
@@ -1218,14 +1237,19 @@ class _MetadataBar extends StatelessWidget {
                               : theme.colorScheme.onSurfaceVariant,
                         ),
                         const SizedBox(width: 4),
-                        Text(
-                          'Sélection',
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: isSelectionMode
-                                ? theme.colorScheme.onPrimaryContainer
-                                : theme.colorScheme.onSurfaceVariant,
-                            fontWeight: isSelectionMode ? FontWeight.w600 : null,
-                          ),
+                        Builder(
+                          builder: (context) {
+                            final l10n = AppLocalizations.of(context);
+                            return Text(
+                              l10n?.selection ?? 'Selection',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: isSelectionMode
+                                    ? theme.colorScheme.onPrimaryContainer
+                                    : theme.colorScheme.onSurfaceVariant,
+                                fontWeight: isSelectionMode ? FontWeight.w600 : null,
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -1235,37 +1259,42 @@ class _MetadataBar extends StatelessWidget {
             ),
           // Stats
           Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _MetadataItem(
-                  icon: Icons.text_fields,
-                  label: 'Mots',
-                  value: '${result.wordCount ?? 0}',
-                  theme: theme,
-                ),
-                _MetadataItem(
-                  icon: Icons.format_line_spacing,
-                  label: 'Lignes',
-                  value: '${result.lineCount ?? 0}',
-                  theme: theme,
-                ),
-                _MetadataItem(
-                  icon: Icons.timer_outlined,
-                  label: 'Temps',
-                  value: result.processingTimeMs != null
-                      ? '${(result.processingTimeMs! / 1000).toStringAsFixed(1)}s'
-                      : 'N/A',
-                  theme: theme,
-                ),
-                if (result.confidence != null)
-                  _MetadataItem(
-                    icon: Icons.check_circle_outline,
-                    label: 'Confiance',
-                    value: result.confidencePercent,
-                    theme: theme,
-                  ),
-              ],
+            child: Builder(
+              builder: (context) {
+                final l10n = AppLocalizations.of(context);
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _MetadataItem(
+                      icon: Icons.text_fields,
+                      label: l10n?.words ?? 'Words',
+                      value: '${result.wordCount ?? 0}',
+                      theme: theme,
+                    ),
+                    _MetadataItem(
+                      icon: Icons.format_line_spacing,
+                      label: l10n?.lines ?? 'Lines',
+                      value: '${result.lineCount ?? 0}',
+                      theme: theme,
+                    ),
+                    _MetadataItem(
+                      icon: Icons.timer_outlined,
+                      label: l10n?.time ?? 'Time',
+                      value: result.processingTimeMs != null
+                          ? '${(result.processingTimeMs! / 1000).toStringAsFixed(1)}s'
+                          : 'N/A',
+                      theme: theme,
+                    ),
+                    if (result.confidence != null)
+                      _MetadataItem(
+                        icon: Icons.check_circle_outline,
+                        label: l10n?.confidence ?? 'Confidence',
+                        value: result.confidencePercent,
+                        theme: theme,
+                      ),
+                  ],
+                );
+              },
             ),
           ),
         ],
@@ -1332,6 +1361,7 @@ class _SelectionBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Container(
@@ -1357,7 +1387,7 @@ class _SelectionBadge extends StatelessWidget {
             ),
             const SizedBox(width: 6),
             Text(
-              '$wordCount ${wordCount == 1 ? 'mot sélectionné' : 'mots sélectionnés'}',
+              l10n?.wordSelected(wordCount) ?? '$wordCount ${wordCount == 1 ? 'word selected' : 'words selected'}',
               style: theme.textTheme.labelMedium?.copyWith(
                 color: theme.colorScheme.onPrimaryContainer,
                 fontWeight: FontWeight.w600,
@@ -1382,6 +1412,7 @@ class _EmptyResultView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -1395,14 +1426,14 @@ class _EmptyResultView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'No text found',
+              l10n?.noTextFound ?? 'No text found',
               style: theme.textTheme.headlineSmall?.copyWith(
                 color: theme.colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              'The image may not contain readable text,\nor the quality may be too low.',
+              l10n?.noTextFoundDescription ?? 'The image may not contain readable text,\nor the quality may be too low.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -1413,7 +1444,7 @@ class _EmptyResultView extends StatelessWidget {
               FilledButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Try Again'),
+                label: Text(l10n?.tryAgain ?? 'Try Again'),
               ),
             ],
           ],
@@ -1437,6 +1468,7 @@ class _PromptView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -1450,14 +1482,14 @@ class _PromptView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Extract Text',
+              l10n?.extractTextTitle ?? 'Extract Text',
               style: theme.textTheme.headlineSmall?.copyWith(
                 color: theme.colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Run OCR to extract readable text\nfrom this document.',
+              l10n?.extractTextDescription ?? 'Run OCR to extract readable text\nfrom this document.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -1467,11 +1499,11 @@ class _PromptView extends StatelessWidget {
             FilledButton.icon(
               onPressed: canRunOcr ? onRunOcr : null,
               icon: const Icon(Icons.text_fields),
-              label: const Text('Run OCR'),
+              label: Text(l10n?.runOcr ?? 'Run OCR'),
             ),
             const SizedBox(height: 16),
             Text(
-              'All processing happens locally on your device',
+              l10n?.allProcessingLocal ?? 'All processing happens locally on your device',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -1513,6 +1545,7 @@ class _OcrOptionsSheetState extends State<_OcrOptionsSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return SafeArea(
       child: Padding(
@@ -1526,7 +1559,7 @@ class _OcrOptionsSheetState extends State<_OcrOptionsSheet> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'OCR Options',
+                  l10n?.ocrOptions ?? 'OCR Options',
                   style: theme.textTheme.titleLarge,
                 ),
                 IconButton(
@@ -1539,7 +1572,7 @@ class _OcrOptionsSheetState extends State<_OcrOptionsSheet> {
 
             // Language selection
             Text(
-              'Language',
+              l10n?.language ?? 'Language',
               style: theme.textTheme.titleSmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -1576,7 +1609,7 @@ class _OcrOptionsSheetState extends State<_OcrOptionsSheet> {
 
             // Page segmentation mode
             Text(
-              'Document Type',
+              l10n?.documentType ?? 'Document Type',
               style: theme.textTheme.titleSmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -1587,22 +1620,22 @@ class _OcrOptionsSheetState extends State<_OcrOptionsSheet> {
               runSpacing: 8,
               children: [
                 _buildModeChip(
-                  'Auto',
+                  l10n?.auto ?? 'Auto',
                   OcrPageSegmentationMode.auto,
                   theme,
                 ),
                 _buildModeChip(
-                  'Single Column',
+                  l10n?.singleColumn ?? 'Single Column',
                   OcrPageSegmentationMode.singleColumn,
                   theme,
                 ),
                 _buildModeChip(
-                  'Single Block',
+                  l10n?.singleBlock ?? 'Single Block',
                   OcrPageSegmentationMode.singleBlock,
                   theme,
                 ),
                 _buildModeChip(
-                  'Sparse Text',
+                  l10n?.sparseText ?? 'Sparse Text',
                   OcrPageSegmentationMode.sparseText,
                   theme,
                 ),
@@ -1622,7 +1655,7 @@ class _OcrOptionsSheetState extends State<_OcrOptionsSheet> {
                       );
                       widget.onOptionsChanged(options);
                     },
-                    child: const Text('Apply'),
+                    child: Text(l10n?.apply ?? 'Apply'),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -1637,7 +1670,7 @@ class _OcrOptionsSheetState extends State<_OcrOptionsSheet> {
                       widget.onRunOcr();
                     },
                     icon: const Icon(Icons.text_fields),
-                    label: const Text('Run OCR'),
+                    label: Text(l10n?.runOcr ?? 'Run OCR'),
                   ),
                 ),
               ],

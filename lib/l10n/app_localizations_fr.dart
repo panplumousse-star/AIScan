@@ -613,4 +613,228 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get textRecognition => 'Reconnaissance texte';
+
+  @override
+  String get search => 'Rechercher...';
+
+  @override
+  String nDocumentsLabel(int count) {
+    return '$count documents';
+  }
+
+  @override
+  String nFoldersLabel(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count dossiers',
+      one: '1 dossier',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String nDocs(int count) {
+    return '$count docs';
+  }
+
+  @override
+  String foldersAndDocs(int folders, int documents) {
+    String _temp0 = intl.Intl.pluralLogic(
+      folders,
+      locale: localeName,
+      other: '$folders dossiers',
+      one: '1 dossier',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      documents,
+      locale: localeName,
+      other: '$documents documents',
+      one: '1 document',
+    );
+    return '$_temp0, $_temp1';
+  }
+
+  @override
+  String get scanner => 'Scanner';
+
+  @override
+  String get sortAndFilter => 'Trier et Filtrer';
+
+  @override
+  String get clearAll => 'Tout effacer';
+
+  @override
+  String get sortBy => 'Trier par';
+
+  @override
+  String get quickFilters => 'Filtres rapides';
+
+  @override
+  String get folder => 'Dossier';
+
+  @override
+  String get tags => 'Tags';
+
+  @override
+  String get apply => 'Appliquer';
+
+  @override
+  String get favoritesOnly => 'Favoris uniquement';
+
+  @override
+  String get favoritesOnlyDescription =>
+      'Afficher uniquement les documents marques comme favoris';
+
+  @override
+  String get hasOcrText => 'Contient du texte OCR';
+
+  @override
+  String get hasOcrTextDescription =>
+      'Afficher uniquement les documents avec du texte extrait';
+
+  @override
+  String get failedToLoadFolders => 'Echec du chargement des dossiers';
+
+  @override
+  String get noFoldersYet => 'Aucun dossier cree';
+
+  @override
+  String get allDocumentsFilter => 'Tous les documents';
+
+  @override
+  String get failedToLoadTags => 'Echec du chargement des tags';
+
+  @override
+  String get noTagsYet => 'Aucun tag cree';
+
+  @override
+  String get initializingOcr => 'Initialisation OCR...';
+
+  @override
+  String get ocrSaved => 'Texte OCR sauvegarde dans le document';
+
+  @override
+  String copiedWords(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count mots copies',
+      one: '1 mot copie',
+    );
+    return '$_temp0 dans le presse-papiers';
+  }
+
+  @override
+  String get failedToCopyText => 'Echec de la copie du texte';
+
+  @override
+  String get searchInText => 'Rechercher dans le texte...';
+
+  @override
+  String matchesFound(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count resultats trouves',
+      one: '1 resultat trouve',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get done => 'Termine';
+
+  @override
+  String get extractingTextProgress => 'Extraction du texte...';
+
+  @override
+  String processingPage(int current, int total) {
+    return 'Traitement de la page $current sur $total';
+  }
+
+  @override
+  String get thisMayTakeAMoment => 'Cela peut prendre un moment';
+
+  @override
+  String get scrollDisabledInSelectionMode =>
+      'Mode selection actif - defilement desactive';
+
+  @override
+  String get words => 'Mots';
+
+  @override
+  String get lines => 'Lignes';
+
+  @override
+  String get time => 'Temps';
+
+  @override
+  String get noTextFound => 'Aucun texte trouve';
+
+  @override
+  String get noTextFoundDescription =>
+      'L\'image ne contient peut-etre pas de texte lisible,\nou la qualite est trop basse.';
+
+  @override
+  String get tryAgain => 'Reessayer';
+
+  @override
+  String get extractTextTitle => 'Extraire le texte';
+
+  @override
+  String get extractTextDescription =>
+      'Lancez l\'OCR pour extraire le texte\nde ce document.';
+
+  @override
+  String get runOcr => 'Lancer OCR';
+
+  @override
+  String get allProcessingLocal =>
+      'Tout le traitement se fait localement sur votre appareil';
+
+  @override
+  String get ocrOptions => 'Options OCR';
+
+  @override
+  String get documentType => 'Type de document';
+
+  @override
+  String get auto => 'Auto';
+
+  @override
+  String get singleColumn => 'Colonne unique';
+
+  @override
+  String get singleBlock => 'Bloc unique';
+
+  @override
+  String get sparseText => 'Texte epars';
+
+  @override
+  String get rerunOcr => 'Relancer OCR';
+
+  @override
+  String get saveToDocument => 'Sauvegarder dans le document';
+
+  @override
+  String get copySelection => 'Copier la selection';
+
+  @override
+  String get copySelectionTooltip => 'Copier le texte selectionne';
+
+  @override
+  String get searchInTextTooltip => 'Rechercher dans le texte';
+
+  @override
+  String get copyAllTextTooltip => 'Copier tout le texte';
+
+  @override
+  String get shareTextTooltip => 'Partager le texte';
+
+  @override
+  String get loadingDocuments => 'Chargement de vos documents...';
+
+  @override
+  String get exportFailed => 'Echec de l\'exportation';
 }

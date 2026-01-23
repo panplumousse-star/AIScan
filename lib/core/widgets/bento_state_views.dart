@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../l10n/app_localizations.dart';
 import 'bento_card.dart';
 import 'bento_mascot.dart';
 
@@ -14,17 +15,20 @@ import 'bento_mascot.dart';
 class BentoLoadingView extends StatelessWidget {
   const BentoLoadingView({
     super.key,
-    this.message = 'Un instant s\'il vous plaît...',
+    this.message,
     this.mascotHeight = 120,
     this.mascotVariant = BentoMascotVariant.waving,
   });
 
-  final String message;
+  final String? message;
   final double mascotHeight;
   final BentoMascotVariant mascotVariant;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final displayMessage = message ?? l10n?.pleaseWait ?? 'Please wait...';
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -46,7 +50,7 @@ class BentoLoadingView extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            message,
+            displayMessage,
             style: GoogleFonts.outfit(
               fontSize: 14,
               fontWeight: FontWeight.w500,
@@ -72,22 +76,25 @@ class BentoErrorView extends StatelessWidget {
     super.key,
     required this.message,
     required this.onRetry,
-    this.title = 'Oups ! Quelque chose a mal tourné',
-    this.retryLabel = 'Réessayer',
+    this.title,
+    this.retryLabel,
     this.mascotHeight = 80,
     this.mascotVariant = BentoMascotVariant.waving,
   });
 
   final String message;
   final VoidCallback onRetry;
-  final String title;
-  final String retryLabel;
+  final String? title;
+  final String? retryLabel;
   final double mascotHeight;
   final BentoMascotVariant mascotVariant;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+    final displayTitle = title ?? l10n?.somethingWentWrong ?? 'Oops! Something went wrong';
+    final displayRetryLabel = retryLabel ?? l10n?.retry ?? 'Retry';
 
     return Center(
       child: Padding(
@@ -103,7 +110,7 @@ class BentoErrorView extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               Text(
-                title,
+                displayTitle,
                 textAlign: TextAlign.center,
                 style: GoogleFonts.outfit(
                   fontSize: 20,
@@ -124,7 +131,7 @@ class BentoErrorView extends StatelessWidget {
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh_rounded),
                 label: Text(
-                  retryLabel,
+                  displayRetryLabel,
                   style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
                 ),
                 style: ElevatedButton.styleFrom(

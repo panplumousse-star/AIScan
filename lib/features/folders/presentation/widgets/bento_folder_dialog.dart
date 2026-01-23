@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/widgets/bento_card.dart';
 import '../../../../core/widgets/bento_mascot.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../domain/folder_model.dart';
 
 /// Result from folder creation/edition dialog.
@@ -104,8 +105,9 @@ class _BentoFolderDialogState extends State<BentoFolderDialog> {
 
   void _submit() {
     final name = _nameController.text.trim();
+    final l10n = AppLocalizations.of(context);
     if (name.isEmpty) {
-      setState(() => _error = 'Le nom ne peut pas être vide');
+      setState(() => _error = l10n?.nameCannotBeEmpty ?? 'Name cannot be empty');
       return;
     }
 
@@ -131,6 +133,7 @@ class _BentoFolderDialogState extends State<BentoFolderDialog> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
@@ -161,7 +164,7 @@ class _BentoFolderDialogState extends State<BentoFolderDialog> {
                       children: [
                         Expanded(
                           child: Text(
-                            widget.isEditing ? 'Modifier le dossier' : 'Nouveau dossier',
+                            widget.isEditing ? (l10n?.editFolder ?? 'Edit folder') : (l10n?.createFolder ?? 'Create folder'),
                             style: GoogleFonts.outfit(
                               fontSize: 20,
                               fontWeight: FontWeight.w700,
@@ -200,7 +203,7 @@ class _BentoFolderDialogState extends State<BentoFolderDialog> {
                           color: colorScheme.onSurface,
                         ),
                         decoration: InputDecoration(
-                          hintText: 'Nom du dossier...',
+                          hintText: l10n?.folderName ?? 'Folder name...',
                           hintStyle: GoogleFonts.outfit(
                             color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                           ),
@@ -263,7 +266,7 @@ class _BentoFolderDialogState extends State<BentoFolderDialog> {
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                             ),
                             child: Text(
-                              'Annuler',
+                              l10n?.cancel ?? 'Cancel',
                               style: GoogleFonts.outfit(
                                 fontWeight: FontWeight.w600,
                                 color: colorScheme.onSurface.withValues(alpha: 0.4),
@@ -299,7 +302,7 @@ class _BentoFolderDialogState extends State<BentoFolderDialog> {
                                 borderRadius: BorderRadius.circular(20),
                                 child: Center(
                                   child: Text(
-                                    widget.isEditing ? 'Enregistrer' : 'Créer',
+                                    widget.isEditing ? (l10n?.save ?? 'Save') : (l10n?.create ?? 'Create'),
                                     style: GoogleFonts.outfit(
                                       fontWeight: FontWeight.w700,
                                       color: Colors.white,

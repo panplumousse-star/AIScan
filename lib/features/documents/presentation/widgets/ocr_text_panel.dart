@@ -29,6 +29,7 @@ class OcrTextPanel extends StatefulWidget {
     super.key,
     required this.ocrText,
     required this.theme,
+    this.onSelectionChanged,
   });
 
   /// The OCR text to display.
@@ -37,12 +38,40 @@ class OcrTextPanel extends StatefulWidget {
   /// The theme to use for styling.
   final ThemeData theme;
 
+  /// Callback when text selection changes.
+  ///
+  /// Called with the selected text when user selects text,
+  /// or null when selection is cleared.
+  final void Function(String?)? onSelectionChanged;
+
   @override
   State<OcrTextPanel> createState() => _OcrTextPanelState();
 }
 
 class _OcrTextPanelState extends State<OcrTextPanel> {
   bool _isExpanded = false;
+
+  /// Tracks if haptic feedback was already triggered for current selection.
+  /// Prevents repeated vibrations while adjusting selection handles.
+  bool _hasTriggeredSelectionHaptic = false;
+
+  /// Handles selection changes, triggering haptic feedback only when selection starts.
+  void _onSelectionChanged(dynamic selectedContent) {
+    final selectedText = selectedContent?.plainText as String?;
+    final hasSelection = selectedText != null && selectedText.isNotEmpty;
+
+    if (hasSelection && !_hasTriggeredSelectionHaptic) {
+      // Selection just started - trigger haptic feedback once
+      HapticFeedback.selectionClick();
+      _hasTriggeredSelectionHaptic = true;
+    } else if (!hasSelection) {
+      // Selection cleared - reset flag for next selection
+      _hasTriggeredSelectionHaptic = false;
+    }
+
+    // Notify parent of selection change
+    widget.onSelectionChanged?.call(hasSelection ? selectedText : null);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -97,19 +126,25 @@ class _OcrTextPanelState extends State<OcrTextPanel> {
           ),
 
           // Content
+          // Using SelectionArea wrapper pattern to fix scroll/selection gesture conflict.
+          // SelectionArea properly handles gesture priority, allowing scrolling to work
+          // while still enabling text selection via long-press.
           AnimatedCrossFade(
             firstChild: const SizedBox.shrink(),
             secondChild: Container(
               constraints: const BoxConstraints(maxHeight: 200),
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: SingleChildScrollView(
-                child: SelectableText(
-                  widget.ocrText,
-                  style: GoogleFonts.outfit(
-                    fontSize: 13,
-                    color: widget.theme.colorScheme.onSurface
-                        .withValues(alpha: 0.7),
-                    height: 1.5,
+              child: SelectionArea(
+                onSelectionChanged: _onSelectionChanged,
+                child: SingleChildScrollView(
+                  child: Text(
+                    widget.ocrText,
+                    style: GoogleFonts.outfit(
+                      fontSize: 13,
+                      color: widget.theme.colorScheme.onSurface
+                          .withValues(alpha: 0.7),
+                      height: 1.5,
+                    ),
                   ),
                 ),
               ),

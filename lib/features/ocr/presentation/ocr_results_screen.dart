@@ -542,6 +542,10 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
       }
     });
 
+    // Determine if we should show the Copy Selection FAB
+    final hasSelection =
+        state.selectedText != null && state.selectedText!.isNotEmpty;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(state.documentTitle ?? 'OCR Results'),
@@ -610,6 +614,15 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
         ],
       ),
       body: _buildBody(context, state, notifier, theme),
+      // Conditional Copy Selection FAB - appears only when text is selected
+      floatingActionButton: hasSelection
+          ? FloatingActionButton.extended(
+              onPressed: () => _copySelectedText(context, state, notifier),
+              icon: const Icon(Icons.copy),
+              label: const Text('Copy Selection'),
+              tooltip: 'Copy selected text to clipboard',
+            )
+          : null,
     );
   }
 
@@ -647,6 +660,7 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
         searchQuery: _searchQuery,
         theme: theme,
         onTextSelected: notifier.setSelectedText,
+        selectedText: state.selectedText,
       );
     }
 
@@ -711,6 +725,63 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
         ),
       );
     }
+  }
+
+  /// Copies the selected text to clipboard.
+  Future<void> _copySelectedText(
+    BuildContext context,
+    OcrResultsScreenState state,
+    OcrResultsScreenNotifier notifier,
+  ) async {
+    if (state.selectedText == null || state.selectedText!.isEmpty) return;
+
+    try {
+      await Clipboard.setData(
+        ClipboardData(text: state.selectedText!),
+      );
+
+      // Haptic feedback on successful copy
+      await HapticFeedback.mediumImpact();
+
+      // Count words in selected text
+      final wordCount = _countWords(state.selectedText!);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Copied $wordCount ${wordCount == 1 ? 'word' : 'words'} to clipboard',
+            ),
+            action: SnackBarAction(
+              label: 'Dismiss',
+              onPressed: () {},
+            ),
+          ),
+        );
+      }
+
+      // Clear selection after copying
+      notifier.clearSelectedText();
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Failed to copy text to clipboard'),
+            action: SnackBarAction(
+              label: 'Dismiss',
+              onPressed: () {},
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  /// Counts words in text.
+  int _countWords(String text) {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return 0;
+    return trimmed.split(RegExp(r'\s+')).length;
   }
 
   Future<void> _shareText(
@@ -895,19 +966,47 @@ class _ResultsView extends StatelessWidget {
     required this.searchQuery,
     required this.theme,
     required this.onTextSelected,
+    this.selectedText,
   });
 
   final OcrResult result;
   final String searchQuery;
   final ThemeData theme;
   final void Function(String?) onTextSelected;
+  final String? selectedText;
+
+  /// Counts words in selected text.
+  int _countSelectedWords(String text) {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return 0;
+    return trimmed.split(RegExp(r'\s+')).length;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final hasSelection = selectedText != null && selectedText!.isNotEmpty;
+    final selectedWordCount = hasSelection ? _countSelectedWords(selectedText!) : 0;
+
     return Column(
       children: [
         // Metadata bar
         _MetadataBar(result: result, theme: theme),
+
+        // Word count badge for selected text
+        AnimatedSize(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutCubic,
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 150),
+            opacity: hasSelection ? 1.0 : 0.0,
+            child: hasSelection
+                ? _SelectionBadge(
+                    wordCount: selectedWordCount,
+                    theme: theme,
+                  )
+                : const SizedBox.shrink(),
+          ),
+        ),
 
         // Text content
         Expanded(
@@ -1079,6 +1178,56 @@ class _MetadataItem extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Badge showing selected word count.
+class _SelectionBadge extends StatelessWidget {
+  const _SelectionBadge({
+    required this.wordCount,
+    required this.theme,
+  });
+
+  final int wordCount;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.primaryContainer,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: theme.colorScheme.primary.withValues(alpha: 0.15),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.text_fields,
+              size: 14,
+              color: theme.colorScheme.onPrimaryContainer,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              '$wordCount ${wordCount == 1 ? 'mot sélectionné' : 'mots sélectionnés'}',
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: theme.colorScheme.onPrimaryContainer,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

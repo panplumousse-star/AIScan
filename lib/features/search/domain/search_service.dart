@@ -897,7 +897,28 @@ class SearchService {
     SearchOptions options,
   ) async {
     try {
-      // Query FTS table with ranking
+      // Build dynamic WHERE clause for filters
+      final whereConditions = <String>['${DatabaseHelper.tableDocumentsFts} MATCH ?'];
+      final queryArgs = <Object>[ftsQuery];
+
+      // Add filter conditions based on SearchOptions
+      if (options.favoritesOnly) {
+        whereConditions.add('d.${DatabaseHelper.columnIsFavorite} = 1');
+      }
+
+      if (options.hasOcrOnly) {
+        whereConditions.add('d.${DatabaseHelper.columnOcrText} IS NOT NULL');
+      }
+
+      if (options.folderId != null) {
+        whereConditions.add('d.${DatabaseHelper.columnFolderId} = ?');
+        queryArgs.add(options.folderId!);
+      }
+
+      // Combine WHERE conditions with AND
+      final whereClause = whereConditions.join(' AND ');
+
+      // Query FTS table with ranking and filters
       final sql = '''
         SELECT
           d.${DatabaseHelper.columnId} as id,
@@ -907,11 +928,11 @@ class SearchService {
           fts.rank as score
         FROM ${DatabaseHelper.tableDocuments} d
         INNER JOIN ${DatabaseHelper.tableDocumentsFts} fts ON d.rowid = fts.rowid
-        WHERE ${DatabaseHelper.tableDocumentsFts} MATCH ?
+        WHERE $whereClause
         ORDER BY fts.rank
       ''';
 
-      final results = await _database.rawQuery(sql, [ftsQuery]);
+      final results = await _database.rawQuery(sql, queryArgs);
 
       return results.map((row) {
         return _RawSearchResult(
@@ -945,9 +966,9 @@ class SearchService {
       return [];
     }
 
-    // Build LIKE conditions
+    // Build LIKE conditions for search terms
     final conditions = <String>[];
-    final args = <String>[];
+    final args = <Object>[];
 
     for (final term in terms) {
       final likePattern = '%$term%';
@@ -965,9 +986,29 @@ class SearchService {
       }
     }
 
-    final whereClause = conditions.join(
+    final searchCondition = conditions.join(
       options.matchMode == SearchMatchMode.anyWord ? ' OR ' : ' AND ',
     );
+
+    // Build WHERE clause with search and filter conditions
+    final whereConditions = <String>['($searchCondition)'];
+
+    // Add filter conditions based on SearchOptions
+    if (options.favoritesOnly) {
+      whereConditions.add('${DatabaseHelper.columnIsFavorite} = 1');
+    }
+
+    if (options.hasOcrOnly) {
+      whereConditions.add('${DatabaseHelper.columnOcrText} IS NOT NULL');
+    }
+
+    if (options.folderId != null) {
+      whereConditions.add('${DatabaseHelper.columnFolderId} = ?');
+      args.add(options.folderId!);
+    }
+
+    // Combine all WHERE conditions with AND
+    final whereClause = whereConditions.join(' AND ');
 
     final sql = '''
       SELECT
@@ -994,33 +1035,17 @@ class SearchService {
   }
 
   /// Applies additional filters to raw search results.
+  ///
+  /// This method is kept for API compatibility and future extensibility,
+  /// but currently returns results unchanged since all filters
+  /// (favoritesOnly, hasOcrOnly, folderId) are now applied in the SQL query.
   Future<List<_RawSearchResult>> _applyFilters(
     List<_RawSearchResult> results,
     SearchOptions options,
   ) async {
-    if (!options.favoritesOnly &&
-        !options.hasOcrOnly &&
-        options.folderId == null) {
-      return results;
-    }
-
-    final filtered = <_RawSearchResult>[];
-
-    for (final result in results) {
-      final document = await _documentRepository.getDocument(result.documentId);
-      if (document == null) continue;
-
-      // Apply filters
-      if (options.favoritesOnly && !document.isFavorite) continue;
-      if (options.hasOcrOnly && !document.hasOcrText) continue;
-      if (options.folderId != null && document.folderId != options.folderId) {
-        continue;
-      }
-
-      filtered.add(result);
-    }
-
-    return filtered;
+    // All filters are now applied in the SQL query in _executeSearch(),
+    // so we just return the results unchanged to avoid O(n) database lookups.
+    return results;
   }
 
   /// Builds full search results with documents and snippets.

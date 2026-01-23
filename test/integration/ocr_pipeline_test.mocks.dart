@@ -464,6 +464,18 @@ class MockDocumentRepository extends _i1.Mock
       ) as _i5.Future<_i7.Uint8List?>);
 
   @override
+  _i5.Future<Map<String, _i7.Uint8List>> getBatchDecryptedThumbnailBytes(
+          List<_i3.Document>? documents) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getBatchDecryptedThumbnailBytes,
+          [documents],
+        ),
+        returnValue: _i5.Future<Map<String, _i7.Uint8List>>.value(
+            <String, _i7.Uint8List>{}),
+      ) as _i5.Future<Map<String, _i7.Uint8List>>);
+
+  @override
   _i5.Future<String?> getDecryptedThumbnailPath(_i3.Document? document) =>
       (super.noSuchMethod(
         Invocation.method(

@@ -75,6 +75,18 @@ class MockEncryptionService extends _i1.Mock implements _i4.EncryptionService {
       ) as _i3.Future<_i5.Uint8List>);
 
   @override
+  _i3.Future<_i5.Uint8List> decryptAsync(_i5.Uint8List? encryptedData) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #decryptAsync,
+          [encryptedData],
+        ),
+        returnValue: _i3.Future<_i5.Uint8List>.value(_i5.Uint8List(0)),
+        returnValueForMissingStub:
+            _i3.Future<_i5.Uint8List>.value(_i5.Uint8List(0)),
+      ) as _i3.Future<_i5.Uint8List>);
+
+  @override
   _i3.Future<void> encryptFile(
     String? inputPath,
     String? outputPath,

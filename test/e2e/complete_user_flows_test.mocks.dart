@@ -399,6 +399,16 @@ class MockEncryptionService extends _i1.Mock implements _i15.EncryptionService {
       ) as _i3.Future<_i14.Uint8List>);
 
   @override
+  _i3.Future<_i14.Uint8List> decryptAsync(_i14.Uint8List? encryptedData) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #decryptAsync,
+          [encryptedData],
+        ),
+        returnValue: _i3.Future<_i14.Uint8List>.value(_i14.Uint8List(0)),
+      ) as _i3.Future<_i14.Uint8List>);
+
+  @override
   _i3.Future<void> encryptFile(
     String? inputPath,
     String? outputPath,
@@ -1145,6 +1155,18 @@ class MockDocumentRepository extends _i1.Mock
         ),
         returnValue: _i3.Future<_i14.Uint8List?>.value(),
       ) as _i3.Future<_i14.Uint8List?>);
+
+  @override
+  _i3.Future<Map<String, _i14.Uint8List>> getBatchDecryptedThumbnailBytes(
+          List<_i4.Document>? documents) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getBatchDecryptedThumbnailBytes,
+          [documents],
+        ),
+        returnValue: _i3.Future<Map<String, _i14.Uint8List>>.value(
+            <String, _i14.Uint8List>{}),
+      ) as _i3.Future<Map<String, _i14.Uint8List>>);
 
   @override
   _i3.Future<String?> getDecryptedThumbnailPath(_i4.Document? document) =>

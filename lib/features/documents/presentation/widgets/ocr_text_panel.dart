@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/widgets/bento_card.dart';
 
@@ -136,6 +137,39 @@ class _OcrTextPanelState extends State<OcrTextPanel> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: SelectionArea(
                 onSelectionChanged: _onSelectionChanged,
+                contextMenuBuilder: (context, selectableRegionState) {
+                  // Custom context menu: Copy, Share, Select All
+                  // (removes system "Read aloud" option)
+                  return AdaptiveTextSelectionToolbar.buttonItems(
+                    anchors: selectableRegionState.contextMenuAnchors,
+                    buttonItems: [
+                      ContextMenuButtonItem(
+                        label: 'Copier',
+                        onPressed: () {
+                          selectableRegionState.copySelection(SelectionChangedCause.toolbar);
+                        },
+                      ),
+                      ContextMenuButtonItem(
+                        label: 'Partager',
+                        onPressed: () {
+                          // Get selected text and share it
+                          selectableRegionState.copySelection(SelectionChangedCause.toolbar);
+                          Clipboard.getData(Clipboard.kTextPlain).then((data) {
+                            if (data?.text != null && data!.text!.isNotEmpty) {
+                              Share.share(data.text!);
+                            }
+                          });
+                        },
+                      ),
+                      ContextMenuButtonItem(
+                        label: 'Tout sélectionner',
+                        onPressed: () {
+                          selectableRegionState.selectAll(SelectionChangedCause.toolbar);
+                        },
+                      ),
+                    ],
+                  );
+                },
                 child: SingleChildScrollView(
                   child: Text(
                     widget.ocrText,

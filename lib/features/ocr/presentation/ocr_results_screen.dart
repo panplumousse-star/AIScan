@@ -1033,8 +1033,37 @@ class _ResultsView extends StatelessWidget {
                       color: theme.colorScheme.onSurface,
                     ),
                     contextMenuBuilder: (context, editableTextState) {
-                      return AdaptiveTextSelectionToolbar.editableText(
-                        editableTextState: editableTextState,
+                      // Custom context menu: Copy, Share, Select All
+                      // (removes system "Read aloud" option)
+                      final selection = editableTextState.textEditingValue.selection;
+                      final selectedText = selection.isValid && !selection.isCollapsed
+                          ? result.trimmedText.substring(selection.start, selection.end)
+                          : null;
+
+                      return AdaptiveTextSelectionToolbar.buttonItems(
+                        anchors: editableTextState.contextMenuAnchors,
+                        buttonItems: [
+                          ContextMenuButtonItem(
+                            label: 'Copier',
+                            onPressed: () {
+                              editableTextState.copySelection(SelectionChangedCause.toolbar);
+                            },
+                          ),
+                          if (selectedText != null)
+                            ContextMenuButtonItem(
+                              label: 'Partager',
+                              onPressed: () {
+                                editableTextState.hideToolbar();
+                                Share.share(selectedText);
+                              },
+                            ),
+                          ContextMenuButtonItem(
+                            label: 'Tout sélectionner',
+                            onPressed: () {
+                              editableTextState.selectAll(SelectionChangedCause.toolbar);
+                            },
+                          ),
+                        ],
                       );
                     },
                     onSelectionChanged: (selection, cause) {

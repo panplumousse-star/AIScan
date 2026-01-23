@@ -44,6 +44,25 @@ class OcrTextPanel extends StatefulWidget {
 class _OcrTextPanelState extends State<OcrTextPanel> {
   bool _isExpanded = false;
 
+  /// Tracks if haptic feedback was already triggered for current selection.
+  /// Prevents repeated vibrations while adjusting selection handles.
+  bool _hasTriggeredSelectionHaptic = false;
+
+  /// Handles selection changes, triggering haptic feedback only when selection starts.
+  void _onSelectionChanged(dynamic selectedContent) {
+    final hasSelection = selectedContent != null &&
+                         (selectedContent.plainText as String).isNotEmpty;
+
+    if (hasSelection && !_hasTriggeredSelectionHaptic) {
+      // Selection just started - trigger haptic feedback once
+      HapticFeedback.selectionClick();
+      _hasTriggeredSelectionHaptic = true;
+    } else if (!hasSelection) {
+      // Selection cleared - reset flag for next selection
+      _hasTriggeredSelectionHaptic = false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = widget.theme.brightness == Brightness.dark;
@@ -106,6 +125,7 @@ class _OcrTextPanelState extends State<OcrTextPanel> {
               constraints: const BoxConstraints(maxHeight: 200),
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: SelectionArea(
+                onSelectionChanged: _onSelectionChanged,
                 child: SingleChildScrollView(
                   child: Text(
                     widget.ocrText,

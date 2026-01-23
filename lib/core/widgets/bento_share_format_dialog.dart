@@ -126,6 +126,18 @@ class BentoShareFormatDialog extends StatelessWidget {
                     onTap: () => Navigator.pop(context, ShareFormat.images),
                     theme: theme,
                   ),
+                  // OCR Text option (conditional)
+                  if (ocrText != null && ocrText!.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    _ShareOptionTile(
+                      icon: Icons.text_snippet_rounded,
+                      title: 'Texte (OCR)',
+                      subtitle: 'Contenu textuel extrait',
+                      color: const Color(0xFF3B82F6),
+                      onTap: () => Navigator.pop(context, ShareFormat.text),
+                      theme: theme,
+                    ),
+                  ],
                   const SizedBox(height: 24),
                   TextButton(
                     onPressed: () => Navigator.pop(context),

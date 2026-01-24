@@ -539,7 +539,6 @@ class OcrService {
       }
 
       _isInitialized = true;
-      debugPrint('OCR Service initialized with ML Kit');
       return true;
     } catch (e) {
       throw OcrException('Failed to initialize OCR service', cause: e);
@@ -815,7 +814,6 @@ class OcrService {
     }
     _recognizers.clear();
     _isInitialized = false;
-    debugPrint('OCR cache cleared');
   }
 
   /// Gets the storage size used (always 0 for ML Kit as it uses system libraries).

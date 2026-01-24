@@ -124,7 +124,7 @@ class DocumentsNavigationController {
                 // Refresh the documents list
                 ref.read(documentsScreenProvider.notifier).loadDocuments();
               } catch (e) {
-                debugPrint('Failed to save OCR text: $e');
+                // Error saving OCR text - silently fail
               }
             }
           },

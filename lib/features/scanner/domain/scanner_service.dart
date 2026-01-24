@@ -981,7 +981,6 @@ class ScannerStorageService {
       return thumbnailFile.path;
     } catch (e) {
       // Thumbnail generation is not critical - return null on failure
-      debugPrint('Failed to generate thumbnail: $e');
       return null;
     }
   }

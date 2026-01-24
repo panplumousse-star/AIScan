@@ -399,14 +399,11 @@ class DatabaseHelper {
         await _createFts5Tables(db);
         await _createFts5Triggers(db);
         setFtsVersion(5);
-        debugPrint('FTS5 initialized successfully');
         return;
       } catch (e) {
-        debugPrint('FTS5 creation failed: $e');
         await _cleanupFts(db);
       }
     } else {
-      debugPrint('FTS5 module not available, trying FTS4...');
     }
 
     // Check FTS4 availability
@@ -415,19 +412,14 @@ class DatabaseHelper {
         await _createFts4Tables(db);
         await _createFts4Triggers(db);
         setFtsVersion(4);
-        debugPrint('FTS4 initialized successfully');
         return;
       } catch (e) {
-        debugPrint('FTS4 creation failed: $e');
         await _cleanupFts(db);
       }
-    } else {
-      debugPrint('FTS4 module not available');
     }
 
     // FTS completely disabled - app will use LIKE-based search
     setFtsVersion(0);
-    debugPrint('WARNING: FTS unavailable, using LIKE-based search');
   }
 
   /// Checks if an FTS module is available without creating a table.
@@ -445,7 +437,6 @@ class DatabaseHelper {
       }
       return false;
     } catch (e) {
-      debugPrint('Error checking FTS module availability: $e');
       return false;
     }
   }
@@ -460,15 +451,14 @@ class DatabaseHelper {
       try {
         await db.execute('DROP TABLE IF EXISTS $tableDocumentsFts');
       } catch (e) {
-        debugPrint('Standard DROP failed, trying sqlite_master cleanup');
         try {
           await db.execute("DELETE FROM sqlite_master WHERE name = '$tableDocumentsFts'");
         } catch (e2) {
-          debugPrint('sqlite_master cleanup also failed: $e2');
+          // Cleanup failed, ignore
         }
       }
     } catch (e) {
-      debugPrint('FTS cleanup error (ignored): $e');
+      // FTS cleanup error (ignored)
     }
   }
 
@@ -721,12 +711,10 @@ class DatabaseHelper {
   /// ```dart
   /// final helper = DatabaseHelper();
   /// await helper.rebuildFtsIndex();
-  /// debugPrint('FTS index rebuilt successfully');
   /// ```
   Future<void> rebuildFtsIndex() async {
     // No FTS index to rebuild in disabled mode
     if (_ftsVersion == 0) {
-      debugPrint('FTS disabled, skipping index rebuild');
       return;
     }
 
@@ -739,7 +727,6 @@ class DatabaseHelper {
       await db.execute('''
         INSERT INTO $tableDocumentsFts($tableDocumentsFts) VALUES('rebuild')
       ''');
-      debugPrint('FTS$_ftsVersion index rebuilt successfully');
     }
   }
 

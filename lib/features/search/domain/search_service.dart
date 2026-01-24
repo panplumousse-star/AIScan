@@ -723,7 +723,6 @@ class SearchService {
       await _loadRecentSearches();
 
       _isInitialized = true;
-      debugPrint('Search service initialized');
       return true;
     } catch (e) {
       throw SearchException(
@@ -945,7 +944,6 @@ class SearchService {
       }).toList();
     } catch (e) {
       // If FTS query fails, try fallback LIKE search
-      debugPrint('FTS search failed, falling back to LIKE: $e');
       return _fallbackSearch(ftsQuery, options);
     }
   }
@@ -1255,11 +1253,8 @@ class SearchService {
       for (final map in searchHistory) {
         _recentSearches.add(RecentSearch.fromMap(map));
       }
-
-      debugPrint('Loaded ${_recentSearches.length} recent searches');
     } catch (e) {
       // Log error but don't throw - search history is not critical
-      debugPrint('Failed to load recent searches: $e');
     }
   }
 
@@ -1305,7 +1300,6 @@ class SearchService {
       }
     } catch (e) {
       // Log error but don't throw - search history persistence is not critical
-      debugPrint('Failed to persist recent searches to database: $e');
     }
   }
 
@@ -1395,7 +1389,6 @@ class SearchService {
       await _database.clearSearchHistory();
     } catch (e) {
       // Log error but don't throw - search history persistence is not critical
-      debugPrint('Failed to clear search history from database: $e');
     }
   }
 
@@ -1424,7 +1417,6 @@ class SearchService {
 
     try {
       await _database.rebuildFtsIndex();
-      debugPrint('Search index rebuilt');
     } catch (e) {
       throw SearchException(
         'Failed to rebuild search index',

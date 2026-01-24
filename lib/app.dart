@@ -142,8 +142,6 @@ class _AppHomeState extends ConsumerState<_AppHome> with WidgetsBindingObserver 
       loading: () => const _LoadingScreen(),
       // On error, show main app (fail-open for better UX)
       error: (error, stackTrace) {
-        // Log error in development
-        debugPrint('Error checking lock screen: $error');
         return const BentoHomeScreen();
       },
     );

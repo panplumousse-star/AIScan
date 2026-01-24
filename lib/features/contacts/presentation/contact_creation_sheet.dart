@@ -460,7 +460,6 @@ class _ContactCreationSheetState extends ConsumerState<ContactCreationSheet> {
         Navigator.pop(context, true);
       case ContactCreationFailure(:final message):
         showContactCreationErrorSnackbar(context);
-        debugPrint('Contact creation failed: $message');
       case ContactCreationCancelled():
         showContactPermissionDeniedSnackbar(context);
     }

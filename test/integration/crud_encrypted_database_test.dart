@@ -165,7 +165,7 @@ void main() {
 
         // Insert pages
         for (var i = 1; i <= 3; i++) {
-          await db.insert(DatabaseHelper.tablePages, {
+          await db.insert(DatabaseHelper.tableDocumentPages, {
             'document_id': documentId,
             'page_number': i,
             'file_path': '/encrypted/pages/$documentId-page-$i.jpg.enc',
@@ -174,7 +174,7 @@ void main() {
 
         // Verify pages were created
         final result = await db.query(
-          DatabaseHelper.tablePages,
+          DatabaseHelper.tableDocumentPages,
           where: 'document_id = ?',
           whereArgs: [documentId],
           orderBy: 'page_number ASC',
@@ -653,7 +653,7 @@ void main() {
 
         // Create pages
         for (var i = 1; i <= 3; i++) {
-          await db.insert(DatabaseHelper.tablePages, {
+          await db.insert(DatabaseHelper.tableDocumentPages, {
             'document_id': 'doc-delete',
             'page_number': i,
             'file_path': '/encrypted/pages/doc-delete-page-$i.jpg.enc',
@@ -704,7 +704,7 @@ void main() {
 
         // Verify pages were cascade deleted
         final result = await db.query(
-          DatabaseHelper.tablePages,
+          DatabaseHelper.tableDocumentPages,
           where: 'document_id = ?',
           whereArgs: ['doc-delete'],
         );

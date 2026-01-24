@@ -14,6 +14,8 @@ import '../../../core/storage/document_repository.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/bento_card.dart';
 import '../../../core/widgets/bento_background.dart';
+import '../../../core/widgets/bento_interactive_wrapper.dart';
+import '../../../core/widgets/bouncing_widget.dart';
 import '../../../core/widgets/scanai_loader.dart';
 import '../../documents/presentation/documents_screen.dart';
 import '../../scanner/presentation/scanner_screen.dart';
@@ -49,7 +51,7 @@ final monthlyScanCountProvider = FutureProvider.autoDispose<int>((ref) async {
   final documents = await repository.getAllDocuments();
   final now = DateTime.now();
   final startOfMonth = DateTime(now.year, now.month);
-
+  
   return documents.where((d) => d.createdAt.isAfter(startOfMonth)).length;
 });
 
@@ -60,8 +62,7 @@ class BentoHomeScreen extends ConsumerStatefulWidget {
   ConsumerState<BentoHomeScreen> createState() => _BentoHomeScreenState();
 }
 
-class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
-    with WidgetsBindingObserver {
+class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsBindingObserver {
   Timer? _idleTimer;
   Timer? _sleepTimer;
   Timer? _unlockTimer;
@@ -216,8 +217,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
     final hasPermission = await _checkAndRequestPermission(context, ref);
     if (hasPermission && context.mounted) {
       final isDark = Theme.of(context).brightness == Brightness.dark;
-      Navigator.of(context)
-          .push(
+      Navigator.of(context).push(
         PageRouteBuilder(
           transitionDuration: const Duration(milliseconds: 200),
           reverseTransitionDuration: const Duration(milliseconds: 200),
@@ -235,8 +235,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
             );
           },
         ),
-      )
-          .then((_) {
+      ).then((_) {
         // Refresh document counts when returning from scanner
         // This ensures the home screen reflects any newly scanned documents
         if (mounted) {
@@ -251,8 +250,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
     HapticFeedback.mediumImpact();
     final l10n = AppLocalizations.of(context);
     Share.share(
-      l10n?.shareAppText ??
-          'I use Scanai to secure and organize my important documents.',
+      l10n?.shareAppText ?? 'I use Scanai to secure and organize my important documents.',
       subject: l10n?.shareAppSubject ?? 'Scanai: Your secure pocket scanner',
     );
   }
@@ -274,124 +272,114 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
       onPointerDown: (_) => _handleInteraction(),
       behavior: HitTestBehavior.translucent,
       child: Scaffold(
-        backgroundColor: Colors.transparent, // Let BentoBackground show through
-        body: Stack(
-          children: [
-            // 1. Background Refinements: Blobs & Texture
-            const BentoBackground(),
+      backgroundColor: Colors.transparent, // Let BentoBackground show through
+      body: Stack(
+        children: [
+          // 1. Background Refinements: Blobs & Texture
+          const BentoBackground(),
 
-            SafeArea(
-              child: Column(
-                children: [
-                  // Gap instead of top bar
-                  const SizedBox(height: 8),
+          SafeArea(
+            child: Column(
+              children: [
+                // Gap instead of top bar
+                const SizedBox(height: 8),
 
-                  // Shift content down slightly
-                  SizedBox(height: MediaQuery.of(context).size.height * 0.03),
+                // Shift content down slightly
+                SizedBox(height: MediaQuery.of(context).size.height * 0.03),
 
-                  // Scrollable Content
-                  Expanded(
-                    child: ShaderMask(
-                      shaderCallback: (rect) {
-                        return LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.white,
-                            Colors.white,
-                            Colors.transparent
-                          ],
-                          stops: const [0.0, 0.9, 1.0],
-                        ).createShader(rect);
-                      },
-                      blendMode: BlendMode.dstIn,
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: Column(
-                          children: [
-                            const SizedBox(height: 16), // Increased spacing
+                // Scrollable Content
+                Expanded(
+                  child: ShaderMask(
+                    shaderCallback: (rect) {
+                      return LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.white, Colors.white, Colors.transparent],
+                        stops: const [0.0, 0.9, 1.0],
+                      ).createShader(rect);
+                    },
+                    blendMode: BlendMode.dstIn,
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 16), // Increased spacing
+                          
+                          // 1. Top Row: Greeting (Small/Medium) + Mascot (Medium/Large)
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Greeting Tile (40%)
+                              Expanded(
+                                flex: 5,
+                                child: BentoAnimatedEntry(
+                                  delay: const Duration(milliseconds: 0),
+                                  child: _buildGreetingCard(),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              // Mascot Tile (60%)
+                              Expanded(
+                                flex: 5,
+                                child: BentoAnimatedEntry(
+                                  delay: const Duration(milliseconds: 50),
+                                  child: _buildMascotCard(),
+                                ),
+                              ),
+                            ],
+                          ),
+                          
+                          const SizedBox(height: 32), // Increased spacing
 
-                            // 1. Top Row: Greeting (Small/Medium) + Mascot (Medium/Large)
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Greeting Tile (40%)
-                                Expanded(
-                                  flex: 5,
-                                  child: BentoAnimatedEntry(
-                                    delay: const Duration(milliseconds: 0),
-                                    child: _buildGreetingCard(),
+                          // 2. Scan Tile (Prominent CTA)
+                          BentoAnimatedEntry(
+                            delay: const Duration(milliseconds: 100),
+                            child: _buildScanCard(context),
+                          ),
+
+                          const SizedBox(height: 32), // Increased spacing
+
+                          // 3. Bottom Row: Documents (Large) + Info/Version (Small)
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Documents Tile (65%)
+                              Expanded(
+                                flex: 65,
+                                child: BentoAnimatedEntry(
+                                  delay: const Duration(milliseconds: 200),
+                                  child: ref.watch(totalDocumentCountProvider).when(
+                                    data: (count) => _buildDocumentsCard(context, count),
+                                    loading: () => _buildDocumentsCard(context, 0, isLoading: true),
+                                    error: (_, __) => _buildDocumentsCard(context, 0),
                                   ),
                                 ),
-                                const SizedBox(width: 16),
-                                // Mascot Tile (60%)
-                                Expanded(
-                                  flex: 5,
-                                  child: BentoAnimatedEntry(
-                                    delay: const Duration(milliseconds: 50),
-                                    child: _buildMascotCard(),
-                                  ),
+                              ),
+                              const SizedBox(width: 16),
+                              // Settings Tile (35%)
+                              Expanded(
+                                flex: 35,
+                                child: BentoAnimatedEntry(
+                                  delay: const Duration(milliseconds: 300),
+                                  child: _buildSettingsCard(context),
                                 ),
-                              ],
-                            ),
-
-                            const SizedBox(height: 32), // Increased spacing
-
-                            // 2. Scan Tile (Prominent CTA)
-                            BentoAnimatedEntry(
-                              delay: const Duration(milliseconds: 100),
-                              child: _buildScanCard(context),
-                            ),
-
-                            const SizedBox(height: 32), // Increased spacing
-
-                            // 3. Bottom Row: Documents (Large) + Info/Version (Small)
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Documents Tile (65%)
-                                Expanded(
-                                  flex: 65,
-                                  child: BentoAnimatedEntry(
-                                    delay: const Duration(milliseconds: 200),
-                                    child: ref
-                                        .watch(totalDocumentCountProvider)
-                                        .when(
-                                          data: (count) => _buildDocumentsCard(
-                                              context, count),
-                                          loading: () => _buildDocumentsCard(
-                                              context, 0,
-                                              isLoading: true),
-                                          error: (_, __) =>
-                                              _buildDocumentsCard(context, 0),
-                                        ),
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                // Settings Tile (35%)
-                                Expanded(
-                                  flex: 35,
-                                  child: BentoAnimatedEntry(
-                                    delay: const Duration(milliseconds: 300),
-                                    child: _buildSettingsCard(context),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 40), // Bottom breathing room
-                          ],
-                        ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 40), // Bottom breathing room
+                        ],
                       ),
                     ),
                   ),
+                ),
 
-                  // Footer Content: Interactive Bento Stat & Share
-                  _buildInteractiveFooter(context),
-                ],
-              ),
+                // Footer Content: Interactive Bento Stat & Share
+                _buildInteractiveFooter(context),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
+      ),
       ),
     );
   }
@@ -403,18 +391,16 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-      child: _BentoInteractiveWrapper(
+      child: BentoInteractiveWrapper(
         onTap: () => _handleAppShare(context),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           decoration: BoxDecoration(
-            color: isDark
-                ? const Color(0xFF000000).withValues(alpha: 0.6)
-                : AppColors.bentoCardWhite,
+            color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : AppColors.bentoCardWhite,
             borderRadius: BorderRadius.circular(32),
             border: Border.all(
-              color: isDark
-                  ? const Color(0xFFFFFFFF).withValues(alpha: 0.1)
+              color: isDark 
+                  ? const Color(0xFFFFFFFF).withValues(alpha: 0.1) 
                   : const Color(0xFFE2E8F0),
               width: 1.5,
             ),
@@ -431,16 +417,12 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.surfaceVariantDark
-                      : const Color(0xFFEEF2FF),
+                  color: isDark ? AppColors.surfaceVariantDark : const Color(0xFFEEF2FF),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.verified_user_rounded,
-                  color: isDark
-                      ? const Color(0xFF818CF8)
-                      : const Color(0xFF6366F1),
+                  color: isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1),
                   size: 20,
                 ),
               ),
@@ -451,41 +433,33 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                   children: [
                     Text(
                       monthlyScans > 0
-                          ? (l10n?.documentsSecured(monthlyScans) ??
-                              '$monthlyScans documents secured')
-                          : (l10n?.secureYourDocuments ??
-                              'Secure your documents'),
+                          ? (l10n?.documentsSecured(monthlyScans) ?? '$monthlyScans documents secured')
+                          : (l10n?.secureYourDocuments ?? 'Secure your documents'),
                       style: GoogleFonts.outfit(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: isDark
-                            ? AppColors.surfaceVariantLight
-                            : const Color(0xFF1E1B4B),
+                        color: isDark ? AppColors.surfaceVariantLight : const Color(0xFF1E1B4B),
                       ),
                     ),
                     Text(
                       l10n?.savedLocally ?? 'Everything saved locally',
                       style: GoogleFonts.outfit(
                         fontSize: 12,
-                        color: isDark
-                            ? AppColors.neutralDark
-                            : AppColors.neutralLight,
+                        color: isDark ? AppColors.neutralDark : AppColors.neutralLight,
                       ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 16),
-              _BouncingWidget(
+              BouncingWidget(
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.surfaceVariantDark
-                        : const Color(0xFFF5F3FF),
+                    color: isDark ? AppColors.surfaceVariantDark : const Color(0xFFF5F3FF),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: isDark
+                      color: isDark 
                           ? const Color(0xFF818CF8).withValues(alpha: 0.2)
                           : const Color(0xFF6366F1).withValues(alpha: 0.1),
                       width: 1,
@@ -535,7 +509,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
 
     return BentoAnimatedEntry(
       delay: const Duration(milliseconds: 0),
-      child: _BentoInteractiveWrapper(
+      child: BentoInteractiveWrapper(
         onTap: () {
           HapticFeedback.lightImpact();
           if (hasJustScanned) {
@@ -548,21 +522,16 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
             alignment: Alignment.bottomCenter, // Align bubble to the bottom
             child: AnimatedOpacity(
               duration: const Duration(milliseconds: 500),
-              opacity: _isSleeping
-                  ? (0.8 + (_sleepMessageIndex % 2 == 0 ? 0.2 : 0.0))
-                  : 1.0,
+              opacity: _isSleeping ? (0.8 + (_sleepMessageIndex % 2 == 0 ? 0.2 : 0.0)) : 1.0,
               child: SizedBox(
                 height: 85,
                 child: BentoSpeechBubble(
                   tailDirection: BubbleTailDirection.right,
-                  color: isDark
-                      ? AppColors.surfaceDark.withValues(alpha: 0.6)
-                      : AppColors.surfaceLight,
+                  color: isDark ? AppColors.surfaceDark.withValues(alpha: 0.6) : AppColors.surfaceLight,
                   borderColor: isDark
                       ? AppColors.surfaceLight.withValues(alpha: 0.1)
                       : const Color(0xFFE2E8F0),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -583,16 +552,11 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                                       "Zzz ...",
                                       "Zzz ... Zzz"
                                     ][_sleepMessageIndex]
-                                  : (hasJustScanned
-                                      ? celebrationMessage
-                                      : _getGreeting(context)),
+                                  : (hasJustScanned ? celebrationMessage : _getGreeting(context)),
                               style: GoogleFonts.outfit(
-                                fontSize:
-                                    (hasJustScanned || _isSleeping) ? 22 : 24,
+                                fontSize: (hasJustScanned || _isSleeping) ? 22 : 24,
                                 fontWeight: FontWeight.w800,
-                                color: isDark
-                                    ? AppColors.surfaceVariantLight
-                                    : AppColors.surfaceVariantDark,
+                                color: isDark ? AppColors.surfaceVariantLight : AppColors.surfaceVariantDark,
                                 letterSpacing: -0.5,
                               ),
                             ),
@@ -607,9 +571,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.outfit(
                             fontSize: 12,
-                            color: isDark
-                                ? AppColors.neutralDark
-                                : AppColors.neutralLight,
+                            color: isDark ? AppColors.neutralDark : AppColors.neutralLight,
                             letterSpacing: 0.2,
                           ),
                         ),
@@ -627,7 +589,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
 
   Widget _buildMascotCard() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return _BentoInteractiveWrapper(
+    return BentoInteractiveWrapper(
       onTap: () {
         HapticFeedback.mediumImpact();
         // Potential secret animation trigger here later?
@@ -635,9 +597,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
       child: Container(
         height: 140,
         decoration: BoxDecoration(
-          color: isDark
-              ? AppColors.surfaceDark.withValues(alpha: 0.6)
-              : AppColors.surfaceVariantLight,
+          color: isDark ? AppColors.surfaceDark.withValues(alpha: 0.6) : AppColors.surfaceVariantLight,
           borderRadius: BorderRadius.circular(32),
           border: Border.all(
             color: isDark
@@ -647,8 +607,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
           ),
           boxShadow: [
             BoxShadow(
-              color:
-                  AppColors.surfaceDark.withValues(alpha: isDark ? 0.2 : 0.05),
+              color: AppColors.surfaceDark.withValues(alpha: isDark ? 0.2 : 0.05),
               blurRadius: 16,
               offset: const Offset(0, 4),
             ),
@@ -659,7 +618,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
           alignment: Alignment.center,
           children: [
             if (_isSleeping)
-              _BouncingWidget(
+              BouncingWidget(
                 child: Image.asset(
                   'assets/images/scanai_zzz.png',
                   height: 180, // Enlarged
@@ -667,7 +626,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                 ),
               )
             else if (_showUnlockMascot)
-              _BouncingWidget(
+              BouncingWidget(
                 child: BentoMascot(
                   key: const ValueKey('unlock_mascot'),
                   height: 180,
@@ -706,8 +665,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
           boxShadow: [
             // Soft multi-layered shadow
             BoxShadow(
-              color: (isDark ? Colors.black : AppColors.primaryLight)
-                  .withValues(alpha: isDark ? 0.3 : 0.2),
+              color: (isDark ? Colors.black : AppColors.primaryLight).withValues(alpha: isDark ? 0.3 : 0.2),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -755,17 +713,14 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                         child: BackdropFilter(
                           filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 24, vertical: 12),
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.3)),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.primaryLight
-                                      .withValues(alpha: 0.3),
+                                  color: AppColors.primaryLight.withValues(alpha: 0.3),
                                   blurRadius: 20,
                                   spreadRadius: 2,
                                 ),
@@ -793,15 +748,14 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
     );
   }
 
-  Widget _buildDocumentsCard(BuildContext context, int count,
-      {bool isLoading = false}) {
+  Widget _buildDocumentsCard(BuildContext context, int count, {bool isLoading = false}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isEmpty = count == 0 && !isLoading;
     final l10n = AppLocalizations.of(context);
 
     return Opacity(
       opacity: isEmpty ? 0.5 : 1.0,
-      child: _BentoInteractiveWrapper(
+      child: BentoInteractiveWrapper(
         onTap: isEmpty
             ? null
             : () {
@@ -813,153 +767,132 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                 );
               },
         child: Container(
-          height: 140,
-          decoration: BoxDecoration(
-            color: isDark
-                ? const Color(0xFF000000).withValues(alpha: 0.6)
-                : AppColors.bentoCardWhite,
-            borderRadius: BorderRadius.circular(32),
-            border: Border.all(
-              color: isDark
-                  ? const Color(0xFFFFFFFF).withValues(alpha: 0.1)
-                  : const Color(0xFFE2E8F0),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
-                blurRadius: 20,
-                offset: const Offset(0, 4),
-              ),
-            ],
+        height: 140,
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : AppColors.bentoCardWhite,
+          borderRadius: BorderRadius.circular(32),
+          border: Border.all(
+            color: isDark 
+                ? const Color(0xFFFFFFFF).withValues(alpha: 0.1) 
+                : const Color(0xFFE2E8F0),
+            width: 1.5,
           ),
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? AppColors.surfaceVariantDark
-                            : const Color(0xFFEEF2FF),
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF6366F1)
-                                .withValues(alpha: isDark ? 0.1 : 0.05),
-                            blurRadius: 8,
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        Icons.folder_copy_rounded,
-                        color: isDark
-                            ? const Color(0xFF818CF8)
-                            : const Color(0xFF6366F1),
-                        size: 20,
-                      ),
-                    ),
-                    const Spacer(),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n?.myDocuments ?? 'Documents',
-                          style: GoogleFonts.outfit(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: isDark
-                                ? AppColors.surfaceVariantLight
-                                : const Color(0xFF1E1B4B),
-                          ),
-                        ),
-                        Text(
-                          count > 0
-                              ? (l10n?.allDocuments ?? 'Voir mes fichiers')
-                              : (l10n?.noDocuments ?? 'Aucun document'),
-                          style: GoogleFonts.outfit(
-                            fontSize: 14,
-                            color: isDark
-                                ? AppColors.neutralDark
-                                : const Color(0xFF6366F1)
-                                    .withValues(alpha: 0.7),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.surfaceVariantDark : const Color(0xFFEEF2FF),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF6366F1).withValues(alpha: isDark ? 0.1 : 0.05),
+                          blurRadius: 8,
                         ),
                       ],
                     ),
-                  ],
-                ),
-              ),
-
-              // Bottom Right Arrow
-              Positioned(
-                bottom: 20,
-                right: 20,
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.surfaceVariantDark
-                        : const Color(0xFFEEF2FF).withValues(alpha: 0.5),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.arrow_forward_rounded,
-                    color: isDark
-                        ? const Color(0xFF818CF8)
-                        : const Color(0xFF6366F1),
-                    size: 16,
-                  ),
-                ),
-              ),
-
-              if (isLoading)
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? Colors.black45
-                          : AppColors.bentoOrangePastel.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(32),
+                    child: Icon(
+                      Icons.folder_copy_rounded,
+                      color: isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1),
+                      size: 20,
                     ),
-                    child: const ScanaiLoader(size: 32),
                   ),
-                ),
-
-              if (count > 0 && !isLoading)
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF6366F1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          width: 1.5),
-                    ),
-                    child: Text(
-                      '$count',
-                      style: GoogleFonts.outfit(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
+                  const Spacer(),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n?.myDocuments ?? 'Documents',
+                        style: GoogleFonts.outfit(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? AppColors.surfaceVariantLight : const Color(0xFF1E1B4B),
+                        ),
                       ),
+                      Text(
+                        count > 0 ? (l10n?.allDocuments ?? 'Voir mes fichiers') : (l10n?.noDocuments ?? 'Aucun document'),
+                        style: GoogleFonts.outfit(
+                          fontSize: 14,
+                          color: isDark
+                              ? AppColors.neutralDark
+                              : const Color(0xFF6366F1).withValues(alpha: 0.7),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            
+            // Bottom Right Arrow
+            Positioned(
+              bottom: 20,
+              right: 20,
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.surfaceVariantDark : const Color(0xFFEEF2FF).withValues(alpha: 0.5),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.arrow_forward_rounded,
+                  color: isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1),
+                  size: 16,
+                ),
+              ),
+            ),
+
+            if (isLoading)
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.black45 : AppColors.bentoOrangePastel.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(32),
+                  ),
+                  child: const ScanaiLoader(size: 32),
+                ),
+              ),
+
+            if (count > 0 && !isLoading)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF6366F1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
+                  ),
+                  child: Text(
+                    '$count',
+                    style: GoogleFonts.outfit(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
                     ),
                   ),
                 ),
-            ],
-          ),
+              ),
+          ],
         ),
+      ),
       ),
     );
   }
@@ -967,7 +900,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
   Widget _buildSettingsCard(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = AppLocalizations.of(context);
-    return _BentoInteractiveWrapper(
+    return BentoInteractiveWrapper(
       onTap: () {
         HapticFeedback.selectionClick();
         Navigator.push(
@@ -979,9 +912,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
         height: 140,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark
-              ? AppColors.surfaceDark.withValues(alpha: 0.6)
-              : AppColors.bentoBackground,
+          color: isDark ? AppColors.surfaceDark.withValues(alpha: 0.6) : AppColors.bentoBackground,
           borderRadius: BorderRadius.circular(32),
           border: Border.all(
             color: isDark
@@ -1004,16 +935,12 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.surfaceVariantDark
-                    : const Color(0xFFEEF2FF), // Soft Indigo background
+                color: isDark ? AppColors.surfaceVariantDark : const Color(0xFFEEF2FF), // Soft Indigo background
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 Icons.settings_rounded,
-                color: isDark
-                    ? const Color(0xFF818CF8)
-                    : const Color(0xFF6366F1), // Vibrant Indigo
+                color: isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1), // Vibrant Indigo
                 size: 20,
               ),
             ),
@@ -1027,9 +954,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                   style: GoogleFonts.outfit(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: isDark
-                        ? AppColors.surfaceVariantLight
-                        : const Color(0xFF1E1B4B), // Deep Indigo / Off White
+                    color: isDark ? AppColors.surfaceVariantLight : const Color(0xFF1E1B4B), // Deep Indigo / Off White
                   ),
                 ),
                 Text(
@@ -1051,6 +976,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
     );
   }
 }
+
 
 class _FloatingAsset extends StatefulWidget {
   final double height;
@@ -1119,105 +1045,6 @@ class _FloatingAssetState extends State<_FloatingAsset>
   }
 }
 
-class _BentoInteractiveWrapper extends StatefulWidget {
-  final Widget child;
-  final VoidCallback? onTap;
-
-  const _BentoInteractiveWrapper({
-    required this.child,
-    this.onTap,
-  });
-
-  @override
-  State<_BentoInteractiveWrapper> createState() =>
-      _BentoInteractiveWrapperState();
-}
-
-class _BentoInteractiveWrapperState extends State<_BentoInteractiveWrapper>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-  double _rotationX = 0.0;
-  double _rotationY = 0.0;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 150),
-      vsync: this,
-    );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.96).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _handleTapDown(TapDownDetails details) {
-    if (widget.onTap == null) return;
-    _controller.forward();
-
-    // Tilt calculation based on touch position relative to center
-    final RenderBox box = context.findRenderObject() as RenderBox;
-    final localPos = details.localPosition;
-    final centerX = box.size.width / 2;
-    final centerY = box.size.height / 2;
-
-    setState(() {
-      // Sensitivity factor: 0.05
-      _rotationX = (centerY - localPos.dy) / centerY * 0.08;
-      _rotationY = (localPos.dx - centerX) / centerX * 0.08;
-    });
-
-    HapticFeedback.lightImpact();
-  }
-
-  void _handleTapUp(TapUpDetails details) {
-    _controller.reverse();
-    setState(() {
-      _rotationX = 0.0;
-      _rotationY = 0.0;
-    });
-  }
-
-  void _handleTapCancel() {
-    _controller.reverse();
-    setState(() {
-      _rotationX = 0.0;
-      _rotationY = 0.0;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: _handleTapDown,
-      onTapUp: _handleTapUp,
-      onTapCancel: _handleTapCancel,
-      onTap: widget.onTap,
-      child: AnimatedBuilder(
-        animation: _scaleAnimation,
-        builder: (context, child) {
-          return Transform(
-            alignment: Alignment.center,
-            transform: Matrix4.identity()
-              ..setEntry(3, 2, 0.001) // perspective
-              ..rotateX(_rotationX)
-              ..rotateY(_rotationY)
-              ..scale(_scaleAnimation.value),
-            child: child,
-          );
-        },
-        child: widget.child,
-      ),
-    );
-  }
-}
 
 class _PulsingGlow extends StatefulWidget {
   final Widget child;
@@ -1244,7 +1071,7 @@ class _PulsingGlowState extends State<_PulsingGlow>
       duration: const Duration(seconds: 2),
       vsync: this,
     )..repeat(reverse: true);
-
+    
     _glowAnimation = Tween<double>(begin: 2.0, end: 12.0).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
@@ -1266,8 +1093,7 @@ class _PulsingGlowState extends State<_PulsingGlow>
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: widget.glowColor
-                    .withValues(alpha: 0.3 * (_controller.value + 0.5)),
+                color: widget.glowColor.withValues(alpha: 0.3 * (_controller.value + 0.5)),
                 blurRadius: _glowAnimation.value,
                 spreadRadius: _glowAnimation.value / 4,
               ),
@@ -1307,7 +1133,7 @@ class _ShakeableWrapperState extends State<_ShakeableWrapper>
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-
+    
     _scaleAnimation = TweenSequence<double>([
       TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.95), weight: 30),
       TweenSequenceItem(tween: Tween(begin: 0.95, end: 1.0), weight: 70),
@@ -1369,8 +1195,8 @@ class _RotatingWidgetState extends State<_RotatingWidget>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(seconds: 20), // Slower, more majestic rotation
-      vsync: this,
+        duration: const Duration(seconds: 20), // Slower, more majestic rotation
+        vsync: this,
     )..repeat();
   }
 
@@ -1389,43 +1215,3 @@ class _RotatingWidgetState extends State<_RotatingWidget>
   }
 }
 
-class _BouncingWidget extends StatefulWidget {
-  final Widget child;
-  const _BouncingWidget({required this.child});
-
-  @override
-  State<_BouncingWidget> createState() => _BouncingWidgetState();
-}
-
-class _BouncingWidgetState extends State<_BouncingWidget>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _animation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(seconds: 2), // Faster, more lively pulse
-      vsync: this,
-    )..repeat(reverse: true);
-
-    _animation = Tween<double>(begin: 0.92, end: 1.08).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ScaleTransition(
-      scale: _animation,
-      child: widget.child,
-    );
-  }
-}

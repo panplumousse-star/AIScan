@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "049-split-scanner-screen-dart-into-modular-components",
+  "spec": "052-split-ocr-results-screen-dart-into-smaller-widget-",
   "state": "building",
   "subtasks": {
-    "completed": 11,
-    "total": 13,
+    "completed": 15,
+    "total": 16,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Documentation",
+    "current": "Verification and Testing",
     "id": null,
-    "total": 2
+    "total": 4
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 14,
-    "started_at": "2026-01-23T17:49:46.770862"
+    "number": 17,
+    "started_at": "2026-01-23T19:21:25.346258"
   },
-  "last_update": "2026-01-23T18:27:44.147134"
+  "last_update": "2026-01-23T19:53:23.935478"
 }

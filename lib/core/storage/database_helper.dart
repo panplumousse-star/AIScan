@@ -4,9 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqflite_sqlcipher/sqflite.dart';
 import 'package:path/path.dart';
 
+import '../security/secure_storage_service.dart';
+
 /// Riverpod provider for [DatabaseHelper].
 final databaseHelperProvider = Provider<DatabaseHelper>((ref) {
-  return DatabaseHelper();
+  final secureStorage = ref.read(secureStorageServiceProvider);
+  return DatabaseHelper(secureStorage: secureStorage);
 });
 
 /// Database helper class for managing SQLite database operations.
@@ -19,10 +22,16 @@ final databaseHelperProvider = Provider<DatabaseHelper>((ref) {
 class DatabaseHelper {
   // Singleton pattern
   static final DatabaseHelper _instance = DatabaseHelper._internal();
-  factory DatabaseHelper() => _instance;
+  factory DatabaseHelper({SecureStorageService? secureStorage}) {
+    if (secureStorage != null) {
+      _instance._secureStorage = secureStorage;
+    }
+    return _instance;
+  }
   DatabaseHelper._internal();
 
   static Database? _database;
+  late SecureStorageService _secureStorage;
 
   // Database configuration
   static const String _databaseName = 'aiscan.db';
@@ -96,11 +105,13 @@ class DatabaseHelper {
   /// Initializes the database.
   Future<Database> _initDatabase() async {
     final String path = join(await getDatabasesPath(), _databaseName);
+    final encryptionKey = await _secureStorage.getOrCreateEncryptionKey();
     return await openDatabase(
       path,
       version: _databaseVersion,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
+      password: encryptionKey,
     );
   }
 

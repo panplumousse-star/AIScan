@@ -1236,10 +1236,16 @@ class DocumentRepository {
   ///
   /// Throws [DocumentRepositoryException] if any deletion fails.
   Future<void> deleteDocuments(List<String> documentIds) async {
+    if (documentIds.isEmpty) {
+      return;
+    }
+
     try {
-      for (final id in documentIds) {
-        await deleteDocument(id);
-      }
+      // Create parallel deletion tasks for all documents
+      final deletionTasks = documentIds.map((id) => deleteDocument(id)).toList();
+
+      // Execute all deletion tasks in parallel
+      await Future.wait(deletionTasks);
     } catch (e) {
       if (e is DocumentRepositoryException) {
         rethrow;

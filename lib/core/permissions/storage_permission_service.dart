@@ -1,6 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import 'permission_exception.dart';
+
+/// Type alias for backward compatibility.
+///
+/// This allows existing code referencing [StoragePermissionException]
+/// to work seamlessly with the common [PermissionException] base class.
+typedef StoragePermissionException = PermissionException;
+
 /// Riverpod provider for [StoragePermissionService].
 ///
 /// Provides a singleton instance of the storage permission service for
@@ -42,28 +50,6 @@ enum StoragePermissionState {
   /// The user selected "Don't ask again" or denied multiple times.
   /// The only way to grant permission is through system settings.
   permanentlyDenied,
-}
-
-/// Exception thrown when storage permission operations fail.
-///
-/// Contains the original error message and optional underlying exception.
-class StoragePermissionException implements Exception {
-  /// Creates a [StoragePermissionException] with the given [message].
-  const StoragePermissionException(this.message, {this.cause});
-
-  /// Human-readable error message.
-  final String message;
-
-  /// The underlying exception that caused this error, if any.
-  final Object? cause;
-
-  @override
-  String toString() {
-    if (cause != null) {
-      return 'StoragePermissionException: $message (caused by: $cause)';
-    }
-    return 'StoragePermissionException: $message';
-  }
 }
 
 /// Service for managing storage permission state and requests.

@@ -79,6 +79,8 @@ class FakePermission implements Permission {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('StoragePermissionState', () {
     test('should have all expected values', () {
       expect(StoragePermissionState.values, hasLength(6));
@@ -101,7 +103,7 @@ void main() {
       final message = exception.toString();
 
       // Assert
-      expect(message, equals('StoragePermissionException: Permission denied'));
+      expect(message, equals('PermissionException: Permission denied'));
     });
 
     test('should format message with cause', () {
@@ -116,7 +118,7 @@ void main() {
       expect(
         message,
         equals(
-          'StoragePermissionException: Permission failed (caused by: Exception: Platform error)',
+          'PermissionException: Permission failed (caused by: Exception: Platform error)',
         ),
       );
     });
@@ -138,7 +140,7 @@ void main() {
 
       // Assert
       expect(exception.cause, isNull);
-      expect(exception.toString(), equals('StoragePermissionException: Simple error'));
+      expect(exception.toString(), equals('PermissionException: Simple error'));
     });
   });
 

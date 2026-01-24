@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "052-split-ocr-results-screen-dart-into-smaller-widget-",
+  "spec": "059-centralize-permission-service-exception-handling",
   "state": "building",
   "subtasks": {
-    "completed": 15,
-    "total": 16,
-    "in_progress": 1,
+    "completed": 6,
+    "total": 6,
+    "in_progress": 0,
     "failed": 0
   },
   "phase": {
-    "current": "Verification and Testing",
+    "current": "Verification - Run Tests",
     "id": null,
-    "total": 4
+    "total": 2
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 17,
-    "started_at": "2026-01-23T19:21:25.346258"
+    "number": 7,
+    "started_at": "2026-01-24T09:08:51.831061"
   },
-  "last_update": "2026-01-23T19:53:23.935478"
+  "last_update": "2026-01-24T09:30:00.000000"
 }

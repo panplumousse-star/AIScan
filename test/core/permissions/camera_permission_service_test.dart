@@ -83,7 +83,7 @@ void main() {
     group('CameraPermissionException', () {
       test('should format message correctly without cause', () {
         const exception = CameraPermissionException('Test error');
-        expect(exception.toString(), equals('CameraPermissionException: Test error'));
+        expect(exception.toString(), equals('PermissionException: Test error'));
       });
 
       test('should format message correctly with cause', () {
@@ -91,7 +91,7 @@ void main() {
         final exception = CameraPermissionException('Test error', cause: cause);
         expect(
           exception.toString(),
-          equals('CameraPermissionException: Test error (caused by: $cause)'),
+          equals('PermissionException: Test error (caused by: $cause)'),
         );
       });
 

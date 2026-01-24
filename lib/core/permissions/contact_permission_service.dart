@@ -1,6 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import 'permission_exception.dart';
+
+/// Type alias for backward compatibility.
+///
+/// This allows existing code referencing [ContactPermissionException]
+/// to work seamlessly with the common [PermissionException] base class.
+typedef ContactPermissionException = PermissionException;
+
 /// Riverpod provider for [ContactPermissionService].
 ///
 /// Provides a singleton instance of the contact permission service for
@@ -42,28 +50,6 @@ enum ContactPermissionState {
   /// The user selected "Don't ask again" or denied multiple times.
   /// The only way to grant permission is through system settings.
   permanentlyDenied,
-}
-
-/// Exception thrown when contact permission operations fail.
-///
-/// Contains the original error message and optional underlying exception.
-class ContactPermissionException implements Exception {
-  /// Creates a [ContactPermissionException] with the given [message].
-  const ContactPermissionException(this.message, {this.cause});
-
-  /// Human-readable error message.
-  final String message;
-
-  /// The underlying exception that caused this error, if any.
-  final Object? cause;
-
-  @override
-  String toString() {
-    if (cause != null) {
-      return 'ContactPermissionException: $message (caused by: $cause)';
-    }
-    return 'ContactPermissionException: $message';
-  }
 }
 
 /// Service for managing contact permission state and requests.

@@ -1,6 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import 'permission_exception.dart';
+
+/// Type alias for backward compatibility.
+///
+/// This allows existing code referencing [CameraPermissionException]
+/// to work seamlessly with the common [PermissionException] base class.
+typedef CameraPermissionException = PermissionException;
+
 /// Riverpod provider for [CameraPermissionService].
 ///
 /// Provides a singleton instance of the camera permission service for
@@ -42,28 +50,6 @@ enum CameraPermissionState {
   /// The user selected "Don't ask again" or denied multiple times.
   /// The only way to grant permission is through system settings.
   permanentlyDenied,
-}
-
-/// Exception thrown when camera permission operations fail.
-///
-/// Contains the original error message and optional underlying exception.
-class CameraPermissionException implements Exception {
-  /// Creates a [CameraPermissionException] with the given [message].
-  const CameraPermissionException(this.message, {this.cause});
-
-  /// Human-readable error message.
-  final String message;
-
-  /// The underlying exception that caused this error, if any.
-  final Object? cause;
-
-  @override
-  String toString() {
-    if (cause != null) {
-      return 'CameraPermissionException: $message (caused by: $cause)';
-    }
-    return 'CameraPermissionException: $message';
-  }
 }
 
 /// Service for managing camera permission state and requests.

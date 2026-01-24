@@ -179,15 +179,38 @@ class DatabaseMigrationHelper {
       final oldDbFile = File(oldDbPath);
       final backupFile = File(backupPath);
 
+      // Verify old database exists
+      if (!await oldDbFile.exists()) {
+        throw MigrationException('Old database not found: $oldDbPath');
+      }
+
       // Delete existing backup if present
       if (await backupFile.exists()) {
         await backupFile.delete();
       }
 
+      // Get original file size for verification
+      final originalSize = await oldDbFile.length();
+
       // Create backup by copying database file
       await oldDbFile.copy(backupPath);
 
-      debugPrint('Database backup created at: $backupPath');
+      // Verify backup was created successfully
+      if (!await backupFile.exists()) {
+        throw MigrationException('Backup file was not created');
+      }
+
+      // Verify backup file size matches original
+      final backupSize = await backupFile.length();
+      if (backupSize != originalSize) {
+        throw MigrationException(
+          'Backup verification failed: size mismatch '
+          '(original: $originalSize, backup: $backupSize)',
+        );
+      }
+
+      debugPrint('Database backup created and verified at: $backupPath '
+          '($backupSize bytes)');
       return backupPath;
     } catch (e) {
       throw MigrationException(
@@ -213,6 +236,12 @@ class DatabaseMigrationHelper {
         throw MigrationException('Backup file not found: $backupPath');
       }
 
+      // Verify backup file is not empty
+      final backupSize = await backupFile.length();
+      if (backupSize == 0) {
+        throw MigrationException('Backup file is empty: $backupPath');
+      }
+
       final oldDbFile = File(oldDbPath);
 
       // Delete current database if exists
@@ -223,12 +252,46 @@ class DatabaseMigrationHelper {
       // Restore from backup
       await backupFile.copy(oldDbPath);
 
-      debugPrint('Database restored from backup: $backupPath');
+      // Verify restoration was successful
+      if (!await oldDbFile.exists()) {
+        throw MigrationException('Database restoration failed: file not created');
+      }
+
+      final restoredSize = await oldDbFile.length();
+      if (restoredSize != backupSize) {
+        throw MigrationException(
+          'Database restoration verification failed: size mismatch '
+          '(backup: $backupSize, restored: $restoredSize)',
+        );
+      }
+
+      debugPrint('Database restored and verified from backup: $backupPath '
+          '($restoredSize bytes)');
     } catch (e) {
       throw MigrationException(
         'Failed to restore database from backup',
         cause: e,
       );
+    }
+  }
+
+  /// Checks if a backup file exists.
+  ///
+  /// Returns `true` if a backup file exists, `false` otherwise.
+  ///
+  /// This can be used to check if a previous migration attempt left a backup.
+  Future<bool> backupExists() async {
+    try {
+      final databasesPath = await getDatabasesPath();
+      final oldDbPath = join(databasesPath, _oldDatabaseName);
+      final backupPath = '$oldDbPath$_backupSuffix';
+
+      final backupFile = File(backupPath);
+      return await backupFile.exists();
+    } catch (e) {
+      // Return false if we can't check (e.g., permissions issue)
+      debugPrint('Error checking backup existence: $e');
+      return false;
     }
   }
 

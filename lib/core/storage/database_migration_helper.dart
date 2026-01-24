@@ -373,6 +373,9 @@ class DatabaseMigrationHelper {
       // Step 8: Replace old database with new encrypted database
       await _replaceOldDatabase();
 
+      // Step 9: Delete backup after successful migration
+      await deleteBackup();
+
       debugPrint('Migration completed successfully: $rowCount rows migrated');
 
       return MigrationResult(

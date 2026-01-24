@@ -20,18 +20,15 @@ final databaseHelperProvider = Provider<DatabaseHelper>((ref) {
 /// - FTS4 (version 4): Universal compatibility fallback
 /// - Disabled (version 0): LIKE-based search when FTS unavailable
 class DatabaseHelper {
-  // Singleton pattern
-  static final DatabaseHelper _instance = DatabaseHelper._internal();
-  factory DatabaseHelper({SecureStorageService? secureStorage}) {
-    if (secureStorage != null) {
-      _instance._secureStorage = secureStorage;
-    }
-    return _instance;
-  }
-  DatabaseHelper._internal();
+  /// Creates a [DatabaseHelper] with the required [SecureStorageService].
+  DatabaseHelper({
+    required SecureStorageService secureStorage,
+  }) : _secureStorage = secureStorage;
+
+  /// The secure storage service for database encryption key management.
+  final SecureStorageService _secureStorage;
 
   static Database? _database;
-  late SecureStorageService _secureStorage;
 
   // Database configuration
   static const String _databaseName = 'aiscan.db';

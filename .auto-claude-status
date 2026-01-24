@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "055-extract-shared-interactive-widgets-to-core",
+  "spec": "030-encrypt-sqlite-database-with-sqlcipher",
   "state": "building",
   "subtasks": {
-    "completed": 7,
-    "total": 8,
+    "completed": 12,
+    "total": 15,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Final Verification",
+    "current": "Verification - Test Encryption",
     "id": null,
-    "total": 2
+    "total": 4
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 9,
-    "started_at": "2026-01-24T12:23:41.548504"
+    "number": 14,
+    "started_at": "2026-01-24T13:03:09.910170"
   },
-  "last_update": "2026-01-24T12:42:11.768529"
+  "last_update": "2026-01-24T13:42:38.970469"
 }

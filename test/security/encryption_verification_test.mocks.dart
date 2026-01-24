@@ -10,7 +10,7 @@ import 'package:aiscan/core/security/secure_storage_service.dart' as _i4;
 import 'package:aiscan/core/storage/database_helper.dart' as _i7;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i5;
-import 'package:sqflite/sqflite.dart' as _i2;
+import 'package:sqflite_sqlcipher/sqflite.dart' as _i2;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values

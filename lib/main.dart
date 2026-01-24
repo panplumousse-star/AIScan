@@ -6,6 +6,7 @@ import 'app.dart';
 import 'core/permissions/camera_permission_service.dart';
 import 'core/providers/locale_provider.dart';
 import 'core/providers/ocr_language_provider.dart';
+import 'core/storage/database_migration_helper.dart';
 import 'features/app_lock/domain/app_lock_service.dart';
 import 'features/settings/presentation/settings_screen.dart';
 
@@ -51,6 +52,25 @@ void main() async {
 
   // Initialize OCR language preference from storage
   await initializeOcrLanguage(container);
+
+  // Migrate database from unencrypted to encrypted format if needed
+  // This runs automatically on first launch after update
+  // Creates backup of old database before migration for safety
+  final migrationHelper = container.read(databaseMigrationHelperProvider);
+  if (await migrationHelper.needsMigration()) {
+    debugPrint('Database migration needed, starting migration...');
+    final result = await migrationHelper.migrateToEncrypted();
+
+    if (result.success) {
+      debugPrint('Database migration completed successfully: ${result.rowsMigrated} rows migrated');
+      // Delete backup after successful migration
+      await migrationHelper.deleteBackup();
+    } else {
+      debugPrint('Database migration failed: ${result.error}');
+      // Migration failed and backup was restored automatically
+      // App will continue with old unencrypted database
+    }
+  }
 
   // Run the application wrapped with Riverpod for state management
   runApp(

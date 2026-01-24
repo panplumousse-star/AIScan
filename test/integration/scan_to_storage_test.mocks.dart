@@ -13,7 +13,7 @@ import 'package:aiscan/core/storage/document_repository.dart' as _i10;
 import 'package:aiscan/features/documents/domain/document_model.dart' as _i4;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i6;
-import 'package:sqflite/sqflite.dart' as _i2;
+import 'package:sqflite_sqlcipher/sqflite.dart' as _i2;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values

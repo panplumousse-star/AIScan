@@ -217,7 +217,6 @@ class DocumentExportService {
   /// The export preferences for remembering last folder.
   final ExportPreferences _exportPreferences;
 
-
   // ============================================================
   // Export Operations
   // ============================================================
@@ -278,7 +277,7 @@ class DocumentExportService {
     String? exportDir = await FilePicker.platform.getDirectoryPath(
       dialogTitle: 'Sélectionner le dossier d\'exportation',
     );
-    
+
     if (exportDir == null) {
       return const ExportResult.cancelled();
     }
@@ -297,20 +296,20 @@ class DocumentExportService {
 
         // Determine unique save path in the selected directory
         String savedPath = p.join(exportDir, suggestedFileName);
-        
+
         // Ensure unique filename if it already exists
         int counter = 1;
         while (await File(savedPath).exists()) {
-           final nameWithoutExt = p.basenameWithoutExtension(suggestedFileName);
-           final ext = p.extension(suggestedFileName);
-           savedPath = p.join(exportDir, '${nameWithoutExt}_$counter$ext');
-           counter++;
+          final nameWithoutExt = p.basenameWithoutExtension(suggestedFileName);
+          final ext = p.extension(suggestedFileName);
+          savedPath = p.join(exportDir, '${nameWithoutExt}_$counter$ext');
+          counter++;
         }
-        
+
         // Write the PDF bytes
         final outputFile = File(savedPath);
         await outputFile.writeAsBytes(pdfBytes);
-        
+
         exportedPaths.add(savedPath);
 
         // Extract folder information from the saved path

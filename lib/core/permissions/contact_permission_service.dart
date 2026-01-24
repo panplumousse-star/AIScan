@@ -13,7 +13,8 @@ typedef ContactPermissionException = PermissionException;
 ///
 /// Provides a singleton instance of the contact permission service for
 /// dependency injection throughout the application.
-final contactPermissionServiceProvider = Provider<ContactPermissionService>((ref) {
+final contactPermissionServiceProvider =
+    Provider<ContactPermissionService>((ref) {
   return ContactPermissionService();
 });
 

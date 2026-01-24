@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/widgets/bento_background.dart';
+import '../../../core/widgets/bento_confirmation_dialog.dart';
 import '../../../core/widgets/scanai_loader.dart';
 import '../domain/image_processor.dart';
 
@@ -238,7 +239,8 @@ class EnhancementScreenNotifier extends StateNotifier<EnhancementScreenState> {
 
   /// Sets brightness and schedules preview update.
   void setBrightness(int value) {
-    state = state.copyWith(brightness: value.clamp(-100, 100), clearPreset: true);
+    state =
+        state.copyWith(brightness: value.clamp(-100, 100), clearPreset: true);
     _schedulePreviewUpdate();
   }
 
@@ -256,7 +258,8 @@ class EnhancementScreenNotifier extends StateNotifier<EnhancementScreenState> {
 
   /// Sets saturation and schedules preview update.
   void setSaturation(int value) {
-    state = state.copyWith(saturation: value.clamp(-100, 100), clearPreset: true);
+    state =
+        state.copyWith(saturation: value.clamp(-100, 100), clearPreset: true);
     _schedulePreviewUpdate();
   }
 
@@ -442,8 +445,8 @@ class EnhancementScreenNotifier extends StateNotifier<EnhancementScreenState> {
 }
 
 /// Riverpod provider for the enhancement screen state.
-final enhancementScreenProvider =
-    StateNotifierProvider.autoDispose<EnhancementScreenNotifier, EnhancementScreenState>(
+final enhancementScreenProvider = StateNotifierProvider.autoDispose<
+    EnhancementScreenNotifier, EnhancementScreenState>(
   (ref) {
     final imageProcessor = ref.watch(imageProcessorProvider);
     return EnhancementScreenNotifier(imageProcessor);
@@ -545,7 +548,8 @@ class _EnhancementScreenState extends ConsumerState<EnhancementScreen> {
     final theme = Theme.of(context);
 
     // Listen for errors and show snackbar
-    ref.listen<EnhancementScreenState>(enhancementScreenProvider, (previous, next) {
+    ref.listen<EnhancementScreenState>(enhancementScreenProvider,
+        (previous, next) {
       if (next.error != null && previous?.error != next.error) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -604,29 +608,16 @@ class _EnhancementScreenState extends ConsumerState<EnhancementScreen> {
     );
   }
 
-  Future<void> _handleClose(BuildContext context, EnhancementScreenState state) async {
+  Future<void> _handleClose(
+      BuildContext context, EnhancementScreenState state) async {
     if (state.hasEnhancements) {
-      final shouldDiscard = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Discard changes?'),
-          content: const Text(
+      final shouldDiscard = await showBentoConfirmationDialog(
+        context,
+        title: 'Discard changes?',
+        message:
             'You have unsaved enhancements. Are you sure you want to discard them?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              style: FilledButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.error,
-              ),
-              child: const Text('Discard'),
-            ),
-          ],
-        ),
+        confirmButtonText: 'Discard',
+        isDestructive: true,
       );
 
       if (shouldDiscard == true && mounted) {
@@ -672,7 +663,8 @@ class _PreviewArea extends StatelessWidget {
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: theme.brightness == Brightness.dark ? 0.3 : 0.08),
+            color: Colors.black.withValues(
+                alpha: theme.brightness == Brightness.dark ? 0.3 : 0.08),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -703,8 +695,8 @@ class _PreviewArea extends StatelessWidget {
           if (state.isProcessing)
             Positioned.fill(
               child: Container(
-                color: theme.brightness == Brightness.dark 
-                    ? Colors.black.withValues(alpha: 0.5) 
+                color: theme.brightness == Brightness.dark
+                    ? Colors.black.withValues(alpha: 0.5)
                     : theme.colorScheme.surface.withValues(alpha: 0.5),
                 child: Center(
                   child: ScanaiLoader(size: 60),
@@ -720,8 +712,8 @@ class _PreviewArea extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      color: theme.brightness == Brightness.dark 
-          ? Colors.black.withValues(alpha: 0.2) 
+      color: theme.brightness == Brightness.dark
+          ? Colors.black.withValues(alpha: 0.2)
           : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.1),
       child: Center(
         child: Column(
@@ -787,8 +779,8 @@ class _ControlsPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: theme.brightness == Brightness.dark 
-            ? const Color(0xFF0F172A).withValues(alpha: 0.95) 
+        color: theme.brightness == Brightness.dark
+            ? const Color(0xFF0F172A).withValues(alpha: 0.95)
             : theme.colorScheme.surface,
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(32),
@@ -1018,7 +1010,8 @@ class _EnhancementSlider extends StatelessWidget {
             child: SliderTheme(
               data: SliderTheme.of(context).copyWith(
                 activeTrackColor: const Color(0xFF6366F1),
-                inactiveTrackColor: const Color(0xFF6366F1).withValues(alpha: 0.2),
+                inactiveTrackColor:
+                    const Color(0xFF6366F1).withValues(alpha: 0.2),
                 thumbColor: const Color(0xFF6366F1),
                 overlayColor: const Color(0xFF6366F1).withValues(alpha: 0.1),
                 trackHeight: 4,
@@ -1147,8 +1140,8 @@ class _BottomBar extends StatelessWidget {
         16 + MediaQuery.of(context).padding.bottom,
       ),
       decoration: BoxDecoration(
-        color: theme.brightness == Brightness.dark 
-            ? const Color(0xFF0F172A) 
+        color: theme.brightness == Brightness.dark
+            ? const Color(0xFF0F172A)
             : theme.colorScheme.surface,
         boxShadow: [
           BoxShadow(
@@ -1205,24 +1198,28 @@ class _BentoPrimaryButton extends StatelessWidget {
     return Container(
       height: 54,
       decoration: BoxDecoration(
-        gradient: onPressed != null 
+        gradient: onPressed != null
             ? LinearGradient(
-                colors: isDark 
+                colors: isDark
                     ? [const Color(0xFF312E81), const Color(0xFF1E1B4B)]
                     : [const Color(0xFF6366F1), const Color(0xFF4F46E5)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               )
             : null,
-        color: onPressed == null ? theme.disabledColor.withValues(alpha: 0.2) : null,
+        color: onPressed == null
+            ? theme.disabledColor.withValues(alpha: 0.2)
+            : null,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: onPressed != null ? [
-          BoxShadow(
-            color: const Color(0xFF4F46E5).withValues(alpha: 0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ] : null,
+        boxShadow: onPressed != null
+            ? [
+                BoxShadow(
+                  color: const Color(0xFF4F46E5).withValues(alpha: 0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : null,
       ),
       child: Material(
         color: Colors.transparent,
@@ -1278,13 +1275,13 @@ class _BentoSecondaryButton extends StatelessWidget {
     return Container(
       height: 54,
       decoration: BoxDecoration(
-        color: theme.brightness == Brightness.dark 
-            ? Colors.white.withValues(alpha: 0.05) 
+        color: theme.brightness == Brightness.dark
+            ? Colors.white.withValues(alpha: 0.05)
             : const Color(0xFFF1F5F9),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: theme.brightness == Brightness.dark 
-              ? Colors.white.withValues(alpha: 0.1) 
+          color: theme.brightness == Brightness.dark
+              ? Colors.white.withValues(alpha: 0.1)
               : const Color(0xFFE2E8F0),
           width: 1.5,
         ),
@@ -1299,8 +1296,8 @@ class _BentoSecondaryButton extends StatelessWidget {
               label,
               style: GoogleFonts.outfit(
                 fontWeight: FontWeight.w700,
-                color: theme.brightness == Brightness.dark 
-                    ? Colors.white.withValues(alpha: 0.7) 
+                color: theme.brightness == Brightness.dark
+                    ? Colors.white.withValues(alpha: 0.7)
                     : const Color(0xFF475569),
                 fontSize: 16,
               ),

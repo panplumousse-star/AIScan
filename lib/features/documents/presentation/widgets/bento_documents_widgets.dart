@@ -27,9 +27,12 @@ class BentoStatsHeader extends StatelessWidget {
     final diff = now.difference(lastUpdated!);
 
     if (diff.inMinutes < 1) return l10n?.justNow ?? 'Just now';
-    if (diff.inMinutes < 60) return l10n?.minutesAgo(diff.inMinutes) ?? '${diff.inMinutes} min ago';
-    if (diff.inHours < 24) return l10n?.hoursAgo(diff.inHours) ?? '${diff.inHours}h ago';
-    if (diff.inDays < 7) return l10n?.daysAgo(diff.inDays) ?? '${diff.inDays} days ago';
+    if (diff.inMinutes < 60)
+      return l10n?.minutesAgo(diff.inMinutes) ?? '${diff.inMinutes} min ago';
+    if (diff.inHours < 24)
+      return l10n?.hoursAgo(diff.inHours) ?? '${diff.inHours}h ago';
+    if (diff.inDays < 7)
+      return l10n?.daysAgo(diff.inDays) ?? '${diff.inDays} days ago';
     return '${lastUpdated!.day}/${lastUpdated!.month}/${lastUpdated!.year}';
   }
 
@@ -54,7 +57,8 @@ class BentoStatsHeader extends StatelessWidget {
                   children: [
                     _StatChip(
                       icon: Icons.description_outlined,
-                      label: l10n?.nDocumentsLabel(documentCount) ?? '$documentCount documents',
+                      label: l10n?.nDocumentsLabel(documentCount) ??
+                          '$documentCount documents',
                       color: isDark
                           ? const Color(0xFF93C5FD)
                           : AppColors.bentoButtonBlue,
@@ -63,7 +67,8 @@ class BentoStatsHeader extends StatelessWidget {
                     const SizedBox(width: 8),
                     _StatChip(
                       icon: Icons.folder_outlined,
-                      label: l10n?.nFoldersLabel(folderCount) ?? '$folderCount folders',
+                      label: l10n?.nFoldersLabel(folderCount) ??
+                          '$folderCount folders',
                       color: isDark
                           ? const Color(0xFFFDBA74)
                           : Colors.orange[700]!,
@@ -391,7 +396,8 @@ class _BentoSearchBarState extends State<BentoSearchBar>
 
     if (folders > 0 && docs > 0) {
       // Both types selected
-      return l10n?.foldersAndDocs(folders, docs) ?? '$folders folders, $docs documents';
+      return l10n?.foldersAndDocs(folders, docs) ??
+          '$folders folders, $docs documents';
     } else if (folders > 0) {
       // Only folders
       return l10n?.folderSelected(folders) ?? '$folders folders selected';
@@ -572,85 +578,87 @@ class _BentoFolderCardState extends State<BentoFolderCard>
 
     return RepaintBoundary(
       child: BentoCard(
-      onTap: widget.onTap,
-      onLongPress: widget.onLongPress,
-      padding: EdgeInsets.zero,
-      blur: 10,
-      backgroundColor: widget.isSelected
-          ? widget.color.withValues(alpha: 0.2)
-          : (isDark
-              ? Colors.white.withValues(alpha: 0.05)
-              : Colors.white.withValues(alpha: 0.7)),
-      child: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: pastelBg,
-                    borderRadius: BorderRadius.circular(14),
+        onTap: widget.onTap,
+        onLongPress: widget.onLongPress,
+        padding: EdgeInsets.zero,
+        blur: 10,
+        backgroundColor: widget.isSelected
+            ? widget.color.withValues(alpha: 0.2)
+            : (isDark
+                ? Colors.white.withValues(alpha: 0.05)
+                : Colors.white.withValues(alpha: 0.7)),
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: pastelBg,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(
+                      Icons.folder_rounded,
+                      size: 28,
+                      color: widget.color,
+                    ),
                   ),
-                  child: Icon(
-                    Icons.folder_rounded,
-                    size: 28,
-                    color: widget.color,
+                  const SizedBox(height: 10),
+                  Text(
+                    widget.name,
+                    style: GoogleFonts.outfit(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white : Colors.grey[800],
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
                   ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  widget.name,
-                  style: GoogleFonts.outfit(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : Colors.grey[800],
+                  const SizedBox(height: 4),
+                  Text(
+                    l10n?.nDocs(widget.documentCount) ??
+                        '${widget.documentCount} docs',
+                    style: GoogleFonts.outfit(
+                      fontSize: 12,
+                      color: isDark ? Colors.white38 : Colors.grey[500],
+                    ),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  l10n?.nDocs(widget.documentCount) ?? '${widget.documentCount} docs',
-                  style: GoogleFonts.outfit(
-                    fontSize: 12,
-                    color: isDark ? Colors.white38 : Colors.grey[500],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Selection indicator
-          if (widget.isSelectionMode)
-            Positioned(
-              top: 8,
-              right: 8,
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: widget.isSelected ? widget.color : Colors.transparent,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: widget.isSelected
-                        ? Colors.transparent
-                        : (isDark ? Colors.white24 : Colors.black12),
-                    width: 1.5,
-                  ),
-                ),
-                child: Icon(
-                  widget.isSelected ? Icons.check : Icons.circle_outlined,
-                  size: 14,
-                  color: widget.isSelected
-                      ? Colors.white
-                      : (isDark ? Colors.white24 : Colors.black12),
-                ),
+                ],
               ),
             ),
-        ],
-      ),
+            // Selection indicator
+            if (widget.isSelectionMode)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color:
+                        widget.isSelected ? widget.color : Colors.transparent,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: widget.isSelected
+                          ? Colors.transparent
+                          : (isDark ? Colors.white24 : Colors.black12),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Icon(
+                    widget.isSelected ? Icons.check : Icons.circle_outlined,
+                    size: 14,
+                    color: widget.isSelected
+                        ? Colors.white
+                        : (isDark ? Colors.white24 : Colors.black12),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -718,146 +726,149 @@ class _BentoDocumentCardState extends State<BentoDocumentCard>
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         child: BentoCard(
-        onTap: widget.onTap,
-        onLongPress: widget.onLongPress,
-        padding: const EdgeInsets.all(12),
-        blur: 8,
-        backgroundColor: widget.isSelected
-            ? AppColors.bentoButtonBlue.withValues(alpha: 0.15)
-            : (isDark
-                ? Colors.white.withValues(alpha: 0.03)
-                : Colors.white.withValues(alpha: 0.6)),
-        child: Row(
-          children: [
-            // Thumbnail
-            Container(
-              width: 64,
-              height: 76,
-              decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.05)
-                    : Colors.grey[100],
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
+          onTap: widget.onTap,
+          onLongPress: widget.onLongPress,
+          padding: const EdgeInsets.all(12),
+          blur: 8,
+          backgroundColor: widget.isSelected
+              ? AppColors.bentoButtonBlue.withValues(alpha: 0.15)
+              : (isDark
+                  ? Colors.white.withValues(alpha: 0.03)
+                  : Colors.white.withValues(alpha: 0.6)),
+          child: Row(
+            children: [
+              // Thumbnail
+              Container(
+                width: 64,
+                height: 76,
+                decoration: BoxDecoration(
                   color: isDark
                       ? Colors.white.withValues(alpha: 0.05)
-                      : Colors.black.withValues(alpha: 0.03),
+                      : Colors.grey[100],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.black.withValues(alpha: 0.03),
+                  ),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: widget.thumbnailBytes != null
+                    ? Image.memory(
+                        widget.thumbnailBytes!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => _buildPlaceholder(),
+                      )
+                    : _buildPlaceholder(),
+              ),
+              const SizedBox(width: 14),
+              // Content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.title,
+                      style: GoogleFonts.outfit(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white : Colors.grey[800],
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      widget.subtitle,
+                      style: GoogleFonts.outfit(
+                        fontSize: 13,
+                        color: isDark ? Colors.white38 : Colors.grey[500],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Builder(
+                          builder: (context) {
+                            final l10n = AppLocalizations.of(context);
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.05)
+                                    : Colors.black.withValues(alpha: 0.03),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                l10n?.pageCount(widget.pageCount) ??
+                                    '${widget.pageCount} page${widget.pageCount > 1 ? 's' : ''}',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  color: isDark
+                                      ? Colors.white54
+                                      : Colors.grey[600],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-              clipBehavior: Clip.antiAlias,
-              child: widget.thumbnailBytes != null
-                  ? Image.memory(
-                      widget.thumbnailBytes!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _buildPlaceholder(),
-                    )
-                  : _buildPlaceholder(),
-            ),
-            const SizedBox(width: 14),
-            // Content
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              // Actions
+              Column(
                 children: [
-                  Text(
-                    widget.title,
-                    style: GoogleFonts.outfit(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : Colors.grey[800],
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    widget.subtitle,
-                    style: GoogleFonts.outfit(
-                      fontSize: 13,
-                      color: isDark ? Colors.white38 : Colors.grey[500],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Builder(
-                        builder: (context) {
-                          final l10n = AppLocalizations.of(context);
-                          return Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? Colors.white.withValues(alpha: 0.05)
-                                  : Colors.black.withValues(alpha: 0.03),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              l10n?.pageCount(widget.pageCount) ?? '${widget.pageCount} page${widget.pageCount > 1 ? 's' : ''}',
-                              style: GoogleFonts.outfit(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                                color: isDark ? Colors.white54 : Colors.grey[600],
-                              ),
-                            ),
-                          );
-                        },
+                  if (widget.isSelectionMode)
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: widget.isSelected
+                            ? AppColors.bentoButtonBlue
+                            : Colors.transparent,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: widget.isSelected
+                              ? Colors.transparent
+                              : (isDark ? Colors.white24 : Colors.black12),
+                          width: 1.5,
+                        ),
                       ),
-                    ],
-                  ),
+                      child: Icon(
+                        widget.isSelected ? Icons.check : Icons.circle_outlined,
+                        size: 18,
+                        color: widget.isSelected
+                            ? Colors.white
+                            : (isDark ? Colors.white24 : Colors.black12),
+                      ),
+                    )
+                  else
+                    IconButton(
+                      onPressed: widget.onFavoriteToggle,
+                      icon: Icon(
+                        widget.isFavorite
+                            ? Icons.favorite_rounded
+                            : Icons.favorite_border_rounded,
+                        color: widget.isFavorite
+                            ? Colors.red[400]
+                            : (isDark ? Colors.white24 : Colors.grey[400]),
+                        size: 22,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(
+                        minWidth: 36,
+                        minHeight: 36,
+                      ),
+                    ),
                 ],
               ),
-            ),
-            // Actions
-            Column(
-              children: [
-                if (widget.isSelectionMode)
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: widget.isSelected
-                          ? AppColors.bentoButtonBlue
-                          : Colors.transparent,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: widget.isSelected
-                            ? Colors.transparent
-                            : (isDark ? Colors.white24 : Colors.black12),
-                        width: 1.5,
-                      ),
-                    ),
-                    child: Icon(
-                      widget.isSelected ? Icons.check : Icons.circle_outlined,
-                      size: 18,
-                      color: widget.isSelected
-                          ? Colors.white
-                          : (isDark ? Colors.white24 : Colors.black12),
-                    ),
-                  )
-                else
-                  IconButton(
-                    onPressed: widget.onFavoriteToggle,
-                    icon: Icon(
-                      widget.isFavorite
-                          ? Icons.favorite_rounded
-                          : Icons.favorite_border_rounded,
-                      color: widget.isFavorite
-                          ? Colors.red[400]
-                          : (isDark ? Colors.white24 : Colors.grey[400]),
-                      size: 22,
-                    ),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(
-                      minWidth: 36,
-                      minHeight: 36,
-                    ),
-                  ),
-              ],
-            ),
-          ],
-        ),
+            ],
+          ),
         ),
       ),
     );
@@ -933,28 +944,28 @@ class _BentoScanFabState extends State<BentoScanFab>
           ],
         ),
         child: Builder(
-        builder: (context) {
-          final l10n = AppLocalizations.of(context);
-          return FloatingActionButton.extended(
-            onPressed: widget.onPressed,
-            backgroundColor: AppColors.bentoButtonBlue,
-            foregroundColor: Colors.white,
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            icon: const Icon(Icons.document_scanner_rounded),
-            label: Text(
-              l10n?.scanner ?? 'Scan',
-              style: GoogleFonts.outfit(
-                fontWeight: FontWeight.w700,
-                fontSize: 16,
-                letterSpacing: 0.2,
+          builder: (context) {
+            final l10n = AppLocalizations.of(context);
+            return FloatingActionButton.extended(
+              onPressed: widget.onPressed,
+              backgroundColor: AppColors.bentoButtonBlue,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
               ),
-            ),
-          );
-        },
-      ),
+              icon: const Icon(Icons.document_scanner_rounded),
+              label: Text(
+                l10n?.scanner ?? 'Scan',
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }

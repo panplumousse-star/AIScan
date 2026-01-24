@@ -142,7 +142,8 @@ class _MoveToFolderDialogState extends State<MoveToFolderDialog> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                l10n?.chooseDestinationFolder ?? 'Choose a destination folder',
+                                l10n?.chooseDestinationFolder ??
+                                    'Choose a destination folder',
                                 style: GoogleFonts.outfit(
                                   fontSize: 12,
                                   color: theme.colorScheme.onSurface

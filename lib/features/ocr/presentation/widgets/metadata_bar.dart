@@ -63,12 +63,15 @@ class MetadataBar extends StatelessWidget {
                   onTap: onSelectionModeToggle,
                   borderRadius: BorderRadius.circular(8),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          isSelectionMode ? Icons.touch_app : Icons.touch_app_outlined,
+                          isSelectionMode
+                              ? Icons.touch_app
+                              : Icons.touch_app_outlined,
                           size: 16,
                           color: isSelectionMode
                               ? theme.colorScheme.onPrimaryContainer
@@ -84,7 +87,8 @@ class MetadataBar extends StatelessWidget {
                                 color: isSelectionMode
                                     ? theme.colorScheme.onPrimaryContainer
                                     : theme.colorScheme.onSurfaceVariant,
-                                fontWeight: isSelectionMode ? FontWeight.w600 : null,
+                                fontWeight:
+                                    isSelectionMode ? FontWeight.w600 : null,
                               ),
                             );
                           },

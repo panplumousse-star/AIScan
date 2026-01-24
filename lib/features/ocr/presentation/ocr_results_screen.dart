@@ -571,23 +571,22 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
             // Copy all button
             IconButton(
               icon: const Icon(Icons.copy_all),
-              onPressed: state.canCopy
-                  ? () => _copyAllText(context, state)
-                  : null,
+              onPressed:
+                  state.canCopy ? () => _copyAllText(context, state) : null,
               tooltip: l10n?.copyAllTextTooltip ?? 'Copy all text',
             ),
             // Share button
             IconButton(
               icon: const Icon(Icons.share),
-              onPressed: state.canCopy
-                  ? () => _shareText(context, state)
-                  : null,
+              onPressed:
+                  state.canCopy ? () => _shareText(context, state) : null,
               tooltip: l10n?.shareTextTooltip ?? 'Share text',
             ),
           ],
           // More options menu
           PopupMenuButton<String>(
-            onSelected: (value) => _handleMenuAction(value, state, notifier, l10n),
+            onSelected: (value) =>
+                _handleMenuAction(value, state, notifier, l10n),
             itemBuilder: (context) => [
               if (state.canRunOcr)
                 PopupMenuItem(
@@ -626,7 +625,8 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
               onPressed: () => _copySelectedText(context, state, notifier),
               icon: const Icon(Icons.copy),
               label: Text(l10n?.copySelection ?? 'Copy Selection'),
-              tooltip: l10n?.copySelectionTooltip ?? 'Copy selected text to clipboard',
+              tooltip: l10n?.copySelectionTooltip ??
+                  'Copy selected text to clipboard',
             )
           : null,
     );
@@ -703,7 +703,8 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
         if (state.ocrResult != null) {
           widget.onSaveRequested?.call(state.ocrResult!.trimmedText);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n?.ocrSaved ?? 'OCR text saved to document')),
+            SnackBar(
+                content: Text(l10n?.ocrSaved ?? 'OCR text saved to document')),
           );
         }
         break;
@@ -725,7 +726,8 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            l10n?.copiedWords(state.ocrResult!.wordCount ?? 0) ?? 'Copied ${state.ocrResult!.wordCount} words to clipboard',
+            l10n?.copiedWords(state.ocrResult!.wordCount ?? 0) ??
+                'Copied ${state.ocrResult!.wordCount} words to clipboard',
           ),
           action: SnackBarAction(
             label: l10n?.dismiss ?? 'Dismiss',
@@ -760,7 +762,8 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              l10n?.copiedWords(wordCount) ?? 'Copied $wordCount ${wordCount == 1 ? 'word' : 'words'} to clipboard',
+              l10n?.copiedWords(wordCount) ??
+                  'Copied $wordCount ${wordCount == 1 ? 'word' : 'words'} to clipboard',
             ),
             action: SnackBarAction(
               label: l10n?.dismiss ?? 'Dismiss',
@@ -776,7 +779,8 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(l10n?.failedToCopyText ?? 'Failed to copy text to clipboard'),
+            content: Text(
+                l10n?.failedToCopyText ?? 'Failed to copy text to clipboard'),
             action: SnackBarAction(
               label: l10n?.dismiss ?? 'Dismiss',
               onPressed: () {},
@@ -806,7 +810,8 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
     // Create a temporary file for sharing
     final tempDir = await getTemporaryDirectory();
     final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final fileName = '${title.replaceAll(RegExp(r'[^\w\s]'), '_')}_$timestamp.txt';
+    final fileName =
+        '${title.replaceAll(RegExp(r'[^\w\s]'), '_')}_$timestamp.txt';
     final filePath = p.join(tempDir.path, fileName);
     final file = File(filePath);
     await file.writeAsString(text);
@@ -860,7 +865,9 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
             const SizedBox(height: 16),
             if (_searchQuery.isNotEmpty && state.ocrResult != null)
               Text(
-                l10n?.matchesFound(_countOccurrences(state.ocrResult!.text, _searchQuery)) ?? '${_countOccurrences(state.ocrResult!.text, _searchQuery)} matches found',
+                l10n?.matchesFound(_countOccurrences(
+                        state.ocrResult!.text, _searchQuery)) ??
+                    '${_countOccurrences(state.ocrResult!.text, _searchQuery)} matches found',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),

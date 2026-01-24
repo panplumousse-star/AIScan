@@ -141,8 +141,7 @@ class SearchScreenState {
 /// Manages search operations, suggestions, and history.
 class SearchScreenNotifier extends StateNotifier<SearchScreenState> {
   /// Creates a [SearchScreenNotifier] with the given search service.
-  SearchScreenNotifier(this._searchService)
-      : super(const SearchScreenState());
+  SearchScreenNotifier(this._searchService) : super(const SearchScreenState());
 
   final SearchService _searchService;
   Timer? _debounceTimer;

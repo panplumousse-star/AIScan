@@ -646,8 +646,7 @@ class _SkeletonLoaderState extends State<SkeletonLoader>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final baseColor =
         widget.baseColor ?? (isDark ? Colors.grey[800]! : Colors.grey[300]!);
-    final highlightColor =
-        widget.highlightColor ??
+    final highlightColor = widget.highlightColor ??
         (isDark ? Colors.grey[700]! : Colors.grey[100]!);
 
     // Handle text skeleton
@@ -660,7 +659,9 @@ class _SkeletonLoaderState extends State<SkeletonLoader>
           return Padding(
             padding: EdgeInsets.only(bottom: index < widget.lines! - 1 ? 8 : 0),
             child: _buildShimmer(
-              width: isLast ? (widget.width ?? double.infinity) * 0.6 : widget.width,
+              width: isLast
+                  ? (widget.width ?? double.infinity) * 0.6
+                  : widget.width,
               height: 14,
               borderRadius: BorderRadius.circular(4),
               baseColor: baseColor,

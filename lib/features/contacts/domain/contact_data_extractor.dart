@@ -42,8 +42,10 @@ class ExtractedContactData {
 
   /// Returns true if any contact data was found.
   bool get hasData =>
-      emails.isNotEmpty || phoneNumbers.isNotEmpty ||
-      addresses.isNotEmpty || websites.isNotEmpty;
+      emails.isNotEmpty ||
+      phoneNumbers.isNotEmpty ||
+      addresses.isNotEmpty ||
+      websites.isNotEmpty;
 
   /// Returns true if no contact data was found.
   bool get isEmpty => !hasData;
@@ -378,7 +380,8 @@ class ContactDataExtractor {
     List<String> emails,
     List<String> phones,
   ) {
-    final lines = text.split('\n').map((l) => l.trim()).where((l) => l.isNotEmpty);
+    final lines =
+        text.split('\n').map((l) => l.trim()).where((l) => l.isNotEmpty);
 
     for (final line in lines) {
       // Skip if line contains email or phone

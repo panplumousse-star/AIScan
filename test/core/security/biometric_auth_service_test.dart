@@ -278,7 +278,8 @@ void main() {
 
         // Verify initial calls (checkBiometricCapability also calls getAvailableBiometrics internally)
         verify(mockLocalAuth.canCheckBiometrics).called(1);
-        verify(mockLocalAuth.getAvailableBiometrics()).called(2); // Called twice: once by checkBiometricCapability, once by getAvailableBiometrics
+        verify(mockLocalAuth.getAvailableBiometrics()).called(
+            2); // Called twice: once by checkBiometricCapability, once by getAvailableBiometrics
 
         // Reset mock to track new calls
         reset(mockLocalAuth);
@@ -302,7 +303,8 @@ void main() {
 
         // Assert - verify platform was called again after clear
         verify(mockLocalAuth.canCheckBiometrics).called(1);
-        verify(mockLocalAuth.getAvailableBiometrics()).called(2); // Called twice again after cache clear
+        verify(mockLocalAuth.getAvailableBiometrics())
+            .called(2); // Called twice again after cache clear
       });
     });
 
@@ -434,8 +436,7 @@ void main() {
   group('Helper methods', () {
     test('getTypeDescription returns correct descriptions', () {
       expect(
-        BiometricAuthService.getTypeDescription(
-            BiometricAuthType.fingerprint),
+        BiometricAuthService.getTypeDescription(BiometricAuthType.fingerprint),
         equals('Fingerprint'),
       );
       expect(

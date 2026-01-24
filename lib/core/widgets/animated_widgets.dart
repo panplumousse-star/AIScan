@@ -26,39 +26,39 @@ class SlidePageRoute<T> extends PageRouteBuilder<T> {
     this.direction = SlideDirection.right,
     Duration? duration,
   }) : super(
-         pageBuilder: (context, animation, secondaryAnimation) => page,
-         transitionDuration: duration ?? AppDuration.medium,
-         reverseTransitionDuration: duration ?? AppDuration.medium,
-         transitionsBuilder: (context, animation, secondaryAnimation, child) {
-           // Use curved animation for smoother feel
-           final curvedAnimation = CurvedAnimation(
-             parent: animation,
-             curve: Curves.easeOutCubic,
-             reverseCurve: Curves.easeInCubic,
-           );
+          pageBuilder: (context, animation, secondaryAnimation) => page,
+          transitionDuration: duration ?? AppDuration.medium,
+          reverseTransitionDuration: duration ?? AppDuration.medium,
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            // Use curved animation for smoother feel
+            final curvedAnimation = CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOutCubic,
+              reverseCurve: Curves.easeInCubic,
+            );
 
-           // Determine slide offset based on direction
-           final Offset begin;
-           switch (direction) {
-             case SlideDirection.right:
-               begin = const Offset(1.0, 0.0);
-             case SlideDirection.left:
-               begin = const Offset(-1.0, 0.0);
-             case SlideDirection.up:
-               begin = const Offset(0.0, 1.0);
-             case SlideDirection.down:
-               begin = const Offset(0.0, -1.0);
-           }
+            // Determine slide offset based on direction
+            final Offset begin;
+            switch (direction) {
+              case SlideDirection.right:
+                begin = const Offset(1.0, 0.0);
+              case SlideDirection.left:
+                begin = const Offset(-1.0, 0.0);
+              case SlideDirection.up:
+                begin = const Offset(0.0, 1.0);
+              case SlideDirection.down:
+                begin = const Offset(0.0, -1.0);
+            }
 
-           return SlideTransition(
-             position: Tween<Offset>(
-               begin: begin,
-               end: Offset.zero,
-             ).animate(curvedAnimation),
-             child: FadeTransition(opacity: curvedAnimation, child: child),
-           );
-         },
-       );
+            return SlideTransition(
+              position: Tween<Offset>(
+                begin: begin,
+                end: Offset.zero,
+              ).animate(curvedAnimation),
+              child: FadeTransition(opacity: curvedAnimation, child: child),
+            );
+          },
+        );
 
   /// The page widget to display.
   final Widget page;
@@ -97,17 +97,18 @@ enum SlideDirection {
 class FadePageRoute<T> extends PageRouteBuilder<T> {
   /// Creates a [FadePageRoute] with the given page.
   FadePageRoute({required this.page, Duration? duration})
-    : super(
-        pageBuilder: (context, animation, secondaryAnimation) => page,
-        transitionDuration: duration ?? AppDuration.medium,
-        reverseTransitionDuration: duration ?? AppDuration.medium,
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(
-            opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
-            child: child,
-          );
-        },
-      );
+      : super(
+          pageBuilder: (context, animation, secondaryAnimation) => page,
+          transitionDuration: duration ?? AppDuration.medium,
+          reverseTransitionDuration: duration ?? AppDuration.medium,
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity:
+                  CurvedAnimation(parent: animation, curve: Curves.easeOut),
+              child: child,
+            );
+          },
+        );
 
   /// The page widget to display.
   final Widget page;
@@ -132,25 +133,25 @@ class ScalePageRoute<T> extends PageRouteBuilder<T> {
     this.initialScale = 0.9,
     Duration? duration,
   }) : super(
-         pageBuilder: (context, animation, secondaryAnimation) => page,
-         transitionDuration: duration ?? AppDuration.medium,
-         reverseTransitionDuration: duration ?? AppDuration.medium,
-         transitionsBuilder: (context, animation, secondaryAnimation, child) {
-           final curvedAnimation = CurvedAnimation(
-             parent: animation,
-             curve: Curves.easeOutCubic,
-             reverseCurve: Curves.easeInCubic,
-           );
+          pageBuilder: (context, animation, secondaryAnimation) => page,
+          transitionDuration: duration ?? AppDuration.medium,
+          reverseTransitionDuration: duration ?? AppDuration.medium,
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            final curvedAnimation = CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOutCubic,
+              reverseCurve: Curves.easeInCubic,
+            );
 
-           return ScaleTransition(
-             scale: Tween<double>(
-               begin: initialScale,
-               end: 1.0,
-             ).animate(curvedAnimation),
-             child: FadeTransition(opacity: curvedAnimation, child: child),
-           );
-         },
-       );
+            return ScaleTransition(
+              scale: Tween<double>(
+                begin: initialScale,
+                end: 1.0,
+              ).animate(curvedAnimation),
+              child: FadeTransition(opacity: curvedAnimation, child: child),
+            );
+          },
+        );
 
   /// The page widget to display.
   final Widget page;
@@ -646,9 +647,8 @@ class _AnimatedIconButtonState extends State<AnimatedIconButton>
           child: Icon(
             widget.icon,
             size: widget.size,
-            color: widget.enabled
-                ? iconColor
-                : iconColor.withValues(alpha: 0.5),
+            color:
+                widget.enabled ? iconColor : iconColor.withValues(alpha: 0.5),
           ),
         ),
       ),
@@ -814,8 +814,7 @@ class _ShimmerLoadingState extends State<ShimmerLoading>
 
     final baseColor =
         widget.baseColor ?? (isDark ? Colors.grey[800]! : Colors.grey[300]!);
-    final highlightColor =
-        widget.highlightColor ??
+    final highlightColor = widget.highlightColor ??
         (isDark ? Colors.grey[700]! : Colors.grey[100]!);
 
     return AnimatedBuilder(
@@ -1031,30 +1030,29 @@ class DocumentHero extends StatelessWidget {
   Widget build(BuildContext context) {
     return Hero(
       tag: tag,
-      flightShuttleBuilder:
-          (
-            flightContext,
-            animation,
-            flightDirection,
-            fromHeroContext,
-            toHeroContext,
-          ) {
-            final curvedAnimation = CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeInOutCubic,
-            );
+      flightShuttleBuilder: (
+        flightContext,
+        animation,
+        flightDirection,
+        fromHeroContext,
+        toHeroContext,
+      ) {
+        final curvedAnimation = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeInOutCubic,
+        );
 
-            return AnimatedBuilder(
-              animation: curvedAnimation,
-              builder: (context, child) {
-                return Material(
-                  elevation: 8 * (1 - curvedAnimation.value),
-                  borderRadius: BorderRadius.circular(AppBorderRadius.lg),
-                  child: toHeroContext.widget,
-                );
-              },
+        return AnimatedBuilder(
+          animation: curvedAnimation,
+          builder: (context, child) {
+            return Material(
+              elevation: 8 * (1 - curvedAnimation.value),
+              borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+              child: toHeroContext.widget,
             );
           },
+        );
+      },
       child: Material(type: MaterialType.transparency, child: child),
     );
   }

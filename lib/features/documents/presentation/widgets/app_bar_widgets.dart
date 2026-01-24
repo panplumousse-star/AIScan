@@ -5,7 +5,8 @@ import '../../../../core/widgets/bento_card.dart';
 import '../../../../core/widgets/bento_mascot.dart';
 import '../../../../core/widgets/bento_speech_bubble.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../documents_screen.dart' show DocumentsScreenState, DocumentsScreenNotifier;
+import '../documents_screen.dart'
+    show DocumentsScreenState, DocumentsScreenNotifier;
 
 /// Top app bar widget for the documents screen.
 ///
@@ -133,7 +134,8 @@ class DocumentsBentoHeader extends StatelessWidget {
                     ? const Color(0xFF1E293B).withValues(alpha: 0.6)
                     : const Color(0xFFF1F5F9).withValues(alpha: 0.8),
                 borderRadius: 20,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Center(
                   child: Text(
                     l10n?.whatAreYouLookingFor ?? 'What are you looking for?',

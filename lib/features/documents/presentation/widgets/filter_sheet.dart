@@ -149,27 +149,31 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   children: [
                     // Sort section
-                    _buildSectionHeader(context, l10n?.sortBy ?? 'Sort by', Icons.sort),
+                    _buildSectionHeader(
+                        context, l10n?.sortBy ?? 'Sort by', Icons.sort),
                     const SizedBox(height: 8),
                     _buildSortOptions(context),
                     const SizedBox(height: 24),
 
                     // Quick filters section
                     _buildSectionHeader(
-                        context, l10n?.quickFilters ?? 'Quick Filters', Icons.filter_list),
+                        context,
+                        l10n?.quickFilters ?? 'Quick Filters',
+                        Icons.filter_list),
                     const SizedBox(height: 8),
                     _buildQuickFilters(context, l10n),
                     const SizedBox(height: 24),
 
                     // Folder filter section
-                    _buildSectionHeader(
-                        context, l10n?.folder ?? 'Folder', Icons.folder_outlined),
+                    _buildSectionHeader(context, l10n?.folder ?? 'Folder',
+                        Icons.folder_outlined),
                     const SizedBox(height: 8),
                     _buildFolderFilter(context, l10n),
                     const SizedBox(height: 24),
 
                     // Tag filter section
-                    _buildSectionHeader(context, l10n?.tags ?? 'Tags', Icons.label_outline),
+                    _buildSectionHeader(
+                        context, l10n?.tags ?? 'Tags', Icons.label_outline),
                     const SizedBox(height: 8),
                     _buildTagFilter(context, l10n),
                     const SizedBox(height: 32),
@@ -280,7 +284,8 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
         _buildFilterTile(
           context: context,
           title: l10n?.favoritesOnly ?? 'Favorites only',
-          subtitle: l10n?.favoritesOnlyDescription ?? 'Show only documents marked as favorite',
+          subtitle: l10n?.favoritesOnlyDescription ??
+              'Show only documents marked as favorite',
           icon: Icons.favorite,
           iconColor: colorScheme.error,
           isSelected: _selectedFilter.favoritesOnly,
@@ -295,7 +300,8 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
         _buildFilterTile(
           context: context,
           title: l10n?.hasOcrText ?? 'Has OCR text',
-          subtitle: l10n?.hasOcrTextDescription ?? 'Show only documents with extracted text',
+          subtitle: l10n?.hasOcrTextDescription ??
+              'Show only documents with extracted text',
           icon: Icons.text_fields,
           iconColor: colorScheme.tertiary,
           isSelected: _selectedFilter.hasOcrOnly,

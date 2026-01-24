@@ -13,7 +13,8 @@ typedef CameraPermissionException = PermissionException;
 ///
 /// Provides a singleton instance of the camera permission service for
 /// dependency injection throughout the application.
-final cameraPermissionServiceProvider = Provider<CameraPermissionService>((ref) {
+final cameraPermissionServiceProvider =
+    Provider<CameraPermissionService>((ref) {
   return CameraPermissionService();
 });
 

@@ -230,13 +230,13 @@ class _LockScreenState extends ConsumerState<LockScreen> {
                       ),
                     ),
                     const SizedBox(height: 32),
-                    
+
                     // Main Lock Card
                     BentoCard(
                       borderRadius: 32,
                       padding: const EdgeInsets.all(32),
-                      backgroundColor: isDark 
-                          ? const Color(0xFF000000).withValues(alpha: 0.6) 
+                      backgroundColor: isDark
+                          ? const Color(0xFF000000).withValues(alpha: 0.6)
                           : Colors.white.withValues(alpha: 0.9),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -244,13 +244,18 @@ class _LockScreenState extends ConsumerState<LockScreen> {
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: (isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1)).withValues(alpha: 0.1),
+                              color: (isDark
+                                      ? const Color(0xFF818CF8)
+                                      : const Color(0xFF6366F1))
+                                  .withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
                               Icons.lock_person_rounded,
                               size: 40,
-                              color: isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1),
+                              color: isDark
+                                  ? const Color(0xFF818CF8)
+                                  : const Color(0xFF6366F1),
                             ),
                           ),
                           const SizedBox(height: 24),
@@ -260,27 +265,33 @@ class _LockScreenState extends ConsumerState<LockScreen> {
                             style: GoogleFonts.outfit(
                               fontSize: 22,
                               fontWeight: FontWeight.w700,
-                              color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
+                              color: isDark
+                                  ? const Color(0xFFF1F5F9)
+                                  : const Color(0xFF1E1B4B),
                             ),
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            l10n?.authenticateToAccess ?? 'Authenticate to access your secured documents.',
+                            l10n?.authenticateToAccess ??
+                                'Authenticate to access your secured documents.',
                             textAlign: TextAlign.center,
                             style: GoogleFonts.outfit(
                               fontSize: 14,
-                              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                              color: isDark
+                                  ? const Color(0xFF94A3B8)
+                                  : const Color(0xFF64748B),
                             ),
                           ),
-                          
-                          if (state.error != null || !state.isAuthenticating) ...[
+                          if (state.error != null ||
+                              !state.isAuthenticating) ...[
                             const SizedBox(height: 32),
                             _UnlockButton(
-                              onTap: () => ref.read(lockScreenProvider.notifier).authenticate(),
+                              onTap: () => ref
+                                  .read(lockScreenProvider.notifier)
+                                  .authenticate(),
                               isDark: isDark,
                             ),
                           ],
-
                           if (state.isAuthenticating) ...[
                             const SizedBox(height: 40),
                             SizedBox(
@@ -288,14 +299,16 @@ class _LockScreenState extends ConsumerState<LockScreen> {
                               height: 24,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1),
+                                color: isDark
+                                    ? const Color(0xFF818CF8)
+                                    : const Color(0xFF6366F1),
                               ),
                             ),
                           ],
                         ],
                       ),
                     ),
-                    
+
                     // Error Message (Subtle)
                     if (state.error != null) ...[
                       const SizedBox(height: 24),
@@ -330,7 +343,8 @@ class _UnlockButton extends StatefulWidget {
   State<_UnlockButton> createState() => _UnlockButtonState();
 }
 
-class _UnlockButtonState extends State<_UnlockButton> with SingleTickerProviderStateMixin {
+class _UnlockButtonState extends State<_UnlockButton>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scale;
 
@@ -354,8 +368,9 @@ class _UnlockButtonState extends State<_UnlockButton> with SingleTickerProviderS
 
   @override
   Widget build(BuildContext context) {
-    final color = widget.isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1);
-    
+    final color =
+        widget.isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1);
+
     return GestureDetector(
       onTapDown: (_) => _controller.forward(),
       onTapUp: (_) {
@@ -382,7 +397,8 @@ class _UnlockButtonState extends State<_UnlockButton> with SingleTickerProviderS
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.fingerprint_rounded, color: Colors.white, size: 20),
+              const Icon(Icons.fingerprint_rounded,
+                  color: Colors.white, size: 20),
               const SizedBox(width: 8),
               Text(
                 AppLocalizations.of(context)?.unlock ?? 'Unlock',

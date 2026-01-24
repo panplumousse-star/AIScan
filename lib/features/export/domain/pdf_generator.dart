@@ -754,8 +754,7 @@ Future<GeneratedPDF> _generatePDFIsolate(_PDFGenerationParams params) async {
     final pageFormat = _getPageFormat(options: options);
 
     // Determine orientation for this page
-    final pageOrientation =
-        page.orientation ?? options.orientation;
+    final pageOrientation = page.orientation ?? options.orientation;
 
     // Calculate effective page format with orientation
     PdfPageFormat effectiveFormat;
@@ -839,10 +838,8 @@ pw.Widget _buildPageContent({
   required PdfPageFormat pageFormat,
 }) {
   // Calculate available space for image
-  final availableWidth =
-      pageFormat.availableWidth;
-  final availableHeight =
-      pageFormat.availableHeight;
+  final availableWidth = pageFormat.availableWidth;
+  final availableHeight = pageFormat.availableHeight;
 
   pw.BoxFit boxFit;
   switch (options.imageFit) {
@@ -880,7 +877,8 @@ pw.Widget _buildPageContent({
 ///
 /// Returns compressed image bytes, or original bytes if compression is
 /// disabled or image decoding fails.
-Uint8List _compressImageForPdf(Uint8List imageBytes, PDFGeneratorOptions options) {
+Uint8List _compressImageForPdf(
+    Uint8List imageBytes, PDFGeneratorOptions options) {
   // Preserve backward compatibility when compression is disabled
   if (!options.compressImages) {
     return imageBytes;

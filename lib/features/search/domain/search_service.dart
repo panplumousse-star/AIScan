@@ -791,10 +791,8 @@ class SearchService {
       final totalCount = filteredResults.length;
 
       // Apply pagination
-      final paginatedResults = filteredResults
-          .skip(options.offset)
-          .take(options.limit)
-          .toList();
+      final paginatedResults =
+          filteredResults.skip(options.offset).take(options.limit).toList();
 
       // Build full search results with snippets if requested
       final results = await _buildSearchResults(
@@ -897,7 +895,9 @@ class SearchService {
   ) async {
     try {
       // Build dynamic WHERE clause for filters
-      final whereConditions = <String>['${DatabaseHelper.tableDocumentsFts} MATCH ?'];
+      final whereConditions = <String>[
+        '${DatabaseHelper.tableDocumentsFts} MATCH ?'
+      ];
       final queryArgs = <Object>[ftsQuery];
 
       // Add filter conditions based on SearchOptions
@@ -1327,10 +1327,7 @@ class SearchService {
     final query = partialQuery.trim().toLowerCase();
     if (query.isEmpty) {
       // Return recent searches if no query
-      return _recentSearches
-          .take(limit)
-          .map((s) => s.query)
-          .toList();
+      return _recentSearches.take(limit).map((s) => s.query).toList();
     }
 
     final suggestions = <String>[];

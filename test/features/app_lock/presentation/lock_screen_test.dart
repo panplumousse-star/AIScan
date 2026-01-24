@@ -143,8 +143,7 @@ void main() {
     testWidgets('tapping unlock button triggers authentication',
         (tester) async {
       // Arrange
-      when(mockAppLockService.authenticateUser())
-          .thenAnswer((_) async => true);
+      when(mockAppLockService.authenticateUser()).thenAnswer((_) async => true);
 
       // Act
       await tester.pumpWidget(createTestWidget(const LockScreen()));
@@ -158,8 +157,7 @@ void main() {
     testWidgets('successful authentication triggers navigation callback',
         (tester) async {
       // Arrange
-      when(mockAppLockService.authenticateUser())
-          .thenAnswer((_) async => true);
+      when(mockAppLockService.authenticateUser()).thenAnswer((_) async => true);
       when(mockAppLockService.recordSuccessfulAuth()).thenReturn(null);
 
       // Create a navigator to track pops
@@ -236,8 +234,7 @@ void main() {
         () async {
       // Arrange
       final notifier = LockScreenNotifier(mockAppLockService);
-      when(mockAppLockService.authenticateUser())
-          .thenAnswer((_) async => true);
+      when(mockAppLockService.authenticateUser()).thenAnswer((_) async => true);
       when(mockAppLockService.recordSuccessfulAuth()).thenReturn(null);
 
       var callbackCalled = false;
@@ -256,8 +253,7 @@ void main() {
       verify(mockAppLockService.recordSuccessfulAuth()).called(1);
     });
 
-    test('failed auth sets error message and isAuthenticating false',
-        () async {
+    test('failed auth sets error message and isAuthenticating false', () async {
       // Arrange
       final notifier = LockScreenNotifier(mockAppLockService);
       when(mockAppLockService.authenticateUser())

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../core/widgets/bento_background.dart';
+import '../../../core/widgets/bento_confirmation_dialog.dart';
 import '../../../core/widgets/bento_state_views.dart';
 import '../../documents/domain/document_model.dart';
 import '../../documents/presentation/documents_screen.dart';
@@ -227,28 +228,14 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
 
   Future<bool?> _showDiscardDialog(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n?.abandonScanTitle ?? 'Abandon scan?'),
-        content: Text(
-          l10n?.abandonScanMessage ??
-              'Are you sure you want to abandon this scan? This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l10n?.cancel ?? 'Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: Text(l10n?.abandon ?? 'Abandon'),
-          ),
-        ],
-      ),
+    return showBentoConfirmationDialog(
+      context,
+      title: l10n?.abandonScanTitle ?? 'Abandon scan?',
+      message: l10n?.abandonScanMessage ??
+          'Are you sure you want to abandon this scan? This action cannot be undone.',
+      confirmButtonText: l10n?.abandon ?? 'Abandon',
+      cancelButtonText: l10n?.cancel ?? 'Cancel',
+      isDestructive: true,
     );
   }
 }

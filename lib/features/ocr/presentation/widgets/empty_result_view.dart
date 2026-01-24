@@ -43,7 +43,8 @@ class EmptyResultView extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              l10n?.noTextFoundDescription ?? 'The image may not contain readable text,\nor the quality may be too low.',
+              l10n?.noTextFoundDescription ??
+                  'The image may not contain readable text,\nor the quality may be too low.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,

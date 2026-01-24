@@ -45,7 +45,8 @@ class SelectionBadge extends StatelessWidget {
             ),
             const SizedBox(width: 6),
             Text(
-              l10n?.wordSelected(wordCount) ?? '$wordCount ${wordCount == 1 ? 'word selected' : 'words selected'}',
+              l10n?.wordSelected(wordCount) ??
+                  '$wordCount ${wordCount == 1 ? 'word selected' : 'words selected'}',
               style: theme.textTheme.labelMedium?.copyWith(
                 color: theme.colorScheme.onPrimaryContainer,
                 fontWeight: FontWeight.w600,

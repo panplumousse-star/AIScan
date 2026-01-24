@@ -35,7 +35,8 @@ class FakePermissionHandlerPlatform extends PermissionHandlerPlatform {
   }
 
   @override
-  Future<bool> shouldShowRequestPermissionRationale(Permission permission) async {
+  Future<bool> shouldShowRequestPermissionRationale(
+      Permission permission) async {
     return _shouldShowRationale;
   }
 
@@ -191,7 +192,8 @@ void main() {
 
   group('Permission Flow Integration', () {
     group('Permission already granted scenarios', () {
-      test('should return true immediately when permission is granted', () async {
+      test('should return true immediately when permission is granted',
+          () async {
         fakePermissionHandler.setCameraStatus(PermissionStatus.granted);
 
         final result = await permissionFlow.checkAndRequestPermission();
@@ -201,7 +203,9 @@ void main() {
         expect(settingsOpened, isFalse);
       });
 
-      test('should return true immediately when sessionOnly permission is active', () async {
+      test(
+          'should return true immediately when sessionOnly permission is active',
+          () async {
         // First grant permission via request (sets session flag)
         fakePermissionHandler.setCameraStatus(PermissionStatus.granted);
         await permissionService.requestSystemPermission();
@@ -251,7 +255,8 @@ void main() {
     });
 
     group('Blocked permission scenarios', () {
-      test('should show settings dialog when permission was previously denied', () async {
+      test('should show settings dialog when permission was previously denied',
+          () async {
         // Previously denied: denied status with rationale shown
         fakePermissionHandler.setCameraStatus(PermissionStatus.denied);
         fakePermissionHandler.setShouldShowRationale(true);
@@ -263,8 +268,10 @@ void main() {
         expect(settingsOpened, isFalse);
       });
 
-      test('should show settings dialog when permission is permanently denied', () async {
-        fakePermissionHandler.setCameraStatus(PermissionStatus.permanentlyDenied);
+      test('should show settings dialog when permission is permanently denied',
+          () async {
+        fakePermissionHandler
+            .setCameraStatus(PermissionStatus.permanentlyDenied);
 
         final result = await permissionFlow.checkAndRequestPermission();
 
@@ -273,7 +280,8 @@ void main() {
         expect(settingsOpened, isFalse);
       });
 
-      test('should show settings dialog when permission is restricted', () async {
+      test('should show settings dialog when permission is restricted',
+          () async {
         fakePermissionHandler.setCameraStatus(PermissionStatus.restricted);
 
         final result = await permissionFlow.checkAndRequestPermission();
@@ -284,19 +292,22 @@ void main() {
       });
 
       test('should open settings when user confirms dialog', () async {
-        fakePermissionHandler.setCameraStatus(PermissionStatus.permanentlyDenied);
+        fakePermissionHandler
+            .setCameraStatus(PermissionStatus.permanentlyDenied);
         settingsDialogResult = true;
 
         final result = await permissionFlow.checkAndRequestPermission();
 
-        expect(result, isFalse); // Returns false since permission not yet granted
+        expect(
+            result, isFalse); // Returns false since permission not yet granted
         expect(settingsDialogShown, isTrue);
         expect(settingsOpened, isTrue);
         expect(permissionFlow.waitingForSettingsReturn, isTrue);
       });
 
       test('should not open settings when user cancels dialog', () async {
-        fakePermissionHandler.setCameraStatus(PermissionStatus.permanentlyDenied);
+        fakePermissionHandler
+            .setCameraStatus(PermissionStatus.permanentlyDenied);
         settingsDialogResult = false;
 
         final result = await permissionFlow.checkAndRequestPermission();
@@ -310,7 +321,8 @@ void main() {
 
     group('Settings return handling', () {
       test('should clear cache when returning from settings', () async {
-        fakePermissionHandler.setCameraStatus(PermissionStatus.permanentlyDenied);
+        fakePermissionHandler
+            .setCameraStatus(PermissionStatus.permanentlyDenied);
         settingsDialogResult = true;
 
         await permissionFlow.checkAndRequestPermission();
@@ -328,15 +340,18 @@ void main() {
         expect(result, isTrue);
       });
 
-      test('should stay blocked if user did not grant permission in settings', () async {
-        fakePermissionHandler.setCameraStatus(PermissionStatus.permanentlyDenied);
+      test('should stay blocked if user did not grant permission in settings',
+          () async {
+        fakePermissionHandler
+            .setCameraStatus(PermissionStatus.permanentlyDenied);
         settingsDialogResult = true;
 
         await permissionFlow.checkAndRequestPermission();
         await permissionFlow.handleAppResume();
 
         // Permission still denied
-        fakePermissionHandler.setCameraStatus(PermissionStatus.permanentlyDenied);
+        fakePermissionHandler
+            .setCameraStatus(PermissionStatus.permanentlyDenied);
 
         final result = await permissionFlow.checkAndRequestPermission();
         expect(result, isFalse);
@@ -377,7 +392,8 @@ void main() {
 
     group('Multiple dialog prevention', () {
       test('should prevent showing multiple dialogs simultaneously', () async {
-        fakePermissionHandler.setCameraStatus(PermissionStatus.permanentlyDenied);
+        fakePermissionHandler
+            .setCameraStatus(PermissionStatus.permanentlyDenied);
 
         // Simulate dialog being shown
         permissionFlow.isPermissionDialogShowing = true;
@@ -390,7 +406,8 @@ void main() {
       });
 
       test('should reset dialog flag after dialog closes', () async {
-        fakePermissionHandler.setCameraStatus(PermissionStatus.permanentlyDenied);
+        fakePermissionHandler
+            .setCameraStatus(PermissionStatus.permanentlyDenied);
         settingsDialogResult = false;
 
         await permissionFlow.checkAndRequestPermission();
@@ -424,7 +441,8 @@ void main() {
       });
 
       test('user with dont ask again selected', () async {
-        fakePermissionHandler.setCameraStatus(PermissionStatus.permanentlyDenied);
+        fakePermissionHandler
+            .setCameraStatus(PermissionStatus.permanentlyDenied);
 
         final result = await permissionFlow.checkAndRequestPermission();
 
@@ -459,7 +477,8 @@ void main() {
       );
     });
 
-    testWidgets('should have Not Now and Open Settings buttons', (tester) async {
+    testWidgets('should have Not Now and Open Settings buttons',
+        (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Builder(
@@ -507,7 +526,8 @@ void main() {
       expect(dialogResult, isFalse);
     });
 
-    testWidgets('should return true when Open Settings is tapped', (tester) async {
+    testWidgets('should return true when Open Settings is tapped',
+        (tester) async {
       bool? dialogResult;
 
       await tester.pumpWidget(
@@ -556,7 +576,8 @@ void main() {
   });
 
   group('Permission Service with Flow Integration', () {
-    test('isFirstTimeRequest and isPermissionBlocked work together correctly', () async {
+    test('isFirstTimeRequest and isPermissionBlocked work together correctly',
+        () async {
       // Scenario 1: Fresh install (denied, no rationale)
       fakePermissionHandler.setCameraStatus(PermissionStatus.denied);
       fakePermissionHandler.setShouldShowRationale(false);

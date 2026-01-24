@@ -27,6 +27,7 @@ import 'encryption_verification_test.mocks.dart';
 ///
 /// CRITICAL: These tests must pass before any release to ensure user data privacy.
 @GenerateMocks([SecureStorageService, DatabaseHelper])
+
 /// Mock ThumbnailCacheService for testing.
 class MockThumbnailCacheService extends Mock implements ThumbnailCacheService {}
 
@@ -157,13 +158,13 @@ void main() {
     when(mockSecureStorage.getOrCreateEncryptionKey())
         .thenAnswer((_) async => testKey);
     when(mockSecureStorage.hasEncryptionKey()).thenAnswer((_) async => true);
-    when(mockSecureStorage.getEncryptionKey())
-        .thenAnswer((_) async => testKey);
+    when(mockSecureStorage.getEncryptionKey()).thenAnswer((_) async => testKey);
   });
 
   group('Security Verification: Encryption at Rest', () {
     group('Binary Data Encryption', () {
-      test('encrypted data should not contain original plaintext bytes', () async {
+      test('encrypted data should not contain original plaintext bytes',
+          () async {
         // Arrange - Create recognizable binary pattern
         final originalData = Uint8List.fromList([
           0x4A, 0x46, 0x49, 0x46, // "JFIF" - JPEG marker
@@ -236,8 +237,7 @@ void main() {
     group('String Data Encryption', () {
       test('encrypted string should not contain original text', () async {
         // Arrange
-        const sensitiveText =
-            'CONFIDENTIAL: Tax Return 2025 - SSN 123-45-6789';
+        const sensitiveText = 'CONFIDENTIAL: Tax Return 2025 - SSN 123-45-6789';
 
         // Act
         final encrypted = await encryptionService.encryptString(sensitiveText);
@@ -620,7 +620,8 @@ void main() {
     test('encrypted and decrypted data should match original', () async {
       // Arrange
       final originalData = Uint8List.fromList(
-        utf8.encode('Original document content with special chars: \u00e9\u00e8\u00ea'),
+        utf8.encode(
+            'Original document content with special chars: \u00e9\u00e8\u00ea'),
       );
 
       // Act
@@ -921,7 +922,8 @@ void main() {
   });
 
   group('Security Verification: Provider Integration', () {
-    test('encryptionServiceProvider should require secureStorageServiceProvider',
+    test(
+        'encryptionServiceProvider should require secureStorageServiceProvider',
         () {
       // Arrange
       final container = ProviderContainer();

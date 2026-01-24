@@ -112,7 +112,8 @@ class _FoldersSectionState extends State<FoldersSection> {
                     // Les autres = dossiers (index - 1 car le bouton prend la place 0)
                     final folderIndex = globalIndex - 1;
                     final folder = widget.folders[folderIndex];
-                    final isSelected = widget.selectedFolderIds.contains(folder.id);
+                    final isSelected =
+                        widget.selectedFolderIds.contains(folder.id);
                     return FolderCard(
                       folder: folder,
                       isSelected: isSelected,

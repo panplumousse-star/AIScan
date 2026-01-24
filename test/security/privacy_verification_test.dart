@@ -515,10 +515,12 @@ void main() {
       }
     });
 
-    test('document scanner should be configured for local processing', () async {
+    test('document scanner should be configured for local processing',
+        () async {
       // Arrange
       final scannerServiceFile = File(
-        p.join(projectRoot.path, 'lib/features/scanner/domain/scanner_service.dart'),
+        p.join(projectRoot.path,
+            'lib/features/scanner/domain/scanner_service.dart'),
       );
 
       // Skip if scanner service doesn't exist yet
@@ -554,7 +556,8 @@ void main() {
     test('image processing should be local only', () async {
       // Arrange
       final imageProcessorFile = File(
-        p.join(projectRoot.path, 'lib/features/enhancement/domain/image_processor.dart'),
+        p.join(projectRoot.path,
+            'lib/features/enhancement/domain/image_processor.dart'),
       );
 
       // Skip if image processor doesn't exist yet
@@ -654,7 +657,8 @@ void main() {
       }
     });
 
-    test('pubspec.yaml should have privacy-focused dependencies only', () async {
+    test('pubspec.yaml should have privacy-focused dependencies only',
+        () async {
       // Arrange
       final pubspecFile = File(p.join(projectRoot.path, 'pubspec.yaml'));
       final content = await pubspecFile.readAsString();
@@ -684,7 +688,8 @@ void main() {
     test('settings should clearly indicate privacy-first design', () async {
       // Arrange
       final settingsFile = File(
-        p.join(projectRoot.path, 'lib/features/settings/presentation/settings_screen.dart'),
+        p.join(projectRoot.path,
+            'lib/features/settings/presentation/settings_screen.dart'),
       );
 
       // Skip if settings screen doesn't exist yet

@@ -296,7 +296,8 @@ void main() {
       expect(str, contains('imagePath: $testImagePath1'));
     });
 
-    test('readBytes should throw ScannerException when file not found', () async {
+    test('readBytes should throw ScannerException when file not found',
+        () async {
       // Arrange
       final page = ScannedPage(imagePath: '/nonexistent/path.jpg');
 
@@ -485,8 +486,7 @@ void main() {
       // Assert
       expect(ScannerService.defaultOptions.documentFormat,
           equals(ScanDocumentFormat.jpeg));
-      expect(
-          ScannerService.defaultOptions.scannerMode, equals(ScanMode.full));
+      expect(ScannerService.defaultOptions.scannerMode, equals(ScanMode.full));
       expect(ScannerService.defaultOptions.pageLimit, equals(100));
       expect(ScannerService.defaultOptions.allowGalleryImport, isTrue);
     });
@@ -497,8 +497,7 @@ void main() {
         final mlKitResult = MockDocumentScanningResult(
           mockImages: [testImagePath1],
         );
-        when(mockScanner.scanDocument())
-            .thenAnswer((_) async => mlKitResult);
+        when(mockScanner.scanDocument()).thenAnswer((_) async => mlKitResult);
 
         // Act
         final result = await scannerService.scanDocument();
@@ -512,8 +511,7 @@ void main() {
       test('should return null when user cancels (null result)', () async {
         // Arrange - Return empty result to simulate cancellation
         final mlKitResult = MockDocumentScanningResult(mockImages: []);
-        when(mockScanner.scanDocument())
-            .thenAnswer((_) async => mlKitResult);
+        when(mockScanner.scanDocument()).thenAnswer((_) async => mlKitResult);
 
         // Act
         final result = await scannerService.scanDocument();
@@ -525,8 +523,7 @@ void main() {
       test('should return null when user cancels (empty images)', () async {
         // Arrange
         final mlKitResult = MockDocumentScanningResult(mockImages: []);
-        when(mockScanner.scanDocument())
-            .thenAnswer((_) async => mlKitResult);
+        when(mockScanner.scanDocument()).thenAnswer((_) async => mlKitResult);
 
         // Act
         final result = await scannerService.scanDocument();
@@ -552,8 +549,7 @@ void main() {
         final mlKitResult = MockDocumentScanningResult(
           mockImages: [testImagePath1],
         );
-        when(mockScanner.scanDocument())
-            .thenAnswer((_) async => mlKitResult);
+        when(mockScanner.scanDocument()).thenAnswer((_) async => mlKitResult);
 
         // Act
         final result = await scannerService.scanDocument(
@@ -571,8 +567,7 @@ void main() {
           mockImages: [testImagePath1],
           mockPdfPath: testPdfPath,
         );
-        when(mockScanner.scanDocument())
-            .thenAnswer((_) async => mlKitResult);
+        when(mockScanner.scanDocument()).thenAnswer((_) async => mlKitResult);
 
         // Act
         final result = await scannerService.scanDocument(
@@ -592,8 +587,7 @@ void main() {
         final mlKitResult = MockDocumentScanningResult(
           mockImages: [testImagePath1],
         );
-        when(mockScanner.scanDocument())
-            .thenAnswer((_) async => mlKitResult);
+        when(mockScanner.scanDocument()).thenAnswer((_) async => mlKitResult);
 
         // Act
         final result = await scannerService.quickScan();
@@ -606,8 +600,7 @@ void main() {
       test('should return null on cancellation', () async {
         // Arrange - Return empty result to simulate cancellation
         final mlKitResult = MockDocumentScanningResult(mockImages: []);
-        when(mockScanner.scanDocument())
-            .thenAnswer((_) async => mlKitResult);
+        when(mockScanner.scanDocument()).thenAnswer((_) async => mlKitResult);
 
         // Act
         final result = await scannerService.quickScan();
@@ -623,8 +616,7 @@ void main() {
         final mlKitResult = MockDocumentScanningResult(
           mockImages: [testImagePath1, testImagePath2],
         );
-        when(mockScanner.scanDocument())
-            .thenAnswer((_) async => mlKitResult);
+        when(mockScanner.scanDocument()).thenAnswer((_) async => mlKitResult);
 
         // Act
         final result = await scannerService.scanMultiPage(maxPages: 10);
@@ -639,8 +631,7 @@ void main() {
         final mlKitResult = MockDocumentScanningResult(
           mockImages: [testImagePath1],
         );
-        when(mockScanner.scanDocument())
-            .thenAnswer((_) async => mlKitResult);
+        when(mockScanner.scanDocument()).thenAnswer((_) async => mlKitResult);
 
         // Act - very high maxPages should be clamped
         final result = await scannerService.scanMultiPage(maxPages: 999);
@@ -655,8 +646,7 @@ void main() {
         final mlKitResult = MockDocumentScanningResult(
           mockImages: [testImagePath1],
         );
-        when(mockScanner.scanDocument())
-            .thenAnswer((_) async => mlKitResult);
+        when(mockScanner.scanDocument()).thenAnswer((_) async => mlKitResult);
 
         // Act - negative should be clamped to 1
         final result = await scannerService.scanMultiPage(maxPages: -5);
@@ -673,8 +663,7 @@ void main() {
           mockImages: [testImagePath1],
           mockPdfPath: testPdfPath,
         );
-        when(mockScanner.scanDocument())
-            .thenAnswer((_) async => mlKitResult);
+        when(mockScanner.scanDocument()).thenAnswer((_) async => mlKitResult);
 
         // Act
         final result = await scannerService.scanToPdf();
@@ -690,8 +679,7 @@ void main() {
         final mlKitResult = MockDocumentScanningResult(
           mockImages: [testImagePath1],
         );
-        when(mockScanner.scanDocument())
-            .thenAnswer((_) async => mlKitResult);
+        when(mockScanner.scanDocument()).thenAnswer((_) async => mlKitResult);
 
         // Act
         final result = await scannerService.scanToPdf(maxPages: 20);
@@ -874,7 +862,8 @@ void main() {
       test('should wrap repository exceptions in ScannerException', () async {
         // Arrange - Create a temp file for the test
         final tempDir = Directory.systemTemp;
-        final tempFile = File('${tempDir.path}/test_scan_${DateTime.now().millisecondsSinceEpoch}.jpg');
+        final tempFile = File(
+            '${tempDir.path}/test_scan_${DateTime.now().millisecondsSinceEpoch}.jpg');
         await tempFile.writeAsBytes([0xFF, 0xD8, 0xFF, 0xE0]); // JPEG header
 
         try {
@@ -1022,7 +1011,8 @@ void main() {
       container.dispose();
     });
 
-    test('scannerStorageServiceProvider should provide ScannerStorageService', () {
+    test('scannerStorageServiceProvider should provide ScannerStorageService',
+        () {
       // Arrange
       final container = ProviderContainer();
 
@@ -1045,8 +1035,7 @@ void main() {
         mockImages: [testImagePath1, testImagePath2],
         mockPdfPath: testPdfPath,
       );
-      when(mockScanner.scanDocument())
-          .thenAnswer((_) async => mlKitResult);
+      when(mockScanner.scanDocument()).thenAnswer((_) async => mlKitResult);
 
       // Act - Scan documents
       final scanResult = await scannerService.scanDocument(
@@ -1066,8 +1055,7 @@ void main() {
     test('should handle cancelled scan gracefully', () async {
       // Arrange - Return empty result to simulate cancellation
       final mlKitResult = MockDocumentScanningResult(mockImages: []);
-      when(mockScanner.scanDocument())
-          .thenAnswer((_) async => mlKitResult);
+      when(mockScanner.scanDocument()).thenAnswer((_) async => mlKitResult);
 
       // Act
       final result = await scannerService.quickScan();
@@ -1078,8 +1066,7 @@ void main() {
 
     test('should handle scanner error gracefully', () async {
       // Arrange
-      when(mockScanner.scanDocument())
-          .thenThrow(Exception('Hardware error'));
+      when(mockScanner.scanDocument()).thenThrow(Exception('Hardware error'));
 
       // Act & Assert
       expect(
@@ -1094,14 +1081,14 @@ void main() {
       );
     });
 
-    test('multi-page scan with PDF should include both pages and PDF', () async {
+    test('multi-page scan with PDF should include both pages and PDF',
+        () async {
       // Arrange
       final mlKitResult = MockDocumentScanningResult(
         mockImages: [testImagePath1, testImagePath2],
         mockPdfPath: testPdfPath,
       );
-      when(mockScanner.scanDocument())
-          .thenAnswer((_) async => mlKitResult);
+      when(mockScanner.scanDocument()).thenAnswer((_) async => mlKitResult);
 
       // Act
       final result = await scannerService.scanToPdf(maxPages: 50);

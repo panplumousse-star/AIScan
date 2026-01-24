@@ -13,7 +13,8 @@ typedef StoragePermissionException = PermissionException;
 ///
 /// Provides a singleton instance of the storage permission service for
 /// dependency injection throughout the application.
-final storagePermissionServiceProvider = Provider<StoragePermissionService>((ref) {
+final storagePermissionServiceProvider =
+    Provider<StoragePermissionService>((ref) {
   return StoragePermissionService();
 });
 

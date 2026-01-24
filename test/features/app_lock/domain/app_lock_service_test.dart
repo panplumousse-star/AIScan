@@ -541,7 +541,8 @@ void main() {
       // Assert
       expect(
         message,
-        equals('AppLockException: Test error (caused by: Exception: Root cause)'),
+        equals(
+            'AppLockException: Test error (caused by: Exception: Root cause)'),
       );
     });
 

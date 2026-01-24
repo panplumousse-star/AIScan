@@ -270,8 +270,7 @@ class DevicePerformance {
   }
 
   @override
-  String toString() =>
-      'DevicePerformance(tier: $_tier, '
+  String toString() => 'DevicePerformance(tier: $_tier, '
       'cores: $_processorCount, estimatedRAM: ${_estimatedRamMB}MB)';
 }
 
@@ -579,8 +578,7 @@ class ImageCacheManager {
   }
 
   @override
-  String toString() =>
-      'ImageCacheManager(items: $itemCount, '
+  String toString() => 'ImageCacheManager(items: $itemCount, '
       'size: ${(_currentSizeBytes / 1024 / 1024).toStringAsFixed(1)}MB/'
       '${(maxSizeBytes / 1024 / 1024).toStringAsFixed(1)}MB)';
 }
@@ -763,8 +761,7 @@ class ThumbnailCacheService {
   }
 
   @override
-  String toString() =>
-      'ThumbnailCacheService(items: $itemCount, '
+  String toString() => 'ThumbnailCacheService(items: $itemCount, '
       'size: ${(currentSizeBytes / 1024 / 1024).toStringAsFixed(1)}MB, '
       'hitRate: ${hitRate.toStringAsFixed(1)}%)';
 }
@@ -1342,13 +1339,13 @@ class OptimizedImage extends ConsumerWidget {
             duration: const Duration(milliseconds: 200),
             child: frame == null
                 ? (placeholder ??
-                      Container(
-                        width: width,
-                        height: height,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.surfaceContainerHighest,
-                      ))
+                    Container(
+                      width: width,
+                      height: height,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
+                    ))
                 : child,
           );
         },

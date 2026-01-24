@@ -195,12 +195,18 @@ class DatabaseHelper {
     ''');
 
     // Create indices for common queries
-    await db.execute('CREATE INDEX idx_documents_folder ON $tableDocuments($columnFolderId)');
-    await db.execute('CREATE INDEX idx_documents_favorite ON $tableDocuments($columnIsFavorite)');
-    await db.execute('CREATE INDEX idx_documents_created ON $tableDocuments($columnCreatedAt)');
-    await db.execute('CREATE INDEX idx_document_pages_document ON $tableDocumentPages($columnDocumentId)');
-    await db.execute('CREATE UNIQUE INDEX idx_document_pages_order ON $tableDocumentPages($columnDocumentId, $columnPageNumber)');
-    await db.execute('CREATE INDEX idx_search_history_timestamp ON $tableSearchHistory($columnTimestamp)');
+    await db.execute(
+        'CREATE INDEX idx_documents_folder ON $tableDocuments($columnFolderId)');
+    await db.execute(
+        'CREATE INDEX idx_documents_favorite ON $tableDocuments($columnIsFavorite)');
+    await db.execute(
+        'CREATE INDEX idx_documents_created ON $tableDocuments($columnCreatedAt)');
+    await db.execute(
+        'CREATE INDEX idx_document_pages_document ON $tableDocumentPages($columnDocumentId)');
+    await db.execute(
+        'CREATE UNIQUE INDEX idx_document_pages_order ON $tableDocumentPages($columnDocumentId, $columnPageNumber)');
+    await db.execute(
+        'CREATE INDEX idx_search_history_timestamp ON $tableSearchHistory($columnTimestamp)');
 
     // Initialize FTS tables and triggers with automatic fallback
     await _initializeFts(db);
@@ -227,7 +233,8 @@ class DatabaseHelper {
           $columnResultCount INTEGER NOT NULL DEFAULT 0
         )
       ''');
-      await db.execute('CREATE INDEX idx_search_history_timestamp ON $tableSearchHistory($columnTimestamp)');
+      await db.execute(
+          'CREATE INDEX idx_search_history_timestamp ON $tableSearchHistory($columnTimestamp)');
     }
   }
 
@@ -403,8 +410,7 @@ class DatabaseHelper {
       } catch (e) {
         await _cleanupFts(db);
       }
-    } else {
-    }
+    } else {}
 
     // Check FTS4 availability
     if (await _isFtsModuleAvailable(db, 'fts4')) {
@@ -427,13 +433,18 @@ class DatabaseHelper {
     try {
       // Query the compile_options to check for FTS support
       final result = await db.rawQuery('PRAGMA compile_options');
-      final options = result.map((r) => r.values.first.toString().toUpperCase()).toList();
+      final options =
+          result.map((r) => r.values.first.toString().toUpperCase()).toList();
 
       if (moduleName == 'fts5') {
-        return options.any((o) => o.contains('FTS5') || o.contains('ENABLE_FTS5'));
+        return options
+            .any((o) => o.contains('FTS5') || o.contains('ENABLE_FTS5'));
       } else if (moduleName == 'fts4') {
         // FTS4 is usually enabled with FTS3
-        return options.any((o) => o.contains('FTS4') || o.contains('FTS3') || o.contains('ENABLE_FTS3'));
+        return options.any((o) =>
+            o.contains('FTS4') ||
+            o.contains('FTS3') ||
+            o.contains('ENABLE_FTS3'));
       }
       return false;
     } catch (e) {
@@ -452,7 +463,8 @@ class DatabaseHelper {
         await db.execute('DROP TABLE IF EXISTS $tableDocumentsFts');
       } catch (e) {
         try {
-          await db.execute("DELETE FROM sqlite_master WHERE name = '$tableDocumentsFts'");
+          await db.execute(
+              "DELETE FROM sqlite_master WHERE name = '$tableDocumentsFts'");
         } catch (e2) {
           // Cleanup failed, ignore
         }
@@ -576,7 +588,9 @@ class DatabaseHelper {
     String query,
   ) async {
     // Split query into terms and filter empty strings
-    final terms = query.trim().split(RegExp(r'\s+'))
+    final terms = query
+        .trim()
+        .split(RegExp(r'\s+'))
         .where((term) => term.isNotEmpty)
         .toList();
 
@@ -590,9 +604,7 @@ class DatabaseHelper {
 
     for (final term in terms) {
       // Escape LIKE special characters (%, _) in the term
-      final escapedTerm = term
-          .replaceAll('%', r'\%')
-          .replaceAll('_', r'\_');
+      final escapedTerm = term.replaceAll('%', r'\%').replaceAll('_', r'\_');
       final likePattern = '%$escapedTerm%';
 
       // Each term must match at least one column (OR within term)
@@ -802,7 +814,8 @@ class DatabaseHelper {
   }
 
   /// Counts rows in the specified table.
-  Future<int> count(String table, {String? where, List<dynamic>? whereArgs}) async {
+  Future<int> count(String table,
+      {String? where, List<dynamic>? whereArgs}) async {
     final db = await database;
     final result = await db.rawQuery(
       'SELECT COUNT(*) as count FROM $table${where != null ? ' WHERE $where' : ''}',

@@ -6,7 +6,8 @@ import '../../../../core/widgets/bento_rename_document_dialog.dart';
 import '../../../folders/domain/folder_model.dart';
 import '../../../folders/domain/folder_service.dart';
 import '../../../folders/presentation/widgets/bento_folder_dialog.dart';
-import '../documents_screen.dart' show DocumentsScreenState, DocumentsScreenNotifier;
+import '../documents_screen.dart'
+    show DocumentsScreenState, DocumentsScreenNotifier;
 import '../widgets/dialog_widgets.dart';
 import '../widgets/filter_sheet.dart' as filter_sheet;
 
@@ -90,10 +91,12 @@ class DocumentsDialogController {
     // Standard confirmation for documents only or empty folders
     String message;
     if (folderCount > 0 && docCount > 0) {
-      message = 'Delete $folderCount ${folderCount == 1 ? 'folder' : 'folders'} and '
-                '$docCount ${docCount == 1 ? 'document' : 'documents'}?';
+      message =
+          'Delete $folderCount ${folderCount == 1 ? 'folder' : 'folders'} and '
+          '$docCount ${docCount == 1 ? 'document' : 'documents'}?';
     } else if (folderCount > 0) {
-      message = 'Delete $folderCount ${folderCount == 1 ? 'folder' : 'folders'}?';
+      message =
+          'Delete $folderCount ${folderCount == 1 ? 'folder' : 'folders'}?';
     } else {
       message = 'Delete $docCount ${docCount == 1 ? 'document' : 'documents'}?';
     }
@@ -199,7 +202,8 @@ class DocumentsDialogController {
   }
 
   /// Shows dialog to create a new folder when moving documents.
-  static Future<BentoFolderDialogResult?> _showCreateFolderForMoveDialog(BuildContext context) async {
+  static Future<BentoFolderDialogResult?> _showCreateFolderForMoveDialog(
+      BuildContext context) async {
     return showDialog<BentoFolderDialogResult>(
       context: context,
       builder: (context) => const BentoFolderDialog(),
@@ -267,7 +271,8 @@ class DocumentsDialogController {
     );
 
     if (result != null) {
-      final hasNameChange = result.name != folder.name && result.name.isNotEmpty;
+      final hasNameChange =
+          result.name != folder.name && result.name.isNotEmpty;
       final hasColorChange = result.color != folder.color;
 
       if (hasNameChange || hasColorChange) {

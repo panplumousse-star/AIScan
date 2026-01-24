@@ -54,7 +54,8 @@ class BentoMoveToFolderDialog extends StatefulWidget {
   final Future<Folder?> Function(String name, String? color) onCreateFolder;
 
   @override
-  State<BentoMoveToFolderDialog> createState() => _BentoMoveToFolderDialogState();
+  State<BentoMoveToFolderDialog> createState() =>
+      _BentoMoveToFolderDialogState();
 }
 
 class _BentoMoveToFolderDialogState extends State<BentoMoveToFolderDialog> {
@@ -94,7 +95,8 @@ class _BentoMoveToFolderDialogState extends State<BentoMoveToFolderDialog> {
     if (widget.selectedCount == 1) {
       return l10n?.saveUnder ?? 'Save under...';
     }
-    return l10n?.moveDocuments(widget.selectedCount) ?? 'Move ${widget.selectedCount} documents';
+    return l10n?.moveDocuments(widget.selectedCount) ??
+        'Move ${widget.selectedCount} documents';
   }
 
   @override
@@ -145,10 +147,13 @@ class _BentoMoveToFolderDialogState extends State<BentoMoveToFolderDialog> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                widget.subtitle ?? (l10n?.chooseDestinationFolder ?? 'Choose a destination folder'),
+                                widget.subtitle ??
+                                    (l10n?.chooseDestinationFolder ??
+                                        'Choose a destination folder'),
                                 style: GoogleFonts.outfit(
                                   fontSize: 12,
-                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                                  color: theme.colorScheme.onSurface
+                                      .withValues(alpha: 0.5),
                                 ),
                               ),
                             ],
@@ -187,7 +192,8 @@ class _BentoMoveToFolderDialogState extends State<BentoMoveToFolderDialog> {
                             subtitle: l10n?.rootFolder ?? 'Root (no folder)',
                             color: theme.colorScheme.primary,
                             isSelected: _selectedFolderId == null,
-                            onTap: () => setState(() => _selectedFolderId = null),
+                            onTap: () =>
+                                setState(() => _selectedFolderId = null),
                             isDark: isDark,
                           ),
                           if (widget.folders.isNotEmpty) ...[
@@ -200,13 +206,14 @@ class _BentoMoveToFolderDialogState extends State<BentoMoveToFolderDialog> {
                               ),
                             ),
                             ...widget.folders.map((folder) => _FolderOption(
-                              icon: Icons.folder_rounded,
-                              name: folder.name,
-                              color: _parseColor(folder.color),
-                              isSelected: _selectedFolderId == folder.id,
-                              onTap: () => setState(() => _selectedFolderId = folder.id),
-                              isDark: isDark,
-                            )),
+                                  icon: Icons.folder_rounded,
+                                  name: folder.name,
+                                  color: _parseColor(folder.color),
+                                  isSelected: _selectedFolderId == folder.id,
+                                  onTap: () => setState(
+                                      () => _selectedFolderId = folder.id),
+                                  isDark: isDark,
+                                )),
                           ],
                         ],
                       ),
@@ -234,7 +241,8 @@ class _BentoMoveToFolderDialogState extends State<BentoMoveToFolderDialog> {
                       children: [
                         Expanded(
                           child: TextButton(
-                            onPressed: () => Navigator.of(context).pop('_cancelled_'),
+                            onPressed: () =>
+                                Navigator.of(context).pop('_cancelled_'),
                             style: TextButton.styleFrom(
                               minimumSize: const Size(0, 48),
                               shape: RoundedRectangleBorder(
@@ -245,7 +253,8 @@ class _BentoMoveToFolderDialogState extends State<BentoMoveToFolderDialog> {
                               l10n?.cancel ?? 'Cancel',
                               style: GoogleFonts.outfit(
                                 fontWeight: FontWeight.w600,
-                                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                                color: theme.colorScheme.onSurface
+                                    .withValues(alpha: 0.6),
                               ),
                             ),
                           ),
@@ -262,7 +271,9 @@ class _BentoMoveToFolderDialogState extends State<BentoMoveToFolderDialog> {
                               ),
                             ),
                             child: Text(
-                              widget.selectedCount == 1 ? (l10n?.save ?? 'Save') : (l10n?.move ?? 'Move'),
+                              widget.selectedCount == 1
+                                  ? (l10n?.save ?? 'Save')
+                                  : (l10n?.move ?? 'Move'),
                               style: GoogleFonts.outfit(
                                 fontWeight: FontWeight.w700,
                               ),
@@ -313,7 +324,9 @@ class _FolderOption extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             color: isSelected
-                ? (isDark ? Colors.white.withValues(alpha: 0.1) : color.withValues(alpha: 0.1))
+                ? (isDark
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : color.withValues(alpha: 0.1))
                 : null,
             borderRadius: BorderRadius.circular(12),
             border: isSelected

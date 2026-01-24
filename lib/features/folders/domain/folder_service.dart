@@ -77,8 +77,7 @@ class FolderStats {
       Object.hash(documentCount, subfolderCount, totalDocuments);
 
   @override
-  String toString() =>
-      'FolderStats('
+  String toString() => 'FolderStats('
       'documentCount: $documentCount, '
       'subfolderCount: $subfolderCount, '
       'totalDocuments: $totalDocuments)';
@@ -133,8 +132,8 @@ class FolderStats {
 class FolderService {
   /// Creates a [FolderService] with the required dependencies.
   FolderService({required DatabaseHelper databaseHelper, Uuid? uuid})
-    : _database = databaseHelper,
-      _uuid = uuid ?? const Uuid();
+      : _database = databaseHelper,
+        _uuid = uuid ?? const Uuid();
 
   /// The database helper for storage operations.
   final DatabaseHelper _database;

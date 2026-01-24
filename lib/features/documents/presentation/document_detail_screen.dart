@@ -281,7 +281,8 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                   children: [
                     Flexible(
                       child: Text(
-                        state.document?.title ?? (l10n?.loading ?? 'Loading...'),
+                        state.document?.title ??
+                            (l10n?.loading ?? 'Loading...'),
                         style: GoogleFonts.outfit(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
@@ -317,7 +318,9 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
     final l10n = AppLocalizations.of(context);
     if (state.isLoading || state.isDecrypting) {
       return BentoLoadingView(
-        message: state.isDecrypting ? (l10n?.decrypting ?? 'Decrypting...') : (l10n?.loading ?? 'Loading...'),
+        message: state.isDecrypting
+            ? (l10n?.decrypting ?? 'Decrypting...')
+            : (l10n?.loading ?? 'Loading...'),
       );
     }
 
@@ -414,15 +417,15 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                           : Colors.white,
                       borderColor: Colors.transparent,
                       borderWidth: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
                       child: Text(
                         l10n?.needHelp ?? 'Need help?',
                         style: GoogleFonts.outfit(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: isDark
-                              ? Colors.white
-                              : const Color(0xFF1E1B4B),
+                          color:
+                              isDark ? Colors.white : const Color(0xFF1E1B4B),
                         ),
                       ),
                     ),
@@ -590,7 +593,10 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
             if (mounted) {
               ScaffoldMessenger.of(context).hideCurrentSnackBar();
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(AppLocalizations.of(context)?.unableToLoadImage ?? 'Unable to load image')),
+                SnackBar(
+                    content: Text(
+                        AppLocalizations.of(context)?.unableToLoadImage ??
+                            'Unable to load image')),
               );
             }
             return;
@@ -607,7 +613,10 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
           if (textToShare == null || textToShare.isEmpty) {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(AppLocalizations.of(context)?.noTextDetected ?? 'No text detected in document')),
+                SnackBar(
+                    content: Text(
+                        AppLocalizations.of(context)?.noTextDetected ??
+                            'No text detected in document')),
               );
             }
             return;
@@ -624,7 +633,9 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
         if (textToShare == null || textToShare.isEmpty) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(AppLocalizations.of(context)?.noTextToShare ?? 'No text to share')),
+              SnackBar(
+                  content: Text(AppLocalizations.of(context)?.noTextToShare ??
+                      'No text to share')),
             );
           }
           return;
@@ -775,7 +786,8 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      AppLocalizations.of(context)?.deleteConfirmTitle ?? 'Delete document?',
+                      AppLocalizations.of(context)?.deleteConfirmTitle ??
+                          'Delete document?',
                       style: GoogleFonts.outfit(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
@@ -784,7 +796,8 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      AppLocalizations.of(context)?.deleteConfirmMessage ?? 'This action cannot be undone. The document will be permanently deleted.',
+                      AppLocalizations.of(context)?.deleteConfirmMessage ??
+                          'This action cannot be undone. The document will be permanently deleted.',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.outfit(
                         color:
@@ -797,7 +810,10 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                         Expanded(
                           child: TextButton(
                             onPressed: () => Navigator.of(context).pop(false),
-                            child: Text(AppLocalizations.of(context)?.cancel ?? 'Cancel', style: GoogleFonts.outfit()),
+                            child: Text(
+                                AppLocalizations.of(context)?.cancel ??
+                                    'Cancel',
+                                style: GoogleFonts.outfit()),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -816,7 +832,8 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                               ),
                               child: Center(
                                 child: Text(
-                                  AppLocalizations.of(context)?.delete ?? 'Delete',
+                                  AppLocalizations.of(context)?.delete ??
+                                      'Delete',
                                   style: GoogleFonts.outfit(
                                     fontWeight: FontWeight.w700,
                                     color: Colors.redAccent,
@@ -874,7 +891,8 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
             final l10n = AppLocalizations.of(context);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                  content: Text('${l10n?.folderCreationError ?? 'Error creating folder'}: $e')),
+                  content: Text(
+                      '${l10n?.folderCreationError ?? 'Error creating folder'}: $e')),
             );
           }
           return null;

@@ -108,7 +108,8 @@ void main() {
       print(
         'Combined brightness+contrast (1000x1000): ${stopwatch.elapsedMilliseconds}ms',
       );
-      print('  Note: Single-pass optimization (was 2 passes with manual loops)');
+      print(
+          '  Note: Single-pass optimization (was 2 passes with manual loops)');
 
       // Combined operation should complete in reasonable time
       // With optimization, this should be only slightly slower than single operation
@@ -131,7 +132,8 @@ void main() {
       print(
         'Sharpening with unsharp mask (1000x1000): ${stopwatch.elapsedMilliseconds}ms',
       );
-      print('  Note: Uses img.gaussianBlur() + manual pixel loop (optimal for unsharp mask)');
+      print(
+          '  Note: Uses img.gaussianBlur() + manual pixel loop (optimal for unsharp mask)');
 
       // Sharpening is more intensive (blur + pixel math)
       expect(stopwatch.elapsedMilliseconds, lessThan(10000));
@@ -158,7 +160,8 @@ void main() {
       print(
         'Full enhancement pipeline (1000x1000): ${stopwatch.elapsedMilliseconds}ms',
       );
-      print('  Operations: auto-enhance + brightness+contrast (1-pass) + sharpening');
+      print(
+          '  Operations: auto-enhance + brightness+contrast (1-pass) + sharpening');
 
       // Full pipeline should complete in reasonable time
       expect(stopwatch.elapsedMilliseconds, lessThan(15000));
@@ -204,7 +207,8 @@ void main() {
       print('AFTER (optimized built-ins):');
       print('  - Brightness+Contrast: 12M pixel iterations (1 combined pass)');
       print('  - Reduction: 50% fewer pixel iterations');
-      print('  - Additional benefits: Native code acceleration in image package');
+      print(
+          '  - Additional benefits: Native code acceleration in image package');
       print('');
       print('SHARPENING:');
       print('  - Uses img.gaussianBlur() (optimized) + manual pixel loop');

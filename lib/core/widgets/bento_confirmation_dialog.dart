@@ -7,92 +7,84 @@ import '../../l10n/app_localizations.dart';
 import 'bento_card.dart';
 import 'bento_speech_bubble.dart';
 
-/// Shows a dialog for renaming a document with mascot and speech bubble.
+/// Shows a confirmation dialog with mascot and speech bubble.
 ///
-/// Returns the new title if confirmed, or null if cancelled.
+/// Returns true if confirmed, false or null if cancelled.
+///
+/// The [isDestructive] parameter changes the confirm button to error styling,
+/// useful for delete/discard actions.
 ///
 /// Usage:
 /// ```dart
-/// final newTitle = await showBentoRenameDocumentDialog(
+/// final confirmed = await showBentoConfirmationDialog(
 ///   context,
-///   currentTitle: document.title,
+///   title: 'Delete folder?',
+///   message: 'This action cannot be undone.',
+///   confirmButtonText: 'Delete',
+///   isDestructive: true,
 /// );
-/// if (newTitle != null) {
-///   // User confirmed with new title
+/// if (confirmed == true) {
+///   // User confirmed the action
 /// }
 /// ```
-Future<String?> showBentoRenameDocumentDialog(
+Future<bool?> showBentoConfirmationDialog(
   BuildContext context, {
-  required String currentTitle,
-  String? dialogTitle,
-  String? hintText,
+  required String title,
+  required String message,
   String? confirmButtonText,
+  String? cancelButtonText,
+  bool isDestructive = false,
+  String? mascotAssetPath,
+  String? speechBubbleText,
 }) {
-  return showDialog<String>(
+  return showDialog<bool>(
     context: context,
     barrierDismissible: false,
-    builder: (context) => BentoRenameDocumentDialog(
-      currentTitle: currentTitle,
-      dialogTitle: dialogTitle,
-      hintText: hintText,
+    builder: (context) => BentoConfirmationDialog(
+      title: title,
+      message: message,
       confirmButtonText: confirmButtonText,
+      cancelButtonText: cancelButtonText,
+      isDestructive: isDestructive,
+      mascotAssetPath: mascotAssetPath,
+      speechBubbleText: speechBubbleText,
     ),
   );
 }
 
-/// A dialog for renaming a document with mascot and speech bubble.
-class BentoRenameDocumentDialog extends StatefulWidget {
-  const BentoRenameDocumentDialog({
+/// A confirmation dialog with mascot and speech bubble.
+///
+/// Features configurable title, message, button text, and styling.
+/// The [isDestructive] flag changes the confirm button to error styling.
+class BentoConfirmationDialog extends StatelessWidget {
+  const BentoConfirmationDialog({
     super.key,
-    required this.currentTitle,
-    this.dialogTitle,
-    this.hintText,
+    required this.title,
+    required this.message,
     this.confirmButtonText,
+    this.cancelButtonText,
+    this.isDestructive = false,
+    this.mascotAssetPath,
+    this.speechBubbleText,
   });
 
-  final String currentTitle;
-  final String? dialogTitle;
-  final String? hintText;
+  final String title;
+  final String message;
   final String? confirmButtonText;
-
-  @override
-  State<BentoRenameDocumentDialog> createState() =>
-      _BentoRenameDocumentDialogState();
-}
-
-class _BentoRenameDocumentDialogState extends State<BentoRenameDocumentDialog> {
-  late final TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: widget.currentTitle);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    FocusScope.of(context).unfocus();
-    final text = _controller.text.trim();
-    if (text.isNotEmpty) {
-      Navigator.of(context).pop(text);
-    }
-  }
-
-  void _cancel() {
-    FocusScope.of(context).unfocus();
-    Navigator.of(context).pop();
-  }
+  final String? cancelButtonText;
+  final bool isDestructive;
+  final String? mascotAssetPath;
+  final String? speechBubbleText;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final l10n = AppLocalizations.of(context);
+
+    final effectiveMascotPath =
+        mascotAssetPath ?? 'assets/images/scanai_hello.png';
+    final effectiveSpeechBubbleText = speechBubbleText ?? '!!!';
 
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
@@ -117,7 +109,7 @@ class _BentoRenameDocumentDialogState extends State<BentoRenameDocumentDialog> {
                       children: [
                         // Mascot image
                         Image.asset(
-                          'assets/images/scanai_rename.png',
+                          effectiveMascotPath,
                           height: 80,
                           fit: BoxFit.contain,
                         ),
@@ -135,9 +127,11 @@ class _BentoRenameDocumentDialogState extends State<BentoRenameDocumentDialog> {
                               borderWidth: 0,
                               showShadow: false,
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 14, vertical: 10),
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
                               child: Text(
-                                'pshiit !!!',
+                                effectiveSpeechBubbleText,
                                 style: GoogleFonts.outfit(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
@@ -153,49 +147,33 @@ class _BentoRenameDocumentDialogState extends State<BentoRenameDocumentDialog> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      widget.dialogTitle ??
-                          (l10n?.renameDocument ?? 'Rename document'),
+                      title,
                       style: GoogleFonts.outfit(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                         color: theme.colorScheme.onSurface,
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _controller,
-                      autofocus: true,
-                      decoration: InputDecoration(
-                        hintText: widget.hintText ??
-                            (l10n?.newTitle ?? 'New title...'),
-                        filled: true,
-                        fillColor: isDark
-                            ? Colors.white.withValues(alpha: 0.05)
-                            : Colors.black.withValues(alpha: 0.03),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
-                        ),
+                    const SizedBox(height: 12),
+                    Text(
+                      message,
+                      style: GoogleFonts.outfit(
+                        fontSize: 14,
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
-                      style: GoogleFonts.outfit(),
-                      textCapitalization: TextCapitalization.sentences,
-                      onSubmitted: (_) => _submit(),
                     ),
                     const SizedBox(height: 24),
                     Row(
                       children: [
                         Expanded(
                           child: TextButton(
-                            onPressed: _cancel,
+                            onPressed: () => Navigator.of(context).pop(false),
                             style: TextButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 14),
                             ),
                             child: Text(
-                              l10n?.cancel ?? 'Cancel',
+                              cancelButtonText ?? (l10n?.cancel ?? 'Cancel'),
                               style: GoogleFonts.outfit(
                                 color: theme.colorScheme.onSurface
                                     .withValues(alpha: 0.5),
@@ -208,21 +186,22 @@ class _BentoRenameDocumentDialogState extends State<BentoRenameDocumentDialog> {
                           child: Container(
                             height: 50,
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.primary,
+                              color: isDestructive
+                                  ? Colors.red
+                                  : theme.colorScheme.primary,
                               borderRadius: BorderRadius.circular(14),
                             ),
                             child: Material(
                               color: Colors.transparent,
                               child: InkWell(
-                                onTap: _submit,
+                                onTap: () => Navigator.of(context).pop(true),
                                 borderRadius: BorderRadius.circular(14),
                                 child: Center(
                                   child: Text(
-                                    widget.confirmButtonText ??
-                                        (l10n?.save ?? 'Save'),
+                                    confirmButtonText ?? (l10n?.ok ?? 'OK'),
                                     style: GoogleFonts.outfit(
                                       fontWeight: FontWeight.w700,
-                                      color: theme.colorScheme.onPrimary,
+                                      color: Colors.white,
                                       fontSize: 15,
                                     ),
                                   ),

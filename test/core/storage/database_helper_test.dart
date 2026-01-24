@@ -446,7 +446,9 @@ void main() {
         expect(DatabaseHelper.ftsVersion, equals(4));
       });
 
-      test('FTS4 could use matchinfo() for relevance but implementation uses date ordering', () {
+      test(
+          'FTS4 could use matchinfo() for relevance but implementation uses date ordering',
+          () {
         // FTS4 has matchinfo() function for calculating relevance scores,
         // but the current implementation uses date ordering for simplicity:
         // - Avoids complex matchinfo() calculation overhead
@@ -480,7 +482,8 @@ void main() {
         expect(DatabaseHelper.ftsVersion, equals(4));
       });
 
-      test('FTS4 detection catches "no such module: fts4" error to disable FTS', () {
+      test('FTS4 detection catches "no such module: fts4" error to disable FTS',
+          () {
         // When FTS4 module is also unavailable, SQLite throws:
         // DatabaseException(no such module: fts4)
         //
@@ -1025,7 +1028,8 @@ void main() {
       // Output: "flutter" "tutorial"
 
       // This test documents the expected behavior
-      expect(true, isTrue); // Placeholder - actual escaping tested in integration tests
+      expect(true,
+          isTrue); // Placeholder - actual escaping tested in integration tests
     });
 
     test('double quotes in query should be escaped', () {
@@ -1034,7 +1038,8 @@ void main() {
       // Output: """test"""
 
       // This test documents the expected behavior
-      expect(true, isTrue); // Placeholder - actual escaping tested in integration tests
+      expect(true,
+          isTrue); // Placeholder - actual escaping tested in integration tests
     });
   });
 
@@ -1051,7 +1056,8 @@ void main() {
       // Input term: 100%
       // Pattern: %100\%% with ESCAPE '\'
 
-      expect(true, isTrue); // Placeholder - actual escaping tested in integration tests
+      expect(true,
+          isTrue); // Placeholder - actual escaping tested in integration tests
     });
   });
 
@@ -1315,7 +1321,8 @@ void main() {
       expect(DatabaseHelper.ftsVersion, equals(0));
     });
 
-    test('_searchWithLike searches across title, description, and ocr_text', () {
+    test('_searchWithLike searches across title, description, and ocr_text',
+        () {
       DatabaseHelper.setFtsVersion(0);
       // LIKE conditions check all searchable columns:
       // (title LIKE ? ESCAPE '\\' OR

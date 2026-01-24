@@ -1062,7 +1062,9 @@ ProcessedImage _cropImageIsolate(_CropParams params) {
     width: cropped.width,
     height: cropped.height,
     format: params.outputFormat,
-    operationsApplied: ['crop:${params.x},${params.y},${params.width}x${params.height}'],
+    operationsApplied: [
+      'crop:${params.x},${params.y},${params.width}x${params.height}'
+    ],
   );
 }
 
@@ -1155,6 +1157,7 @@ img.Image _adjustBrightness(img.Image image, int amount) {
   // adjustColor expects brightness offset in range suitable for direct application
   return img.adjustColor(image, brightness: amount);
 }
+
 /// Applies unsharp mask sharpening to an image.
 ///
 /// Uses the unsharp mask algorithm which provides high-quality sharpening
@@ -1183,15 +1186,12 @@ img.Image _sharpenImage(img.Image image, double amount) {
       final original = image.getPixel(x, y);
       final blur = blurred.getPixel(x, y);
 
-      final r = (original.r + amount * (original.r - blur.r))
-          .clamp(0, 255)
-          .toInt();
-      final g = (original.g + amount * (original.g - blur.g))
-          .clamp(0, 255)
-          .toInt();
-      final b = (original.b + amount * (original.b - blur.b))
-          .clamp(0, 255)
-          .toInt();
+      final r =
+          (original.r + amount * (original.r - blur.r)).clamp(0, 255).toInt();
+      final g =
+          (original.g + amount * (original.g - blur.g)).clamp(0, 255).toInt();
+      final b =
+          (original.b + amount * (original.b - blur.b)).clamp(0, 255).toInt();
 
       result.setPixelRgba(x, y, r, g, b, original.a.toInt());
     }

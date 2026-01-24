@@ -97,7 +97,8 @@ class LocalePersistenceService {
 }
 
 /// Riverpod provider for the locale persistence service.
-final localePersistenceServiceProvider = Provider<LocalePersistenceService>((ref) {
+final localePersistenceServiceProvider =
+    Provider<LocalePersistenceService>((ref) {
   return LocalePersistenceService();
 });
 

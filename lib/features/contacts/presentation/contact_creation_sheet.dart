@@ -39,7 +39,8 @@ class ContactCreationSheet extends ConsumerStatefulWidget {
   final ExtractedContactData extractedData;
 
   @override
-  ConsumerState<ContactCreationSheet> createState() => _ContactCreationSheetState();
+  ConsumerState<ContactCreationSheet> createState() =>
+      _ContactCreationSheetState();
 }
 
 class _ContactCreationSheetState extends ConsumerState<ContactCreationSheet> {
@@ -332,9 +333,7 @@ class _ContactCreationSheetState extends ConsumerState<ContactCreationSheet> {
             child: Row(
               children: [
                 Icon(
-                  isSelected
-                      ? Icons.check_box
-                      : Icons.check_box_outline_blank,
+                  isSelected ? Icons.check_box : Icons.check_box_outline_blank,
                   size: 22,
                   color: isSelected
                       ? colorScheme.primary
@@ -382,7 +381,8 @@ class _ContactCreationSheetState extends ConsumerState<ContactCreationSheet> {
         children: [
           Expanded(
             child: OutlinedButton(
-              onPressed: _isCreating ? null : () => Navigator.pop(context, false),
+              onPressed:
+                  _isCreating ? null : () => Navigator.pop(context, false),
               child: const Text('Cancel'),
             ),
           ),

@@ -74,7 +74,8 @@ class OcrProcessingView extends StatelessWidget {
             const SizedBox(height: 8),
             if (totalPages > 1)
               Text(
-                l10n?.processingPage(currentPage, totalPages) ?? 'Processing page $currentPage of $totalPages',
+                l10n?.processingPage(currentPage, totalPages) ??
+                    'Processing page $currentPage of $totalPages',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),

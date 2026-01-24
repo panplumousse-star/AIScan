@@ -331,7 +331,8 @@ class DocumentRepository {
   }
 
   /// Generates an encrypted file path for a document page.
-  Future<String> _generatePageFilePath(String documentId, int pageNumber) async {
+  Future<String> _generatePageFilePath(
+      String documentId, int pageNumber) async {
     final documentsDir = await _getDocumentsDirectory();
     final fileName = '${documentId}_page_$pageNumber.png$_encryptedExtension';
     return path.join(documentsDir.path, fileName);
@@ -345,12 +346,14 @@ class DocumentRepository {
 
       // Delete any files starting with the document ID
       await for (final entity in documentsDir.list()) {
-        if (entity is File && path.basename(entity.path).startsWith(documentId)) {
+        if (entity is File &&
+            path.basename(entity.path).startsWith(documentId)) {
           await entity.delete();
         }
       }
       await for (final entity in thumbnailsDir.list()) {
-        if (entity is File && path.basename(entity.path).startsWith(documentId)) {
+        if (entity is File &&
+            path.basename(entity.path).startsWith(documentId)) {
           await entity.delete();
         }
       }
@@ -445,7 +448,8 @@ class DocumentRepository {
           .toList();
 
       // Batch fetch page paths for all documents in a single query
-      final allPagesPaths = await _database.getBatchDocumentPagePaths(documentIds);
+      final allPagesPaths =
+          await _database.getBatchDocumentPagePaths(documentIds);
 
       // Batch fetch tags for all documents in a single query if requested
       Map<String, List<String>>? allTags;
@@ -459,7 +463,8 @@ class DocumentRepository {
         final docId = result[DatabaseHelper.columnId] as String;
         final pagesPaths = allPagesPaths[docId] ?? [];
         final tags = includeTags ? allTags![docId] : null;
-        documents.add(Document.fromMap(result, pagesPaths: pagesPaths, tags: tags));
+        documents
+            .add(Document.fromMap(result, pagesPaths: pagesPaths, tags: tags));
       }
 
       return documents;
@@ -510,7 +515,8 @@ class DocumentRepository {
           .toList();
 
       // Batch fetch page paths for all documents in a single query
-      final allPagesPaths = await _database.getBatchDocumentPagePaths(documentIds);
+      final allPagesPaths =
+          await _database.getBatchDocumentPagePaths(documentIds);
 
       // Batch fetch tags for all documents in a single query if requested
       Map<String, List<String>>? allTags;
@@ -524,7 +530,8 @@ class DocumentRepository {
         final docId = result[DatabaseHelper.columnId] as String;
         final pagesPaths = allPagesPaths[docId] ?? [];
         final tags = includeTags ? allTags![docId] : null;
-        documents.add(Document.fromMap(result, pagesPaths: pagesPaths, tags: tags));
+        documents
+            .add(Document.fromMap(result, pagesPaths: pagesPaths, tags: tags));
       }
 
       return documents;
@@ -566,7 +573,8 @@ class DocumentRepository {
           .toList();
 
       // Batch fetch page paths for all documents in a single query
-      final allPagesPaths = await _database.getBatchDocumentPagePaths(documentIds);
+      final allPagesPaths =
+          await _database.getBatchDocumentPagePaths(documentIds);
 
       // Batch fetch tags for all documents in a single query if requested
       Map<String, List<String>>? allTags;
@@ -580,7 +588,8 @@ class DocumentRepository {
         final docId = result[DatabaseHelper.columnId] as String;
         final pagesPaths = allPagesPaths[docId] ?? [];
         final tags = includeTags ? allTags![docId] : null;
-        documents.add(Document.fromMap(result, pagesPaths: pagesPaths, tags: tags));
+        documents
+            .add(Document.fromMap(result, pagesPaths: pagesPaths, tags: tags));
       }
 
       return documents;
@@ -618,7 +627,8 @@ class DocumentRepository {
   /// Returns the path to the decrypted page image.
   ///
   /// Throws [DocumentRepositoryException] if decryption fails.
-  Future<String> getDecryptedPagePath(Document document, {int pageIndex = 0}) async {
+  Future<String> getDecryptedPagePath(Document document,
+      {int pageIndex = 0}) async {
     try {
       if (pageIndex < 0 || pageIndex >= document.pageCount) {
         throw DocumentRepositoryException(
@@ -706,7 +716,8 @@ class DocumentRepository {
   /// Returns the decrypted image bytes.
   ///
   /// Throws [DocumentRepositoryException] if decryption fails.
-  Future<List<int>> getDecryptedPageBytes(Document document, {int pageIndex = 0}) async {
+  Future<List<int>> getDecryptedPageBytes(Document document,
+      {int pageIndex = 0}) async {
     try {
       if (pageIndex < 0 || pageIndex >= document.pageCount) {
         throw DocumentRepositoryException(
@@ -1345,7 +1356,8 @@ class DocumentRepository {
           .toList();
 
       // Batch fetch page paths for all documents in a single query
-      final allPagesPaths = await _database.getBatchDocumentPagePaths(documentIds);
+      final allPagesPaths =
+          await _database.getBatchDocumentPagePaths(documentIds);
 
       // Batch fetch tags for all documents in a single query if requested
       Map<String, List<String>>? allTags;
@@ -1359,7 +1371,8 @@ class DocumentRepository {
         final docId = result[DatabaseHelper.columnId] as String;
         final pagesPaths = allPagesPaths[docId] ?? [];
         final tags = includeTags ? allTags![docId] : null;
-        documents.add(Document.fromMap(result, pagesPaths: pagesPaths, tags: tags));
+        documents
+            .add(Document.fromMap(result, pagesPaths: pagesPaths, tags: tags));
       }
 
       return documents;
@@ -1416,7 +1429,8 @@ class DocumentRepository {
       }
 
       // Batch fetch page paths for all documents in a single query
-      final allPagesPaths = await _database.getBatchDocumentPagePaths(documentIds);
+      final allPagesPaths =
+          await _database.getBatchDocumentPagePaths(documentIds);
 
       // Batch fetch tags for all documents in a single query if requested
       Map<String, List<String>>? allTags;
@@ -1430,7 +1444,8 @@ class DocumentRepository {
         final docId = result[DatabaseHelper.columnId] as String;
         final pagesPaths = allPagesPaths[docId] ?? [];
         final tags = includeTags ? allTags![docId] : null;
-        documents.add(Document.fromMap(result, pagesPaths: pagesPaths, tags: tags));
+        documents
+            .add(Document.fromMap(result, pagesPaths: pagesPaths, tags: tags));
       }
 
       return documents;

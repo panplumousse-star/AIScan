@@ -121,7 +121,8 @@ class OcrLanguagePersistenceService {
 }
 
 /// Riverpod provider for the OCR language persistence service.
-final ocrLanguagePersistenceServiceProvider = Provider<OcrLanguagePersistenceService>((ref) {
+final ocrLanguagePersistenceServiceProvider =
+    Provider<OcrLanguagePersistenceService>((ref) {
   return OcrLanguagePersistenceService();
 });
 
@@ -162,7 +163,8 @@ class OcrLanguageNotifier extends StateNotifier<OcrLanguageOption> {
 ///
 /// Provides the current [OcrLanguageOption] and allows changing it.
 /// The preference is persisted to SharedPreferences.
-final ocrLanguageProvider = StateNotifierProvider<OcrLanguageNotifier, OcrLanguageOption>((ref) {
+final ocrLanguageProvider =
+    StateNotifierProvider<OcrLanguageNotifier, OcrLanguageOption>((ref) {
   final persistenceService = ref.watch(ocrLanguagePersistenceServiceProvider);
   return OcrLanguageNotifier(persistenceService);
 });

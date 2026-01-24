@@ -45,7 +45,8 @@ class OcrPromptView extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              l10n?.extractTextDescription ?? 'Run OCR to extract readable text\nfrom this document.',
+              l10n?.extractTextDescription ??
+                  'Run OCR to extract readable text\nfrom this document.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -64,7 +65,8 @@ class OcrPromptView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              l10n?.allProcessingLocal ?? 'All processing happens locally on your device',
+              l10n?.allProcessingLocal ??
+                  'All processing happens locally on your device',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),

@@ -707,7 +707,8 @@ class ImageExporter {
 
       final exportedImages = <ExportedImage>[];
       var totalSize = 0;
-      final extension = options.format == ExportImageFormat.jpeg ? 'jpg' : 'png';
+      final extension =
+          options.format == ExportImageFormat.jpeg ? 'jpg' : 'png';
 
       for (var i = 0; i < imageBytesList.length; i++) {
         if (imageBytesList[i].isEmpty) {

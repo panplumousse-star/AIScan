@@ -148,14 +148,16 @@ class _OcrTextPanelState extends State<OcrTextPanel> {
                       ContextMenuButtonItem(
                         label: l10n?.copy ?? 'Copy',
                         onPressed: () {
-                          selectableRegionState.copySelection(SelectionChangedCause.toolbar);
+                          selectableRegionState
+                              .copySelection(SelectionChangedCause.toolbar);
                         },
                       ),
                       ContextMenuButtonItem(
                         label: l10n?.share ?? 'Share',
                         onPressed: () {
                           // Get selected text and share it
-                          selectableRegionState.copySelection(SelectionChangedCause.toolbar);
+                          selectableRegionState
+                              .copySelection(SelectionChangedCause.toolbar);
                           Clipboard.getData(Clipboard.kTextPlain).then((data) {
                             if (data?.text != null && data!.text!.isNotEmpty) {
                               Share.share(data.text!);
@@ -166,7 +168,8 @@ class _OcrTextPanelState extends State<OcrTextPanel> {
                       ContextMenuButtonItem(
                         label: l10n?.selectAll ?? 'Select all',
                         onPressed: () {
-                          selectableRegionState.selectAll(SelectionChangedCause.toolbar);
+                          selectableRegionState
+                              .selectAll(SelectionChangedCause.toolbar);
                         },
                       ),
                     ],

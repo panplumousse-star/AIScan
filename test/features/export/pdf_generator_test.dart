@@ -103,8 +103,8 @@ void main() {
     });
 
     test('should format file size in MB', () {
-      final bytes = Uint8List.fromList(
-          List.generate(1024 * 1024 * 2, (i) => 0)); // 2MB
+      final bytes =
+          Uint8List.fromList(List.generate(1024 * 1024 * 2, (i) => 0)); // 2MB
       final result = GeneratedPDF(
         bytes: bytes,
         pageCount: 1,
@@ -540,10 +540,10 @@ void main() {
       final bytes = Uint8List.fromList([1, 2, 3]);
 
       final page1 = PDFPage.fromBytes(imageBytes: bytes);
-      final page2 = PDFPage.fromBytes(
-          imageBytes: Uint8List.fromList([1, 2, 3]));
-      final page3 = PDFPage.fromBytes(
-          imageBytes: Uint8List.fromList([4, 5, 6]));
+      final page2 =
+          PDFPage.fromBytes(imageBytes: Uint8List.fromList([1, 2, 3]));
+      final page3 =
+          PDFPage.fromBytes(imageBytes: Uint8List.fromList([4, 5, 6]));
 
       expect(page1, equals(page2));
       expect(page1, isNot(equals(page3)));
@@ -562,8 +562,8 @@ void main() {
       final bytes = Uint8List.fromList([1, 2, 3]);
 
       final page1 = PDFPage.fromBytes(imageBytes: bytes);
-      final page2 = PDFPage.fromBytes(
-          imageBytes: Uint8List.fromList([1, 2, 3]));
+      final page2 =
+          PDFPage.fromBytes(imageBytes: Uint8List.fromList([1, 2, 3]));
 
       expect(page1.hashCode, equals(page2.hashCode));
     });
@@ -773,7 +773,8 @@ void main() {
       generator = PDFGenerator();
     });
 
-    test('generateFromBytes should throw PDFGeneratorException on invalid input',
+    test(
+        'generateFromBytes should throw PDFGeneratorException on invalid input',
         () async {
       expect(
         () => generator.generateFromBytes(imageBytesList: []),
@@ -781,7 +782,8 @@ void main() {
       );
     });
 
-    test('generateFromFiles should throw PDFGeneratorException on invalid input',
+    test(
+        'generateFromFiles should throw PDFGeneratorException on invalid input',
         () async {
       expect(
         () => generator.generateFromFiles(imagePaths: []),
@@ -789,7 +791,8 @@ void main() {
       );
     });
 
-    test('generateFromPages should throw PDFGeneratorException on invalid input',
+    test(
+        'generateFromPages should throw PDFGeneratorException on invalid input',
         () async {
       expect(
         () => generator.generateFromPages(pages: []),
@@ -797,7 +800,8 @@ void main() {
       );
     });
 
-    test('generateToFile should throw PDFGeneratorException on empty output path',
+    test(
+        'generateToFile should throw PDFGeneratorException on empty output path',
         () async {
       expect(
         () => generator.generateToFile(
@@ -849,7 +853,8 @@ void main() {
     }
 
     group('compressImages flag', () {
-      test('should compress images when compressImages is true (default)', () async {
+      test('should compress images when compressImages is true (default)',
+          () async {
         final generator = PDFGenerator();
         final largeImage = createLargeTestImage(width: 3000, height: 2000);
 
@@ -878,7 +883,8 @@ void main() {
         );
       });
 
-      test('should preserve original bytes when compressImages is false', () async {
+      test('should preserve original bytes when compressImages is false',
+          () async {
         final generator = PDFGenerator();
         final testImage = createTestImage(width: 500, height: 500);
 
@@ -1018,7 +1024,8 @@ void main() {
     });
 
     group('graceful degradation', () {
-      test('should return original bytes when decode fails with compression', () async {
+      test('should return original bytes when decode fails with compression',
+          () async {
         final generator = PDFGenerator();
         // Invalid image bytes that cannot be decoded
         final invalidBytes = Uint8List.fromList([1, 2, 3, 4, 5]);
@@ -1045,7 +1052,8 @@ void main() {
         expect(errorThrown, isTrue);
       });
 
-      test('should generate PDF with valid images mixed with compression', () async {
+      test('should generate PDF with valid images mixed with compression',
+          () async {
         final generator = PDFGenerator();
         final testImage = createTestImage(width: 800, height: 600);
 

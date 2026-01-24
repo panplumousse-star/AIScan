@@ -685,8 +685,7 @@ class AccessibleSlider extends StatelessWidget {
     return Semantics(
       label: valueLabel,
       slider: true,
-      value:
-          semanticFormatterCallback?.call(value) ??
+      value: semanticFormatterCallback?.call(value) ??
           '${((value - min) / (max - min) * 100).round()}%',
       hint: A11yHints.sliderAdjust,
       child: Slider(

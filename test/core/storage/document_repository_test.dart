@@ -95,7 +95,8 @@ void main() {
     group('getDocument', () {
       test('should return document when found', () async {
         // Arrange
-        when(mockDatabase.getById(DatabaseHelper.tableDocuments, 'test-uuid-123'))
+        when(mockDatabase.getById(
+                DatabaseHelper.tableDocuments, 'test-uuid-123'))
             .thenAnswer((_) async => testDocumentMap);
 
         // Act
@@ -105,13 +106,15 @@ void main() {
         expect(result, isNotNull);
         expect(result!.id, equals('test-uuid-123'));
         expect(result.title, equals('Test Document'));
-        verify(mockDatabase.getById(DatabaseHelper.tableDocuments, 'test-uuid-123'))
+        verify(mockDatabase.getById(
+                DatabaseHelper.tableDocuments, 'test-uuid-123'))
             .called(1);
       });
 
       test('should return null when document not found', () async {
         // Arrange
-        when(mockDatabase.getById(DatabaseHelper.tableDocuments, 'non-existent'))
+        when(mockDatabase.getById(
+                DatabaseHelper.tableDocuments, 'non-existent'))
             .thenAnswer((_) async => null);
 
         // Act
@@ -123,7 +126,8 @@ void main() {
 
       test('should include tags when requested', () async {
         // Arrange
-        when(mockDatabase.getById(DatabaseHelper.tableDocuments, 'test-uuid-123'))
+        when(mockDatabase.getById(
+                DatabaseHelper.tableDocuments, 'test-uuid-123'))
             .thenAnswer((_) async => testDocumentMap);
         when(mockDatabase.query(
           DatabaseHelper.tableDocumentTags,
@@ -147,7 +151,8 @@ void main() {
         expect(result.tags, contains('tag-2'));
       });
 
-      test('should throw DocumentRepositoryException on database error', () async {
+      test('should throw DocumentRepositoryException on database error',
+          () async {
         // Arrange
         when(mockDatabase.getById(any, any))
             .thenThrow(Exception('Database error'));
@@ -171,8 +176,10 @@ void main() {
         )).thenAnswer((_) async => [testDocumentMap]);
         when(mockDatabase.getBatchDocumentPagePaths(['test-uuid-123']))
             .thenAnswer((_) async => {
-              'test-uuid-123': ['/encrypted/documents/test-uuid-123.jpg.enc'],
-            });
+                  'test-uuid-123': [
+                    '/encrypted/documents/test-uuid-123.jpg.enc'
+                  ],
+                });
         when(mockDatabase.getBatchDocumentTags(['test-uuid-123']))
             .thenAnswer((_) async => {});
 
@@ -194,8 +201,7 @@ void main() {
         )).thenAnswer((_) async => []);
         when(mockDatabase.getBatchDocumentPagePaths([]))
             .thenAnswer((_) async => {});
-        when(mockDatabase.getBatchDocumentTags([]))
-            .thenAnswer((_) async => {});
+        when(mockDatabase.getBatchDocumentTags([])).thenAnswer((_) async => {});
 
         // Act
         final result = await repository.getAllDocuments();
@@ -214,8 +220,10 @@ void main() {
         )).thenAnswer((_) async => [testDocumentMap]);
         when(mockDatabase.getBatchDocumentPagePaths(['test-uuid-123']))
             .thenAnswer((_) async => {
-              'test-uuid-123': ['/encrypted/documents/test-uuid-123.jpg.enc'],
-            });
+                  'test-uuid-123': [
+                    '/encrypted/documents/test-uuid-123.jpg.enc'
+                  ],
+                });
         when(mockDatabase.getBatchDocumentTags(['test-uuid-123']))
             .thenAnswer((_) async => {});
 
@@ -370,7 +378,8 @@ void main() {
     group('updateDocumentOcr', () {
       test('should update OCR text and status', () async {
         // Arrange
-        when(mockDatabase.getById(DatabaseHelper.tableDocuments, 'test-uuid-123'))
+        when(mockDatabase.getById(
+                DatabaseHelper.tableDocuments, 'test-uuid-123'))
             .thenAnswer((_) async => testDocumentMap);
         when(mockDatabase.update(
           any,
@@ -396,7 +405,8 @@ void main() {
         docWithOcr['ocr_text'] = 'Previous OCR text';
         docWithOcr['ocr_status'] = 'completed';
 
-        when(mockDatabase.getById(DatabaseHelper.tableDocuments, 'test-uuid-123'))
+        when(mockDatabase.getById(
+                DatabaseHelper.tableDocuments, 'test-uuid-123'))
             .thenAnswer((_) async => docWithOcr);
         when(mockDatabase.update(
           any,
@@ -421,7 +431,8 @@ void main() {
     group('toggleFavorite', () {
       test('should toggle favorite from false to true', () async {
         // Arrange
-        when(mockDatabase.getById(DatabaseHelper.tableDocuments, 'test-uuid-123'))
+        when(mockDatabase.getById(
+                DatabaseHelper.tableDocuments, 'test-uuid-123'))
             .thenAnswer((_) async => testDocumentMap);
         when(mockDatabase.update(
           any,
@@ -442,7 +453,8 @@ void main() {
         final favoriteMap = Map<String, dynamic>.from(testDocumentMap);
         favoriteMap['is_favorite'] = 1;
 
-        when(mockDatabase.getById(DatabaseHelper.tableDocuments, 'test-uuid-123'))
+        when(mockDatabase.getById(
+                DatabaseHelper.tableDocuments, 'test-uuid-123'))
             .thenAnswer((_) async => favoriteMap);
         when(mockDatabase.update(
           any,
@@ -462,7 +474,8 @@ void main() {
     group('moveToFolder', () {
       test('should move document to folder', () async {
         // Arrange
-        when(mockDatabase.getById(DatabaseHelper.tableDocuments, 'test-uuid-123'))
+        when(mockDatabase.getById(
+                DatabaseHelper.tableDocuments, 'test-uuid-123'))
             .thenAnswer((_) async => testDocumentMap);
         when(mockDatabase.update(
           any,
@@ -472,7 +485,8 @@ void main() {
         )).thenAnswer((_) async => 1);
 
         // Act
-        final result = await repository.moveToFolder('test-uuid-123', 'folder-456');
+        final result =
+            await repository.moveToFolder('test-uuid-123', 'folder-456');
 
         // Assert
         expect(result.folderId, equals('folder-456'));
@@ -483,7 +497,8 @@ void main() {
         final docInFolder = Map<String, dynamic>.from(testDocumentMap);
         docInFolder['folder_id'] = 'folder-123';
 
-        when(mockDatabase.getById(DatabaseHelper.tableDocuments, 'test-uuid-123'))
+        when(mockDatabase.getById(
+                DatabaseHelper.tableDocuments, 'test-uuid-123'))
             .thenAnswer((_) async => docInFolder);
         when(mockDatabase.update(
           any,
@@ -503,7 +518,8 @@ void main() {
     group('deleteDocument', () {
       test('should delete document and files', () async {
         // Arrange
-        when(mockDatabase.getById(DatabaseHelper.tableDocuments, 'test-uuid-123'))
+        when(mockDatabase.getById(
+                DatabaseHelper.tableDocuments, 'test-uuid-123'))
             .thenAnswer((_) async => testDocumentMap);
         when(mockDatabase.delete(
           any,
@@ -594,7 +610,8 @@ void main() {
           DatabaseHelper.tableDocumentTags,
           argThat(
             predicate<Map<String, dynamic>>((map) =>
-                map['document_id'] == 'test-uuid-123' && map['tag_id'] == 'tag-1'),
+                map['document_id'] == 'test-uuid-123' &&
+                map['tag_id'] == 'tag-1'),
           ),
         )).called(1);
       });
@@ -642,8 +659,10 @@ void main() {
             .thenAnswer((_) async => [testDocumentMap]);
         when(mockDatabase.getBatchDocumentPagePaths(['test-uuid-123']))
             .thenAnswer((_) async => {
-              'test-uuid-123': ['/encrypted/documents/test-uuid-123.jpg.enc'],
-            });
+                  'test-uuid-123': [
+                    '/encrypted/documents/test-uuid-123.jpg.enc'
+                  ],
+                });
         when(mockDatabase.getBatchDocumentTags(['test-uuid-123']))
             .thenAnswer((_) async => {});
 
@@ -699,7 +718,8 @@ void main() {
 
         // Arrange
         when(mockDatabase.initialize()).thenAnswer((_) async => true);
-        when(mockEncryption.ensureKeyInitialized()).thenAnswer((_) async => true);
+        when(mockEncryption.ensureKeyInitialized())
+            .thenAnswer((_) async => true);
 
         // Act
         final result = await repository.initialize();
@@ -860,7 +880,8 @@ void main() {
       final tags = ['tag-a', 'tag-b', 'tag-c'];
 
       // Act
-      final document = Document.fromMap(map, pagesPaths: pagesPaths, tags: tags);
+      final document =
+          Document.fromMap(map, pagesPaths: pagesPaths, tags: tags);
 
       // Assert
       expect(document.tags, equals(tags));
@@ -1230,7 +1251,8 @@ void main() {
   });
 
   group('Error handling edge cases', () {
-    test('should throw DocumentRepositoryException on toggle favorite for non-existent document',
+    test(
+        'should throw DocumentRepositoryException on toggle favorite for non-existent document',
         () async {
       // Arrange
       when(mockDatabase.getById(DatabaseHelper.tableDocuments, 'non-existent'))
@@ -1243,7 +1265,8 @@ void main() {
       );
     });
 
-    test('should throw DocumentRepositoryException on move to folder for non-existent document',
+    test(
+        'should throw DocumentRepositoryException on move to folder for non-existent document',
         () async {
       // Arrange
       when(mockDatabase.getById(DatabaseHelper.tableDocuments, 'non-existent'))
@@ -1256,7 +1279,8 @@ void main() {
       );
     });
 
-    test('should throw DocumentRepositoryException on update OCR for non-existent document',
+    test(
+        'should throw DocumentRepositoryException on update OCR for non-existent document',
         () async {
       // Arrange
       when(mockDatabase.getById(DatabaseHelper.tableDocuments, 'non-existent'))

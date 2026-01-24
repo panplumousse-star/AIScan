@@ -196,7 +196,8 @@ void main() {
           expect(initialized, isTrue);
 
           // Act - Step 2: Get decrypted file path
-          final decryptedPath = await mockDocumentRepository.getDecryptedFilePath(
+          final decryptedPath =
+              await mockDocumentRepository.getDecryptedFilePath(
             testDocument,
           );
           expect(decryptedPath, equals(testImagePath));
@@ -243,7 +244,8 @@ void main() {
         },
       );
 
-      test('should process multi-page document with combined OCR results', () async {
+      test('should process multi-page document with combined OCR results',
+          () async {
         // Arrange - Create multiple test images
         final testDir = await Directory(
           '${testTempDir.path}/multi_page_ocr',
@@ -474,7 +476,8 @@ void main() {
 
         // Assert
         expect(extracted.hasText, isTrue);
-        expect(options.pageSegmentationMode, equals(OcrPageSegmentationMode.auto));
+        expect(
+            options.pageSegmentationMode, equals(OcrPageSegmentationMode.auto));
         expect(options.engineMode, equals(OcrEngineMode.lstmOnly));
       });
 
@@ -652,7 +655,8 @@ void main() {
           expect(results.hasResults, isTrue);
           expect(results.count, equals(1));
           expect(results.results.first.matchedOcrText, isTrue);
-          expect(results.results.first.document.id, equals(testDocumentWithOcr.id));
+          expect(results.results.first.document.id,
+              equals(testDocumentWithOcr.id));
         },
       );
 
@@ -766,7 +770,8 @@ void main() {
             options: anyNamed('options'),
           ),
         ).thenThrow(
-          const OcrException('Image file not found: /nonexistent/path/image.jpg'),
+          const OcrException(
+              'Image file not found: /nonexistent/path/image.jpg'),
         );
 
         // Act & Assert
@@ -826,7 +831,8 @@ void main() {
       test('should handle corrupted image data', () async {
         // Arrange
         final corruptedPath = '${testTempDir.path}/corrupted.jpg';
-        await File(corruptedPath).writeAsBytes([0x00, 0x01, 0x02]); // Invalid JPEG
+        await File(corruptedPath)
+            .writeAsBytes([0x00, 0x01, 0x02]); // Invalid JPEG
 
         when(mockOcrService.isReady).thenReturn(true);
         when(
@@ -1030,7 +1036,8 @@ void main() {
         const options = OcrOptions();
 
         expect(options.language, equals(OcrLanguage.english));
-        expect(options.pageSegmentationMode, equals(OcrPageSegmentationMode.auto));
+        expect(
+            options.pageSegmentationMode, equals(OcrPageSegmentationMode.auto));
         expect(options.engineMode, equals(OcrEngineMode.lstmOnly));
         expect(options.preserveInterwordSpaces, isTrue);
         expect(options.enableDeskew, isFalse);
@@ -1054,7 +1061,8 @@ void main() {
 
       test('should create presets with correct configuration', () {
         const docOptions = OcrOptions.document();
-        expect(docOptions.pageSegmentationMode, equals(OcrPageSegmentationMode.auto));
+        expect(docOptions.pageSegmentationMode,
+            equals(OcrPageSegmentationMode.auto));
 
         const sparseOptions = OcrOptions.sparse();
         expect(
@@ -1116,7 +1124,8 @@ void main() {
         // Act & Assert
         expect(mockOcrService.availableLanguages, hasLength(2));
         expect(mockOcrService.isLanguageAvailable(OcrLanguage.english), isTrue);
-        expect(mockOcrService.isLanguageAvailable(OcrLanguage.japanese), isFalse);
+        expect(
+            mockOcrService.isLanguageAvailable(OcrLanguage.japanese), isFalse);
       });
 
       test('OcrLanguage enum should have correct codes', () {
@@ -1207,7 +1216,8 @@ void main() {
         final container = ProviderContainer(
           overrides: [
             databaseHelperProvider.overrideWithValue(mockDatabaseHelper),
-            documentRepositoryProvider.overrideWithValue(mockDocumentRepository),
+            documentRepositoryProvider
+                .overrideWithValue(mockDocumentRepository),
           ],
         );
 
@@ -1222,7 +1232,8 @@ void main() {
     });
 
     group('End-to-End OCR Scenarios', () {
-      test('complete E2E: scan document -> OCR -> search finds document', () async {
+      test('complete E2E: scan document -> OCR -> search finds document',
+          () async {
         // Arrange - Setup complete pipeline
         final testDir = await Directory(
           '${testTempDir.path}/e2e_ocr',
@@ -1326,7 +1337,8 @@ void main() {
         expect(results.results.first.matchedOcrText, isTrue);
       });
 
-      test('complete E2E: batch OCR processing for multiple documents', () async {
+      test('complete E2E: batch OCR processing for multiple documents',
+          () async {
         // Arrange
         final testDir = await Directory(
           '${testTempDir.path}/batch_ocr',

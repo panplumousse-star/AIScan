@@ -257,7 +257,8 @@ void main() {
         },
       );
 
-      test('should complete single page scan workflow for one-click scan', () async {
+      test('should complete single page scan workflow for one-click scan',
+          () async {
         // Arrange - Create test image
         final testImagePath = await createTestImageFile(
           testTempDir,
@@ -1142,7 +1143,8 @@ void main() {
   group('Scanner Options Integration', () {
     test('single page scan options should limit to single page', () async {
       // Arrange
-      final imagePath = await createTestImageFile(testTempDir, 'single_page_opt.jpg');
+      final imagePath =
+          await createTestImageFile(testTempDir, 'single_page_opt.jpg');
 
       final mlKitResult = MockDocumentScanningResult(mockImages: [imagePath]);
       when(mockScanner.scanDocument()).thenAnswer((_) async => mlKitResult);

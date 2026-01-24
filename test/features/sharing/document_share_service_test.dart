@@ -377,7 +377,8 @@ class FakePDFGenerator implements PDFGenerator {
   String generateErrorMessage = 'PDF generation failed';
 
   /// The bytes to return from generation.
-  Uint8List generatedBytes = Uint8List.fromList([0x25, 0x50, 0x44, 0x46]); // %PDF
+  Uint8List generatedBytes =
+      Uint8List.fromList([0x25, 0x50, 0x44, 0x46]); // %PDF
 
   @override
   Future<GeneratedPDF> generateFromBytes({
@@ -484,10 +485,14 @@ void main() {
   group('SharePermissionResult', () {
     test('should have all expected values', () {
       expect(SharePermissionResult.values, hasLength(4));
-      expect(SharePermissionResult.values, contains(SharePermissionResult.granted));
-      expect(SharePermissionResult.values, contains(SharePermissionResult.needsSystemRequest));
-      expect(SharePermissionResult.values, contains(SharePermissionResult.blocked));
-      expect(SharePermissionResult.values, contains(SharePermissionResult.denied));
+      expect(SharePermissionResult.values,
+          contains(SharePermissionResult.granted));
+      expect(SharePermissionResult.values,
+          contains(SharePermissionResult.needsSystemRequest));
+      expect(SharePermissionResult.values,
+          contains(SharePermissionResult.blocked));
+      expect(
+          SharePermissionResult.values, contains(SharePermissionResult.denied));
     });
   });
 
@@ -537,7 +542,8 @@ void main() {
 
       // Assert
       expect(exception.cause, isNull);
-      expect(exception.toString(), equals('DocumentShareException: Simple error'));
+      expect(
+          exception.toString(), equals('DocumentShareException: Simple error'));
     });
   });
 
@@ -636,7 +642,8 @@ void main() {
         expect(result, equals(SharePermissionResult.granted));
       });
 
-      test('should return granted when permission is limited (sessionOnly)', () async {
+      test('should return granted when permission is limited (sessionOnly)',
+          () async {
         // Arrange
         setMockPermissionStatus(PermissionStatus.limited);
         permissionService.clearCache();
@@ -660,7 +667,9 @@ void main() {
         expect(result, equals(SharePermissionResult.granted));
       });
 
-      test('should return blocked when permission is denied (even for first time)', () async {
+      test(
+          'should return blocked when permission is denied (even for first time)',
+          () async {
         // Arrange
         // Note: In the current implementation, denied status is always treated as blocked
         // because isPermissionBlocked() returns true for denied state
@@ -676,7 +685,8 @@ void main() {
         expect(result, equals(SharePermissionResult.blocked));
       });
 
-      test('should return blocked when permission is denied and should show rationale',
+      test(
+          'should return blocked when permission is denied and should show rationale',
           () async {
         // Arrange
         setMockPermissionStatus(PermissionStatus.denied);
@@ -702,7 +712,8 @@ void main() {
         expect(result, equals(SharePermissionResult.blocked));
       });
 
-      test('should return blocked when permission is permanentlyDenied', () async {
+      test('should return blocked when permission is permanentlyDenied',
+          () async {
         // Arrange
         setMockPermissionStatus(PermissionStatus.permanentlyDenied);
         permissionService.clearCache();
@@ -787,7 +798,8 @@ void main() {
         );
       });
 
-      test('should throw DocumentShareException when decryption fails', () async {
+      test('should throw DocumentShareException when decryption fails',
+          () async {
         // Arrange
         fakeRepository.throwOnDecrypt = true;
         fakeRepository.decryptErrorMessage = 'Decryption error';
@@ -800,7 +812,8 @@ void main() {
         );
       });
 
-      test('should throw DocumentShareException with "not found" for missing files',
+      test(
+          'should throw DocumentShareException with "not found" for missing files',
           () async {
         // Arrange
         fakeRepository.throwNotFoundError = true;
@@ -943,7 +956,8 @@ void main() {
   });
 
   group('DocumentShareService with Riverpod', () {
-    test('documentShareServiceProvider should provide DocumentShareService', () {
+    test('documentShareServiceProvider should provide DocumentShareService',
+        () {
       // Arrange
       final container = ProviderContainer();
 
@@ -1012,7 +1026,8 @@ void main() {
       expect(requestResult, equals(StoragePermissionState.granted));
     });
 
-    test('blocked permission flow: denied -> request -> permanently denied', () async {
+    test('blocked permission flow: denied -> request -> permanently denied',
+        () async {
       // Arrange
       setMockPermissionStatus(PermissionStatus.denied);
       setMockShouldShowRationale(false);
@@ -1036,7 +1051,8 @@ void main() {
       expect(checkResult, equals(SharePermissionResult.blocked));
     });
 
-    test('return from settings flow: blocked -> clear cache -> granted', () async {
+    test('return from settings flow: blocked -> clear cache -> granted',
+        () async {
       // Arrange - Start with permanently denied
       setMockPermissionStatus(PermissionStatus.permanentlyDenied);
       permissionService.clearCache();
@@ -1058,7 +1074,8 @@ void main() {
   group('File name sanitization', () {
     // Test _getShareFileName behavior indirectly through share operations
 
-    test('document with empty title should use "Document" as default', () async {
+    test('document with empty title should use "Document" as default',
+        () async {
       // This behavior is tested by verifying the shareDocuments logic
       // The _getShareFileName method uses 'Document' when title is empty
       final document = createTestDocument(title: '');
@@ -1069,7 +1086,8 @@ void main() {
       expect(document.title, equals(''));
     });
 
-    test('document with special characters in title should be sanitized', () async {
+    test('document with special characters in title should be sanitized',
+        () async {
       // Testing the contract of _getShareFileName:
       // - Characters like <, >, :, ", /, \, |, ?, * should be replaced with _
       // - Multiple spaces should be collapsed
@@ -1150,7 +1168,8 @@ void main() {
       );
     });
 
-    test('multiple document failure should clean up partial temp files', () async {
+    test('multiple document failure should clean up partial temp files',
+        () async {
       // Arrange
       final document1 = createTestDocument(id: 'doc-1', title: 'Doc 1');
       final document2 = createTestDocument(id: 'doc-2', title: 'Doc 2');

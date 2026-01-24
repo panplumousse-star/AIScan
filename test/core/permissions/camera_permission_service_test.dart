@@ -27,7 +27,8 @@ class FakePermissionHandlerPlatform extends PermissionHandlerPlatform {
   }
 
   @override
-  Future<bool> shouldShowRequestPermissionRationale(Permission permission) async {
+  Future<bool> shouldShowRequestPermissionRationale(
+      Permission permission) async {
     return _shouldShowRationale;
   }
 
@@ -71,12 +72,18 @@ void main() {
   group('CameraPermissionService', () {
     group('CameraPermissionState enum', () {
       test('should have all expected states', () {
-        expect(CameraPermissionState.values, contains(CameraPermissionState.unknown));
-        expect(CameraPermissionState.values, contains(CameraPermissionState.granted));
-        expect(CameraPermissionState.values, contains(CameraPermissionState.sessionOnly));
-        expect(CameraPermissionState.values, contains(CameraPermissionState.denied));
-        expect(CameraPermissionState.values, contains(CameraPermissionState.restricted));
-        expect(CameraPermissionState.values, contains(CameraPermissionState.permanentlyDenied));
+        expect(CameraPermissionState.values,
+            contains(CameraPermissionState.unknown));
+        expect(CameraPermissionState.values,
+            contains(CameraPermissionState.granted));
+        expect(CameraPermissionState.values,
+            contains(CameraPermissionState.sessionOnly));
+        expect(CameraPermissionState.values,
+            contains(CameraPermissionState.denied));
+        expect(CameraPermissionState.values,
+            contains(CameraPermissionState.restricted));
+        expect(CameraPermissionState.values,
+            contains(CameraPermissionState.permanentlyDenied));
       });
     });
 
@@ -120,7 +127,8 @@ void main() {
         expect(state, equals(CameraPermissionState.denied));
       });
 
-      test('should return restricted when system permission is restricted', () async {
+      test('should return restricted when system permission is restricted',
+          () async {
         fakePermissionHandler.setCameraStatus(PermissionStatus.restricted);
 
         final state = await service.checkPermission();
@@ -128,8 +136,11 @@ void main() {
         expect(state, equals(CameraPermissionState.restricted));
       });
 
-      test('should return permanentlyDenied when system permission is permanently denied', () async {
-        fakePermissionHandler.setCameraStatus(PermissionStatus.permanentlyDenied);
+      test(
+          'should return permanentlyDenied when system permission is permanently denied',
+          () async {
+        fakePermissionHandler
+            .setCameraStatus(PermissionStatus.permanentlyDenied);
 
         final state = await service.checkPermission();
 
@@ -194,7 +205,8 @@ void main() {
         expect(state, equals(CameraPermissionState.denied));
       });
 
-      test('should set session permission granted when permission is granted', () async {
+      test('should set session permission granted when permission is granted',
+          () async {
         fakePermissionHandler.setCameraStatus(PermissionStatus.granted);
 
         await service.requestSystemPermission();
@@ -202,7 +214,9 @@ void main() {
         expect(service.isSessionPermissionGranted, isTrue);
       });
 
-      test('should not set session permission granted when permission is denied', () async {
+      test(
+          'should not set session permission granted when permission is denied',
+          () async {
         fakePermissionHandler.setCameraStatus(PermissionStatus.denied);
 
         await service.requestSystemPermission();
@@ -232,8 +246,10 @@ void main() {
         expect(isBlocked, isTrue);
       });
 
-      test('should return true when permission is permanently denied', () async {
-        fakePermissionHandler.setCameraStatus(PermissionStatus.permanentlyDenied);
+      test('should return true when permission is permanently denied',
+          () async {
+        fakePermissionHandler
+            .setCameraStatus(PermissionStatus.permanentlyDenied);
 
         final isBlocked = await service.isPermissionBlocked();
 
@@ -256,7 +272,9 @@ void main() {
         expect(isBlocked, isFalse);
       });
 
-      test('should return false when session permission was granted in current session', () async {
+      test(
+          'should return false when session permission was granted in current session',
+          () async {
         // First grant permission via request (sets session flag)
         fakePermissionHandler.setCameraStatus(PermissionStatus.granted);
         await service.requestSystemPermission();
@@ -270,7 +288,9 @@ void main() {
         expect(isBlocked, isFalse);
       });
 
-      test('should return true when session permission expired (app restart simulation)', () async {
+      test(
+          'should return true when session permission expired (app restart simulation)',
+          () async {
         // First grant permission via request
         fakePermissionHandler.setCameraStatus(PermissionStatus.granted);
         await service.requestSystemPermission();
@@ -290,7 +310,8 @@ void main() {
         expect(isBlocked, isFalse);
       });
 
-      test('should return true when sessionOnly and session not active', () async {
+      test('should return true when sessionOnly and session not active',
+          () async {
         // Manually set up a scenario where state is sessionOnly but session is cleared
         // This requires:
         // 1. Request permission (grants session)
@@ -311,7 +332,9 @@ void main() {
     });
 
     group('isFirstTimeRequest', () {
-      test('should return true when status is denied and rationale is false (never requested)', () async {
+      test(
+          'should return true when status is denied and rationale is false (never requested)',
+          () async {
         fakePermissionHandler.setCameraStatus(PermissionStatus.denied);
         fakePermissionHandler.setShouldShowRationale(false);
 
@@ -320,7 +343,9 @@ void main() {
         expect(isFirstTime, isTrue);
       });
 
-      test('should return false when status is denied but rationale is true (previously denied)', () async {
+      test(
+          'should return false when status is denied but rationale is true (previously denied)',
+          () async {
         fakePermissionHandler.setCameraStatus(PermissionStatus.denied);
         fakePermissionHandler.setShouldShowRationale(true);
 
@@ -338,8 +363,10 @@ void main() {
         expect(isFirstTime, isFalse);
       });
 
-      test('should return false when permission is permanently denied', () async {
-        fakePermissionHandler.setCameraStatus(PermissionStatus.permanentlyDenied);
+      test('should return false when permission is permanently denied',
+          () async {
+        fakePermissionHandler
+            .setCameraStatus(PermissionStatus.permanentlyDenied);
         fakePermissionHandler.setShouldShowRationale(false);
 
         final isFirstTime = await service.isFirstTimeRequest();
@@ -441,7 +468,9 @@ void main() {
     });
 
     group('sessionOnly state', () {
-      test('should return sessionOnly when granted after request and session is active', () async {
+      test(
+          'should return sessionOnly when granted after request and session is active',
+          () async {
         fakePermissionHandler.setCameraStatus(PermissionStatus.granted);
 
         // Request permission sets session flag
@@ -457,7 +486,9 @@ void main() {
         expect(state, equals(CameraPermissionState.sessionOnly));
       });
 
-      test('sessionOnly isPermissionBlocked should return false when session active', () async {
+      test(
+          'sessionOnly isPermissionBlocked should return false when session active',
+          () async {
         fakePermissionHandler.setCameraStatus(PermissionStatus.granted);
         await service.requestSystemPermission();
 
@@ -495,9 +526,11 @@ void main() {
         expect(isBlocked, isTrue);
       });
 
-      test('user selected dont ask again - should show settings dialog', () async {
+      test('user selected dont ask again - should show settings dialog',
+          () async {
         // Permanently denied
-        fakePermissionHandler.setCameraStatus(PermissionStatus.permanentlyDenied);
+        fakePermissionHandler
+            .setCameraStatus(PermissionStatus.permanentlyDenied);
         fakePermissionHandler.setShouldShowRationale(false);
 
         final isFirstTime = await service.isFirstTimeRequest();
@@ -527,7 +560,8 @@ void main() {
         expect(service.isSessionPermissionGranted, isTrue);
       });
 
-      test('app restart after only this time - should show settings dialog', () async {
+      test('app restart after only this time - should show settings dialog',
+          () async {
         // Simulate granting "only this time"
         fakePermissionHandler.setCameraStatus(PermissionStatus.granted);
         await service.requestSystemPermission();

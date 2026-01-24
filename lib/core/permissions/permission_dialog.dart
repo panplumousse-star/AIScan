@@ -86,18 +86,21 @@ class _CameraPermissionDialog extends StatelessWidget {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(PermissionDialogResult.denied),
+          onPressed: () =>
+              Navigator.of(context).pop(PermissionDialogResult.denied),
           child: Text(
             'Deny',
             style: TextStyle(color: colorScheme.error),
           ),
         ),
         TextButton(
-          onPressed: () => Navigator.of(context).pop(PermissionDialogResult.sessionOnly),
+          onPressed: () =>
+              Navigator.of(context).pop(PermissionDialogResult.sessionOnly),
           child: const Text('This Session'),
         ),
         FilledButton(
-          onPressed: () => Navigator.of(context).pop(PermissionDialogResult.granted),
+          onPressed: () =>
+              Navigator.of(context).pop(PermissionDialogResult.granted),
           child: const Text('Accept'),
         ),
       ],

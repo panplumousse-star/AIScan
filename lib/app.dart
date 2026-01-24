@@ -9,7 +9,6 @@ import 'features/app_lock/presentation/lock_screen.dart';
 import 'features/home/presentation/bento_home_screen.dart';
 import 'l10n/app_localizations.dart';
 
-
 /// The root widget of the Scanaï application.
 ///
 /// Configures MaterialApp with theming, routing, and global settings.
@@ -98,7 +97,8 @@ class _AppHome extends ConsumerStatefulWidget {
   ConsumerState<_AppHome> createState() => _AppHomeState();
 }
 
-class _AppHomeState extends ConsumerState<_AppHome> with WidgetsBindingObserver {
+class _AppHomeState extends ConsumerState<_AppHome>
+    with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();

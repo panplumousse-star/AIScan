@@ -86,13 +86,16 @@ class BentoShareFormatDialog extends StatelessWidget {
                           padding: const EdgeInsets.only(bottom: 10),
                           child: BentoSpeechBubble(
                             tailDirection: BubbleTailDirection.downLeft,
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 12),
                             child: Text(
                               l10n?.share ?? 'Share',
                               style: GoogleFonts.outfit(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
-                                color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E293B),
+                                color: isDark
+                                    ? const Color(0xFFF1F5F9)
+                                    : const Color(0xFF1E293B),
                                 letterSpacing: 0.2,
                               ),
                             ),
@@ -114,7 +117,8 @@ class BentoShareFormatDialog extends StatelessWidget {
                   _ShareOptionTile(
                     icon: Icons.picture_as_pdf_rounded,
                     title: l10n?.pdf ?? 'PDF',
-                    subtitle: l10n?.singleDocumentCompressed ?? 'Single compressed document',
+                    subtitle: l10n?.singleDocumentCompressed ??
+                        'Single compressed document',
                     color: Colors.redAccent,
                     onTap: () => Navigator.pop(context, ShareFormat.pdf),
                     theme: theme,
@@ -123,7 +127,8 @@ class BentoShareFormatDialog extends StatelessWidget {
                   _ShareOptionTile(
                     icon: Icons.image_rounded,
                     title: l10n?.images ?? 'Images',
-                    subtitle: l10n?.originalQualityPng ?? 'Original quality (PNG)',
+                    subtitle:
+                        l10n?.originalQualityPng ?? 'Original quality (PNG)',
                     color: const Color(0xFF4F46E5),
                     onTap: () => Navigator.pop(context, ShareFormat.images),
                     theme: theme,
@@ -146,7 +151,8 @@ class BentoShareFormatDialog extends StatelessWidget {
                     child: Text(
                       l10n?.cancel ?? 'Cancel',
                       style: GoogleFonts.outfit(
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.5),
                       ),
                     ),
                   ),

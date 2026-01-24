@@ -56,7 +56,8 @@ class DocumentsNavigationController {
     Document document,
     WidgetRef ref,
   ) {
-    Navigator.of(context).push(
+    Navigator.of(context)
+        .push(
       MaterialPageRoute(
         builder: (navContext) => DocumentDetailScreen(
           document: document,
@@ -76,7 +77,9 @@ class DocumentsNavigationController {
                 );
               } else if (result.isFailed) {
                 ScaffoldMessenger.of(navContext).showSnackBar(
-                  SnackBar(content: Text(result.errorMessage ?? 'Échec de l\'exportation')),
+                  SnackBar(
+                      content: Text(
+                          result.errorMessage ?? 'Échec de l\'exportation')),
                 );
               }
             } on DocumentExportException catch (e) {
@@ -87,11 +90,14 @@ class DocumentsNavigationController {
               }
             }
           },
-          onOcr: (doc, imageBytes) => navigateToOcr(navContext, doc, imageBytes, ref),
-          onEnhance: (doc, imageBytes) => navigateToEnhancement(navContext, doc, imageBytes),
+          onOcr: (doc, imageBytes) =>
+              navigateToOcr(navContext, doc, imageBytes, ref),
+          onEnhance: (doc, imageBytes) =>
+              navigateToEnhancement(navContext, doc, imageBytes),
         ),
       ),
-    ).then((_) {
+    )
+        .then((_) {
       // Refresh documents when returning from detail screen
       ref.read(documentsScreenProvider.notifier).loadDocuments();
     });

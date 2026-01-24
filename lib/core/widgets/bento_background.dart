@@ -20,28 +20,36 @@ class BentoBackground extends StatelessWidget {
 
         // Deep Mesh Blobs (Using more saturated pastels for visibility)
         _LiquidBlob(
-          color: isDark ? const Color(0xFF1E1B4B) : const Color(0xFFC7D2FE), // Midnight Indigo / Light Indigo
+          color: isDark
+              ? const Color(0xFF1E1B4B)
+              : const Color(0xFFC7D2FE), // Midnight Indigo / Light Indigo
           size: 600,
           left: -150,
           top: -100,
           duration: const Duration(seconds: 25),
         ),
         _LiquidBlob(
-          color: isDark ? const Color(0xFF4C1D95) : const Color(0xFFE9D5FF), // Midnight Purple / Light Purple
+          color: isDark
+              ? const Color(0xFF4C1D95)
+              : const Color(0xFFE9D5FF), // Midnight Purple / Light Purple
           size: 550,
           right: -150,
           bottom: -50,
           duration: const Duration(seconds: 30),
         ),
         _LiquidBlob(
-          color: isDark ? const Color(0xFF064E3B) : const Color(0xFFBAE6FD), // Midnight Emerald / Light Sky
+          color: isDark
+              ? const Color(0xFF064E3B)
+              : const Color(0xFFBAE6FD), // Midnight Emerald / Light Sky
           size: 500,
           right: 0,
           top: 150,
           duration: const Duration(seconds: 22),
         ),
         _LiquidBlob(
-          color: isDark ? const Color(0xFF312E81) : const Color(0xFFFBCFE8), // Deep Navy / Soft Pink
+          color: isDark
+              ? const Color(0xFF312E81)
+              : const Color(0xFFFBCFE8), // Deep Navy / Soft Pink
           size: 450,
           left: 50,
           bottom: 100,
@@ -129,7 +137,7 @@ class _LiquidBlobState extends State<_LiquidBlob>
           final angle = _controller.value * 2 * math.pi;
           final xOffset = math.sin(angle) * 40;
           final yOffset = math.cos(angle) * 40;
-          
+
           return Transform.translate(
             offset: Offset(xOffset, yOffset),
             child: Transform.scale(

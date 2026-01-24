@@ -84,13 +84,18 @@ void main() {
   group('StoragePermissionState', () {
     test('should have all expected values', () {
       expect(StoragePermissionState.values, hasLength(6));
-      expect(StoragePermissionState.values, contains(StoragePermissionState.unknown));
-      expect(StoragePermissionState.values, contains(StoragePermissionState.granted));
-      expect(StoragePermissionState.values, contains(StoragePermissionState.sessionOnly));
-      expect(StoragePermissionState.values, contains(StoragePermissionState.denied));
-      expect(StoragePermissionState.values, contains(StoragePermissionState.restricted));
-      expect(
-          StoragePermissionState.values, contains(StoragePermissionState.permanentlyDenied));
+      expect(StoragePermissionState.values,
+          contains(StoragePermissionState.unknown));
+      expect(StoragePermissionState.values,
+          contains(StoragePermissionState.granted));
+      expect(StoragePermissionState.values,
+          contains(StoragePermissionState.sessionOnly));
+      expect(StoragePermissionState.values,
+          contains(StoragePermissionState.denied));
+      expect(StoragePermissionState.values,
+          contains(StoragePermissionState.restricted));
+      expect(StoragePermissionState.values,
+          contains(StoragePermissionState.permanentlyDenied));
     });
   });
 
@@ -109,7 +114,8 @@ void main() {
     test('should format message with cause', () {
       // Arrange
       final cause = Exception('Platform error');
-      final exception = StoragePermissionException('Permission failed', cause: cause);
+      final exception =
+          StoragePermissionException('Permission failed', cause: cause);
 
       // Act
       final message = exception.toString();
@@ -176,7 +182,8 @@ void main() {
         expect(result, equals(StoragePermissionState.denied));
       });
 
-      test('should return restricted when system permission is restricted', () async {
+      test('should return restricted when system permission is restricted',
+          () async {
         // Arrange
         fakePermission.setStatus(PermissionStatus.restricted);
 
@@ -187,7 +194,8 @@ void main() {
         expect(result, equals(StoragePermissionState.restricted));
       });
 
-      test('should return permanentlyDenied when system permission is permanentlyDenied',
+      test(
+          'should return permanentlyDenied when system permission is permanentlyDenied',
           () async {
         // Arrange
         fakePermission.setStatus(PermissionStatus.permanentlyDenied);
@@ -210,7 +218,8 @@ void main() {
         expect(result, equals(StoragePermissionState.granted));
       });
 
-      test('should return granted when system permission is provisional', () async {
+      test('should return granted when system permission is provisional',
+          () async {
         // Arrange
         fakePermission.setStatus(PermissionStatus.provisional);
 
@@ -261,7 +270,8 @@ void main() {
         expect(result, equals(StoragePermissionState.denied));
       });
 
-      test('should return permanentlyDenied when system denies permanently', () async {
+      test('should return permanentlyDenied when system denies permanently',
+          () async {
         // Arrange
         fakePermission.setStatus(PermissionStatus.permanentlyDenied);
 
@@ -376,7 +386,8 @@ void main() {
         expect(result, isFalse);
       });
 
-      test('should return false for sessionOnly when session is active', () async {
+      test('should return false for sessionOnly when session is active',
+          () async {
         // Arrange - Grant permission via request to set session flag
         fakePermission.setStatus(PermissionStatus.granted);
         await service.requestSystemPermission();
@@ -389,7 +400,8 @@ void main() {
         expect(result, isFalse);
       });
 
-      test('should return true for sessionOnly when session is cleared', () async {
+      test('should return true for sessionOnly when session is cleared',
+          () async {
         // Arrange - Grant permission via request
         fakePermission.setStatus(PermissionStatus.granted);
         await service.requestSystemPermission();
@@ -406,7 +418,8 @@ void main() {
     });
 
     group('isFirstTimeRequest', () {
-      test('should return true when status is denied and rationale is false', () async {
+      test('should return true when status is denied and rationale is false',
+          () async {
         // Arrange
         fakePermission.setStatus(PermissionStatus.denied);
         fakePermission.setShouldShowRationale(false);
@@ -418,7 +431,8 @@ void main() {
         expect(result, isTrue);
       });
 
-      test('should return false when status is denied but rationale is true', () async {
+      test('should return false when status is denied but rationale is true',
+          () async {
         // Arrange
         fakePermission.setStatus(PermissionStatus.denied);
         fakePermission.setShouldShowRationale(true);
@@ -441,7 +455,8 @@ void main() {
         expect(result, isFalse);
       });
 
-      test('should return false when permission is permanentlyDenied', () async {
+      test('should return false when permission is permanentlyDenied',
+          () async {
         // Arrange
         fakePermission.setStatus(PermissionStatus.permanentlyDenied);
 
@@ -613,7 +628,8 @@ void main() {
       service = StoragePermissionService(permission: fakePermission);
     });
 
-    test('fresh app install flow: unknown -> first time request -> granted', () async {
+    test('fresh app install flow: unknown -> first time request -> granted',
+        () async {
       // Arrange - Fresh install state
       fakePermission.setStatus(PermissionStatus.denied);
       fakePermission.setShouldShowRationale(false);
@@ -714,7 +730,8 @@ void main() {
       service = StoragePermissionService(permission: fakePermission);
     });
 
-    test('multiple consecutive requests should update state correctly', () async {
+    test('multiple consecutive requests should update state correctly',
+        () async {
       // First request - denied
       fakePermission.setStatus(PermissionStatus.denied);
       final result1 = await service.requestSystemPermission();

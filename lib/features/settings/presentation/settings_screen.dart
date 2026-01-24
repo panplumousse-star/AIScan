@@ -72,7 +72,8 @@ class ThemePersistenceService {
 }
 
 /// Riverpod provider for the theme persistence service.
-final themePersistenceServiceProvider = Provider<ThemePersistenceService>((ref) {
+final themePersistenceServiceProvider =
+    Provider<ThemePersistenceService>((ref) {
   const storage = FlutterSecureStorage(
     aOptions: AndroidOptions(
       encryptedSharedPreferences: true,
@@ -286,8 +287,8 @@ class SettingsScreenNotifier extends StateNotifier<SettingsScreenState> {
 }
 
 /// Riverpod provider for the settings screen state.
-final settingsScreenProvider =
-    StateNotifierProvider.autoDispose<SettingsScreenNotifier, SettingsScreenState>(
+final settingsScreenProvider = StateNotifierProvider.autoDispose<
+    SettingsScreenNotifier, SettingsScreenState>(
   (ref) {
     final persistenceService = ref.watch(themePersistenceServiceProvider);
     final themeModeNotifier = ref.watch(themeModeProvider.notifier);
@@ -376,19 +377,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         _BouncingWidget(
                           child: Container(
                             decoration: BoxDecoration(
-                              color: isDark 
-                                  ? Colors.white.withValues(alpha: 0.1) 
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.1)
                                   : Colors.white.withValues(alpha: 0.5),
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: isDark 
-                                    ? Colors.white.withValues(alpha: 0.1) 
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.1)
                                     : Colors.white.withValues(alpha: 0.2),
                               ),
                             ),
                             child: IconButton(
                               icon: const Icon(Icons.arrow_back_rounded),
-                              color: isDark ? Colors.white : const Color(0xFF1E1B4B),
+                              color: isDark
+                                  ? Colors.white
+                                  : const Color(0xFF1E1B4B),
                               onPressed: () => Navigator.pop(context),
                             ),
                           ),
@@ -399,7 +402,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           style: GoogleFonts.outfit(
                             fontSize: 20,
                             fontWeight: FontWeight.w700,
-                            color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
+                            color: isDark
+                                ? const Color(0xFFF1F5F9)
+                                : const Color(0xFF1E1B4B),
                           ),
                         ),
                         const Spacer(),
@@ -436,7 +441,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
 
                   // 4. Bento Grid Scrollable
@@ -444,14 +449,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     child: state.isLoading && !state.isInitialized
                         ? const Center(child: ScanaiLoader(size: 40))
                         : SingleChildScrollView(
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 8),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 // Apparence (Theme) - Large Card
                                 BentoAnimatedEntry(
                                   delay: const Duration(milliseconds: 100),
-                                  child: _buildThemeCard(state.themeMode, notifier.setThemeMode, isDark),
+                                  child: _buildThemeCard(state.themeMode,
+                                      notifier.setThemeMode, isDark),
                                 ),
 
                                 const SizedBox(height: 16),
@@ -460,12 +467,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 SizedBox(
                                   height: 180,
                                   child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
                                     children: [
                                       // App Language Card
                                       Expanded(
                                         child: BentoAnimatedEntry(
-                                          delay: const Duration(milliseconds: 150),
+                                          delay:
+                                              const Duration(milliseconds: 150),
                                           child: _buildAppLanguageCard(isDark),
                                         ),
                                       ),
@@ -473,7 +482,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                       // OCR Language Card
                                       Expanded(
                                         child: BentoAnimatedEntry(
-                                          delay: const Duration(milliseconds: 200),
+                                          delay:
+                                              const Duration(milliseconds: 200),
                                           child: _buildOcrLanguageCard(isDark),
                                         ),
                                       ),
@@ -485,19 +495,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                                 // Security & Info Row
                                 SizedBox(
-                                  height: 196, // Increased from 180 to prevent overflow
+                                  height:
+                                      196, // Increased from 180 to prevent overflow
                                   child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
                                     children: [
                                       // Security Card
                                       Expanded(
                                         child: BentoAnimatedEntry(
-                                          delay: const Duration(milliseconds: 200),
+                                          delay:
+                                              const Duration(milliseconds: 200),
                                           child: _buildSecurityCard(
                                             enabled: state.biometricLockEnabled,
-                                            available: state.isBiometricAvailable,
+                                            available:
+                                                state.isBiometricAvailable,
                                             timeout: state.biometricLockTimeout,
-                                            onTimeoutChanged: notifier.setBiometricLockTimeout,
+                                            onTimeoutChanged: notifier
+                                                .setBiometricLockTimeout,
                                             isDark: isDark,
                                           ),
                                         ),
@@ -506,14 +521,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                       // About Card
                                       Expanded(
                                         child: BentoAnimatedEntry(
-                                          delay: const Duration(milliseconds: 300),
+                                          delay:
+                                              const Duration(milliseconds: 300),
                                           child: _buildAboutCard(isDark),
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                                
+
                                 const SizedBox(height: 40),
                               ],
                             ),
@@ -552,7 +568,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     style: GoogleFonts.outfit(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E293B),
+                      color: isDark
+                          ? const Color(0xFFF1F5F9)
+                          : const Color(0xFF1E293B),
                       letterSpacing: -0.5,
                       height: 1.1,
                     ),
@@ -562,7 +580,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     style: GoogleFonts.outfit(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E293B),
+                      color: isDark
+                          ? const Color(0xFFF1F5F9)
+                          : const Color(0xFF1E293B),
                       letterSpacing: -0.5,
                       height: 1.1,
                     ),
@@ -584,11 +604,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       child: Container(
         height: 140,
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : const Color(0xFFF1F5F9),
+          color: isDark
+              ? const Color(0xFF000000).withValues(alpha: 0.6)
+              : const Color(0xFFF1F5F9),
           borderRadius: BorderRadius.circular(32),
           border: Border.all(
-            color: isDark 
-                ? const Color(0xFFFFFFFF).withValues(alpha: 0.1) 
+            color: isDark
+                ? const Color(0xFFFFFFFF).withValues(alpha: 0.1)
                 : const Color(0xFFE2E8F0),
             width: 1.5,
           ),
@@ -610,70 +632,79 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Widget _buildThemeCard(ThemeMode selectedMode, ValueChanged<ThemeMode> onModeChanged, bool isDark) {
+  Widget _buildThemeCard(ThemeMode selectedMode,
+      ValueChanged<ThemeMode> onModeChanged, bool isDark) {
     final l10n = AppLocalizations.of(context);
     return BentoCard(
       borderRadius: 32,
       padding: const EdgeInsets.all(24),
-      backgroundColor: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : Colors.white,
+      backgroundColor: isDark
+          ? const Color(0xFF000000).withValues(alpha: 0.6)
+          : Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-           Row(
-             children: [
-               Container(
-                 padding: const EdgeInsets.all(10),
-                 decoration: BoxDecoration(
-                   color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEEF2FF),
-                   borderRadius: BorderRadius.circular(12),
-                 ),
-                 child: Icon(
-                   Icons.palette_rounded,
-                   color: isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1),
-                   size: 20,
-                 ),
-               ),
-               const SizedBox(width: 12),
-               Text(
-                 l10n?.appearance ?? 'Apparence',
-                 style: GoogleFonts.outfit(
-                   fontSize: 18,
-                   fontWeight: FontWeight.w700,
-                   color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
-                 ),
-               ),
-             ],
-           ),
-           const SizedBox(height: 24),
-           Row(
-             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-             children: [
-               _buildThemeOption(
-                 mode: ThemeMode.light,
-                 icon: Icons.light_mode_rounded,
-                 label: l10n?.themeLight ?? 'Clair',
-                 isSelected: selectedMode == ThemeMode.light,
-                 onTap: () => onModeChanged(ThemeMode.light),
-                 isDark: isDark,
-               ),
-               _buildThemeOption(
-                 mode: ThemeMode.dark,
-                 icon: Icons.dark_mode_rounded,
-                 label: l10n?.themeDark ?? 'Sombre',
-                 isSelected: selectedMode == ThemeMode.dark,
-                 onTap: () => onModeChanged(ThemeMode.dark),
-                 isDark: isDark,
-               ),
-               _buildThemeOption(
-                 mode: ThemeMode.system,
-                 icon: Icons.settings_brightness_rounded,
-                 label: l10n?.themeAuto ?? 'Auto',
-                 isSelected: selectedMode == ThemeMode.system,
-                 onTap: () => onModeChanged(ThemeMode.system),
-                 isDark: isDark,
-               ),
-             ],
-           ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF1E293B)
+                      : const Color(0xFFEEF2FF),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.palette_rounded,
+                  color: isDark
+                      ? const Color(0xFF818CF8)
+                      : const Color(0xFF6366F1),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                l10n?.appearance ?? 'Apparence',
+                style: GoogleFonts.outfit(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: isDark
+                      ? const Color(0xFFF1F5F9)
+                      : const Color(0xFF1E1B4B),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildThemeOption(
+                mode: ThemeMode.light,
+                icon: Icons.light_mode_rounded,
+                label: l10n?.themeLight ?? 'Clair',
+                isSelected: selectedMode == ThemeMode.light,
+                onTap: () => onModeChanged(ThemeMode.light),
+                isDark: isDark,
+              ),
+              _buildThemeOption(
+                mode: ThemeMode.dark,
+                icon: Icons.dark_mode_rounded,
+                label: l10n?.themeDark ?? 'Sombre',
+                isSelected: selectedMode == ThemeMode.dark,
+                onTap: () => onModeChanged(ThemeMode.dark),
+                isDark: isDark,
+              ),
+              _buildThemeOption(
+                mode: ThemeMode.system,
+                icon: Icons.settings_brightness_rounded,
+                label: l10n?.themeAuto ?? 'Auto',
+                isSelected: selectedMode == ThemeMode.system,
+                onTap: () => onModeChanged(ThemeMode.system),
+                isDark: isDark,
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -687,9 +718,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     required VoidCallback onTap,
     required bool isDark,
   }) {
-    final selectedColor = isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1);
-    final unselectedBg = isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC);
-    
+    final selectedColor =
+        isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1);
+    final unselectedBg =
+        isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC);
+
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
@@ -699,7 +732,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: isSelected ? selectedColor.withValues(alpha: 0.15) : unselectedBg,
+                color: isSelected
+                    ? selectedColor.withValues(alpha: 0.15)
+                    : unselectedBg,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: isSelected ? selectedColor : Colors.transparent,
@@ -708,7 +743,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               child: Icon(
                 icon,
-                color: isSelected ? selectedColor : (isDark ? Colors.grey : Colors.grey[600]),
+                color: isSelected
+                    ? selectedColor
+                    : (isDark ? Colors.grey : Colors.grey[600]),
               ),
             ),
             const SizedBox(height: 8),
@@ -717,7 +754,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               style: GoogleFonts.outfit(
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected ? selectedColor : (isDark ? Colors.grey : Colors.grey[600]),
+                color: isSelected
+                    ? selectedColor
+                    : (isDark ? Colors.grey : Colors.grey[600]),
               ),
             ),
           ],
@@ -738,7 +777,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
           ),
           content: Text(
-            l10n?.enableLockMessage ?? 'Souhaitez-vous securiser l\'acces a vos documents avec votre empreinte digitale ?',
+            l10n?.enableLockMessage ??
+                'Souhaitez-vous securiser l\'acces a vos documents avec votre empreinte digitale ?',
             style: GoogleFonts.outfit(),
           ),
           actions: [
@@ -764,13 +804,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       );
 
       if (confirmed == true) {
-        await ref.read(settingsScreenProvider.notifier).setBiometricLockEnabled(true);
+        await ref
+            .read(settingsScreenProvider.notifier)
+            .setBiometricLockEnabled(true);
       }
     } else {
       // Deactivating - Request biometric scan
-      final authenticated = await ref.read(appLockServiceProvider).authenticateUser();
+      final authenticated =
+          await ref.read(appLockServiceProvider).authenticateUser();
       if (authenticated) {
-        await ref.read(settingsScreenProvider.notifier).setBiometricLockEnabled(false);
+        await ref
+            .read(settingsScreenProvider.notifier)
+            .setBiometricLockEnabled(false);
       }
     }
   }
@@ -795,7 +840,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       borderRadius: 32,
       onTap: available ? () => _handleSecurityToggle(enabled) : null,
       padding: const EdgeInsets.all(20),
-      backgroundColor: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : Colors.white,
+      backgroundColor: isDark
+          ? const Color(0xFF000000).withValues(alpha: 0.6)
+          : Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -833,8 +880,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const SizedBox(height: 2),
           Text(
-            enabled ? (l10n?.enabled ?? 'Active') : (l10n?.disabled ?? 'Desactive'),
-             style: GoogleFonts.outfit(
+            enabled
+                ? (l10n?.enabled ?? 'Active')
+                : (l10n?.disabled ?? 'Desactive'),
+            style: GoogleFonts.outfit(
               fontSize: 12,
               color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
             ),
@@ -846,28 +895,38 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 height: 32,
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.withValues(alpha: 0.1),
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.grey.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<AppLockTimeout>(
                     value: timeout,
                     isDense: true,
-                    icon: Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: isDark ? Colors.grey : Colors.black54),
-                    dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    icon: Icon(Icons.keyboard_arrow_down_rounded,
+                        size: 16, color: isDark ? Colors.grey : Colors.black54),
+                    dropdownColor:
+                        isDark ? const Color(0xFF1E293B) : Colors.white,
                     style: GoogleFonts.outfit(
                       fontSize: 12,
-                      color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
+                      color: isDark
+                          ? const Color(0xFFF1F5F9)
+                          : const Color(0xFF1E1B4B),
                     ),
                     onChanged: (newValue) {
                       if (newValue != null) onTimeoutChanged(newValue);
                     },
                     items: AppLockTimeout.values.map((val) {
-                      final label = switch(val) {
-                        AppLockTimeout.immediate => l10n?.lockTimeoutImmediate ?? 'Immediat',
-                        AppLockTimeout.oneMinute => l10n?.lockTimeout1Min ?? '1 min',
-                        AppLockTimeout.fiveMinutes => l10n?.lockTimeout5Min ?? '5 min',
-                        AppLockTimeout.thirtyMinutes => l10n?.lockTimeout30Min ?? '30 min',
+                      final label = switch (val) {
+                        AppLockTimeout.immediate =>
+                          l10n?.lockTimeoutImmediate ?? 'Immediat',
+                        AppLockTimeout.oneMinute =>
+                          l10n?.lockTimeout1Min ?? '1 min',
+                        AppLockTimeout.fiveMinutes =>
+                          l10n?.lockTimeout5Min ?? '5 min',
+                        AppLockTimeout.thirtyMinutes =>
+                          l10n?.lockTimeout30Min ?? '30 min',
                       };
                       return DropdownMenuItem(
                         value: val,
@@ -891,7 +950,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return BentoCard(
       borderRadius: 32,
       padding: const EdgeInsets.all(20),
-      backgroundColor: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : Colors.white,
+      backgroundColor: isDark
+          ? const Color(0xFF000000).withValues(alpha: 0.6)
+          : Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -900,12 +961,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF312E81) : const Color(0xFFEEF2FF),
+                  color: isDark
+                      ? const Color(0xFF312E81)
+                      : const Color(0xFFEEF2FF),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   Icons.language_rounded,
-                  color: isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1),
+                  color: isDark
+                      ? const Color(0xFF818CF8)
+                      : const Color(0xFF6366F1),
                   size: 20,
                 ),
               ),
@@ -916,7 +981,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   style: GoogleFonts.outfit(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
+                    color: isDark
+                        ? const Color(0xFFF1F5F9)
+                        : const Color(0xFF1E1B4B),
                   ),
                 ),
               ),
@@ -928,7 +995,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               height: 40,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.withValues(alpha: 0.1),
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : Colors.grey.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: DropdownButtonHideUnderline(
@@ -940,10 +1009,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     size: 20,
                     color: isDark ? Colors.grey : Colors.black54,
                   ),
-                  dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                  dropdownColor:
+                      isDark ? const Color(0xFF1E293B) : Colors.white,
                   style: GoogleFonts.outfit(
                     fontSize: 14,
-                    color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
+                    color: isDark
+                        ? const Color(0xFFF1F5F9)
+                        : const Color(0xFF1E1B4B),
                   ),
                   onChanged: (newValue) {
                     if (newValue != null) {
@@ -992,7 +1064,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return BentoCard(
       borderRadius: 32,
       padding: const EdgeInsets.all(20),
-      backgroundColor: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : Colors.white,
+      backgroundColor: isDark
+          ? const Color(0xFF000000).withValues(alpha: 0.6)
+          : Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1001,12 +1075,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E3A5F) : const Color(0xFFE0F2FE),
+                  color: isDark
+                      ? const Color(0xFF1E3A5F)
+                      : const Color(0xFFE0F2FE),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   Icons.text_fields_rounded,
-                  color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0284C7),
+                  color: isDark
+                      ? const Color(0xFF38BDF8)
+                      : const Color(0xFF0284C7),
                   size: 20,
                 ),
               ),
@@ -1017,7 +1095,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   style: GoogleFonts.outfit(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
+                    color: isDark
+                        ? const Color(0xFFF1F5F9)
+                        : const Color(0xFF1E1B4B),
                   ),
                 ),
               ),
@@ -1029,7 +1109,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               height: 40,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.withValues(alpha: 0.1),
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : Colors.grey.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: DropdownButtonHideUnderline(
@@ -1041,14 +1123,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     size: 20,
                     color: isDark ? Colors.grey : Colors.black54,
                   ),
-                  dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                  dropdownColor:
+                      isDark ? const Color(0xFF1E293B) : Colors.white,
                   style: GoogleFonts.outfit(
                     fontSize: 14,
-                    color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
+                    color: isDark
+                        ? const Color(0xFFF1F5F9)
+                        : const Color(0xFF1E1B4B),
                   ),
                   onChanged: (newValue) {
                     if (newValue != null) {
-                      ref.read(ocrLanguageProvider.notifier).setOcrLanguage(newValue);
+                      ref
+                          .read(ocrLanguageProvider.notifier)
+                          .setOcrLanguage(newValue);
                     }
                   },
                   items: OcrLanguageOption.values.map((lang) {
@@ -1102,12 +1189,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF312E81) : const Color(0xFFEEF2FF),
+                  color: isDark
+                      ? const Color(0xFF312E81)
+                      : const Color(0xFFEEF2FF),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   Icons.info_outline_rounded,
-                  color: isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1),
+                  color: isDark
+                      ? const Color(0xFF818CF8)
+                      : const Color(0xFF6366F1),
                   size: 20,
                 ),
               ),
@@ -1116,7 +1207,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 style: GoogleFonts.outfit(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  color: isDark
+                      ? const Color(0xFF94A3B8)
+                      : const Color(0xFF64748B),
                 ),
               ),
             ],
@@ -1137,7 +1230,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 l10n?.developedWith ?? 'Developpee avec le',
                 style: GoogleFonts.outfit(
                   fontSize: 12,
-                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  color: isDark
+                      ? const Color(0xFF94A3B8)
+                      : const Color(0xFF64748B),
                 ),
               ),
               Icon(
@@ -1207,13 +1302,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Widget _buildAboutInfoItem(IconData icon, String title, String subtitle, bool isDark) {
+  Widget _buildAboutInfoItem(
+      IconData icon, String title, String subtitle, bool isDark) {
     return Row(
       children: [
         Container(
           padding: const EdgeInsets.all(5),
           decoration: BoxDecoration(
-            color: (isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1)).withValues(alpha: 0.1),
+            color: (isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1))
+                .withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(6),
           ),
           child: Icon(
@@ -1233,14 +1330,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 style: GoogleFonts.outfit(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
+                  color: isDark
+                      ? const Color(0xFFF1F5F9)
+                      : const Color(0xFF1E1B4B),
                 ),
               ),
               Text(
                 subtitle,
                 style: GoogleFonts.outfit(
                   fontSize: 9,
-                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  color: isDark
+                      ? const Color(0xFF94A3B8)
+                      : const Color(0xFF64748B),
                 ),
               ),
             ],
@@ -1249,7 +1350,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ],
     );
   }
-
 }
 
 // Bouncing Widget Helper
@@ -1294,7 +1394,6 @@ class _BouncingWidgetState extends State<_BouncingWidget>
   }
 }
 
-
 class _BentoInteractiveWrapper extends StatefulWidget {
   final Widget child;
   final VoidCallback? onTap;
@@ -1305,7 +1404,8 @@ class _BentoInteractiveWrapper extends StatefulWidget {
   });
 
   @override
-  State<_BentoInteractiveWrapper> createState() => _BentoInteractiveWrapperState();
+  State<_BentoInteractiveWrapper> createState() =>
+      _BentoInteractiveWrapperState();
 }
 
 class _BentoInteractiveWrapperState extends State<_BentoInteractiveWrapper>
@@ -1336,17 +1436,17 @@ class _BentoInteractiveWrapperState extends State<_BentoInteractiveWrapper>
   void _handleTapDown(TapDownDetails details) {
     if (widget.onTap == null) return;
     _controller.forward();
-    
+
     final RenderBox box = context.findRenderObject() as RenderBox;
     final localPos = details.localPosition;
     final centerX = box.size.width / 2;
     final centerY = box.size.height / 2;
-    
+
     setState(() {
       _rotationX = (centerY - localPos.dy) / centerY * 0.08;
       _rotationY = (localPos.dx - centerX) / centerX * 0.08;
     });
-    
+
     HapticFeedback.lightImpact();
   }
 
@@ -1496,8 +1596,8 @@ class _BentoFlipCardState extends State<_BentoFlipCard>
             padding: const EdgeInsets.all(16), // Reduced padding to 16
             onTap: _toggleCard,
             animateOnTap: false,
-            backgroundColor: widget.isDark 
-                ? const Color(0xFF000000).withValues(alpha: 0.6) 
+            backgroundColor: widget.isDark
+                ? const Color(0xFF000000).withValues(alpha: 0.6)
                 : Colors.white,
             child: Transform(
               alignment: Alignment.center,

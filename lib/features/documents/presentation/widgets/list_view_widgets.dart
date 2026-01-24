@@ -95,7 +95,9 @@ class DocumentListItem extends StatelessWidget {
         blur: 8,
         backgroundColor: isSelected
             ? colorScheme.primary.withValues(alpha: 0.1)
-            : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.7)),
+            : (isDark
+                ? Colors.white.withValues(alpha: 0.05)
+                : Colors.white.withValues(alpha: 0.7)),
         onTap: onTap,
         onLongPress: onLongPress,
         child: Row(
@@ -108,15 +110,19 @@ class DocumentListItem extends StatelessWidget {
                   width: 24,
                   height: 24,
                   decoration: BoxDecoration(
-                    color: isSelected ? colorScheme.primary : Colors.transparent,
+                    color:
+                        isSelected ? colorScheme.primary : Colors.transparent,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: isSelected ? colorScheme.primary : colorScheme.outline,
+                      color: isSelected
+                          ? colorScheme.primary
+                          : colorScheme.outline,
                       width: 2,
                     ),
                   ),
                   child: isSelected
-                      ? Icon(Icons.check, size: 16, color: colorScheme.onPrimary)
+                      ? Icon(Icons.check,
+                          size: 16, color: colorScheme.onPrimary)
                       : null,
                 ),
               ),
@@ -166,7 +172,8 @@ class DocumentListItem extends StatelessWidget {
                         document.fileSizeFormatted,
                         style: GoogleFonts.outfit(
                           fontSize: 13,
-                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                          color: colorScheme.onSurfaceVariant
+                              .withValues(alpha: 0.7),
                         ),
                       ),
                       if (document.pageCount > 1) ...[
@@ -194,15 +201,18 @@ class DocumentListItem extends StatelessWidget {
                         _formatDate(document.createdAt),
                         style: GoogleFonts.outfit(
                           fontSize: 12,
-                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                          color: colorScheme.onSurfaceVariant
+                              .withValues(alpha: 0.5),
                         ),
                       ),
                       if (document.hasOcrText) ...[
                         const SizedBox(width: 12),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: colorScheme.secondaryContainer.withValues(alpha: 0.5),
+                            color: colorScheme.secondaryContainer
+                                .withValues(alpha: 0.5),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -230,11 +240,15 @@ class DocumentListItem extends StatelessWidget {
               ),
               IconButton(
                 icon: Icon(
-                  document.isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                  document.isFavorite
+                      ? Icons.favorite_rounded
+                      : Icons.favorite_border_rounded,
                   size: 20,
                 ),
                 onPressed: onFavoriteToggle,
-                color: document.isFavorite ? colorScheme.error : colorScheme.onSurfaceVariant,
+                color: document.isFavorite
+                    ? colorScheme.error
+                    : colorScheme.onSurfaceVariant,
               ),
             ],
           ],

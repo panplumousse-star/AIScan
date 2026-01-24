@@ -77,7 +77,8 @@ class ExportPreferences {
   static const String _lastExportFolderKey = 'aiscan_export_last_folder';
 
   /// Key used to store the last export folder display name.
-  static const String _lastExportFolderNameKey = 'aiscan_export_last_folder_name';
+  static const String _lastExportFolderNameKey =
+      'aiscan_export_last_folder_name';
 
   /// Ensures SharedPreferences is initialized.
   ///

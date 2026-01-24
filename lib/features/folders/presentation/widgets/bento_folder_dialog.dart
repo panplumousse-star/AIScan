@@ -107,7 +107,8 @@ class _BentoFolderDialogState extends State<BentoFolderDialog> {
     final name = _nameController.text.trim();
     final l10n = AppLocalizations.of(context);
     if (name.isEmpty) {
-      setState(() => _error = l10n?.nameCannotBeEmpty ?? 'Name cannot be empty');
+      setState(
+          () => _error = l10n?.nameCannotBeEmpty ?? 'Name cannot be empty');
       return;
     }
 
@@ -164,7 +165,9 @@ class _BentoFolderDialogState extends State<BentoFolderDialog> {
                       children: [
                         Expanded(
                           child: Text(
-                            widget.isEditing ? (l10n?.editFolder ?? 'Edit folder') : (l10n?.createFolder ?? 'Create folder'),
+                            widget.isEditing
+                                ? (l10n?.editFolder ?? 'Edit folder')
+                                : (l10n?.createFolder ?? 'Create folder'),
                             style: GoogleFonts.outfit(
                               fontSize: 20,
                               fontWeight: FontWeight.w700,
@@ -187,11 +190,12 @@ class _BentoFolderDialogState extends State<BentoFolderDialog> {
                       decoration: BoxDecoration(
                         color: isDark
                             ? const Color(0xFF1E293B)
-                            : colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                            : colorScheme.surfaceContainerHighest
+                                .withValues(alpha: 0.3),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: isDark 
-                              ? Colors.white.withValues(alpha: 0.1) 
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.1)
                               : const Color(0xFFE2E8F0),
                         ),
                       ),
@@ -205,11 +209,13 @@ class _BentoFolderDialogState extends State<BentoFolderDialog> {
                         decoration: InputDecoration(
                           hintText: l10n?.folderName ?? 'Folder name...',
                           hintStyle: GoogleFonts.outfit(
-                            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                            color: colorScheme.onSurfaceVariant
+                                .withValues(alpha: 0.5),
                           ),
                           errorText: _error,
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 14),
                         ),
                         onChanged: (_) {
                           if (_error != null) setState(() => _error = null);
@@ -247,10 +253,10 @@ class _BentoFolderDialogState extends State<BentoFolderDialog> {
                           ),
                         ),
                         ..._folderColors.map((hex) => _ColorChip(
-                          isSelected: _selectedColor == hex,
-                          color: _parseColor(hex),
-                          onTap: () => setState(() => _selectedColor = hex),
-                        )),
+                              isSelected: _selectedColor == hex,
+                              color: _parseColor(hex),
+                              onTap: () => setState(() => _selectedColor = hex),
+                            )),
                       ],
                     ),
                     const SizedBox(height: 24),
@@ -263,13 +269,15 @@ class _BentoFolderDialogState extends State<BentoFolderDialog> {
                             onPressed: () => Navigator.of(context).pop(),
                             style: TextButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14)),
                             ),
                             child: Text(
                               l10n?.cancel ?? 'Cancel',
                               style: GoogleFonts.outfit(
                                 fontWeight: FontWeight.w600,
-                                color: colorScheme.onSurface.withValues(alpha: 0.4),
+                                color: colorScheme.onSurface
+                                    .withValues(alpha: 0.4),
                               ),
                             ),
                           ),
@@ -280,16 +288,23 @@ class _BentoFolderDialogState extends State<BentoFolderDialog> {
                             height: 54,
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: isDark 
-                                    ? [const Color(0xFF312E81), const Color(0xFF1E1B4B)]
-                                    : [const Color(0xFF6366F1), const Color(0xFF4F46E5)],
+                                colors: isDark
+                                    ? [
+                                        const Color(0xFF312E81),
+                                        const Color(0xFF1E1B4B)
+                                      ]
+                                    : [
+                                        const Color(0xFF6366F1),
+                                        const Color(0xFF4F46E5)
+                                      ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFF4F46E5).withValues(alpha: 0.3),
+                                  color: const Color(0xFF4F46E5)
+                                      .withValues(alpha: 0.3),
                                   blurRadius: 12,
                                   offset: const Offset(0, 4),
                                 ),
@@ -302,7 +317,9 @@ class _BentoFolderDialogState extends State<BentoFolderDialog> {
                                 borderRadius: BorderRadius.circular(20),
                                 child: Center(
                                   child: Text(
-                                    widget.isEditing ? (l10n?.save ?? 'Save') : (l10n?.create ?? 'Create'),
+                                    widget.isEditing
+                                        ? (l10n?.save ?? 'Save')
+                                        : (l10n?.create ?? 'Create'),
                                     style: GoogleFonts.outfit(
                                       fontWeight: FontWeight.w700,
                                       color: Colors.white,
@@ -356,7 +373,10 @@ class _ColorChip extends StatelessWidget {
             width: 2.5,
           ),
         ),
-        child: child ?? (isSelected ? const Icon(Icons.check_rounded, size: 16, color: Colors.white) : null),
+        child: child ??
+            (isSelected
+                ? const Icon(Icons.check_rounded, size: 16, color: Colors.white)
+                : null),
       ),
     );
   }

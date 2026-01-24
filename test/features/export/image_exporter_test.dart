@@ -132,8 +132,8 @@ void main() {
     });
 
     test('should format file size in MB', () {
-      final bytes = Uint8List.fromList(
-          List.generate(1024 * 1024 * 2, (i) => 0)); // 2MB
+      final bytes =
+          Uint8List.fromList(List.generate(1024 * 1024 * 2, (i) => 0)); // 2MB
       final result = ExportedImage(
         bytes: bytes,
         width: 100,
@@ -954,7 +954,8 @@ void main() {
 
         for (var i = 0; i < 3; i++) {
           final path = '${tempDir.path}/image_$i.jpg';
-          final testImage = createTestImage(width: 100 + i * 50, height: 100 + i * 50);
+          final testImage =
+              createTestImage(width: 100 + i * 50, height: 100 + i * 50);
           await File(path).writeAsBytes(testImage);
           imagePaths.add(path);
         }
@@ -967,7 +968,8 @@ void main() {
       });
 
       test('should export multiple images from files', () async {
-        final result = await exporter.exportBatchFromFiles(imagePaths: imagePaths);
+        final result =
+            await exporter.exportBatchFromFiles(imagePaths: imagePaths);
 
         expect(result.imageCount, 3);
         expect(result.exportedImages.length, 3);
@@ -1416,10 +1418,12 @@ void main() {
 
     test('should complete batch export workflow', () async {
       // Create multiple test images
-      final images = List.generate(5, (i) => createTestImage(
-        width: 100 + i * 10,
-        height: 100 + i * 10,
-      ));
+      final images = List.generate(
+          5,
+          (i) => createTestImage(
+                width: 100 + i * 10,
+                height: 100 + i * 10,
+              ));
 
       // Export batch to directory
       final result = await exporter.exportBatchToDirectory(

@@ -832,7 +832,8 @@ void main() {
 
       // Verify getSearchHistory was called with correct limit
       verify(
-        mockDatabaseHelper.getSearchHistory(limit: SearchService.maxRecentSearches),
+        mockDatabaseHelper.getSearchHistory(
+            limit: SearchService.maxRecentSearches),
       ).called(1);
     });
 

@@ -292,9 +292,8 @@ class AppCard extends StatelessWidget {
     final effectiveBorderColor = isSelected && showSelectedBorder
         ? colorScheme.primary
         : borderColor ?? colorScheme.outlineVariant;
-    final effectiveBorderWidth = isSelected && showSelectedBorder
-        ? 2.0
-        : borderWidth ?? 1.0;
+    final effectiveBorderWidth =
+        isSelected && showSelectedBorder ? 2.0 : borderWidth ?? 1.0;
 
     Widget content = _buildContent(colorScheme);
 

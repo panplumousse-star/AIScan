@@ -193,7 +193,8 @@ void main() {
     });
 
     test('should create from highContrast preset', () {
-      final options = EnhancementOptions.fromPreset(EnhancementPreset.highContrast);
+      final options =
+          EnhancementOptions.fromPreset(EnhancementPreset.highContrast);
 
       expect(options.brightness, 10);
       expect(options.contrast, 50);
@@ -201,7 +202,8 @@ void main() {
     });
 
     test('should create from blackAndWhite preset', () {
-      final options = EnhancementOptions.fromPreset(EnhancementPreset.blackAndWhite);
+      final options =
+          EnhancementOptions.fromPreset(EnhancementPreset.blackAndWhite);
 
       expect(options.contrast, 30);
       expect(options.sharpness, 25);
@@ -521,7 +523,8 @@ void main() {
 
       final result = await processor.enhanceFromBytes(bytes);
 
-      expect(result.width, lessThanOrEqualTo(ImageProcessor.maxProcessingDimension));
+      expect(result.width,
+          lessThanOrEqualTo(ImageProcessor.maxProcessingDimension));
       expect(result.operationsApplied, contains('downscaled'));
     });
   });
@@ -963,8 +966,10 @@ void main() {
   group('EnhancementPreset', () {
     test('should have all expected presets', () {
       expect(EnhancementPreset.values, contains(EnhancementPreset.document));
-      expect(EnhancementPreset.values, contains(EnhancementPreset.highContrast));
-      expect(EnhancementPreset.values, contains(EnhancementPreset.blackAndWhite));
+      expect(
+          EnhancementPreset.values, contains(EnhancementPreset.highContrast));
+      expect(
+          EnhancementPreset.values, contains(EnhancementPreset.blackAndWhite));
       expect(EnhancementPreset.values, contains(EnhancementPreset.photo));
       expect(EnhancementPreset.values, contains(EnhancementPreset.none));
     });

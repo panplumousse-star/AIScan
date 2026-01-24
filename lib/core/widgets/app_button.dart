@@ -377,10 +377,9 @@ class AppButton extends StatelessWidget {
   /// Builds the style for filled button.
   ButtonStyle _buildFilledStyle(ColorScheme colorScheme) {
     final backgroundColor = customColor ?? colorScheme.primary;
-    final foregroundColor =
-        customColor != null
-            ? A11yContrast.getContrastingTextColor(customColor!)
-            : colorScheme.onPrimary;
+    final foregroundColor = customColor != null
+        ? A11yContrast.getContrastingTextColor(customColor!)
+        : colorScheme.onPrimary;
 
     return FilledButton.styleFrom(
       backgroundColor: backgroundColor,

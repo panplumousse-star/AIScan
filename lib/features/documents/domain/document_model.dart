@@ -539,9 +539,8 @@ class Document {
       title: title ?? this.title,
       description: clearDescription ? null : (description ?? this.description),
       pagesPaths: pagesPaths ?? this.pagesPaths,
-      thumbnailPath: clearThumbnailPath
-          ? null
-          : (thumbnailPath ?? this.thumbnailPath),
+      thumbnailPath:
+          clearThumbnailPath ? null : (thumbnailPath ?? this.thumbnailPath),
       originalFileName: clearOriginalFileName
           ? null
           : (originalFileName ?? this.originalFileName),

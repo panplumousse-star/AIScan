@@ -27,7 +27,8 @@ final appLockServiceProvider = Provider<AppLockService>((ref) {
 /// This provider checks the app lock service to determine whether
 /// the user needs to authenticate before accessing the app.
 /// Uses autoDispose to re-check when the app comes to foreground.
-final shouldShowLockScreenProvider = FutureProvider.autoDispose<bool>((ref) async {
+final shouldShowLockScreenProvider =
+    FutureProvider.autoDispose<bool>((ref) async {
   final appLockService = ref.read(appLockServiceProvider);
   return await appLockService.shouldShowLockScreen();
 });

@@ -428,7 +428,8 @@ abstract final class AppTheme {
       // Icon Button Theme
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
-          minimumSize: const Size(AppSpacing.iconButtonSize, AppSpacing.iconButtonSize),
+          minimumSize:
+              const Size(AppSpacing.iconButtonSize, AppSpacing.iconButtonSize),
           tapTargetSize: MaterialTapTargetSize.padded,
         ),
       ),
@@ -485,7 +486,8 @@ abstract final class AppTheme {
       chipTheme: ChipThemeData(
         backgroundColor: colorScheme.surfaceContainerHighest,
         selectedColor: colorScheme.secondaryContainer,
-        disabledColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        disabledColor:
+            colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         labelStyle: GoogleFonts.outfit(
           color: colorScheme.onSurfaceVariant,
           fontSize: 13,
@@ -643,14 +645,18 @@ abstract final class AppTheme {
           return GoogleFonts.outfit(
             fontSize: 12,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            color: isSelected ? colorScheme.onSecondaryContainer : colorScheme.onSurfaceVariant,
+            color: isSelected
+                ? colorScheme.onSecondaryContainer
+                : colorScheme.onSurfaceVariant,
           );
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           final isSelected = states.contains(WidgetState.selected);
           return IconThemeData(
             size: 24,
-            color: isSelected ? colorScheme.onSecondaryContainer : colorScheme.onSurfaceVariant,
+            color: isSelected
+                ? colorScheme.onSecondaryContainer
+                : colorScheme.onSurfaceVariant,
           );
         }),
       ),
@@ -857,7 +863,8 @@ abstract final class AppTheme {
       // Icon Button Theme
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
-          minimumSize: const Size(AppSpacing.iconButtonSize, AppSpacing.iconButtonSize),
+          minimumSize:
+              const Size(AppSpacing.iconButtonSize, AppSpacing.iconButtonSize),
           tapTargetSize: MaterialTapTargetSize.padded,
         ),
       ),
@@ -914,7 +921,8 @@ abstract final class AppTheme {
       chipTheme: ChipThemeData(
         backgroundColor: colorScheme.surfaceContainerHighest,
         selectedColor: colorScheme.secondaryContainer,
-        disabledColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        disabledColor:
+            colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         labelStyle: TextStyle(
           color: colorScheme.onSurfaceVariant,
           fontSize: 13,
@@ -1071,14 +1079,18 @@ abstract final class AppTheme {
           return TextStyle(
             fontSize: 12,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            color: isSelected ? colorScheme.onSecondaryContainer : colorScheme.onSurfaceVariant,
+            color: isSelected
+                ? colorScheme.onSecondaryContainer
+                : colorScheme.onSurfaceVariant,
           );
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           final isSelected = states.contains(WidgetState.selected);
           return IconThemeData(
             size: 24,
-            color: isSelected ? colorScheme.onSecondaryContainer : colorScheme.onSurfaceVariant,
+            color: isSelected
+                ? colorScheme.onSecondaryContainer
+                : colorScheme.onSurfaceVariant,
           );
         }),
       ),

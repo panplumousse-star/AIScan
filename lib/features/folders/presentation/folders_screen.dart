@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/widgets/bento_confirmation_dialog.dart';
 import '../../../core/widgets/bento_state_views.dart';
 import '../../../l10n/app_localizations.dart';
 import '../domain/folder_model.dart';
@@ -122,12 +123,10 @@ class FoldersScreenState {
   }) {
     return FoldersScreenState(
       folders: folders ?? this.folders,
-      currentFolderId: clearCurrentFolder
-          ? null
-          : (currentFolderId ?? this.currentFolderId),
-      breadcrumbs: clearCurrentFolder
-          ? const []
-          : (breadcrumbs ?? this.breadcrumbs),
+      currentFolderId:
+          clearCurrentFolder ? null : (currentFolderId ?? this.currentFolderId),
+      breadcrumbs:
+          clearCurrentFolder ? const [] : (breadcrumbs ?? this.breadcrumbs),
       sortBy: sortBy ?? this.sortBy,
       isLoading: isLoading ?? this.isLoading,
       isRefreshing: isRefreshing ?? this.isRefreshing,
@@ -136,9 +135,8 @@ class FoldersScreenState {
       selectedFolderIds: clearSelection
           ? const {}
           : (selectedFolderIds ?? this.selectedFolderIds),
-      isSelectionMode: clearSelection
-          ? false
-          : (isSelectionMode ?? this.isSelectionMode),
+      isSelectionMode:
+          clearSelection ? false : (isSelectionMode ?? this.isSelectionMode),
       folderStats: folderStats ?? this.folderStats,
     );
   }
@@ -159,15 +157,15 @@ class FoldersScreenState {
 
   @override
   int get hashCode => Object.hash(
-    currentFolderId,
-    sortBy,
-    isLoading,
-    isRefreshing,
-    isInitialized,
-    error,
-    isSelectionMode,
-    folderCount,
-  );
+        currentFolderId,
+        sortBy,
+        isLoading,
+        isRefreshing,
+        isInitialized,
+        error,
+        isSelectionMode,
+        folderCount,
+      );
 }
 
 /// State notifier for the folders screen.
@@ -176,7 +174,7 @@ class FoldersScreenState {
 class FoldersScreenNotifier extends StateNotifier<FoldersScreenState> {
   /// Creates a [FoldersScreenNotifier] with the given service.
   FoldersScreenNotifier(this._folderService)
-    : super(const FoldersScreenState());
+      : super(const FoldersScreenState());
 
   final FolderService _folderService;
 
@@ -314,9 +312,8 @@ class FoldersScreenNotifier extends StateNotifier<FoldersScreenState> {
     newBreadcrumbs.removeLast();
 
     state = state.copyWith(
-      currentFolderId: newBreadcrumbs.isNotEmpty
-          ? newBreadcrumbs.last.id
-          : null,
+      currentFolderId:
+          newBreadcrumbs.isNotEmpty ? newBreadcrumbs.last.id : null,
       breadcrumbs: newBreadcrumbs,
       clearSelection: true,
     );
@@ -476,14 +473,11 @@ class FoldersScreenNotifier extends StateNotifier<FoldersScreenState> {
 }
 
 /// Riverpod provider for the folders screen state.
-final foldersScreenProvider =
-    StateNotifierProvider.autoDispose<
-      FoldersScreenNotifier,
-      FoldersScreenState
-    >((ref) {
-      final folderService = ref.watch(folderServiceProvider);
-      return FoldersScreenNotifier(folderService);
-    });
+final foldersScreenProvider = StateNotifierProvider.autoDispose<
+    FoldersScreenNotifier, FoldersScreenState>((ref) {
+  final folderService = ref.watch(folderServiceProvider);
+  return FoldersScreenNotifier(folderService);
+});
 
 /// Main folder management screen.
 ///
@@ -625,9 +619,8 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
                   Icon(
                     sort.icon,
                     size: 20,
-                    color: state.sortBy == sort
-                        ? theme.colorScheme.primary
-                        : null,
+                    color:
+                        state.sortBy == sort ? theme.colorScheme.primary : null,
                   ),
                   const SizedBox(width: 12),
                   Text(
@@ -716,7 +709,8 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
                   title: state.isAtRoot
                       ? (l10n?.noFoldersYet ?? 'No folders yet')
                       : (l10n?.noDocuments ?? 'This folder is empty'),
-                  description: l10n?.createFolderToOrganize ?? 'Create a folder to organize your documents',
+                  description: l10n?.createFolderToOrganize ??
+                      'Create a folder to organize your documents',
                   icon: Icons.folder_outlined,
                   actionLabel: l10n?.createFolder ?? 'Create folder',
                   onAction: () => _showCreateDialog(context, notifier),
@@ -807,29 +801,16 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
     FoldersScreenState state,
     FoldersScreenNotifier notifier,
   ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete folders?'),
-        content: Text(
-          'Are you sure you want to delete ${state.selectedCount} '
+    final confirmed = await showBentoConfirmationDialog(
+      context,
+      title: 'Delete folders?',
+      message: 'Are you sure you want to delete ${state.selectedCount} '
           '${state.selectedCount == 1 ? 'folder' : 'folders'}?\n\n'
           'Documents inside will be moved to the root level.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      confirmButtonText: 'Delete',
+      isDestructive: true,
+      mascotAssetPath: 'assets/images/scanai_sad.png',
+      speechBubbleText: 'Are you sure?',
     );
 
     if (confirmed == true) {
@@ -842,28 +823,15 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
     Folder folder,
     FoldersScreenNotifier notifier,
   ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete folder?'),
-        content: Text(
-          'Are you sure you want to delete "${folder.name}"?\n\n'
+    final confirmed = await showBentoConfirmationDialog(
+      context,
+      title: 'Delete folder?',
+      message: 'Are you sure you want to delete "${folder.name}"?\n\n'
           'Documents inside will be moved to the root level.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      confirmButtonText: 'Delete',
+      isDestructive: true,
+      mascotAssetPath: 'assets/images/scanai_sad.png',
+      speechBubbleText: 'Are you sure?',
     );
 
     if (confirmed == true) {
@@ -1055,9 +1023,8 @@ class _FolderListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = theme.colorScheme;
-    final folderColor = folder.hasColor
-        ? _parseColor(folder.color!)
-        : colorScheme.primary;
+    final folderColor =
+        folder.hasColor ? _parseColor(folder.color!) : colorScheme.primary;
 
     return Material(
       color: isSelected
@@ -1078,9 +1045,8 @@ class _FolderListItem extends StatelessWidget {
                     width: 24,
                     height: 24,
                     decoration: BoxDecoration(
-                      color: isSelected
-                          ? colorScheme.primary
-                          : Colors.transparent,
+                      color:
+                          isSelected ? colorScheme.primary : Colors.transparent,
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: isSelected
@@ -1304,9 +1270,8 @@ class _ColorOption extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    final displayColor = color != null
-        ? _parseColor(color!)
-        : colorScheme.primary;
+    final displayColor =
+        color != null ? _parseColor(color!) : colorScheme.primary;
 
     return InkWell(
       onTap: onTap,
@@ -1331,12 +1296,12 @@ class _ColorOption extends StatelessWidget {
                 color: colorScheme.onSurfaceVariant,
               )
             : isSelected
-            ? Icon(
-                Icons.check,
-                size: size * 0.5,
-                color: _getContrastColor(displayColor),
-              )
-            : null,
+                ? Icon(
+                    Icons.check,
+                    size: size * 0.5,
+                    color: _getContrastColor(displayColor),
+                  )
+                : null,
       ),
     );
   }

@@ -63,7 +63,8 @@ class MoveToFolderDialog extends StatelessWidget {
     final theme = Theme.of(context);
 
     return AlertDialog(
-      title: Text('Move ${selectedCount == 1 ? 'document' : '$selectedCount documents'}'),
+      title: Text(
+          'Move ${selectedCount == 1 ? 'document' : '$selectedCount documents'}'),
       content: SizedBox(
         width: double.maxFinite,
         child: Column(

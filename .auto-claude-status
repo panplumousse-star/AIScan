@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "053-add-ocr-textrecognizer-lifecycle-management",
+  "spec": "060-extract-common-confirmation-dialog-widget",
   "state": "building",
   "subtasks": {
-    "completed": 7,
-    "total": 8,
+    "completed": 5,
+    "total": 6,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Integration Verification",
+    "current": "Code Cleanup",
     "id": null,
-    "total": 2
+    "total": 1
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 9,
-    "started_at": "2026-01-24T11:49:16.770742"
+    "number": 7,
+    "started_at": "2026-01-24T11:49:53.983570"
   },
-  "last_update": "2026-01-24T12:12:30.973580"
+  "last_update": "2026-01-24T12:04:25.746377"
 }

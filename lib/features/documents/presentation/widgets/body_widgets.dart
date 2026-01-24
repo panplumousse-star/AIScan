@@ -6,7 +6,8 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../folders/domain/folder_model.dart';
 import '../../../folders/domain/folder_service.dart';
 import '../../domain/document_model.dart';
-import '../documents_screen.dart' show DocumentsScreenState, DocumentsScreenNotifier;
+import '../documents_screen.dart'
+    show DocumentsScreenState, DocumentsScreenNotifier;
 import '../models/documents_ui_models.dart';
 import 'folder_widgets.dart';
 import 'grid_view_widgets.dart';
@@ -82,7 +83,8 @@ class FolderHeaderWidget extends ConsumerWidget {
                   style: GoogleFonts.outfit(
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
-                    color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                    color: theme.colorScheme.onSurfaceVariant
+                        .withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -90,7 +92,9 @@ class FolderHeaderWidget extends ConsumerWidget {
           ),
           IconButton(
             icon: Icon(
-              folder.isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+              folder.isFavorite
+                  ? Icons.favorite_rounded
+                  : Icons.favorite_border_rounded,
               size: 18,
             ),
             onPressed: () async {
@@ -100,7 +104,8 @@ class FolderHeaderWidget extends ConsumerWidget {
             style: IconButton.styleFrom(
               backgroundColor: folder.isFavorite
                   ? theme.colorScheme.error.withValues(alpha: 0.1)
-                  : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                  : theme.colorScheme.surfaceContainerHighest
+                      .withValues(alpha: 0.5),
               padding: const EdgeInsets.all(8),
               foregroundColor: folder.isFavorite
                   ? theme.colorScheme.error
@@ -112,7 +117,8 @@ class FolderHeaderWidget extends ConsumerWidget {
             icon: const Icon(Icons.edit_rounded, size: 18),
             onPressed: () => onEditFolder(folder),
             style: IconButton.styleFrom(
-              backgroundColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+              backgroundColor: theme.colorScheme.surfaceContainerHighest
+                  .withValues(alpha: 0.5),
               padding: const EdgeInsets.all(8),
               foregroundColor: folderColor,
             ),
@@ -192,7 +198,8 @@ class DocumentsSliverList extends StatelessWidget {
       child: CustomScrollView(
         slivers: [
           // Folders section (only at root)
-          if (state.isAtRoot && (state.filteredFolders.isNotEmpty || !state.filter.favoritesOnly))
+          if (state.isAtRoot &&
+              (state.filteredFolders.isNotEmpty || !state.filter.favoritesOnly))
             SliverToBoxAdapter(
               child: FoldersSection(
                 folders: state.filteredFolders,
@@ -231,11 +238,13 @@ class DocumentsSliverList extends StatelessWidget {
                           return DocumentListItem(
                             document: doc,
                             thumbnailBytes: state.decryptedThumbnails[doc.id],
-                            isSelected: state.selectedDocumentIds.contains(doc.id),
+                            isSelected:
+                                state.selectedDocumentIds.contains(doc.id),
                             isSelectionMode: state.isSelectionMode,
                             onTap: () => onDocumentTap(doc),
                             onLongPress: () => onDocumentLongPress(doc),
-                            onFavoriteToggle: () => notifier.toggleFavorite(doc.id),
+                            onFavoriteToggle: () =>
+                                notifier.toggleFavorite(doc.id),
                             onRename: () => onRename(doc.id, doc.title),
                             theme: theme,
                           );
@@ -265,7 +274,8 @@ class DocumentsSliverList extends StatelessWidget {
                     const SizedBox(height: 16),
                     Text(
                       state.hasSearch
-                          ? (l10n?.noResultsFor(state.searchQuery) ?? 'No results for "${state.searchQuery}"')
+                          ? (l10n?.noResultsFor(state.searchQuery) ??
+                              'No results for "${state.searchQuery}"')
                           : state.filter.favoritesOnly
                               ? (l10n?.noFavorites ?? 'No favorites')
                               : (l10n?.noDocuments ?? 'No documents'),

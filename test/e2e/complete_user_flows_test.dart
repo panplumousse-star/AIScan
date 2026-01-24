@@ -579,7 +579,8 @@ void main() {
     test('Flow 8: Export as PDF', () async {
       // Arrange - Setup PDF generation
       final documentBytes = await createTestImageBytes();
-      final pdfBytes = Uint8List.fromList([0x25, 0x50, 0x44, 0x46]); // PDF header
+      final pdfBytes =
+          Uint8List.fromList([0x25, 0x50, 0x44, 0x46]); // PDF header
 
       final generatedPdf = GeneratedPDF(
         bytes: pdfBytes,
@@ -985,7 +986,8 @@ void main() {
 
       // Verify services are local-only
       expect(mockOcrService, isA<MockOcrService>()); // Tesseract - local
-      expect(mockImageProcessor, isA<MockImageProcessor>()); // image pkg - local
+      expect(
+          mockImageProcessor, isA<MockImageProcessor>()); // image pkg - local
       expect(mockScanner, isA<MockDocumentScanner>()); // ML Kit - local
 
       // Note: Real verification happens in privacy_verification_test.dart

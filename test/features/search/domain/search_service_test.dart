@@ -65,7 +65,8 @@ void main() {
       await searchService.initialize();
 
       // Setup mock to return favorite documents
-      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((invocation) async {
+      when(mockDatabaseHelper.rawQuery(any, any))
+          .thenAnswer((invocation) async {
         final sql = invocation.positionalArguments[0] as String;
 
         // Verify SQL contains the favorites filter
@@ -104,14 +105,16 @@ void main() {
 
       // Verify that getDocument was only called once to build the result,
       // not for filtering (which would indicate N+1 queries)
-      verify(mockDocumentRepository.getDocument('doc-fav-1', includeTags: false))
+      verify(mockDocumentRepository.getDocument('doc-fav-1',
+              includeTags: false))
           .called(1);
     });
 
     test('hasOcrOnly filter applies SQL WHERE clause', () async {
       await searchService.initialize();
 
-      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((invocation) async {
+      when(mockDatabaseHelper.rawQuery(any, any))
+          .thenAnswer((invocation) async {
         final sql = invocation.positionalArguments[0] as String;
 
         // Verify SQL contains the OCR filter
@@ -148,7 +151,8 @@ void main() {
       expect(results.results.first.document.hasOcrText, isTrue);
 
       // Verify no N+1 query pattern
-      verify(mockDocumentRepository.getDocument('doc-ocr-1', includeTags: false))
+      verify(mockDocumentRepository.getDocument('doc-ocr-1',
+              includeTags: false))
           .called(1);
     });
 
@@ -157,7 +161,8 @@ void main() {
 
       const testFolderId = 'folder-123';
 
-      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((invocation) async {
+      when(mockDatabaseHelper.rawQuery(any, any))
+          .thenAnswer((invocation) async {
         final sql = invocation.positionalArguments[0] as String;
         final args = invocation.positionalArguments[1] as List<Object>;
 
@@ -186,7 +191,8 @@ void main() {
         ];
       });
 
-      when(mockDocumentRepository.getDocument('doc-folder-1', includeTags: false))
+      when(mockDocumentRepository.getDocument('doc-folder-1',
+              includeTags: false))
           .thenAnswer((_) async => createTestDocument(
                 id: 'doc-folder-1',
                 title: 'Document in folder',
@@ -202,14 +208,16 @@ void main() {
       expect(results.results.first.document.folderId, testFolderId);
 
       // Verify no N+1 query pattern
-      verify(mockDocumentRepository.getDocument('doc-folder-1', includeTags: false))
+      verify(mockDocumentRepository.getDocument('doc-folder-1',
+              includeTags: false))
           .called(1);
     });
 
     test('combination of favoritesOnly and hasOcrOnly filters', () async {
       await searchService.initialize();
 
-      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((invocation) async {
+      when(mockDatabaseHelper.rawQuery(any, any))
+          .thenAnswer((invocation) async {
         final sql = invocation.positionalArguments[0] as String;
 
         // Verify SQL contains both filters combined with AND
@@ -256,7 +264,8 @@ void main() {
       expect(results.results.first.document.hasOcrText, isTrue);
 
       // Verify single getDocument call per result
-      verify(mockDocumentRepository.getDocument('doc-both-1', includeTags: false))
+      verify(mockDocumentRepository.getDocument('doc-both-1',
+              includeTags: false))
           .called(1);
     });
 
@@ -265,7 +274,8 @@ void main() {
 
       const testFolderId = 'folder-456';
 
-      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((invocation) async {
+      when(mockDatabaseHelper.rawQuery(any, any))
+          .thenAnswer((invocation) async {
         final sql = invocation.positionalArguments[0] as String;
         final args = invocation.positionalArguments[1] as List<Object>;
 
@@ -297,7 +307,8 @@ void main() {
         ];
       });
 
-      when(mockDocumentRepository.getDocument('doc-combo-1', includeTags: false))
+      when(mockDocumentRepository.getDocument('doc-combo-1',
+              includeTags: false))
           .thenAnswer((_) async => createTestDocument(
                 id: 'doc-combo-1',
                 title: 'Favorite in folder',
@@ -318,16 +329,19 @@ void main() {
       expect(results.results.first.document.folderId, testFolderId);
 
       // Verify no N+1 queries
-      verify(mockDocumentRepository.getDocument('doc-combo-1', includeTags: false))
+      verify(mockDocumentRepository.getDocument('doc-combo-1',
+              includeTags: false))
           .called(1);
     });
 
-    test('all three filters combined (favoritesOnly, hasOcrOnly, folderId)', () async {
+    test('all three filters combined (favoritesOnly, hasOcrOnly, folderId)',
+        () async {
       await searchService.initialize();
 
       const testFolderId = 'folder-789';
 
-      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((invocation) async {
+      when(mockDatabaseHelper.rawQuery(any, any))
+          .thenAnswer((invocation) async {
         final sql = invocation.positionalArguments[0] as String;
         final args = invocation.positionalArguments[1] as List<Object>;
 
@@ -389,14 +403,16 @@ void main() {
       expect(results.results.first.document.folderId, testFolderId);
 
       // Verify only one getDocument call per result (no N+1 pattern)
-      verify(mockDocumentRepository.getDocument('doc-all-1', includeTags: false))
+      verify(mockDocumentRepository.getDocument('doc-all-1',
+              includeTags: false))
           .called(1);
     });
 
     test('no filters applied when all are false/null', () async {
       await searchService.initialize();
 
-      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((invocation) async {
+      when(mockDatabaseHelper.rawQuery(any, any))
+          .thenAnswer((invocation) async {
         final sql = invocation.positionalArguments[0] as String;
 
         // When no filters, SQL should only have MATCH condition
@@ -428,7 +444,8 @@ void main() {
         ];
       });
 
-      when(mockDocumentRepository.getDocument('doc-no-filter-1', includeTags: false))
+      when(mockDocumentRepository.getDocument('doc-no-filter-1',
+              includeTags: false))
           .thenAnswer((_) async => createTestDocument(
                 id: 'doc-no-filter-1',
                 title: 'Any document',
@@ -446,7 +463,8 @@ void main() {
       expect(results.hasResults, isTrue);
 
       // Verify single getDocument call
-      verify(mockDocumentRepository.getDocument('doc-no-filter-1', includeTags: false))
+      verify(mockDocumentRepository.getDocument('doc-no-filter-1',
+              includeTags: false))
           .called(1);
     });
 
@@ -480,11 +498,14 @@ void main() {
 
       // Mock document repository for building full results
       when(mockDocumentRepository.getDocument('doc-1', includeTags: false))
-          .thenAnswer((_) async => createTestDocument(id: 'doc-1', ocrText: 'OCR 1'));
+          .thenAnswer(
+              (_) async => createTestDocument(id: 'doc-1', ocrText: 'OCR 1'));
       when(mockDocumentRepository.getDocument('doc-2', includeTags: false))
-          .thenAnswer((_) async => createTestDocument(id: 'doc-2', ocrText: 'OCR 2'));
+          .thenAnswer(
+              (_) async => createTestDocument(id: 'doc-2', ocrText: 'OCR 2'));
       when(mockDocumentRepository.getDocument('doc-3', includeTags: false))
-          .thenAnswer((_) async => createTestDocument(id: 'doc-3', ocrText: 'OCR 3'));
+          .thenAnswer(
+              (_) async => createTestDocument(id: 'doc-3', ocrText: 'OCR 3'));
 
       final results = await searchService.search(
         'test',
@@ -501,9 +522,12 @@ void main() {
 
       // Verify getDocument was called exactly 3 times (once per result to build full data)
       // NOT called for filtering - that's done in SQL
-      verify(mockDocumentRepository.getDocument('doc-1', includeTags: false)).called(1);
-      verify(mockDocumentRepository.getDocument('doc-2', includeTags: false)).called(1);
-      verify(mockDocumentRepository.getDocument('doc-3', includeTags: false)).called(1);
+      verify(mockDocumentRepository.getDocument('doc-1', includeTags: false))
+          .called(1);
+      verify(mockDocumentRepository.getDocument('doc-2', includeTags: false))
+          .called(1);
+      verify(mockDocumentRepository.getDocument('doc-3', includeTags: false))
+          .called(1);
 
       // Verify no additional calls were made beyond building the results
       verifyNever(mockDocumentRepository.getDocument(any));
@@ -514,7 +538,8 @@ void main() {
 
       // First call fails (FTS), second succeeds (fallback)
       var callCount = 0;
-      when(mockDatabaseHelper.rawQuery(any, any)).thenAnswer((invocation) async {
+      when(mockDatabaseHelper.rawQuery(any, any))
+          .thenAnswer((invocation) async {
         callCount++;
         final sql = invocation.positionalArguments[0] as String;
 
@@ -546,7 +571,8 @@ void main() {
         ];
       });
 
-      when(mockDocumentRepository.getDocument('doc-fallback-1', includeTags: false))
+      when(mockDocumentRepository.getDocument('doc-fallback-1',
+              includeTags: false))
           .thenAnswer((_) async => createTestDocument(
                 id: 'doc-fallback-1',
                 title: 'Fallback result',
@@ -570,7 +596,8 @@ void main() {
       verify(mockDatabaseHelper.rawQuery(any, any)).called(2);
 
       // Verify no N+1 pattern in fallback
-      verify(mockDocumentRepository.getDocument('doc-fallback-1', includeTags: false))
+      verify(mockDocumentRepository.getDocument('doc-fallback-1',
+              includeTags: false))
           .called(1);
     });
   });

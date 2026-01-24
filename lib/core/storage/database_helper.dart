@@ -12,13 +12,30 @@ final databaseHelperProvider = Provider<DatabaseHelper>((ref) {
   return DatabaseHelper(secureStorage: secureStorage);
 });
 
-/// Database helper class for managing SQLite database operations.
+/// Database helper class for managing encrypted SQLite database operations.
+///
+/// Uses SQLCipher for AES-256 encryption of all database contents including
+/// metadata, OCR text, and full-text search indexes. The encryption key is
+/// managed by [SecureStorageService] using platform secure storage
+/// (Android KeyStore/iOS Keychain) - the same key used for file encryption.
 ///
 /// Implements FTS5/FTS4 fallback strategy for full-text search capabilities.
 /// Supports three modes:
 /// - FTS5 (version 5): Best performance with rank ordering
 /// - FTS4 (version 4): Universal compatibility fallback
 /// - Disabled (version 0): LIKE-based search when FTS unavailable
+///
+/// ## Security
+///
+/// All sensitive data stored in the database is encrypted at rest:
+/// - Document titles, descriptions, and metadata
+/// - OCR-extracted text (may contain PII, financial data, medical records)
+/// - Folder names and hierarchies
+/// - Tags and search history
+/// - Full-text search indexes (FTS virtual tables)
+///
+/// The database file is unreadable without the encryption password, which is
+/// derived from the encryption key stored in platform secure storage.
 class DatabaseHelper {
   /// Creates a [DatabaseHelper] with the required [SecureStorageService].
   DatabaseHelper({
@@ -99,7 +116,14 @@ class DatabaseHelper {
     return _database!;
   }
 
-  /// Initializes the database.
+  /// Initializes the encrypted database using SQLCipher.
+  ///
+  /// Retrieves the encryption key from [SecureStorageService] and passes it
+  /// to SQLCipher as the database password. This ensures all database contents
+  /// are encrypted at rest using AES-256 encryption.
+  ///
+  /// The same encryption key is used for both file encryption and database
+  /// encryption, providing consistent security across all stored data.
   Future<Database> _initDatabase() async {
     final String path = join(await getDatabasesPath(), _databaseName);
     final encryptionKey = await _secureStorage.getOrCreateEncryptionKey();
@@ -112,7 +136,10 @@ class DatabaseHelper {
     );
   }
 
-  /// Creates database tables and FTS indexes.
+  /// Creates database tables and FTS indexes within the encrypted database.
+  ///
+  /// All tables, indexes, and FTS virtual tables are created inside the
+  /// SQLCipher-encrypted database, ensuring all content is encrypted at rest.
   Future<void> _onCreate(Database db, int version) async {
     // Create folders table
     await db.execute('''

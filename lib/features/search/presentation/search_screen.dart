@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/widgets/bento_state_views.dart';
 import '../../documents/domain/document_model.dart';
 import '../domain/search_service.dart';
 
@@ -141,7 +142,8 @@ class SearchScreenState {
 /// Manages search operations, suggestions, and history.
 class SearchScreenNotifier extends StateNotifier<SearchScreenState> {
   /// Creates a [SearchScreenNotifier] with the given search service.
-  SearchScreenNotifier(this._searchService) : super(const SearchScreenState());
+  SearchScreenNotifier(this._searchService)
+      : super(const SearchScreenState());
 
   final SearchService _searchService;
   Timer? _debounceTimer;
@@ -569,9 +571,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
     // Show empty state
     if (state.isEmpty) {
-      return _EmptyResultsView(
-        query: state.query,
-        theme: theme,
+      return BentoNoResultsView(
+        description: 'No documents match "${state.query}".\n'
+            'Try different keywords or check your filters.',
       );
     }
 
@@ -822,51 +824,6 @@ class _InitialView extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-/// Empty results view.
-class _EmptyResultsView extends StatelessWidget {
-  const _EmptyResultsView({
-    required this.query,
-    required this.theme,
-  });
-
-  final String query;
-  final ThemeData theme;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.search_off,
-              size: 64,
-              color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No results found',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'No documents match "$query".\nTry different keywords or check your filters.',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

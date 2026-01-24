@@ -93,8 +93,7 @@ class BentoErrorView extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    final displayTitle =
-        title ?? l10n?.somethingWentWrong ?? 'Oops! Something went wrong';
+    final displayTitle = title ?? l10n?.somethingWentWrong ?? 'Oops! Something went wrong';
     final displayRetryLabel = retryLabel ?? l10n?.retry ?? 'Retry';
 
     return Center(
@@ -138,8 +137,7 @@ class BentoErrorView extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4F46E5),
                   foregroundColor: Colors.white,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -226,8 +224,103 @@ class BentoEmptyView extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4F46E5),
                   foregroundColor: Colors.white,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  minimumSize: const Size(200, 48),
+                ),
+                child: Text(
+                  actionLabel!,
+                  style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A Bento-style no results view for search and filter states.
+///
+/// Features:
+/// - Friendly no results message with mascot or icon
+/// - Optimized for search and filter result scenarios
+/// - Optional action button (e.g., clear filters)
+/// - Consistent styling across the app
+/// - Customizable icon, title, and description
+class BentoNoResultsView extends StatelessWidget {
+  const BentoNoResultsView({
+    super.key,
+    this.title,
+    this.description,
+    this.icon,
+    this.mascotVariant,
+    this.mascotHeight = 80,
+    this.actionLabel,
+    this.onAction,
+  });
+
+  final String? title;
+  final String? description;
+  final IconData? icon;
+  final BentoMascotVariant? mascotVariant;
+  final double mascotHeight;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final displayTitle = title ?? 'No results found';
+    final displayDescription = description ??
+        'Try adjusting your search or filters';
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (mascotVariant != null)
+              BentoMascot(
+                height: mascotHeight,
+                variant: mascotVariant!,
+              )
+            else
+              Icon(
+                icon ?? Icons.search_off_rounded,
+                size: 80,
+                color: theme.colorScheme.primary.withValues(alpha: 0.6),
+              ),
+            const SizedBox(height: 24),
+            Text(
+              displayTitle,
+              style: GoogleFonts.outfit(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: theme.colorScheme.onSurface,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              displayDescription,
+              style: GoogleFonts.outfit(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            if (actionLabel != null && onAction != null) ...[
+              const SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: onAction,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4F46E5),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),

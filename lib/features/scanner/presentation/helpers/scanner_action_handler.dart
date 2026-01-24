@@ -1,28 +1,22 @@
-/// Action handlers for scanner screen (share, export, OCR).
+/// Action handlers for scanner screen (share, export).
 ///
 /// This file provides reusable action handlers for scanner screen
-/// operations including document sharing, export, and OCR processing.
+/// operations including document sharing and export.
 library;
-
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../l10n/app_localizations.dart';
 import '../../../../core/widgets/bento_share_format_dialog.dart';
-import '../../../../core/permissions/contact_permission_dialog.dart';
 import '../../../../core/export/document_export_service.dart';
-import '../../../contacts/presentation/contact_creation_sheet.dart';
-import '../../../contacts/domain/contact_data_extractor.dart';
-import '../../../ocr/domain/ocr_service.dart';
 import '../../../sharing/domain/document_share_service.dart';
 import '../../../home/presentation/bento_home_screen.dart';
 import '../../../documents/presentation/documents_screen.dart';
 import '../scanner_screen.dart';
 import '../state/scanner_screen_state.dart';
 
-/// Handles scanner screen actions (share, export, OCR).
+/// Handles scanner screen actions (share, export).
 class ScannerActionHandler {
   final WidgetRef ref;
   final BuildContext context;
@@ -150,92 +144,6 @@ class ScannerActionHandler {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Échec de l\'exportation: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-      }
-    }
-  }
-
-  /// Handles OCR processing on the scanned document.
-  Future<void> handleOcr(ScannerScreenState state) async {
-    if (state.scanResult == null || state.scanResult!.pages.isEmpty) {
-      if (context.mounted) {
-        showNoContactDataFoundSnackbar(context);
-      }
-      return;
-    }
-
-    // Show loading indicator
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Row(
-            children: [
-              SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-              SizedBox(width: 16),
-              Text('Extracting text...'),
-            ],
-          ),
-          duration: Duration(seconds: 30),
-        ),
-      );
-    }
-
-    try {
-      final ocrService = ref.read(ocrServiceProvider);
-      const extractor = ContactDataExtractor();
-
-      // Run OCR on all scanned pages
-      final textParts = <String>[];
-      for (final page in state.scanResult!.pages) {
-        // Read image file and run OCR
-        final imageFile = File(page.imagePath);
-        if (await imageFile.exists()) {
-          final imageBytes = await imageFile.readAsBytes();
-          final result = await ocrService.extractTextFromBytes(imageBytes);
-          if (result.text.isNotEmpty) {
-            textParts.add(result.text);
-          }
-        }
-      }
-
-      // Hide loading snackbar
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      }
-
-      if (!context.mounted) return;
-
-      if (textParts.isEmpty) {
-        showNoContactDataFoundSnackbar(context);
-        return;
-      }
-
-      // Combine all text and extract contact data
-      final combinedText = textParts.join('\n\n');
-      final extractedData = extractor.extractFromText(combinedText);
-
-      if (extractedData.isEmpty) {
-        showNoContactDataFoundSnackbar(context);
-        return;
-      }
-
-      // Show contact creation sheet
-      await showContactCreationSheet(
-        context,
-        extractedData: extractedData,
-      );
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('OCR failed: $e'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );

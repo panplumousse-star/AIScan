@@ -41,7 +41,7 @@ import 'saved_preview.dart';
 /// - Page selection for multi-page documents
 /// - Animated action wizard with step-by-step flow
 /// - Document naming and folder selection
-/// - Post-save actions (share, export, OCR)
+/// - Post-save actions (share, export)
 ///
 /// ## Usage
 /// ```dart
@@ -54,7 +54,6 @@ import 'saved_preview.dart';
 ///   onDelete: () => deleteScan(),
 ///   onShare: () => shareDocument(),
 ///   onExport: () => exportDocument(),
-///   onOcr: () => extractText(),
 ///   onDone: () => finishScanning(),
 /// )
 /// ```
@@ -70,7 +69,6 @@ class ResultView extends ConsumerWidget {
     required this.onDelete,
     required this.onShare,
     required this.onExport,
-    required this.onOcr,
     required this.onDone,
   });
 
@@ -102,9 +100,6 @@ class ResultView extends ConsumerWidget {
 
   /// Callback to export the saved document.
   final VoidCallback onExport;
-
-  /// Callback to perform OCR on the document.
-  final VoidCallback onOcr;
 
   /// Callback when the user completes all actions.
   final VoidCallback onDone;
@@ -256,7 +251,6 @@ class ResultView extends ConsumerWidget {
               onDelete: onDelete,
               onShare: onShare,
               onExport: onExport,
-              onOcr: onOcr,
               onDone: onDone,
             ),
           ),

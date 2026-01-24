@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "051-split-performance-utils-dart-into-domain-specific-",
+  "spec": "061-delete-contact-ocr",
   "state": "building",
   "subtasks": {
-    "completed": 22,
-    "total": 24,
+    "completed": 10,
+    "total": 12,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Testing & Documentation",
+    "current": "Verification and Cleanup",
     "id": null,
-    "total": 5
+    "total": 4
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 24,
-    "started_at": "2026-01-24T12:55:15.152478"
+    "number": 1269,
+    "started_at": "2026-01-24T15:27:02.847571"
   },
-  "last_update": "2026-01-24T13:43:48.023274"
+  "last_update": "2026-01-24T18:08:11.128366"
 }

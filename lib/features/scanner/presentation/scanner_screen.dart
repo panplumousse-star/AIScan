@@ -183,7 +183,6 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
         },
         onShare: () => _actionHandler.handleShare(state),
         onExport: () => _actionHandler.handleExport(state),
-        onOcr: () => _actionHandler.handleOcr(state),
         onDone: () => _navigateToDocuments(context),
       );
     }

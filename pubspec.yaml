@@ -62,9 +62,6 @@ dependencies:
   permission_handler: ^12.0.0
   share_plus: ^12.0.0
 
-  # Contacts
-  flutter_contacts: ^1.1.7+1
-
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -33,7 +33,7 @@ import '../../../folders/presentation/widgets/bento_folder_dialog.dart';
 /// This widget guides users through a three-step process after scanning a document:
 /// 1. **Rename Step**: Edit the document name
 /// 2. **Folder Step**: Select a destination folder (or create new)
-/// 3. **Final Actions**: Share, Export, OCR, or Finish
+/// 3. **Final Actions**: Share, Export, or Finish
 ///
 /// Features:
 /// - Animated card flip transitions between steps
@@ -55,7 +55,6 @@ import '../../../folders/presentation/widgets/bento_folder_dialog.dart';
 ///   onDelete: () => deleteScan(),
 ///   onShare: () => shareDocument(),
 ///   onExport: () => exportDocument(),
-///   onOcr: () => extractTextWithOcr(),
 ///   onDone: () => navigateToDocuments(),
 /// )
 /// ```
@@ -68,7 +67,6 @@ class ActionWizard extends StatefulWidget {
     required this.onDelete,
     required this.onShare,
     required this.onExport,
-    required this.onOcr,
     required this.onDone,
   });
 
@@ -89,9 +87,6 @@ class ActionWizard extends StatefulWidget {
 
   /// Callback when exporting the document to external storage
   final VoidCallback onExport;
-
-  /// Callback when performing OCR on the document
-  final VoidCallback onOcr;
 
   /// Callback when finishing the workflow
   final VoidCallback onDone;
@@ -655,12 +650,6 @@ class _ActionWizardState extends State<ActionWizard>
             label: l10n?.export ?? 'Export',
             onTap: widget.onExport,
             color: const Color(0xFF10B981),
-          ),
-          _buildActionTile(
-            icon: Icons.auto_fix_high_rounded,
-            label: l10n?.ocr ?? 'OCR',
-            onTap: widget.onOcr,
-            color: const Color(0xFFF59E0B),
           ),
           _buildActionTile(
             icon: Icons.check_circle_rounded,

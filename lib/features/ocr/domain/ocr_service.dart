@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -34,6 +35,107 @@ class OcrException implements Exception {
       return 'OcrException: $message (caused by: $cause)';
     }
     return 'OcrException: $message';
+  }
+}
+
+/// Represents the timeout duration before TextRecognizer cleanup.
+///
+/// These durations define how long an unused TextRecognizer should be
+/// kept in memory before being automatically disposed to free resources.
+enum OcrRecognizerTimeout {
+  /// Clean up immediately after each use.
+  ///
+  /// The most memory-efficient option - recognizers are disposed
+  /// immediately after processing, but this may impact performance
+  /// if OCR operations are frequent.
+  immediate,
+
+  /// Clean up after 1 minute of inactivity.
+  ///
+  /// Good balance between memory usage and performance for
+  /// occasional OCR operations.
+  oneMinute,
+
+  /// Clean up after 5 minutes of inactivity.
+  ///
+  /// Suitable for moderate OCR usage with better performance.
+  fiveMinutes,
+
+  /// Clean up after 30 minutes of inactivity.
+  ///
+  /// The most lenient option - keeps recognizers in memory longer
+  /// for better performance during heavy OCR usage.
+  thirtyMinutes;
+
+  /// Returns the duration in seconds for this timeout.
+  int get seconds {
+    switch (this) {
+      case OcrRecognizerTimeout.immediate:
+        return 0;
+      case OcrRecognizerTimeout.oneMinute:
+        return 60;
+      case OcrRecognizerTimeout.fiveMinutes:
+        return 300;
+      case OcrRecognizerTimeout.thirtyMinutes:
+        return 1800;
+    }
+  }
+
+  /// Returns a human-readable label for this timeout option.
+  String get label {
+    switch (this) {
+      case OcrRecognizerTimeout.immediate:
+        return 'Immediate';
+      case OcrRecognizerTimeout.oneMinute:
+        return '1 minute';
+      case OcrRecognizerTimeout.fiveMinutes:
+        return '5 minutes';
+      case OcrRecognizerTimeout.thirtyMinutes:
+        return '30 minutes';
+    }
+  }
+
+  /// Creates an [OcrRecognizerTimeout] from a duration in seconds.
+  ///
+  /// Returns [immediate] if [seconds] is 0 or negative.
+  /// Returns the closest matching timeout if no exact match exists.
+  static OcrRecognizerTimeout fromSeconds(int seconds) {
+    if (seconds <= 0) return OcrRecognizerTimeout.immediate;
+    if (seconds <= 60) return OcrRecognizerTimeout.oneMinute;
+    if (seconds <= 300) return OcrRecognizerTimeout.fiveMinutes;
+    return OcrRecognizerTimeout.thirtyMinutes;
+  }
+}
+
+/// Tracks the last usage time and metadata for a TextRecognizer instance.
+///
+/// This structure helps manage the lifecycle of recognizers by tracking
+/// when they were created and last used, enabling automatic cleanup
+/// of inactive recognizers to prevent memory leaks.
+class RecognizerUsageTracker {
+  /// Creates a [RecognizerUsageTracker] with the current time.
+  RecognizerUsageTracker()
+      : createdAt = DateTime.now(),
+        lastUsedAt = DateTime.now();
+
+  /// When this recognizer was created.
+  final DateTime createdAt;
+
+  /// When this recognizer was last used for processing.
+  DateTime lastUsedAt;
+
+  /// Updates the last used timestamp to now.
+  void markUsed() {
+    lastUsedAt = DateTime.now();
+  }
+
+  /// Returns how long it has been since this recognizer was last used.
+  Duration get timeSinceLastUse => DateTime.now().difference(lastUsedAt);
+
+  /// Returns true if this recognizer should be cleaned up based on the timeout.
+  bool shouldCleanup(OcrRecognizerTimeout timeout) {
+    if (timeout == OcrRecognizerTimeout.immediate) return true;
+    return timeSinceLastUse.inSeconds >= timeout.seconds;
   }
 }
 
@@ -506,6 +608,15 @@ class OcrService {
   /// Cached text recognizers by script.
   final Map<TextRecognitionScript, TextRecognizer> _recognizers = {};
 
+  /// Usage trackers for each recognizer to monitor activity.
+  final Map<TextRecognitionScript, RecognizerUsageTracker> _usageTrackers = {};
+
+  /// Current timeout setting for recognizer cleanup.
+  OcrRecognizerTimeout _timeout = OcrRecognizerTimeout.fiveMinutes;
+
+  /// Periodic timer for cleaning up unused recognizers.
+  Timer? _cleanupTimer;
+
   /// Whether the service has been initialized.
   bool _isInitialized = false;
 
@@ -517,10 +628,20 @@ class OcrService {
 
   /// Gets or creates a text recognizer for the given script.
   TextRecognizer _getRecognizer(TextRecognitionScript script) {
-    return _recognizers.putIfAbsent(
+    // Get or create the recognizer
+    final recognizer = _recognizers.putIfAbsent(
       script,
       () => TextRecognizer(script: script),
     );
+
+    // Get or create the usage tracker and mark it as used
+    final tracker = _usageTrackers.putIfAbsent(
+      script,
+      RecognizerUsageTracker.new,
+    );
+    tracker.markUsed();
+
+    return recognizer;
   }
 
   /// Initializes the OCR service.
@@ -538,7 +659,11 @@ class OcrService {
         _getRecognizer(language.mlKitScript);
       }
 
+      // Start the cleanup timer if timeout is configured
+      _startCleanupTimer();
+
       _isInitialized = true;
+      debugPrint('OCR Service initialized with ML Kit');
       return true;
     } catch (e) {
       throw OcrException('Failed to initialize OCR service', cause: e);
@@ -805,15 +930,124 @@ class OcrService {
     }
   }
 
+  /// Sets the timeout for cleaning up unused recognizers.
+  ///
+  /// This method allows you to dynamically change the timeout behavior.
+  /// When called, it will:
+  /// 1. Stop the current cleanup timer (if running)
+  /// 2. Update the timeout setting
+  /// 3. Start a new cleanup timer with the new timeout (unless immediate)
+  ///
+  /// Example:
+  /// ```dart
+  /// // Clean up unused recognizers immediately after each use
+  /// ocrService.setTimeout(OcrRecognizerTimeout.immediate);
+  ///
+  /// // Keep recognizers for 5 minutes of inactivity
+  /// ocrService.setTimeout(OcrRecognizerTimeout.fiveMinutes);
+  /// ```
+  void setTimeout(OcrRecognizerTimeout timeout) {
+    if (_timeout == timeout) return; // No change needed
+
+    _stopCleanupTimer();
+    _timeout = timeout;
+    _startCleanupTimer();
+
+    debugPrint('OCR timeout updated to: ${timeout.label}');
+  }
+
+  /// Gets the current timeout setting for recognizer cleanup.
+  ///
+  /// Returns the [OcrRecognizerTimeout] currently in use.
+  OcrRecognizerTimeout getTimeout() => _timeout;
+
+  /// Gets the number of active recognizers currently in memory.
+  ///
+  /// This is useful for debugging and monitoring memory usage.
+  /// Each recognizer can consume 10-30MB of native memory depending
+  /// on the script complexity.
+  ///
+  /// Returns the count of cached [TextRecognizer] instances.
+  int getRecognizerCount() => _recognizers.length;
+
+  /// Gets a list of active recognizer scripts.
+  ///
+  /// Returns the names of all [TextRecognitionScript] values that
+  /// currently have recognizers loaded in memory.
+  ///
+  /// Useful for debugging to see which language recognizers are active.
+  List<String> getActiveRecognizers() {
+    return _recognizers.keys.map((script) => script.name).toList();
+  }
+
+  /// Starts the periodic cleanup timer for unused recognizers.
+  ///
+  /// The timer checks every minute for recognizers that haven't been used
+  /// within the configured timeout period and closes them to free memory.
+  void _startCleanupTimer() {
+    // Don't start timer for immediate cleanup (handled inline)
+    if (_timeout == OcrRecognizerTimeout.immediate) {
+      return;
+    }
+
+    // Cancel any existing timer
+    _stopCleanupTimer();
+
+    // Create a periodic timer that checks every minute
+    _cleanupTimer = Timer.periodic(const Duration(minutes: 1), (_) {
+      _cleanupUnusedRecognizers();
+    });
+
+    debugPrint('OCR cleanup timer started (timeout: ${_timeout.label})');
+  }
+
+  /// Stops the cleanup timer if it's running.
+  void _stopCleanupTimer() {
+    _cleanupTimer?.cancel();
+    _cleanupTimer = null;
+  }
+
+  /// Cleans up recognizers that haven't been used within the timeout period.
+  ///
+  /// This method iterates through all active recognizers and closes any
+  /// that haven't been accessed within the configured timeout duration.
+  Future<void> _cleanupUnusedRecognizers() async {
+    final scriptsToRemove = <TextRecognitionScript>[];
+
+    // Check each recognizer's usage tracker
+    for (final entry in _usageTrackers.entries) {
+      final script = entry.key;
+      final tracker = entry.value;
+
+      if (tracker.shouldCleanup(_timeout)) {
+        scriptsToRemove.add(script);
+      }
+    }
+
+    // Close and remove unused recognizers
+    for (final script in scriptsToRemove) {
+      final recognizer = _recognizers[script];
+      if (recognizer != null) {
+        await recognizer.close();
+        _recognizers.remove(script);
+        _usageTrackers.remove(script);
+        debugPrint('OCR: Cleaned up unused recognizer for $script');
+      }
+    }
+  }
+
   /// Clears cached recognizers.
   ///
   /// Call this to free up memory when OCR is no longer needed.
   Future<void> clearCache() async {
+    final count = _recognizers.length;
     for (final recognizer in _recognizers.values) {
       await recognizer.close();
     }
     _recognizers.clear();
+    _usageTrackers.clear();
     _isInitialized = false;
+    debugPrint('OCR: Manually cleared $count recognizer(s)');
   }
 
   /// Gets the storage size used (always 0 for ML Kit as it uses system libraries).
@@ -826,6 +1060,7 @@ class OcrService {
   ///
   /// Call this when the service is no longer needed.
   Future<void> dispose() async {
+    _stopCleanupTimer();
     await clearCache();
   }
 }

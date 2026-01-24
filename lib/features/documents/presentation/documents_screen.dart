@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/storage/document_repository.dart';
-import '../../../core/utils/performance_utils.dart';
+import '../../../core/performance/lazy_loader.dart';
+import '../../../core/performance/rate_limiting.dart';
+import '../../../core/performance/cache/thumbnail_cache_service.dart';
 import '../../folders/domain/folder_model.dart';
 import '../../folders/domain/folder_service.dart';
 import '../../sharing/domain/document_share_service.dart';

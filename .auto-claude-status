@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "030-encrypt-sqlite-database-with-sqlcipher",
+  "spec": "051-split-performance-utils-dart-into-domain-specific-",
   "state": "building",
   "subtasks": {
-    "completed": 12,
-    "total": 15,
+    "completed": 22,
+    "total": 24,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Verification - Test Encryption",
+    "current": "Testing & Documentation",
     "id": null,
-    "total": 4
+    "total": 5
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 14,
-    "started_at": "2026-01-24T13:03:09.910170"
+    "number": 24,
+    "started_at": "2026-01-24T12:55:15.152478"
   },
-  "last_update": "2026-01-24T13:42:38.970469"
+  "last_update": "2026-01-24T13:43:48.023274"
 }

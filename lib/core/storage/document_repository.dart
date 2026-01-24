@@ -7,8 +7,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../features/documents/domain/document_model.dart';
+import '../performance/cache/thumbnail_cache_service.dart';
 import '../security/encryption_service.dart';
-import '../utils/performance_utils.dart';
 import 'database_helper.dart';
 
 /// Riverpod provider for [DocumentRepository].

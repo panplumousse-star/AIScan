@@ -217,7 +217,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
     final hasPermission = await _checkAndRequestPermission(context, ref);
     if (hasPermission && context.mounted) {
       final isDark = Theme.of(context).brightness == Brightness.dark;
-      Navigator.of(context).push(
+      unawaited(Navigator.of(context).push(
         PageRouteBuilder(
           transitionDuration: const Duration(milliseconds: 200),
           reverseTransitionDuration: const Duration(milliseconds: 200),
@@ -242,7 +242,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
           ref.invalidate(totalDocumentCountProvider);
           ref.invalidate(monthlyScanCountProvider);
         }
-      });
+      }));
     }
   }
 

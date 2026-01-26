@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../l10n/app_localizations.dart';
@@ -70,7 +69,8 @@ class FolderHeaderWidget extends ConsumerWidget {
               children: [
                 Text(
                   folder.name,
-                  style: GoogleFonts.outfit(
+                  style: TextStyle(
+                  fontFamily: 'Outfit',
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: theme.colorScheme.onSurface,
@@ -80,7 +80,8 @@ class FolderHeaderWidget extends ConsumerWidget {
                 ),
                 Text(
                   'Dossier actuel',
-                  style: GoogleFonts.outfit(
+                  style: TextStyle(
+                  fontFamily: 'Outfit',
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
                     color: theme.colorScheme.onSurfaceVariant
@@ -279,7 +280,8 @@ class DocumentsSliverList extends StatelessWidget {
                           : state.filter.favoritesOnly
                               ? (l10n?.noFavorites ?? 'No favorites')
                               : (l10n?.noDocuments ?? 'No documents'),
-                      style: GoogleFonts.outfit(
+                      style: TextStyle(
+                  fontFamily: 'Outfit',
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: theme.colorScheme.onSurface,
@@ -321,7 +323,8 @@ class DocumentsSliverList extends StatelessWidget {
                     const SizedBox(height: 16),
                     Text(
                       'Ce dossier est vide',
-                      style: GoogleFonts.outfit(
+                      style: TextStyle(
+                  fontFamily: 'Outfit',
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: theme.colorScheme.onSurface,

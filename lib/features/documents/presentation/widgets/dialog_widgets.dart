@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../folders/domain/folder_model.dart';
 
@@ -219,7 +218,8 @@ class ShareFormatOption extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: GoogleFonts.outfit(
+                      style: TextStyle(
+                      fontFamily: 'Outfit',
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                         color: isDark ? Colors.white : const Color(0xFF1E1B4B),
@@ -227,7 +227,8 @@ class ShareFormatOption extends StatelessWidget {
                     ),
                     Text(
                       subtitle,
-                      style: GoogleFonts.outfit(
+                      style: TextStyle(
+                      fontFamily: 'Outfit',
                         fontSize: 12,
                         color: isDark
                             ? Colors.white.withValues(alpha: 0.6)

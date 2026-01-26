@@ -54,7 +54,6 @@ dependencies:
   # UI Components
   flutter_svg: ^2.0.0
   lottie: ^3.0.0
-  google_fonts: ^7.0.0
 
   # Signature Capture
   hand_signature: ^3.0.0

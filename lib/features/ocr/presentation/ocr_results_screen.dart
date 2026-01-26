@@ -397,10 +397,10 @@ class OcrResultsScreen extends ConsumerStatefulWidget {
   final void Function(String text)? onSaveRequested;
 
   @override
-  ConsumerState<OcrResultsScreen> createState() => _OcrResultsScreenState();
+  ConsumerState<OcrResultsScreen> createState() => _OcrResultsScreenWidgetState();
 }
 
-class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
+class _OcrResultsScreenWidgetState extends ConsumerState<OcrResultsScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 

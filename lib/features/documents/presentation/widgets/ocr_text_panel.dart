@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/security/clipboard_security_service.dart';
@@ -114,7 +113,8 @@ class _OcrTextPanelState extends ConsumerState<OcrTextPanel> {
                   Expanded(
                     child: Text(
                       l10n?.ocrText ?? 'OCR Text',
-                      style: GoogleFonts.outfit(
+                      style: TextStyle(
+                        fontFamily: 'Outfit',
                         fontWeight: FontWeight.w700,
                         color: widget.theme.colorScheme.onSurface,
                       ),
@@ -201,7 +201,8 @@ class _OcrTextPanelState extends ConsumerState<OcrTextPanel> {
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     child: Text(
                       widget.ocrText,
-                      style: GoogleFonts.outfit(
+                      style: TextStyle(
+                        fontFamily: 'Outfit',
                         fontSize: 14, // Slightly larger for easier selection
                         color: widget.theme.colorScheme.onSurface
                             .withValues(alpha: 0.7),

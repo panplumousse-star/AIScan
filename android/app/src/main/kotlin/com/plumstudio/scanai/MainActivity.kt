@@ -1,4 +1,4 @@
-package com.aiscan.aiscan
+package com.plumstudio.scanai
 
 import android.content.Intent
 import android.util.Log
@@ -16,7 +16,7 @@ import io.flutter.embedding.android.FlutterFragmentActivity
  */
 class MainActivity: FlutterFragmentActivity() {
     companion object {
-        private const val TAG = "AIScanMainActivity"
+        private const val TAG = "ScanaiMainActivity"
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

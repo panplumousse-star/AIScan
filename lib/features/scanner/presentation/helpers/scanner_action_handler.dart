@@ -10,9 +10,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../core/widgets/bento_share_format_dialog.dart';
 import '../../../../core/export/document_export_service.dart';
+import '../../../../core/storage/document_repository.dart';
 import '../../../sharing/domain/document_share_service.dart';
 import '../../../home/presentation/bento_home_screen.dart';
 import '../../../documents/presentation/documents_screen.dart';
+import '../../../ocr/domain/ocr_service.dart';
 import '../scanner_screen.dart';
 import '../state/scanner_screen_state.dart';
 
@@ -40,8 +42,78 @@ class ScannerActionHandler {
     try {
       // Handle text format separately (no file sharing needed)
       if (format == ShareFormat.text) {
+        String textToShare = state.savedDocument!.ocrText ?? '';
+
+        // If no OCR text, extract it on-the-fly
+        if (textToShare.isEmpty) {
+          // Show loading indicator
+          if (context.mounted) {
+            final l10n = AppLocalizations.of(context);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    const SizedBox(width: 16),
+                    Text(l10n?.extractingText ?? 'Extracting text...'),
+                  ],
+                ),
+                duration: const Duration(seconds: 30),
+              ),
+            );
+          }
+
+          try {
+            // Get decrypted page paths
+            final documentRepo = ref.read(documentRepositoryProvider);
+            final pagePaths = await documentRepo.getDecryptedAllPages(state.savedDocument!);
+
+            // Run OCR on pages
+            final ocrService = ref.read(ocrServiceProvider);
+            final ocrResult = await ocrService.extractTextFromMultipleFiles(pagePaths);
+
+            // Cleanup temp files
+            await documentRepo.cleanupTempFiles();
+
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+            }
+
+            if (ocrResult.hasText) {
+              textToShare = ocrResult.text;
+            } else {
+              // No text found
+              if (context.mounted) {
+                final l10n = AppLocalizations.of(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(l10n?.noTextFound ?? 'No text found in document'),
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                  ),
+                );
+              }
+              return;
+            }
+          } catch (e) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('OCR failed: $e'),
+                  backgroundColor: Theme.of(context).colorScheme.error,
+                ),
+              );
+            }
+            return;
+          }
+        }
+
         await shareService.shareText(
-          state.savedDocument!.ocrText!,
+          textToShare,
           subject: state.savedDocument!.title,
         );
         // Navigate to documents after sharing

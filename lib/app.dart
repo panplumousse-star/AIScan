@@ -13,8 +13,8 @@ import 'l10n/app_localizations.dart';
 ///
 /// Configures MaterialApp with theming, routing, and global settings.
 /// Supports both light and dark themes with system preference detection.
-class AIScanApp extends ConsumerWidget {
-  const AIScanApp({super.key});
+class ScanaiApp extends ConsumerWidget {
+  const ScanaiApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

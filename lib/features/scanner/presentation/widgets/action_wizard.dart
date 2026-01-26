@@ -631,31 +631,49 @@ class _ActionWizardState extends State<ActionWizard>
     final l10n = AppLocalizations.of(context);
     return Container(
       padding: EdgeInsets.zero,
-      child: GridView.count(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 1.3,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          _buildActionTile(
-            icon: Icons.share_rounded,
-            label: l10n?.share ?? 'Share',
-            onTap: widget.onShare,
-            color: const Color(0xFF6366F1),
+          // Row with Share and Export tiles
+          Row(
+            children: [
+              Expanded(
+                child: AspectRatio(
+                  aspectRatio: 1.3,
+                  child: _buildActionTile(
+                    icon: Icons.share_rounded,
+                    label: l10n?.share ?? 'Share',
+                    onTap: widget.onShare,
+                    color: const Color(0xFF6366F1),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: AspectRatio(
+                  aspectRatio: 1.3,
+                  child: _buildActionTile(
+                    icon: Icons.save_alt_rounded,
+                    label: l10n?.export ?? 'Export',
+                    onTap: widget.onExport,
+                    color: const Color(0xFF10B981),
+                  ),
+                ),
+              ),
+            ],
           ),
-          _buildActionTile(
-            icon: Icons.save_alt_rounded,
-            label: l10n?.export ?? 'Export',
-            onTap: widget.onExport,
-            color: const Color(0xFF10B981),
-          ),
-          _buildActionTile(
-            icon: Icons.check_circle_rounded,
-            label: l10n?.finish ?? 'Finish',
-            onTap: widget.onDone,
-            color: const Color(0xFF4F46E5),
+          const SizedBox(height: 12),
+          // Full-width Finish button
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: _buildActionTile(
+              icon: Icons.check_circle_rounded,
+              label: l10n?.finish ?? 'Finish',
+              onTap: widget.onDone,
+              color: const Color(0xFF4F46E5),
+              isWide: true,
+            ),
           ),
         ],
       ),

@@ -127,6 +127,7 @@ class DatabaseHelper {
   Future<Database> _initDatabase() async {
     final String path = join(await getDatabasesPath(), _databaseName);
     final encryptionKey = await _secureStorage.getOrCreateEncryptionKey();
+    debugPrint('DatabaseHelper: Opening database with key length: ${encryptionKey.length}');
     return await openDatabase(
       path,
       version: _databaseVersion,

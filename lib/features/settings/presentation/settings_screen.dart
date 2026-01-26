@@ -516,6 +516,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                   ),
                                 ),
                                 
+                                const SizedBox(height: 16),
+
+                                // Licenses Card
+                                BentoAnimatedEntry(
+                                  delay: const Duration(milliseconds: 350),
+                                  child: _buildLicensesCard(isDark),
+                                ),
+
                                 const SizedBox(height: 40),
                               ],
                             ),
@@ -524,6 +532,66 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ],
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLicensesCard(bool isDark) {
+    final l10n = AppLocalizations.of(context);
+    return BentoCard(
+      borderRadius: 32,
+      padding: const EdgeInsets.all(20),
+      backgroundColor: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : Colors.white,
+      onTap: () {
+        showLicensePage(
+          context: context,
+          applicationName: 'Scanai',
+          applicationVersion: '1.0.0',
+          applicationLegalese: '© 2026 Scanai. All rights reserved.',
+        );
+      },
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              Icons.description_outlined,
+              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n?.licenses ?? 'Licences open source',
+                  style: GoogleFonts.outfit(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
+                  ),
+                ),
+                Text(
+                  l10n?.licensesSubtitle ?? 'Voir les licences des bibliotheques',
+                  style: GoogleFonts.outfit(
+                    fontSize: 11,
+                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            Icons.chevron_right_rounded,
+            color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
           ),
         ],
       ),

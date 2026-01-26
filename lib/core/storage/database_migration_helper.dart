@@ -150,13 +150,37 @@ class DatabaseMigrationHelper {
 
       // Check if old database exists
       if (!await oldDbFile.exists()) {
+        debugPrint('DatabaseMigration: No database file found, no migration needed');
         return false;
       }
 
-      // Additional check: verify it's not already encrypted
-      // (Implementation will be added in phase 3)
+      // Check if database is already encrypted by trying to open AND query it
+      // An encrypted database will fail when we try to query the schema
+      try {
+        final testDb = await sqflite.openDatabase(
+          oldDbPath,
+          readOnly: true,
+        );
 
-      return true;
+        // Try to actually query the database - this will fail if it's encrypted
+        try {
+          await testDb.rawQuery('SELECT name FROM sqlite_master LIMIT 1');
+          // If we get here, database is readable without encryption = needs migration
+          await testDb.close();
+          debugPrint('DatabaseMigration: Database is unencrypted, migration needed');
+          return true;
+        } catch (queryError) {
+          // Query failed = database is encrypted, no migration needed
+          await testDb.close();
+          debugPrint('DatabaseMigration: Database is already encrypted: $queryError');
+          return false;
+        }
+      } catch (e) {
+        // Couldn't open database at all = might be encrypted or corrupted
+        // Either way, no migration needed (will be handled by DatabaseHelper)
+        debugPrint('DatabaseMigration: Cannot open database, assuming encrypted: $e');
+        return false;
+      }
     } catch (e) {
       throw MigrationException(
         'Failed to check migration status',

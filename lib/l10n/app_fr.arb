@@ -28,8 +28,8 @@
   "exclusiveAccess": "Acces exclusif",
   "offline": "Hors-ligne",
   "securedPercent": "100% securise",
-  "settingsSpeechBubbleLine1": "On peaufine",
-  "settingsSpeechBubbleLine2": "notre application",
+  "settingsSpeechBubbleLine1": "Un petit",
+  "settingsSpeechBubbleLine2": "reglage ?",
   "dismiss": "Fermer",
   "myDocuments": "Mes documents",
   "scan": "Scanner",
@@ -312,5 +312,12 @@
   "loadingDocuments": "Chargement de vos documents...",
   "exportFailed": "Echec de l'exportation",
   "whatAreYouLookingFor": "Que cherches-tu ?",
-  "needHelp": "Besoin d'aide ?"
+  "needHelp": "Besoin d'aide ?",
+
+  "licenses": "Licences open source",
+  "licensesSubtitle": "Voir les licences des bibliotheques",
+
+  "localStorageWarningTitle": "Stockage local uniquement",
+  "localStorageWarningMessage": "Vos documents sont stockes sur votre appareil et chiffres. Si vous desinstallez l'application, ils seront definitivement supprimes.\n\nPensez a exporter vos documents importants !",
+  "localStorageWarningButton": "J'ai compris"
 }

@@ -28,8 +28,8 @@
   "exclusiveAccess": "Exclusive access",
   "offline": "Offline",
   "securedPercent": "100% secured",
-  "settingsSpeechBubbleLine1": "Let's fine-tune",
-  "settingsSpeechBubbleLine2": "our application",
+  "settingsSpeechBubbleLine1": "A little",
+  "settingsSpeechBubbleLine2": "adjustment ?",
   "dismiss": "Dismiss",
   "myDocuments": "My documents",
   "scan": "Scan",
@@ -312,5 +312,12 @@
   "loadingDocuments": "Loading your documents...",
   "exportFailed": "Export failed",
   "whatAreYouLookingFor": "What are you looking for?",
-  "needHelp": "Need help?"
+  "needHelp": "Need help?",
+
+  "licenses": "Open source licenses",
+  "licensesSubtitle": "View library licenses",
+
+  "localStorageWarningTitle": "Local storage only",
+  "localStorageWarningMessage": "Your documents are stored on your device and encrypted. If you uninstall the app, they will be permanently deleted.\n\nRemember to export your important documents!",
+  "localStorageWarningButton": "Got it"
 }

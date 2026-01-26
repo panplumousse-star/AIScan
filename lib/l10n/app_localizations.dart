@@ -263,13 +263,13 @@ abstract class AppLocalizations {
   /// No description provided for @settingsSpeechBubbleLine1.
   ///
   /// In fr, this message translates to:
-  /// **'On peaufine'**
+  /// **'Un petit'**
   String get settingsSpeechBubbleLine1;
 
   /// No description provided for @settingsSpeechBubbleLine2.
   ///
   /// In fr, this message translates to:
-  /// **'notre application'**
+  /// **'reglage ?'**
   String get settingsSpeechBubbleLine2;
 
   /// No description provided for @dismiss.
@@ -1543,6 +1543,36 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Besoin d\'aide ?'**
   String get needHelp;
+
+  /// No description provided for @licenses.
+  ///
+  /// In fr, this message translates to:
+  /// **'Licences open source'**
+  String get licenses;
+
+  /// No description provided for @licensesSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Voir les licences des bibliotheques'**
+  String get licensesSubtitle;
+
+  /// No description provided for @localStorageWarningTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Stockage local uniquement'**
+  String get localStorageWarningTitle;
+
+  /// No description provided for @localStorageWarningMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vos documents sont stockes sur votre appareil et chiffres. Si vous desinstallez l\'application, ils seront definitivement supprimes.\n\nPensez a exporter vos documents importants !'**
+  String get localStorageWarningMessage;
+
+  /// No description provided for @localStorageWarningButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'J\'ai compris'**
+  String get localStorageWarningButton;
 }
 
 class _AppLocalizationsDelegate

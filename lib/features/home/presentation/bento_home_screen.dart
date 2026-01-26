@@ -249,8 +249,10 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
   void _handleAppShare(BuildContext context) {
     HapticFeedback.mediumImpact();
     final l10n = AppLocalizations.of(context);
+    const playStoreUrl = 'https://play.google.com/store/apps/details?id=com.plumstudio.scanai';
+    final shareText = '${l10n?.shareAppText ?? 'I use Scanai to secure and organize my important documents.'}\n\n$playStoreUrl';
     Share.share(
-      l10n?.shareAppText ?? 'I use Scanai to secure and organize my important documents.',
+      shareText,
       subject: l10n?.shareAppSubject ?? 'Scanai: Your secure pocket scanner',
     );
   }

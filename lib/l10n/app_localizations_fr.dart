@@ -91,10 +91,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get securedPercent => '100% securise';
 
   @override
-  String get settingsSpeechBubbleLine1 => 'On peaufine';
+  String get settingsSpeechBubbleLine1 => 'Un petit';
 
   @override
-  String get settingsSpeechBubbleLine2 => 'notre application';
+  String get settingsSpeechBubbleLine2 => 'reglage ?';
 
   @override
   String get dismiss => 'Fermer';
@@ -843,4 +843,20 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get needHelp => 'Besoin d\'aide ?';
+
+  @override
+  String get licenses => 'Licences open source';
+
+  @override
+  String get licensesSubtitle => 'Voir les licences des bibliotheques';
+
+  @override
+  String get localStorageWarningTitle => 'Stockage local uniquement';
+
+  @override
+  String get localStorageWarningMessage =>
+      'Vos documents sont stockes sur votre appareil et chiffres. Si vous desinstallez l\'application, ils seront definitivement supprimes.\n\nPensez a exporter vos documents importants !';
+
+  @override
+  String get localStorageWarningButton => 'J\'ai compris';
 }

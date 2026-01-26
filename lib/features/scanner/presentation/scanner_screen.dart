@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../core/widgets/bento_background.dart';
@@ -77,9 +78,12 @@ class ScannerScreen extends ConsumerStatefulWidget {
 class _ScannerScreenState extends ConsumerState<ScannerScreen> {
   bool _autoScanStarted = false;
   bool _scanWasActive = false;
+  bool _localStorageWarningShown = false;
 
   late final ScannerPermissionHandler _permissionHandler;
   late final ScannerActionHandler _actionHandler;
+
+  static const String _localStorageWarningKey = 'scanai_local_storage_warning_shown';
 
   @override
   void initState() {
@@ -114,6 +118,11 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
           previous?.isScanning == true) {
         Navigator.of(context).pop();
         return;
+      }
+
+      // Show first-time local storage warning when scan result appears
+      if (next.hasResult && previous?.hasResult != true) {
+        _showLocalStorageWarningIfNeeded();
       }
 
       // Show error snackbar
@@ -235,6 +244,95 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
       confirmButtonText: l10n?.abandon ?? 'Abandon',
       cancelButtonText: l10n?.cancel ?? 'Cancel',
       isDestructive: true,
+    );
+  }
+
+  /// Shows a one-time warning about local storage on first scan.
+  Future<void> _showLocalStorageWarningIfNeeded() async {
+    if (_localStorageWarningShown) return;
+    _localStorageWarningShown = true;
+
+    final prefs = await SharedPreferences.getInstance();
+    final alreadyShown = prefs.getBool(_localStorageWarningKey) ?? false;
+
+    if (alreadyShown) return;
+
+    // Mark as shown
+    await prefs.setBool(_localStorageWarningKey, true);
+
+    if (!mounted) return;
+
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1E1B4B) : Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
+        icon: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDark
+                ? const Color(0xFF312E81)
+                : const Color(0xFFEEF2FF),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            Icons.smartphone_rounded,
+            size: 32,
+            color: isDark
+                ? const Color(0xFF818CF8)
+                : const Color(0xFF6366F1),
+          ),
+        ),
+        title: Text(
+          l10n?.localStorageWarningTitle ?? 'Local storage only',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            color: isDark ? Colors.white : const Color(0xFF1E1B4B),
+          ),
+        ),
+        content: Text(
+          l10n?.localStorageWarningMessage ??
+              'Your documents are stored on your device and encrypted. If you uninstall the app, they will be permanently deleted.\n\nRemember to export your important documents!',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: isDark ? Colors.white70 : const Color(0xFF64748B),
+            height: 1.5,
+          ),
+        ),
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              style: FilledButton.styleFrom(
+                backgroundColor: isDark
+                    ? const Color(0xFF818CF8)
+                    : const Color(0xFF6366F1),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              child: Text(
+                l10n?.localStorageWarningButton ?? 'Got it',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ],
+        actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+      ),
     );
   }
 }

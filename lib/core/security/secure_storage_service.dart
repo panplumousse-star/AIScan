@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -67,6 +69,12 @@ class SecureStorageService {
 
   /// The underlying secure storage instance.
   final FlutterSecureStorage _storage;
+
+  /// Cached encryption key to prevent race conditions.
+  String? _cachedEncryptionKey;
+
+  /// Completer to prevent concurrent key generation.
+  Completer<String>? _keyGenerationCompleter;
 
   /// Key used to store the main encryption key in secure storage.
   static const String _encryptionKeyStorageKey = 'aiscan_encryption_key';
@@ -241,15 +249,44 @@ class SecureStorageService {
   ///
   /// Throws [SecureStorageException] if the operation fails.
   Future<String> getOrCreateEncryptionKey() async {
-    final existingKey = await getEncryptionKey();
-    if (existingKey != null) {
-      return existingKey;
+    // Return cached key if available (prevents race conditions)
+    if (_cachedEncryptionKey != null) {
+      debugPrint('SecureStorage: Using CACHED key (first 8 chars: ${_cachedEncryptionKey!.substring(0, 8)})');
+      return _cachedEncryptionKey!;
     }
 
-    final newKey = _generateSecureRandomBytes(_keyLengthBytes);
-    final encodedKey = base64Encode(newKey);
-    await storeEncryptionKey(encodedKey);
-    return encodedKey;
+    // If another call is already generating the key, wait for it
+    if (_keyGenerationCompleter != null) {
+      debugPrint('SecureStorage: Waiting for ongoing key generation...');
+      return _keyGenerationCompleter!.future;
+    }
+
+    // Start key generation with lock
+    _keyGenerationCompleter = Completer<String>();
+
+    try {
+      final existingKey = await getEncryptionKey();
+      if (existingKey != null) {
+        debugPrint('SecureStorage: Using EXISTING key (first 8 chars: ${existingKey.substring(0, 8)})');
+        _cachedEncryptionKey = existingKey;
+        _keyGenerationCompleter!.complete(existingKey);
+        return existingKey;
+      }
+
+      debugPrint('SecureStorage: No existing key found, generating NEW key');
+      final newKey = _generateSecureRandomBytes(_keyLengthBytes);
+      final encodedKey = base64Encode(newKey);
+      await storeEncryptionKey(encodedKey);
+      debugPrint('SecureStorage: NEW key stored (first 8 chars: ${encodedKey.substring(0, 8)})');
+      _cachedEncryptionKey = encodedKey;
+      _keyGenerationCompleter!.complete(encodedKey);
+      return encodedKey;
+    } catch (e) {
+      _keyGenerationCompleter!.completeError(e);
+      rethrow;
+    } finally {
+      _keyGenerationCompleter = null;
+    }
   }
 
   /// Generates and stores a new initialization vector if one doesn't exist.

@@ -134,3 +134,9 @@ test/**/*.mocks.dart
 .env
 .env.local
 .env.*.local
+
+# Keystore and signing credentials (NEVER commit these!)
+android/key.properties
+android/app/keystore/
+*.jks
+*.keystore

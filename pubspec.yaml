@@ -73,6 +73,7 @@ dev_dependencies:
   build_runner: ^2.4.0
   freezed: ^2.4.6
   json_serializable: ^6.7.1
+  flutter_native_splash: ^2.4.4
 
 flutter:
   generate: true
@@ -94,3 +95,16 @@ flutter:
           weight: 600
         - asset: assets/fonts/Outfit-Bold.ttf
           weight: 700
+
+# Native splash screen configuration
+# Minimal splash - transitions quickly to Flutter skeleton
+flutter_native_splash:
+  color: "#F8FAFC"
+  color_dark: "#0F172A"
+  # No image - faster transition to animated Flutter skeleton
+  android_12:
+    color: "#F8FAFC"
+    color_dark: "#0F172A"
+  android: true
+  ios: true
+  web: false

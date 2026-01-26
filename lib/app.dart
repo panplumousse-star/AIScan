@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/providers/locale_provider.dart';
 import 'core/theme/app_theme.dart';
+import 'core/widgets/skeleton_loading.dart';
 import 'features/app_lock/domain/app_lock_service.dart';
 import 'features/app_lock/presentation/lock_screen.dart';
 import 'features/home/presentation/bento_home_screen.dart';
@@ -85,11 +86,13 @@ class ScanaiApp extends ConsumerWidget {
   }
 }
 
-/// Root home widget that handles lock screen logic.
+/// Minimum duration to show skeleton for smooth perceived loading.
+const _kMinSkeletonDuration = Duration(milliseconds: 800);
+
+/// Root home widget that handles startup animation and lock screen logic.
 ///
-/// Checks if the app lock is enabled and shows the lock screen
-/// if authentication is required. After successful authentication,
-/// shows the main app content.
+/// Shows a skeleton loading screen during app initialization, then
+/// transitions smoothly to the home screen or lock screen.
 class _AppHome extends ConsumerStatefulWidget {
   const _AppHome();
 
@@ -98,17 +101,47 @@ class _AppHome extends ConsumerStatefulWidget {
 }
 
 class _AppHomeState extends ConsumerState<_AppHome>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
+  bool _isInitialized = false;
+  bool _minDurationPassed = false;
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
+    // Setup fade animation for smooth transition
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeOut,
+    );
+
+    // Start minimum duration timer
+    Future.delayed(_kMinSkeletonDuration, () {
+      if (mounted) {
+        setState(() => _minDurationPassed = true);
+        _checkAndTransition();
+      }
+    });
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _fadeController.dispose();
     super.dispose();
+  }
+
+  void _checkAndTransition() {
+    if (_isInitialized && _minDurationPassed && !_fadeController.isAnimating) {
+      _fadeController.forward();
+    }
   }
 
   @override
@@ -130,13 +163,44 @@ class _AppHomeState extends ConsumerState<_AppHome>
     return lockScreenCheck.when(
       // Lock check complete - show appropriate screen
       data: (shouldShowLock) {
-        if (shouldShowLock) {
-          // Show lock screen - after authentication, it will dismiss
-          return const _LockScreenWrapper();
-        } else {
-          // No lock required - show main app
-          return const BentoHomeScreen();
+        // Mark as initialized
+        if (!_isInitialized) {
+          _isInitialized = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _checkAndTransition();
+          });
         }
+
+        // Determine target screen
+        final targetScreen = shouldShowLock
+            ? const _LockScreenWrapper()
+            : const BentoHomeScreen();
+
+        // Show skeleton until both init complete AND min duration passed
+        if (!_minDurationPassed) {
+          return const _LoadingScreen();
+        }
+
+        // Fade transition from skeleton to target
+        return AnimatedBuilder(
+          animation: _fadeAnimation,
+          builder: (context, child) {
+            return Stack(
+              children: [
+                // Skeleton underneath (fades out)
+                Opacity(
+                  opacity: 1.0 - _fadeAnimation.value,
+                  child: const _LoadingScreen(),
+                ),
+                // Target screen on top (fades in)
+                Opacity(
+                  opacity: _fadeAnimation.value,
+                  child: targetScreen,
+                ),
+              ],
+            );
+          },
+        );
       },
       // While checking lock status, show loading screen
       loading: () => const _LoadingScreen(),
@@ -188,16 +252,14 @@ class _LockScreenWrapperState extends ConsumerState<_LockScreenWrapper> {
 }
 
 /// Loading screen shown while checking lock status.
+///
+/// Uses skeleton placeholder cards that match the home screen layout,
+/// providing a smoother perceived loading experience instead of a spinner.
 class _LoadingScreen extends StatelessWidget {
   const _LoadingScreen();
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bentoBackground,
-      body: const Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
+    return const BentoHomeScreenSkeleton();
   }
 }

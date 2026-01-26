@@ -268,13 +268,15 @@ class DocumentRepository {
       // Get file info from first page
       final originalFileName = path.basename(sourceImagePaths.first);
 
-      // Encrypt and store each page
-      final encryptedPagePaths = <String>[];
-      for (var i = 0; i < sourceImagePaths.length; i++) {
+      // Encrypt and store each page (parallelized for performance)
+      final encryptionTasks = List.generate(sourceImagePaths.length, (i) async {
         final encryptedPath = await _generatePageFilePath(id, i);
         await _encryption.encryptFile(sourceImagePaths[i], encryptedPath);
-        encryptedPagePaths.add(encryptedPath);
-      }
+        return encryptedPath;
+      });
+
+      // Execute all encryption tasks in parallel
+      final encryptedPagePaths = await Future.wait(encryptionTasks);
 
       // Encrypt and store thumbnail if provided
       String? encryptedThumbnailPath;
@@ -673,11 +675,11 @@ class DocumentRepository {
   /// Throws [DocumentRepositoryException] if decryption fails.
   Future<List<String>> getDecryptedAllPages(Document document) async {
     try {
-      final decryptedPaths = <String>[];
       final tempDir = await _getTempDirectory();
       final timestamp = DateTime.now().millisecondsSinceEpoch;
 
-      for (var i = 0; i < document.pagesPaths.length; i++) {
+      // Decrypt pages in parallel for performance
+      final decryptionTasks = List.generate(document.pagesPaths.length, (i) async {
         final encryptedPath = document.pagesPaths[i];
         final encryptedFile = File(encryptedPath);
         if (!await encryptedFile.exists()) {
@@ -690,8 +692,11 @@ class DocumentRepository {
         final decryptedPath = path.join(tempDir.path, decryptedFileName);
 
         await _encryption.decryptFile(encryptedPath, decryptedPath);
-        decryptedPaths.add(decryptedPath);
-      }
+        return decryptedPath;
+      });
+
+      // Execute all decryption tasks in parallel
+      final decryptedPaths = await Future.wait(decryptionTasks);
 
       return decryptedPaths;
     } catch (e) {

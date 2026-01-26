@@ -308,12 +308,13 @@ class _LoadingDots extends StatefulWidget {
   const _LoadingDots({
     required this.color,
     this.size = 8.0,
-    this.spacing = 4.0,
   });
 
   final Color color;
   final double size;
-  final double spacing;
+
+  /// Spacing between dots (hardcoded for simplicity).
+  static const double _spacing = 4.0;
 
   @override
   State<_LoadingDots> createState() => _LoadingDotsState();
@@ -352,7 +353,7 @@ class _LoadingDotsState extends State<_LoadingDots>
             final scale = _calculateScale(animValue);
 
             return Padding(
-              padding: EdgeInsets.symmetric(horizontal: widget.spacing / 2),
+              padding: EdgeInsets.symmetric(horizontal: _LoadingDots._spacing / 2),
               child: Transform.scale(
                 scale: scale,
                 child: Container(

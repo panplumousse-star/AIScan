@@ -1472,27 +1472,6 @@ class DocumentRepository {
   // Utility Methods
   // ============================================================
 
-  /// Gets the MIME type for a file extension.
-  String _getMimeType(String extension) {
-    switch (extension.toLowerCase()) {
-      case '.jpg':
-      case '.jpeg':
-        return 'image/jpeg';
-      case '.png':
-        return 'image/png';
-      case '.gif':
-        return 'image/gif';
-      case '.webp':
-        return 'image/webp';
-      case '.pdf':
-        return 'application/pdf';
-      case '.heic':
-        return 'image/heic';
-      default:
-        return 'application/octet-stream';
-    }
-  }
-
   /// Cleans up temporary decrypted files from the temp directory.
   ///
   /// Call this periodically to free up disk space from temporary files.

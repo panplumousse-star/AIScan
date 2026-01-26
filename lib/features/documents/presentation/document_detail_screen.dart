@@ -609,7 +609,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
           }
 
           // Check if OCR found any text
-          if (textToShare == null || textToShare.isEmpty) {
+          if (textToShare.isEmpty) {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(

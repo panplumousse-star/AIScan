@@ -61,6 +61,9 @@ class EnhancementScreenState with _$EnhancementScreenState {
     /// Original image bytes before enhancement.
     Uint8List? originalBytes,
 
+    /// Preview-sized image bytes for faster processing.
+    Uint8List? previewSizedBytes,
+
     /// Path to the source image file.
     String? imagePath,
     // ignore: redirect_to_invalid_return_type

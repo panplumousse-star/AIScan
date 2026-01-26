@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/widgets/bento_background.dart';
 import '../../../core/widgets/bento_card.dart';
@@ -238,7 +237,7 @@ class _LockScreenWidgetState extends ConsumerState<LockScreen> {
                           Text(
                             l10n?.appIsLocked ?? 'Scanai is locked',
                             textAlign: TextAlign.center,
-                            style: GoogleFonts.outfit(
+                            style: TextStyle(fontFamily: 'Outfit', 
                               fontSize: 22,
                               fontWeight: FontWeight.w700,
                               color: isDark
@@ -251,7 +250,7 @@ class _LockScreenWidgetState extends ConsumerState<LockScreen> {
                             l10n?.authenticateToAccess ??
                                 'Authenticate to access your secured documents.',
                             textAlign: TextAlign.center,
-                            style: GoogleFonts.outfit(
+                            style: TextStyle(fontFamily: 'Outfit', 
                               fontSize: 14,
                               color: isDark
                                   ? const Color(0xFF94A3B8)
@@ -291,7 +290,7 @@ class _LockScreenWidgetState extends ConsumerState<LockScreen> {
                       Text(
                         state.error!,
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.outfit(
+                        style: TextStyle(fontFamily: 'Outfit', 
                           fontSize: 12,
                           color: Colors.redAccent,
                           fontWeight: FontWeight.w500,
@@ -378,7 +377,7 @@ class _UnlockButtonState extends State<_UnlockButton>
               const SizedBox(width: 8),
               Text(
                 AppLocalizations.of(context)?.unlock ?? 'Unlock',
-                style: GoogleFonts.outfit(
+                style: TextStyle(fontFamily: 'Outfit', 
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                   fontSize: 16,

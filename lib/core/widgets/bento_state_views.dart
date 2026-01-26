@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../l10n/app_localizations.dart';
 import 'bento_card.dart';
@@ -51,7 +50,7 @@ class BentoLoadingView extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             displayMessage,
-            style: GoogleFonts.outfit(
+            style: TextStyle(fontFamily: 'Outfit', 
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: const Color(0xFF64748B),
@@ -112,7 +111,7 @@ class BentoErrorView extends StatelessWidget {
               Text(
                 displayTitle,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.outfit(
+                style: TextStyle(fontFamily: 'Outfit', 
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
                   color: theme.colorScheme.onSurface,
@@ -122,7 +121,7 @@ class BentoErrorView extends StatelessWidget {
               Text(
                 message,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.outfit(
+                style: TextStyle(fontFamily: 'Outfit', 
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
@@ -132,7 +131,7 @@ class BentoErrorView extends StatelessWidget {
                 icon: const Icon(Icons.refresh_rounded),
                 label: Text(
                   displayRetryLabel,
-                  style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+                  style: TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.w600),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4F46E5),
@@ -202,7 +201,7 @@ class BentoEmptyView extends StatelessWidget {
             const SizedBox(height: 24),
             Text(
               title,
-              style: GoogleFonts.outfit(
+              style: TextStyle(fontFamily: 'Outfit', 
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
                 color: theme.colorScheme.onSurface,
@@ -212,7 +211,7 @@ class BentoEmptyView extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               description,
-              style: GoogleFonts.outfit(
+              style: TextStyle(fontFamily: 'Outfit', 
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
               textAlign: TextAlign.center,
@@ -232,7 +231,7 @@ class BentoEmptyView extends StatelessWidget {
                 ),
                 child: Text(
                   actionLabel!,
-                  style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+                  style: TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -298,7 +297,7 @@ class BentoNoResultsView extends StatelessWidget {
             const SizedBox(height: 24),
             Text(
               displayTitle,
-              style: GoogleFonts.outfit(
+              style: TextStyle(fontFamily: 'Outfit', 
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
                 color: theme.colorScheme.onSurface,
@@ -308,7 +307,7 @@ class BentoNoResultsView extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               displayDescription,
-              style: GoogleFonts.outfit(
+              style: TextStyle(fontFamily: 'Outfit', 
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
               textAlign: TextAlign.center,
@@ -328,7 +327,7 @@ class BentoNoResultsView extends StatelessWidget {
                 ),
                 child: Text(
                   actionLabel!,
-                  style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+                  style: TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.w600),
                 ),
               ),
             ],

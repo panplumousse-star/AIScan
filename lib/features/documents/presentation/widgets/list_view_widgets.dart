@@ -1,6 +1,5 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../domain/document_model.dart';
 import '../../../../core/widgets/bento_card.dart';
@@ -157,7 +156,7 @@ class DocumentListItem extends StatelessWidget {
                 children: [
                   Text(
                     document.title,
-                    style: GoogleFonts.outfit(
+                    style: TextStyle(fontFamily: 'Outfit', 
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: colorScheme.onSurface,
@@ -170,7 +169,7 @@ class DocumentListItem extends StatelessWidget {
                     children: [
                       Text(
                         document.fileSizeFormatted,
-                        style: GoogleFonts.outfit(
+                        style: TextStyle(fontFamily: 'Outfit', 
                           fontSize: 13,
                           color: colorScheme.onSurfaceVariant
                               .withValues(alpha: 0.7),
@@ -186,7 +185,7 @@ class DocumentListItem extends StatelessWidget {
                         const SizedBox(width: 2),
                         Text(
                           '${document.pageCount} pages',
-                          style: GoogleFonts.outfit(
+                          style: TextStyle(fontFamily: 'Outfit', 
                             fontSize: 13,
                             color: colorScheme.onSurfaceVariant,
                           ),
@@ -199,7 +198,7 @@ class DocumentListItem extends StatelessWidget {
                     children: [
                       Text(
                         _formatDate(document.createdAt),
-                        style: GoogleFonts.outfit(
+                        style: TextStyle(fontFamily: 'Outfit', 
                           fontSize: 12,
                           color: colorScheme.onSurfaceVariant
                               .withValues(alpha: 0.5),
@@ -217,7 +216,7 @@ class DocumentListItem extends StatelessWidget {
                           ),
                           child: Text(
                             'OCR',
-                            style: GoogleFonts.outfit(
+                            style: TextStyle(fontFamily: 'Outfit', 
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
                               color: colorScheme.onSecondaryContainer,

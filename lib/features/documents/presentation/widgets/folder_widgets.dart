@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../l10n/app_localizations.dart';
 import '../../../folders/domain/folder_model.dart';
@@ -66,7 +65,7 @@ class _FoldersSectionState extends State<FoldersSection> {
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
           child: Text(
             'Dossiers',
-            style: GoogleFonts.outfit(
+            style: TextStyle(fontFamily: 'Outfit', 
               fontSize: 18,
               fontWeight: FontWeight.w700,
               color: widget.theme.colorScheme.onSurface,
@@ -140,7 +139,7 @@ class _FoldersSectionState extends State<FoldersSection> {
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
           child: Text(
             'Documents',
-            style: GoogleFonts.outfit(
+            style: TextStyle(fontFamily: 'Outfit', 
               fontSize: 18,
               fontWeight: FontWeight.w700,
               color: widget.theme.colorScheme.onSurface,
@@ -204,7 +203,7 @@ class AddFolderButton extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 l10n?.newFolder ?? 'New',
-                style: GoogleFonts.outfit(
+                style: TextStyle(fontFamily: 'Outfit', 
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: colorScheme.primary,

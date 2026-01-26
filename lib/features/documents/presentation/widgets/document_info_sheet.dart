@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/widgets/bento_card.dart';
 import '../../../../core/widgets/bento_mascot.dart';
@@ -81,7 +80,8 @@ class DocumentInfoSheet extends StatelessWidget {
                 const SizedBox(width: 16),
                 Text(
                   'Informations Document',
-                  style: GoogleFonts.outfit(
+                  style: TextStyle(
+                    fontFamily: 'Outfit',
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
                     color: theme.colorScheme.onSurface,
@@ -252,7 +252,8 @@ class BentoInfoRow extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style: GoogleFonts.outfit(
+                    style: TextStyle(
+                      fontFamily: 'Outfit',
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
@@ -261,7 +262,8 @@ class BentoInfoRow extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     value,
-                    style: GoogleFonts.outfit(
+                    style: TextStyle(
+                      fontFamily: 'Outfit',
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: theme.colorScheme.onSurface,

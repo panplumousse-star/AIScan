@@ -1,7 +1,6 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../features/sharing/domain/document_share_service.dart';
 import '../../l10n/app_localizations.dart';
@@ -90,7 +89,7 @@ class BentoShareFormatDialog extends StatelessWidget {
                                 horizontal: 20, vertical: 12),
                             child: Text(
                               l10n?.share ?? 'Share',
-                              style: GoogleFonts.outfit(
+                              style: TextStyle(fontFamily: 'Outfit', 
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
                                 color: isDark
@@ -107,7 +106,7 @@ class BentoShareFormatDialog extends StatelessWidget {
                   const SizedBox(height: 16),
                   Text(
                     l10n?.shareAs ?? 'Share as',
-                    style: GoogleFonts.outfit(
+                    style: TextStyle(fontFamily: 'Outfit', 
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
                       color: theme.colorScheme.onSurface,
@@ -150,7 +149,7 @@ class BentoShareFormatDialog extends StatelessWidget {
                     onPressed: () => Navigator.pop(context),
                     child: Text(
                       l10n?.cancel ?? 'Cancel',
-                      style: GoogleFonts.outfit(
+                      style: TextStyle(fontFamily: 'Outfit', 
                         color:
                             theme.colorScheme.onSurface.withValues(alpha: 0.5),
                       ),
@@ -208,7 +207,7 @@ class _ShareOptionTile extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: GoogleFonts.outfit(
+                    style: TextStyle(fontFamily: 'Outfit', 
                       fontWeight: FontWeight.w700,
                       fontSize: 16,
                       color: theme.colorScheme.onSurface,
@@ -216,7 +215,7 @@ class _ShareOptionTile extends StatelessWidget {
                   ),
                   Text(
                     subtitle,
-                    style: GoogleFonts.outfit(
+                    style: TextStyle(fontFamily: 'Outfit', 
                       fontSize: 12,
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),

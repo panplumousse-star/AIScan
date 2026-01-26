@@ -3,7 +3,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../core/storage/document_repository.dart';
@@ -283,7 +282,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                       child: Text(
                         state.document?.title ??
                             (l10n?.loading ?? 'Loading...'),
-                        style: GoogleFonts.outfit(
+                        style: TextStyle(fontFamily: 'Outfit', 
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
                           color:
@@ -421,7 +420,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                           horizontal: 12, vertical: 8),
                       child: Text(
                         l10n?.needHelp ?? 'Need help?',
-                        style: GoogleFonts.outfit(
+                        style: TextStyle(fontFamily: 'Outfit', 
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color:
@@ -788,7 +787,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                     Text(
                       AppLocalizations.of(context)?.deleteConfirmTitle ??
                           'Delete document?',
-                      style: GoogleFonts.outfit(
+                      style: TextStyle(fontFamily: 'Outfit', 
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
                         color: theme.colorScheme.onSurface,
@@ -799,7 +798,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                       AppLocalizations.of(context)?.deleteConfirmMessage ??
                           'This action cannot be undone. The document will be permanently deleted.',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.outfit(
+                      style: TextStyle(fontFamily: 'Outfit', 
                         color:
                             theme.colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
@@ -813,7 +812,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                             child: Text(
                                 AppLocalizations.of(context)?.cancel ??
                                     'Cancel',
-                                style: GoogleFonts.outfit()),
+                                style: TextStyle(fontFamily: 'Outfit', )),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -834,7 +833,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                                 child: Text(
                                   AppLocalizations.of(context)?.delete ??
                                       'Delete',
-                                  style: GoogleFonts.outfit(
+                                  style: TextStyle(fontFamily: 'Outfit', 
                                     fontWeight: FontWeight.w700,
                                     color: Colors.redAccent,
                                   ),

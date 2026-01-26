@@ -1,7 +1,6 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../l10n/app_localizations.dart';
 import 'bento_card.dart';
@@ -132,7 +131,7 @@ class BentoConfirmationDialog extends StatelessWidget {
                               ),
                               child: Text(
                                 effectiveSpeechBubbleText,
-                                style: GoogleFonts.outfit(
+                                style: TextStyle(fontFamily: 'Outfit', 
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
                                   color: isDark
@@ -148,7 +147,7 @@ class BentoConfirmationDialog extends StatelessWidget {
                     const SizedBox(height: 16),
                     Text(
                       title,
-                      style: GoogleFonts.outfit(
+                      style: TextStyle(fontFamily: 'Outfit', 
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                         color: theme.colorScheme.onSurface,
@@ -157,7 +156,7 @@ class BentoConfirmationDialog extends StatelessWidget {
                     const SizedBox(height: 12),
                     Text(
                       message,
-                      style: GoogleFonts.outfit(
+                      style: TextStyle(fontFamily: 'Outfit', 
                         fontSize: 14,
                         color:
                             theme.colorScheme.onSurface.withValues(alpha: 0.7),
@@ -174,7 +173,7 @@ class BentoConfirmationDialog extends StatelessWidget {
                             ),
                             child: Text(
                               cancelButtonText ?? (l10n?.cancel ?? 'Cancel'),
-                              style: GoogleFonts.outfit(
+                              style: TextStyle(fontFamily: 'Outfit', 
                                 color: theme.colorScheme.onSurface
                                     .withValues(alpha: 0.5),
                               ),
@@ -199,7 +198,7 @@ class BentoConfirmationDialog extends StatelessWidget {
                                 child: Center(
                                   child: Text(
                                     confirmButtonText ?? (l10n?.ok ?? 'OK'),
-                                    style: GoogleFonts.outfit(
+                                    style: TextStyle(fontFamily: 'Outfit', 
                                       fontWeight: FontWeight.w700,
                                       color: Colors.white,
                                       fontSize: 15,

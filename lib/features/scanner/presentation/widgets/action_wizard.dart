@@ -21,7 +21,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../l10n/app_localizations.dart';
 import '../../../folders/domain/folder_model.dart';
@@ -260,19 +259,22 @@ class _ActionWizardState extends State<ActionWizard>
         children: [
           TextField(
             controller: _titleController,
-            style: GoogleFonts.outfit(
+            style: TextStyle(
+              fontFamily: 'Outfit',
               fontSize: 18,
               fontWeight: FontWeight.w700,
               color: isDark ? Colors.white : const Color(0xFF1E293B),
             ),
             decoration: InputDecoration(
               labelText: l10n?.documentName ?? 'Document name',
-              labelStyle: GoogleFonts.outfit(
+              labelStyle: TextStyle(
+                fontFamily: 'Outfit',
                 color: isDark ? Colors.white60 : Colors.black45,
                 fontWeight: FontWeight.w600,
               ),
               hintText: 'ex: ${widget.initialTitle}',
-              hintStyle: GoogleFonts.outfit(
+              hintStyle: TextStyle(
+                fontFamily: 'Outfit',
                 color: isDark ? Colors.white30 : Colors.black26,
                 fontWeight: FontWeight.w500,
               ),
@@ -386,11 +388,12 @@ class _ActionWizardState extends State<ActionWizard>
                             controller: _folderSearchController,
                             onChanged: (value) =>
                                 setState(() => _folderSearchQuery = value),
-                            style: GoogleFonts.outfit(fontSize: 13),
+                            style: const TextStyle(fontFamily: 'Outfit', fontSize: 13),
                             decoration: InputDecoration(
                               hintText:
                                   l10n?.searchFolder ?? 'Search folder...',
-                              hintStyle: GoogleFonts.outfit(
+                              hintStyle: TextStyle(
+                                  fontFamily: 'Outfit',
                                   color:
                                       isDark ? Colors.white30 : Colors.black38,
                                   fontSize: 13),
@@ -610,7 +613,8 @@ class _ActionWizardState extends State<ActionWizard>
             const SizedBox(height: 6),
             Text(
               label,
-              style: GoogleFonts.outfit(
+              style: TextStyle(
+                fontFamily: 'Outfit',
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
                 color: isSelected
@@ -731,7 +735,8 @@ class _ActionWizardState extends State<ActionWizard>
               const SizedBox(width: 8),
               Text(
                 label,
-                style: GoogleFonts.outfit(
+                style: TextStyle(
+                  fontFamily: 'Outfit',
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: isSecondary ? color : Colors.white,
@@ -789,7 +794,8 @@ class _ActionWizardState extends State<ActionWizard>
                   Expanded(
                     child: Text(
                       label,
-                      style: GoogleFonts.outfit(
+                      style: TextStyle(
+                        fontFamily: 'Outfit',
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: isDark ? Colors.white : const Color(0xFF1E293B),
@@ -805,7 +811,8 @@ class _ActionWizardState extends State<ActionWizard>
                   const SizedBox(height: 8),
                   Text(
                     label,
-                    style: GoogleFonts.outfit(
+                    style: TextStyle(
+                      fontFamily: 'Outfit',
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: isDark ? Colors.white : const Color(0xFF1E293B),

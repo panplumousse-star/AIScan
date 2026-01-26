@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/widgets/bento_background.dart';
 import '../../../core/widgets/bento_confirmation_dialog.dart';
@@ -669,7 +668,8 @@ class _PreviewArea extends StatelessWidget {
             const SizedBox(height: 24),
             Text(
               'Préparation de l\'image...',
-              style: GoogleFonts.outfit(
+              style: TextStyle(
+                fontFamily: 'Outfit',
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: theme.colorScheme.primary,
@@ -1194,7 +1194,8 @@ class _BentoPrimaryButton extends StatelessWidget {
                 if (isLoading || icon != null) const SizedBox(width: 8),
                 Text(
                   label,
-                  style: GoogleFonts.outfit(
+                  style: const TextStyle(
+                    fontFamily: 'Outfit',
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
                     fontSize: 16,
@@ -1244,7 +1245,8 @@ class _BentoSecondaryButton extends StatelessWidget {
           child: Center(
             child: Text(
               label,
-              style: GoogleFonts.outfit(
+              style: TextStyle(
+                fontFamily: 'Outfit',
                 fontWeight: FontWeight.w700,
                 color: theme.brightness == Brightness.dark
                     ? Colors.white.withValues(alpha: 0.7)

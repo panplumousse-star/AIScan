@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 // ============================================================================
 // Theme Mode Provider
@@ -304,7 +303,7 @@ abstract final class AppTheme {
       surfaceContainerHighest: AppColors.surfaceVariantLight,
     );
 
-    final textTheme = GoogleFonts.outfitTextTheme(ThemeData.light().textTheme);
+    final textTheme = ThemeData.light().textTheme.apply(fontFamily: 'Outfit');
 
     return ThemeData(
       useMaterial3: true,
@@ -325,7 +324,8 @@ abstract final class AppTheme {
           systemNavigationBarColor: colorScheme.surface,
           systemNavigationBarIconBrightness: Brightness.dark,
         ),
-        titleTextStyle: GoogleFonts.outfit(
+        titleTextStyle: TextStyle(
+          fontFamily: 'Outfit',
           color: colorScheme.onSurface,
           fontSize: 20,
           fontWeight: FontWeight.w600,
@@ -362,7 +362,8 @@ abstract final class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: AppBorderRadius.button,
           ),
-          textStyle: GoogleFonts.outfit(
+          textStyle: const TextStyle(
+            fontFamily: 'Outfit',
             fontSize: 14,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.5,
@@ -380,7 +381,8 @@ abstract final class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: AppBorderRadius.button,
           ),
-          textStyle: GoogleFonts.outfit(
+          textStyle: const TextStyle(
+            fontFamily: 'Outfit',
             fontSize: 14,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.5,
@@ -475,7 +477,8 @@ abstract final class AppTheme {
           horizontal: AppSpacing.md,
           vertical: 14,
         ),
-        hintStyle: GoogleFonts.outfit(
+        hintStyle: TextStyle(
+          fontFamily: 'Outfit',
           color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
         ),
         prefixIconColor: colorScheme.onSurfaceVariant,
@@ -488,7 +491,8 @@ abstract final class AppTheme {
         selectedColor: colorScheme.secondaryContainer,
         disabledColor:
             colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-        labelStyle: GoogleFonts.outfit(
+        labelStyle: TextStyle(
+          fontFamily: 'Outfit',
           color: colorScheme.onSurfaceVariant,
           fontSize: 13,
           fontWeight: FontWeight.w500,
@@ -508,12 +512,14 @@ abstract final class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: AppBorderRadius.card,
         ),
-        titleTextStyle: GoogleFonts.outfit(
+        titleTextStyle: TextStyle(
+          fontFamily: 'Outfit',
           color: colorScheme.onSurface,
           fontSize: 16,
           fontWeight: FontWeight.w600,
         ),
-        subtitleTextStyle: GoogleFonts.outfit(
+        subtitleTextStyle: TextStyle(
+          fontFamily: 'Outfit',
           color: colorScheme.onSurfaceVariant,
           fontSize: 14,
         ),
@@ -535,13 +541,15 @@ abstract final class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: AppBorderRadius.dialog,
         ),
-        titleTextStyle: GoogleFonts.outfit(
+        titleTextStyle: TextStyle(
+          fontFamily: 'Outfit',
           color: colorScheme.onSurface,
           fontSize: 20,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.5,
         ),
-        contentTextStyle: GoogleFonts.outfit(
+        contentTextStyle: TextStyle(
+          fontFamily: 'Outfit',
           color: colorScheme.onSurfaceVariant,
           fontSize: 14,
         ),
@@ -564,7 +572,8 @@ abstract final class AppTheme {
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: colorScheme.inverseSurface,
-        contentTextStyle: GoogleFonts.outfit(
+        contentTextStyle: TextStyle(
+          fontFamily: 'Outfit',
           color: colorScheme.onInverseSurface,
           fontSize: 14,
         ),
@@ -588,7 +597,8 @@ abstract final class AppTheme {
         thumbColor: colorScheme.primary,
         overlayColor: colorScheme.primary.withValues(alpha: 0.12),
         valueIndicatorColor: colorScheme.primaryContainer,
-        valueIndicatorTextStyle: GoogleFonts.outfit(
+        valueIndicatorTextStyle: TextStyle(
+          fontFamily: 'Outfit',
           color: colorScheme.onPrimaryContainer,
           fontSize: 12,
           fontWeight: FontWeight.w600,
@@ -642,7 +652,8 @@ abstract final class AppTheme {
         indicatorColor: colorScheme.secondaryContainer,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final isSelected = states.contains(WidgetState.selected);
-          return GoogleFonts.outfit(
+          return TextStyle(
+            fontFamily: 'Outfit',
             fontSize: 12,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
             color: isSelected
@@ -669,7 +680,8 @@ abstract final class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: AppBorderRadius.card,
         ),
-        textStyle: GoogleFonts.outfit(
+        textStyle: TextStyle(
+          fontFamily: 'Outfit',
           color: colorScheme.onSurface,
           fontSize: 14,
         ),
@@ -682,7 +694,8 @@ abstract final class AppTheme {
           color: colorScheme.inverseSurface,
           borderRadius: AppBorderRadius.chip,
         ),
-        textStyle: GoogleFonts.outfit(
+        textStyle: TextStyle(
+          fontFamily: 'Outfit',
           color: colorScheme.onInverseSurface,
           fontSize: 12,
         ),
@@ -692,7 +705,8 @@ abstract final class AppTheme {
       badgeTheme: BadgeThemeData(
         backgroundColor: colorScheme.error,
         textColor: colorScheme.onError,
-        textStyle: GoogleFonts.outfit(
+        textStyle: const TextStyle(
+          fontFamily: 'Outfit',
           fontSize: 10,
           fontWeight: FontWeight.w700,
         ),
@@ -739,7 +753,7 @@ abstract final class AppTheme {
       surfaceContainerHighest: AppColors.surfaceVariantDark,
     );
 
-    final textTheme = GoogleFonts.outfitTextTheme(ThemeData.dark().textTheme);
+    final textTheme = ThemeData.dark().textTheme.apply(fontFamily: 'Outfit');
 
     return ThemeData(
       useMaterial3: true,
@@ -760,7 +774,8 @@ abstract final class AppTheme {
           systemNavigationBarColor: colorScheme.surface,
           systemNavigationBarIconBrightness: Brightness.light,
         ),
-        titleTextStyle: GoogleFonts.outfit(
+        titleTextStyle: TextStyle(
+          fontFamily: 'Outfit',
           color: colorScheme.onSurface,
           fontSize: 20,
           fontWeight: FontWeight.w600,
@@ -797,7 +812,8 @@ abstract final class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: AppBorderRadius.button,
           ),
-          textStyle: GoogleFonts.outfit(
+          textStyle: const TextStyle(
+            fontFamily: 'Outfit',
             fontSize: 14,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.5,
@@ -815,7 +831,8 @@ abstract final class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: AppBorderRadius.button,
           ),
-          textStyle: GoogleFonts.outfit(
+          textStyle: const TextStyle(
+            fontFamily: 'Outfit',
             fontSize: 14,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.5,

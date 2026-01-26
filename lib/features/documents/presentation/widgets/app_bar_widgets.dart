@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/widgets/bento_card.dart';
 import '../../../../core/widgets/bento_mascot.dart';
@@ -74,7 +73,8 @@ class DocumentsAppBar extends StatelessWidget {
           // Title always "My Documents"
           Text(
             l10n?.myDocuments ?? 'My Documents',
-            style: GoogleFonts.outfit(
+            style: TextStyle(
+                    fontFamily: 'Outfit',
               fontSize: 20,
               fontWeight: FontWeight.w700,
               color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
@@ -139,7 +139,8 @@ class DocumentsBentoHeader extends StatelessWidget {
                 child: Center(
                   child: Text(
                     l10n?.whatAreYouLookingFor ?? 'What are you looking for?',
-                    style: GoogleFonts.outfit(
+                    style: TextStyle(
+                    fontFamily: 'Outfit',
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       color: theme.colorScheme.onSurface,

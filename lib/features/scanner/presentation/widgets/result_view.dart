@@ -18,7 +18,6 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../l10n/app_localizations.dart';
 import '../../../../core/widgets/bento_card.dart';
@@ -172,7 +171,8 @@ class ResultView extends ConsumerWidget {
                             ? (l10n?.scanSuccessMessage ??
                                 'Done, it\'s in the box!')
                             : (l10n?.savePromptMessage ?? 'Shall we save it?'),
-                        style: GoogleFonts.outfit(
+                        style: TextStyle(
+                          fontFamily: 'Outfit',
                           fontSize: 14,
                           fontWeight: FontWeight.w800,
                           color:
@@ -232,7 +232,8 @@ class ResultView extends ConsumerWidget {
           if (!isSaved && scanResult != null)
             Text(
               'Page ${selectedIndex + 1} sur ${scanResult!.pageCount}',
-              style: GoogleFonts.outfit(
+              style: TextStyle(
+                fontFamily: 'Outfit',
                 fontSize: 14,
                 color: isDark ? Colors.white70 : Colors.black54,
                 fontWeight: FontWeight.w600,

@@ -4,7 +4,6 @@ import 'dart:ui'; // For ImageFilter
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // For HapticFeedback
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/permissions/camera_permission_service.dart';
 import '../../../core/permissions/permission_dialog.dart';
@@ -437,7 +436,8 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                       monthlyScans > 0
                           ? (l10n?.documentsSecured(monthlyScans) ?? '$monthlyScans documents secured')
                           : (l10n?.secureYourDocuments ?? 'Secure your documents'),
-                      style: GoogleFonts.outfit(
+                      style: TextStyle(
+                        fontFamily: 'Outfit',
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
                         color: isDark ? AppColors.surfaceVariantLight : const Color(0xFF1E1B4B),
@@ -445,7 +445,8 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                     ),
                     Text(
                       l10n?.savedLocally ?? 'Everything saved locally',
-                      style: GoogleFonts.outfit(
+                      style: TextStyle(
+                        fontFamily: 'Outfit',
                         fontSize: 12,
                         color: isDark ? AppColors.neutralDark : AppColors.neutralLight,
                       ),
@@ -555,7 +556,8 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                                       "Zzz ... Zzz"
                                     ][_sleepMessageIndex]
                                   : (hasJustScanned ? celebrationMessage : _getGreeting(context)),
-                              style: GoogleFonts.outfit(
+                              style: TextStyle(
+                        fontFamily: 'Outfit',
                                 fontSize: (hasJustScanned || _isSleeping) ? 22 : 24,
                                 fontWeight: FontWeight.w800,
                                 color: isDark ? AppColors.surfaceVariantLight : AppColors.surfaceVariantDark,
@@ -571,7 +573,8 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                           greetingSubtitle,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.outfit(
+                          style: TextStyle(
+                        fontFamily: 'Outfit',
                             fontSize: 12,
                             color: isDark ? AppColors.neutralDark : AppColors.neutralLight,
                             letterSpacing: 0.2,
@@ -699,7 +702,8 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                   children: [
                     Text(
                       l10n?.scanDocument ?? 'Scanner un\ndocument',
-                      style: GoogleFonts.outfit(
+                      style: TextStyle(
+                        fontFamily: 'Outfit',
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
@@ -730,7 +734,8 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                             ),
                             child: Text(
                               l10n?.scan ?? 'Scanner',
-                              style: GoogleFonts.outfit(
+                              style: TextStyle(
+                        fontFamily: 'Outfit',
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.white,
@@ -819,7 +824,8 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                     children: [
                       Text(
                         l10n?.myDocuments ?? 'Documents',
-                        style: GoogleFonts.outfit(
+                        style: TextStyle(
+                        fontFamily: 'Outfit',
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
                           color: isDark ? AppColors.surfaceVariantLight : const Color(0xFF1E1B4B),
@@ -827,7 +833,8 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                       ),
                       Text(
                         count > 0 ? (l10n?.allDocuments ?? 'Voir mes fichiers') : (l10n?.noDocuments ?? 'Aucun document'),
-                        style: GoogleFonts.outfit(
+                        style: TextStyle(
+                        fontFamily: 'Outfit',
                           fontSize: 14,
                           color: isDark
                               ? AppColors.neutralDark
@@ -884,7 +891,8 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                   ),
                   child: Text(
                     '$count',
-                    style: GoogleFonts.outfit(
+                    style: TextStyle(
+                        fontFamily: 'Outfit',
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
                       color: Colors.white,
@@ -953,7 +961,8 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                   l10n?.settings ?? 'Reglages',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.outfit(
+                  style: TextStyle(
+                        fontFamily: 'Outfit',
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                     color: isDark ? AppColors.surfaceVariantLight : const Color(0xFF1E1B4B), // Deep Indigo / Off White
@@ -963,7 +972,8 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
                   l10n?.appearance ?? 'Preferences',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.outfit(
+                  style: TextStyle(
+                        fontFamily: 'Outfit',
                     fontSize: 11,
                     color: isDark
                         ? AppColors.neutralDark

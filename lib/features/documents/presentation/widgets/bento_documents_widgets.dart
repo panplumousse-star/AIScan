@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../models/documents_ui_models.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -143,7 +142,8 @@ class _StatChip extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             label,
-            style: GoogleFonts.outfit(
+            style: TextStyle(
+              fontFamily: 'Outfit',
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: color,
@@ -316,13 +316,15 @@ class _BentoSearchBarState extends State<BentoSearchBar>
               controller: widget.controller,
               focusNode: _focusNode,
               onChanged: widget.onChanged,
-              style: GoogleFonts.outfit(
+              style: TextStyle(
+              fontFamily: 'Outfit',
                 color: isDark ? Colors.white : Colors.black87,
                 fontSize: 15,
               ),
               decoration: InputDecoration(
                 hintText: l10n?.search ?? 'Search...',
-                hintStyle: GoogleFonts.outfit(
+                hintStyle: TextStyle(
+              fontFamily: 'Outfit',
                   color: isDark ? Colors.white38 : Colors.grey[500],
                   fontSize: 15,
                 ),
@@ -426,7 +428,8 @@ class _BentoSearchBarState extends State<BentoSearchBar>
             ),
             child: Text(
               '${widget.selectedCount}',
-              style: GoogleFonts.outfit(
+              style: TextStyle(
+              fontFamily: 'Outfit',
                 fontWeight: FontWeight.w700,
                 color: theme.colorScheme.primary,
                 fontSize: 14,
@@ -437,7 +440,8 @@ class _BentoSearchBarState extends State<BentoSearchBar>
           Flexible(
             child: Text(
               _buildSelectionText(l10n),
-              style: GoogleFonts.outfit(
+              style: TextStyle(
+              fontFamily: 'Outfit',
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
                 color: isDark
@@ -609,7 +613,8 @@ class _BentoFolderCardState extends State<BentoFolderCard>
                   const SizedBox(height: 10),
                   Text(
                     widget.name,
-                    style: GoogleFonts.outfit(
+                    style: TextStyle(
+              fontFamily: 'Outfit',
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: isDark ? Colors.white : Colors.grey[800],
@@ -622,7 +627,8 @@ class _BentoFolderCardState extends State<BentoFolderCard>
                   Text(
                     l10n?.nDocs(widget.documentCount) ??
                         '${widget.documentCount} docs',
-                    style: GoogleFonts.outfit(
+                    style: TextStyle(
+              fontFamily: 'Outfit',
                       fontSize: 12,
                       color: isDark ? Colors.white38 : Colors.grey[500],
                     ),
@@ -769,7 +775,8 @@ class _BentoDocumentCardState extends State<BentoDocumentCard>
                   children: [
                     Text(
                       widget.title,
-                      style: GoogleFonts.outfit(
+                      style: TextStyle(
+              fontFamily: 'Outfit',
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                         color: isDark ? Colors.white : Colors.grey[800],
@@ -780,7 +787,8 @@ class _BentoDocumentCardState extends State<BentoDocumentCard>
                     const SizedBox(height: 4),
                     Text(
                       widget.subtitle,
-                      style: GoogleFonts.outfit(
+                      style: TextStyle(
+              fontFamily: 'Outfit',
                         fontSize: 13,
                         color: isDark ? Colors.white38 : Colors.grey[500],
                       ),
@@ -805,7 +813,8 @@ class _BentoDocumentCardState extends State<BentoDocumentCard>
                               child: Text(
                                 l10n?.pageCount(widget.pageCount) ??
                                     '${widget.pageCount} page${widget.pageCount > 1 ? 's' : ''}',
-                                style: GoogleFonts.outfit(
+                                style: TextStyle(
+              fontFamily: 'Outfit',
                                   fontSize: 11,
                                   fontWeight: FontWeight.w500,
                                   color: isDark
@@ -957,7 +966,8 @@ class _BentoScanFabState extends State<BentoScanFab>
               icon: const Icon(Icons.document_scanner_rounded),
               label: Text(
                 l10n?.scanner ?? 'Scan',
-                style: GoogleFonts.outfit(
+                style: TextStyle(
+              fontFamily: 'Outfit',
                   fontWeight: FontWeight.w700,
                   fontSize: 16,
                   letterSpacing: 0.2,

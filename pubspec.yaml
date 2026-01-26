@@ -54,7 +54,6 @@ dependencies:
   # UI Components
   flutter_svg: ^2.0.0
   lottie: ^3.0.0
-  google_fonts: ^7.0.0
 
   # Signature Capture
   hand_signature: ^3.0.0
@@ -84,3 +83,14 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/audio/
+
+  fonts:
+    - family: Outfit
+      fonts:
+        - asset: assets/fonts/Outfit-Regular.ttf
+        - asset: assets/fonts/Outfit-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Outfit-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Outfit-Bold.ttf
+          weight: 700

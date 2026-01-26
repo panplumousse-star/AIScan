@@ -1,7 +1,6 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/widgets/bento_card.dart';
 import '../../../../core/widgets/bento_mascot.dart';
@@ -168,7 +167,8 @@ class _BentoFolderDialogState extends State<BentoFolderDialog> {
                             widget.isEditing
                                 ? (l10n?.editFolder ?? 'Edit folder')
                                 : (l10n?.createFolder ?? 'Create folder'),
-                            style: GoogleFonts.outfit(
+                            style: TextStyle(
+                              fontFamily: 'Outfit',
                               fontSize: 20,
                               fontWeight: FontWeight.w700,
                               color: colorScheme.onSurface,
@@ -202,13 +202,15 @@ class _BentoFolderDialogState extends State<BentoFolderDialog> {
                       child: TextField(
                         controller: _nameController,
                         autofocus: true,
-                        style: GoogleFonts.outfit(
+                        style: TextStyle(
+                          fontFamily: 'Outfit',
                           fontWeight: FontWeight.w600,
                           color: colorScheme.onSurface,
                         ),
                         decoration: InputDecoration(
                           hintText: l10n?.folderName ?? 'Folder name...',
-                          hintStyle: GoogleFonts.outfit(
+                          hintStyle: TextStyle(
+                            fontFamily: 'Outfit',
                             color: colorScheme.onSurfaceVariant
                                 .withValues(alpha: 0.5),
                           ),
@@ -228,7 +230,8 @@ class _BentoFolderDialogState extends State<BentoFolderDialog> {
                     // Color picker label
                     Text(
                       'Couleur',
-                      style: GoogleFonts.outfit(
+                      style: TextStyle(
+                        fontFamily: 'Outfit',
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
                         color: colorScheme.onSurface,
@@ -274,7 +277,8 @@ class _BentoFolderDialogState extends State<BentoFolderDialog> {
                             ),
                             child: Text(
                               l10n?.cancel ?? 'Cancel',
-                              style: GoogleFonts.outfit(
+                              style: TextStyle(
+                                fontFamily: 'Outfit',
                                 fontWeight: FontWeight.w600,
                                 color: colorScheme.onSurface
                                     .withValues(alpha: 0.4),
@@ -320,7 +324,8 @@ class _BentoFolderDialogState extends State<BentoFolderDialog> {
                                     widget.isEditing
                                         ? (l10n?.save ?? 'Save')
                                         : (l10n?.create ?? 'Create'),
-                                    style: GoogleFonts.outfit(
+                                    style: TextStyle(
+                                      fontFamily: 'Outfit',
                                       fontWeight: FontWeight.w700,
                                       color: Colors.white,
                                       fontSize: 16,

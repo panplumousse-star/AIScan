@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 /// An action button for the document detail bottom action bar.
 ///
@@ -149,7 +148,8 @@ class DocumentActionButton extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   label,
-                  style: GoogleFonts.outfit(
+                  style: TextStyle(
+                  fontFamily: 'Outfit',
                     fontSize: 11,
                     fontWeight: isPrimary ? FontWeight.w700 : FontWeight.w600,
                     color: isPrimary

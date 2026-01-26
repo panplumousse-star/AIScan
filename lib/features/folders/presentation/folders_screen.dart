@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -156,7 +158,7 @@ class FoldersScreenNotifier extends StateNotifier<FoldersScreenState> {
       state = state.copyWith(folders: folders, isLoading: false);
 
       // Load folder stats in background
-      _loadFolderStats(folders);
+      unawaited(_loadFolderStats(folders));
     } on FolderServiceException catch (e) {
       state = state.copyWith(
         isLoading: false,

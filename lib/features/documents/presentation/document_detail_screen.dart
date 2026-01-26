@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -915,9 +916,9 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
           ),
         );
         // Refresh document state
-        ref
+        unawaited(ref
             .read(documentDetailScreenProvider.notifier)
-            .loadDocument(state.document!.id);
+            .loadDocument(state.document!.id));
       }
     } catch (e) {
       if (mounted) {

@@ -16,6 +16,7 @@
 /// ensure proper document organization.
 library;
 
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -195,7 +196,7 @@ class _ActionWizardState extends State<ActionWizard>
         : _titleController.text.trim();
 
     setState(() => _isSavingLocal = true);
-    _pulseController.repeat(reverse: true);
+    unawaited(_pulseController.repeat(reverse: true));
 
     // The actual save happens via widget.onSave.
     widget.onSave(finalTitle, _selectedFolderId);

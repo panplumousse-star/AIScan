@@ -37,7 +37,7 @@ class ScannerPermissionHandler {
               storageState == StoragePermissionState.sessionOnly;
 
       // Only enable gallery import if storage permission is granted
-      ref.read(scannerScreenProvider.notifier).multiPageScan(
+      await ref.read(scannerScreenProvider.notifier).multiPageScan(
             allowGalleryImport: hasStoragePermission,
           );
     }

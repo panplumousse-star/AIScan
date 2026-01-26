@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -100,7 +102,7 @@ class FolderHeaderWidget extends ConsumerWidget {
             ),
             onPressed: () async {
               await ref.read(folderServiceProvider).toggleFavorite(folder.id);
-              notifier.loadDocuments();
+              unawaited(notifier.loadDocuments());
             },
             style: IconButton.styleFrom(
               backgroundColor: folder.isFavorite

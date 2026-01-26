@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -354,7 +355,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
       );
 
       // Load thumbnails in background
-      _loadThumbnails(documents);
+      unawaited(_loadThumbnails(documents));
     } on DocumentRepositoryException catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -390,7 +391,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
       );
 
       // Load thumbnails for new documents
-      _loadThumbnails(newDocuments);
+      unawaited(_loadThumbnails(newDocuments));
 
       return true;
     } on DocumentRepositoryException catch (e) {

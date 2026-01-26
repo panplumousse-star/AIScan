@@ -98,7 +98,9 @@ class _BentoInteractiveWrapperState extends State<BentoInteractiveWrapper>
     _controller.forward();
 
     // Tilt calculation based on touch position relative to center
-    final RenderBox box = context.findRenderObject() as RenderBox;
+    final renderObject = context.findRenderObject();
+    if (renderObject is! RenderBox) return;
+    final box = renderObject;
     final localPos = details.localPosition;
     final centerX = box.size.width / 2;
     final centerY = box.size.height / 2;

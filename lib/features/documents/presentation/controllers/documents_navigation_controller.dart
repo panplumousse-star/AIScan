@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -126,7 +128,7 @@ class DocumentsNavigationController {
                   result.text,
                 );
                 // Refresh the documents list
-                ref.read(documentsScreenProvider.notifier).loadDocuments();
+                unawaited(ref.read(documentsScreenProvider.notifier).loadDocuments());
               } catch (e) {
                 // Error saving OCR text - silently fail
               }

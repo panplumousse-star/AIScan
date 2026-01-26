@@ -986,9 +986,11 @@ class DatabaseHelper {
 
     // Group pages by document ID
     for (final page in pages) {
-      final docId = page[columnDocumentId] as String;
-      final filePath = page[columnFilePath] as String;
-      result[docId]!.add(filePath);
+      final docId = page[columnDocumentId] as String?;
+      final filePath = page[columnFilePath] as String?;
+      if (docId != null && filePath != null && result.containsKey(docId)) {
+        result[docId]!.add(filePath);
+      }
     }
 
     return result;
@@ -1127,9 +1129,11 @@ class DatabaseHelper {
 
     // Group tags by document ID
     for (final tag in tags) {
-      final docId = tag[columnDocumentId] as String;
-      final tagId = tag[columnTagId] as String;
-      result[docId]!.add(tagId);
+      final docId = tag[columnDocumentId] as String?;
+      final tagId = tag[columnTagId] as String?;
+      if (docId != null && tagId != null && result.containsKey(docId)) {
+        result[docId]!.add(tagId);
+      }
     }
 
     return result;

@@ -74,6 +74,27 @@ class ThemePersistenceService {
       // Silently ignore storage errors for theme preferences
     }
   }
+
+  static const _showSecurityWarningsKey = 'show_security_warnings';
+
+  /// Loads the security warnings preference from storage.
+  Future<bool> loadShowSecurityWarnings() async {
+    try {
+      final value = await _storage.read(key: _showSecurityWarningsKey);
+      return value != 'false'; // Default to true
+    } catch (_) {
+      return true;
+    }
+  }
+
+  /// Saves the security warnings preference to storage.
+  Future<void> saveShowSecurityWarnings(bool show) async {
+    try {
+      await _storage.write(key: _showSecurityWarningsKey, value: show.toString());
+    } catch (_) {
+      // Silently ignore storage errors
+    }
+  }
 }
 
 /// Riverpod provider for the theme persistence service.

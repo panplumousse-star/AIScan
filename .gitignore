@@ -140,3 +140,7 @@ android/key.properties
 android/app/keystore/
 *.jks
 *.keystore
+
+# SonarQube (contains tokens)
+sonar-project.properties
+.scannerwork/

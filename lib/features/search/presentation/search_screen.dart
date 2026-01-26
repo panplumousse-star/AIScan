@@ -142,8 +142,7 @@ class SearchScreenState {
 /// Manages search operations, suggestions, and history.
 class SearchScreenNotifier extends StateNotifier<SearchScreenState> {
   /// Creates a [SearchScreenNotifier] with the given search service.
-  SearchScreenNotifier(this._searchService)
-      : super(const SearchScreenState());
+  SearchScreenNotifier(this._searchService) : super(const SearchScreenState());
 
   final SearchService _searchService;
   Timer? _debounceTimer;
@@ -747,7 +746,8 @@ class _InitialView extends StatelessWidget {
               Icon(
                 Icons.search,
                 size: 64,
-                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                color:
+                    theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
               ),
               const SizedBox(height: 16),
               Text(
@@ -1057,7 +1057,8 @@ class _SearchResultCard extends StatelessWidget {
                             Icon(
                               Icons.text_snippet_outlined,
                               size: 14,
-                              color: theme.colorScheme.primary.withValues(alpha: 0.7),
+                              color: theme.colorScheme.primary
+                                  .withValues(alpha: 0.7),
                             ),
                         ],
                       ),

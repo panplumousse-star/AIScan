@@ -491,7 +491,7 @@ abstract final class AppTheme {
         selectedColor: colorScheme.secondaryContainer,
         disabledColor:
             colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-        labelStyle: const TextStyle(
+        labelStyle: TextStyle(
           fontFamily: 'Outfit',
           color: colorScheme.onSurfaceVariant,
           fontSize: 13,
@@ -512,13 +512,13 @@ abstract final class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: AppBorderRadius.card,
         ),
-        titleTextStyle: const TextStyle(
+        titleTextStyle: TextStyle(
           fontFamily: 'Outfit',
           color: colorScheme.onSurface,
           fontSize: 16,
           fontWeight: FontWeight.w600,
         ),
-        subtitleTextStyle: const TextStyle(
+        subtitleTextStyle: TextStyle(
           fontFamily: 'Outfit',
           color: colorScheme.onSurfaceVariant,
           fontSize: 14,
@@ -541,14 +541,14 @@ abstract final class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: AppBorderRadius.dialog,
         ),
-        titleTextStyle: const TextStyle(
+        titleTextStyle: TextStyle(
           fontFamily: 'Outfit',
           color: colorScheme.onSurface,
           fontSize: 20,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.5,
         ),
-        contentTextStyle: const TextStyle(
+        contentTextStyle: TextStyle(
           fontFamily: 'Outfit',
           color: colorScheme.onSurfaceVariant,
           fontSize: 14,
@@ -572,7 +572,7 @@ abstract final class AppTheme {
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: colorScheme.inverseSurface,
-        contentTextStyle: const TextStyle(
+        contentTextStyle: TextStyle(
           fontFamily: 'Outfit',
           color: colorScheme.onInverseSurface,
           fontSize: 14,
@@ -597,7 +597,7 @@ abstract final class AppTheme {
         thumbColor: colorScheme.primary,
         overlayColor: colorScheme.primary.withValues(alpha: 0.12),
         valueIndicatorColor: colorScheme.primaryContainer,
-        valueIndicatorTextStyle: const TextStyle(
+        valueIndicatorTextStyle: TextStyle(
           fontFamily: 'Outfit',
           color: colorScheme.onPrimaryContainer,
           fontSize: 12,
@@ -680,7 +680,7 @@ abstract final class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: AppBorderRadius.card,
         ),
-        textStyle: const TextStyle(
+        textStyle: TextStyle(
           fontFamily: 'Outfit',
           color: colorScheme.onSurface,
           fontSize: 14,
@@ -694,7 +694,7 @@ abstract final class AppTheme {
           color: colorScheme.inverseSurface,
           borderRadius: AppBorderRadius.chip,
         ),
-        textStyle: const TextStyle(
+        textStyle: TextStyle(
           fontFamily: 'Outfit',
           color: colorScheme.onInverseSurface,
           fontSize: 12,
@@ -774,7 +774,7 @@ abstract final class AppTheme {
           systemNavigationBarColor: colorScheme.surface,
           systemNavigationBarIconBrightness: Brightness.light,
         ),
-        titleTextStyle: const TextStyle(
+        titleTextStyle: TextStyle(
           fontFamily: 'Outfit',
           color: colorScheme.onSurface,
           fontSize: 20,

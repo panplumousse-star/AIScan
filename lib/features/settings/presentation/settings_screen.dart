@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/providers/locale_provider.dart';
 import '../../../core/providers/ocr_language_provider.dart';
@@ -312,7 +311,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         const Spacer(),
                         Text(
                           AppLocalizations.of(context)?.settings ?? 'Reglages',
-                          style: GoogleFonts.outfit(
+                          style: TextStyle(
+                            fontFamily: 'Outfit',
                             fontSize: 20,
                             fontWeight: FontWeight.w700,
                             color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
@@ -465,7 +465,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 children: [
                   Text(
                     l10n?.settingsSpeechBubbleLine1 ?? 'On peaufine',
-                    style: GoogleFonts.outfit(
+                    style: TextStyle(
+                      fontFamily: 'Outfit',
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
                       color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E293B),
@@ -475,7 +476,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                   Text(
                     l10n?.settingsSpeechBubbleLine2 ?? 'notre application',
-                    style: GoogleFonts.outfit(
+                    style: TextStyle(
+                      fontFamily: 'Outfit',
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E293B),
@@ -552,7 +554,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                const SizedBox(width: 12),
                Text(
                  l10n?.appearance ?? 'Apparence',
-                 style: GoogleFonts.outfit(
+                 style: TextStyle(
+                   fontFamily: 'Outfit',
                    fontSize: 18,
                    fontWeight: FontWeight.w700,
                    color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
@@ -630,7 +633,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const SizedBox(height: 8),
             Text(
               label,
-              style: GoogleFonts.outfit(
+              style: TextStyle(
+                fontFamily: 'Outfit',
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                 color: isSelected ? selectedColor : (isDark ? Colors.grey : Colors.grey[600]),
@@ -651,25 +655,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         builder: (context) => AlertDialog.adaptive(
           title: Text(
             l10n?.enableLockTitle ?? 'Activer le verrouillage ?',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+            style: const TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.w700),
           ),
           content: Text(
             l10n?.enableLockMessage ?? 'Souhaitez-vous securiser l\'acces a vos documents avec votre empreinte digitale ?',
-            style: GoogleFonts.outfit(),
+            style: const TextStyle(fontFamily: 'Outfit'),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
               child: Text(
                 l10n?.cancel ?? 'Annuler',
-                style: GoogleFonts.outfit(color: Colors.grey),
+                style: const TextStyle(fontFamily: 'Outfit', color: Colors.grey),
               ),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
               child: Text(
                 l10n?.enable ?? 'Activer',
-                style: GoogleFonts.outfit(
+                style: const TextStyle(
+                  fontFamily: 'Outfit',
                   color: const Color(0xFF6366F1),
                   fontWeight: FontWeight.w700,
                 ),
@@ -741,7 +746,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 12),
           Text(
             l10n?.security ?? 'Verrouillage',
-            style: GoogleFonts.outfit(
+            style: TextStyle(
+              fontFamily: 'Outfit',
               fontSize: 16,
               fontWeight: FontWeight.w700,
               color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
@@ -750,7 +756,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 2),
           Text(
             enabled ? (l10n?.enabled ?? 'Active') : (l10n?.disabled ?? 'Desactive'),
-             style: GoogleFonts.outfit(
+             style: TextStyle(
+              fontFamily: 'Outfit',
               fontSize: 12,
               color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
             ),
@@ -771,7 +778,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     isDense: true,
                     icon: Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: isDark ? Colors.grey : Colors.black54),
                     dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-                    style: GoogleFonts.outfit(
+                    style: TextStyle(
+                      fontFamily: 'Outfit',
                       fontSize: 12,
                       color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
                     ),
@@ -829,7 +837,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               Expanded(
                 child: Text(
                   l10n?.appLanguage ?? 'Langue',
-                  style: GoogleFonts.outfit(
+                  style: TextStyle(
+                    fontFamily: 'Outfit',
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
@@ -857,7 +866,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     color: isDark ? Colors.grey : Colors.black54,
                   ),
                   dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-                  style: GoogleFonts.outfit(
+                  style: TextStyle(
+                    fontFamily: 'Outfit',
                     fontSize: 14,
                     color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
                   ),
@@ -888,7 +898,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               Expanded(
                 child: Text(
                   'Interface',
-                  style: GoogleFonts.outfit(
+                  style: TextStyle(
+                    fontFamily: 'Outfit',
                     fontSize: 10,
                     color: isDark ? Colors.white38 : Colors.black26,
                   ),
@@ -930,7 +941,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               Expanded(
                 child: Text(
                   l10n?.ocrLanguage ?? 'OCR',
-                  style: GoogleFonts.outfit(
+                  style: TextStyle(
+                    fontFamily: 'Outfit',
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
@@ -958,7 +970,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     color: isDark ? Colors.grey : Colors.black54,
                   ),
                   dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-                  style: GoogleFonts.outfit(
+                  style: TextStyle(
+                    fontFamily: 'Outfit',
                     fontSize: 14,
                     color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
                   ),
@@ -992,7 +1005,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               Expanded(
                 child: Text(
                   'Reconnaissance texte',
-                  style: GoogleFonts.outfit(
+                  style: TextStyle(
+                    fontFamily: 'Outfit',
                     fontSize: 10,
                     color: isDark ? Colors.white38 : Colors.black26,
                   ),
@@ -1029,7 +1043,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               Text(
                 'v1.0.0',
-                style: GoogleFonts.outfit(
+                style: TextStyle(
+                  fontFamily: 'Outfit',
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
@@ -1040,7 +1055,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 16),
           Text(
             l10n?.appTitle ?? 'Scanai',
-            style: GoogleFonts.outfit(
+            style: TextStyle(
+              fontFamily: 'Outfit',
               fontSize: 22,
               fontWeight: FontWeight.w700,
               color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
@@ -1051,7 +1067,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             children: [
               Text(
                 l10n?.developedWith ?? 'Developpee avec le',
-                style: GoogleFonts.outfit(
+                style: TextStyle(
+                  fontFamily: 'Outfit',
                   fontSize: 12,
                   color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                 ),
@@ -1075,7 +1092,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               Expanded(
                 child: Text(
                   l10n?.securityDetails ?? 'Details securite',
-                  style: GoogleFonts.outfit(
+                  style: TextStyle(
+                    fontFamily: 'Outfit',
                     fontSize: 10,
                     color: isDark ? Colors.white38 : Colors.black26,
                   ),
@@ -1091,7 +1109,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         children: [
           Text(
             l10n?.securityTitle ?? 'Securite',
-            style: GoogleFonts.outfit(
+            style: TextStyle(
+              fontFamily: 'Outfit',
               fontSize: 15,
               fontWeight: FontWeight.w700,
               color: isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1),
@@ -1146,7 +1165,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             children: [
               Text(
                 title,
-                style: GoogleFonts.outfit(
+                style: TextStyle(
+                  fontFamily: 'Outfit',
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
@@ -1154,7 +1174,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               Text(
                 subtitle,
-                style: GoogleFonts.outfit(
+                style: TextStyle(
+                  fontFamily: 'Outfit',
                   fontSize: 9,
                   color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                 ),

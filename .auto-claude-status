@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "050-adopt-freezed-for-state-class-code-generation",
+  "spec": "062-bundle-google-fonts-instead-of-runtime-downloads",
   "state": "building",
   "subtasks": {
-    "completed": 18,
-    "total": 20,
+    "completed": 3,
+    "total": 8,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Documentation and Cleanup",
+    "current": "Bundle Outfit Font Implementation",
     "id": null,
-    "total": 3
+    "total": 8
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 20,
-    "started_at": "2026-01-26T09:03:29.871584"
+    "number": 5,
+    "started_at": "2026-01-26T12:39:36.078745"
   },
-  "last_update": "2026-01-26T10:21:23.564145"
+  "last_update": "2026-01-26T12:50:01.949435"
 }

@@ -918,7 +918,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               Expanded(
                 child: Text(
                   l10n?.appLanguage ?? 'Langue',
-                  style: TextStyle(fontFamily: 'Outfit', 
+                  style: TextStyle(fontFamily: 'Outfit',
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
@@ -930,7 +930,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 16),
           BentoInteractiveWrapper(
             child: Container(
-              height: 40,
+              height: 48,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
                 color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.withValues(alpha: 0.1),

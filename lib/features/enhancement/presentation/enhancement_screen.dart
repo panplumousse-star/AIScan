@@ -465,10 +465,10 @@ class EnhancementScreen extends ConsumerStatefulWidget {
   final String? title;
 
   @override
-  ConsumerState<EnhancementScreen> createState() => _EnhancementScreenState();
+  ConsumerState<EnhancementScreen> createState() => _EnhancementScreenWidgetState();
 }
 
-class _EnhancementScreenState extends ConsumerState<EnhancementScreen> {
+class _EnhancementScreenWidgetState extends ConsumerState<EnhancementScreen> {
   @override
   void initState() {
     super.initState();

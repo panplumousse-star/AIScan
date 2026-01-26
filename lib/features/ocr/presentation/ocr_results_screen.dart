@@ -9,6 +9,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../l10n/app_localizations.dart';
+import '../../../core/security/clipboard_security_service.dart';
+import '../../../core/security/sensitive_data_detector.dart';
 import '../../documents/domain/document_model.dart';
 import '../domain/ocr_service.dart';
 import 'widgets/empty_result_view.dart';
@@ -637,24 +639,52 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
   ) async {
     if (state.ocrResult == null) return;
     final l10n = AppLocalizations.of(context);
+    final clipboardService = ref.read(clipboardSecurityServiceProvider);
 
-    await Clipboard.setData(
-      ClipboardData(text: state.ocrResult!.trimmedText),
-    );
-
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            l10n?.copiedWords(state.ocrResult!.wordCount ?? 0) ??
-                'Copied ${state.ocrResult!.wordCount} words to clipboard',
-          ),
-          action: SnackBarAction(
-            label: l10n?.dismiss ?? 'Dismiss',
-            onPressed: () {},
-          ),
-        ),
+    try {
+      final result = await clipboardService.copyToClipboard(
+        state.ocrResult!.trimmedText,
+        onSensitiveDataDetected: (detection) async {
+          if (!context.mounted) return false;
+          return await _showSensitiveDataWarning(context, detection);
+        },
       );
+
+      if (!result.success) {
+        // User cancelled or error occurred
+        return;
+      }
+
+      if (context.mounted) {
+        // Show success message with optional auto-clear countdown
+        final message = result.willAutoClear
+            ? '${l10n?.copiedWords(state.ocrResult!.wordCount ?? 0) ?? 'Copied ${state.ocrResult!.wordCount} words'}. Clipboard will clear in ${result.autoClearDuration?.inSeconds ?? 0}s'
+            : l10n?.copiedWords(state.ocrResult!.wordCount ?? 0) ??
+                'Copied ${state.ocrResult!.wordCount} words to clipboard';
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            action: SnackBarAction(
+              label: l10n?.dismiss ?? 'Dismiss',
+              onPressed: () {},
+            ),
+          ),
+        );
+      }
+    } on ClipboardSecurityException catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                l10n?.failedToCopyText ?? 'Failed to copy text: ${e.message}'),
+            action: SnackBarAction(
+              label: l10n?.dismiss ?? 'Dismiss',
+              onPressed: () {},
+            ),
+          ),
+        );
+      }
     }
   }
 
@@ -666,11 +696,21 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
   ) async {
     if (state.selectedText == null || state.selectedText!.isEmpty) return;
     final l10n = AppLocalizations.of(context);
+    final clipboardService = ref.read(clipboardSecurityServiceProvider);
 
     try {
-      await Clipboard.setData(
-        ClipboardData(text: state.selectedText!),
+      final result = await clipboardService.copyToClipboard(
+        state.selectedText!,
+        onSensitiveDataDetected: (detection) async {
+          if (!context.mounted) return false;
+          return await _showSensitiveDataWarning(context, detection);
+        },
       );
+
+      if (!result.success) {
+        // User cancelled or error occurred
+        return;
+      }
 
       // Haptic feedback on successful copy
       await HapticFeedback.mediumImpact();
@@ -679,12 +719,15 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
       final wordCount = _countWords(state.selectedText!);
 
       if (context.mounted) {
+        // Show success message with optional auto-clear countdown
+        final message = result.willAutoClear
+            ? '${l10n?.copiedWords(wordCount) ?? 'Copied $wordCount ${wordCount == 1 ? 'word' : 'words'}'}. Clipboard will clear in ${result.autoClearDuration?.inSeconds ?? 0}s'
+            : l10n?.copiedWords(wordCount) ??
+                'Copied $wordCount ${wordCount == 1 ? 'word' : 'words'} to clipboard';
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              l10n?.copiedWords(wordCount) ??
-                  'Copied $wordCount ${wordCount == 1 ? 'word' : 'words'} to clipboard',
-            ),
+            content: Text(message),
             action: SnackBarAction(
               label: l10n?.dismiss ?? 'Dismiss',
               onPressed: () {},
@@ -695,12 +738,12 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
 
       // Clear selection after copying
       notifier.clearSelectedText();
-    } catch (e) {
+    } on ClipboardSecurityException catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-                l10n?.failedToCopyText ?? 'Failed to copy text to clipboard'),
+                l10n?.failedToCopyText ?? 'Failed to copy text: ${e.message}'),
             action: SnackBarAction(
               label: l10n?.dismiss ?? 'Dismiss',
               onPressed: () {},
@@ -808,6 +851,84 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
   int _countOccurrences(String text, String pattern) {
     if (pattern.isEmpty) return 0;
     return pattern.allMatches(text.toLowerCase()).length;
+  }
+
+  /// Shows a warning dialog when sensitive data is detected.
+  ///
+  /// Returns `true` if the user chooses to copy anyway, `false` if cancelled.
+  Future<bool> _showSensitiveDataWarning(
+    BuildContext context,
+    SensitiveDataDetectionResult detection,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final detector = ref.read(sensitiveDataDetectorProvider);
+
+    // Get human-readable description of detected types
+    final detectedDescription = detector.getSensitiveDataDescription(detection);
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: Icon(
+          Icons.warning_amber_rounded,
+          color: theme.colorScheme.error,
+          size: 48,
+        ),
+        title: const Text('Sensitive Data Detected'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'The text you are copying may contain sensitive information that could be accessed by other apps.',
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.errorContainer.withAlpha(77),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: theme.colorScheme.error.withAlpha(77),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Detected:',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onErrorContainer,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    detectedDescription,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onErrorContainer,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n?.cancel ?? 'Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Copy Anyway'),
+          ),
+        ],
+      ),
+    );
+
+    return result ?? false;
   }
 
   void _showOptionsSheet(

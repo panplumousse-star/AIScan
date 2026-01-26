@@ -1072,10 +1072,10 @@ class DocumentsScreen extends ConsumerStatefulWidget {
   final String? initialFolderId;
 
   @override
-  ConsumerState<DocumentsScreen> createState() => _DocumentsScreenState();
+  ConsumerState<DocumentsScreen> createState() => _DocumentsScreenWidgetState();
 }
 
-class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
+class _DocumentsScreenWidgetState extends ConsumerState<DocumentsScreen>
     with WidgetsBindingObserver {
   final _searchController = TextEditingController();
   final _searchFocusNode = FocusNode();

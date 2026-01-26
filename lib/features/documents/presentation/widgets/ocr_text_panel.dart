@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../../core/security/clipboard_security_service.dart';
+import '../../../../core/security/sensitive_data_detector.dart';
 import '../../../../core/widgets/bento_card.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -24,7 +28,7 @@ import '../../../../l10n/app_localizations.dart';
 ///   theme: Theme.of(context),
 /// )
 /// ```
-class OcrTextPanel extends StatefulWidget {
+class OcrTextPanel extends ConsumerStatefulWidget {
   /// Creates an [OcrTextPanel].
   const OcrTextPanel({
     super.key,
@@ -46,20 +50,26 @@ class OcrTextPanel extends StatefulWidget {
   final void Function(String?)? onSelectionChanged;
 
   @override
-  State<OcrTextPanel> createState() => _OcrTextPanelState();
+  ConsumerState<OcrTextPanel> createState() => _OcrTextPanelState();
 }
 
-class _OcrTextPanelState extends State<OcrTextPanel> {
+class _OcrTextPanelState extends ConsumerState<OcrTextPanel> {
   bool _isExpanded = false;
 
   /// Tracks if haptic feedback was already triggered for current selection.
   /// Prevents repeated vibrations while adjusting selection handles.
   bool _hasTriggeredSelectionHaptic = false;
 
+  /// Currently selected text from the selection area.
+  String? _currentSelectedText;
+
   /// Handles selection changes, triggering haptic feedback only when selection starts.
   void _onSelectionChanged(dynamic selectedContent) {
     final selectedText = selectedContent?.plainText as String?;
     final hasSelection = selectedText != null && selectedText.isNotEmpty;
+
+    // Store selected text for later use
+    _currentSelectedText = hasSelection ? selectedText : null;
 
     if (hasSelection && !_hasTriggeredSelectionHaptic) {
       // Selection just started - trigger haptic feedback once
@@ -104,7 +114,7 @@ class _OcrTextPanelState extends State<OcrTextPanel> {
                   Expanded(
                     child: Text(
                       l10n?.ocrText ?? 'OCR Text',
-                      style: TextStyle(fontFamily: 'Outfit', 
+                      style: GoogleFonts.outfit(
                         fontWeight: FontWeight.w700,
                         color: widget.theme.colorScheme.onSurface,
                       ),
@@ -147,21 +157,31 @@ class _OcrTextPanelState extends State<OcrTextPanel> {
                       ContextMenuButtonItem(
                         label: l10n?.copy ?? 'Copy',
                         onPressed: () {
-                          selectableRegionState
-                              .copySelection(SelectionChangedCause.toolbar);
+                          // Close context menu
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            selectableRegionState.hideToolbar();
+                          });
+
+                          // Copy with security using tracked selected text
+                          if (_currentSelectedText != null) {
+                            _copySelectedText(_currentSelectedText!);
+                          }
                         },
                       ),
                       ContextMenuButtonItem(
                         label: l10n?.share ?? 'Share',
                         onPressed: () {
-                          // Get selected text and share it
-                          selectableRegionState
-                              .copySelection(SelectionChangedCause.toolbar);
-                          Clipboard.getData(Clipboard.kTextPlain).then((data) {
-                            if (data?.text != null && data!.text!.isNotEmpty) {
-                              Share.share(data.text!);
-                            }
+                          // Close context menu
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            selectableRegionState.hideToolbar();
                           });
+
+                          // Share the selected text
+                          if (_currentSelectedText != null && _currentSelectedText!.isNotEmpty) {
+                            SharePlus.instance.share(
+                              ShareParams(text: _currentSelectedText!),
+                            );
+                          }
                         },
                       ),
                       ContextMenuButtonItem(
@@ -181,7 +201,7 @@ class _OcrTextPanelState extends State<OcrTextPanel> {
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     child: Text(
                       widget.ocrText,
-                      style: TextStyle(fontFamily: 'Outfit', 
+                      style: GoogleFonts.outfit(
                         fontSize: 14, // Slightly larger for easier selection
                         color: widget.theme.colorScheme.onSurface
                             .withValues(alpha: 0.7),
@@ -202,13 +222,169 @@ class _OcrTextPanelState extends State<OcrTextPanel> {
     );
   }
 
-  void _copyText() {
-    Clipboard.setData(ClipboardData(text: widget.ocrText));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Text copied to clipboard'),
-        duration: Duration(seconds: 2),
+  /// Copies all OCR text to clipboard with security features.
+  Future<void> _copyText() async {
+    final clipboardService = ref.read(clipboardSecurityServiceProvider);
+
+    try {
+      final result = await clipboardService.copyToClipboard(
+        widget.ocrText,
+        onSensitiveDataDetected: (detection) async {
+          if (!context.mounted) return false;
+          return await _showSensitiveDataWarning(context, detection);
+        },
+      );
+
+      if (!result.success) {
+        // User cancelled or error occurred
+        return;
+      }
+
+      if (context.mounted) {
+        // Show success message with optional auto-clear countdown
+        final message = result.willAutoClear
+            ? 'Text copied to clipboard. Clipboard will clear in ${result.autoClearDuration?.inSeconds ?? 0}s'
+            : 'Text copied to clipboard';
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } on ClipboardSecurityException catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to copy text: ${e.message}'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  /// Copies selected text to clipboard with security features.
+  Future<void> _copySelectedText(String selectedText) async {
+    if (selectedText.isEmpty) return;
+
+    final clipboardService = ref.read(clipboardSecurityServiceProvider);
+
+    try {
+      final result = await clipboardService.copyToClipboard(
+        selectedText,
+        onSensitiveDataDetected: (detection) async {
+          if (!context.mounted) return false;
+          return await _showSensitiveDataWarning(context, detection);
+        },
+      );
+
+      if (!result.success) {
+        // User cancelled or error occurred
+        return;
+      }
+
+      if (context.mounted) {
+        // Show success message with optional auto-clear countdown
+        final message = result.willAutoClear
+            ? 'Text copied to clipboard. Clipboard will clear in ${result.autoClearDuration?.inSeconds ?? 0}s'
+            : 'Text copied to clipboard';
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } on ClipboardSecurityException catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to copy text: ${e.message}'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  /// Shows a warning dialog when sensitive data is detected.
+  ///
+  /// Returns `true` if the user chooses to copy anyway, `false` if cancelled.
+  Future<bool> _showSensitiveDataWarning(
+    BuildContext context,
+    SensitiveDataDetectionResult detection,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final detector = ref.read(sensitiveDataDetectorProvider);
+
+    // Get human-readable description of detected types
+    final detectedDescription = detector.getSensitiveDataDescription(detection);
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: Icon(
+          Icons.warning_amber_rounded,
+          color: theme.colorScheme.error,
+          size: 48,
+        ),
+        title: const Text('Sensitive Data Detected'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'The text you are copying may contain sensitive information that could be accessed by other apps.',
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.errorContainer.withAlpha(77),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: theme.colorScheme.error.withAlpha(77),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Detected:',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onErrorContainer,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    detectedDescription,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onErrorContainer,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n?.cancel ?? 'Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Copy Anyway'),
+          ),
+        ],
       ),
     );
+
+    return result ?? false;
   }
 }

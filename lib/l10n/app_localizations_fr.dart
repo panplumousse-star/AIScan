@@ -845,6 +845,74 @@ class AppLocalizationsFr extends AppLocalizations {
   String get needHelp => 'Besoin d\'aide ?';
 
   @override
+  String get clipboardSecurityTitle => 'Securite du presse-papiers';
+
+  @override
+  String get clipboardAutoClear => 'Effacement automatique';
+
+  @override
+  String get clipboardAutoClearSubtitle => 'Efface apres copie';
+
+  @override
+  String get clipboardClearAfter => 'Effacer apres';
+
+  @override
+  String get clipboardSensitiveDetection => 'Detection donnees sensibles';
+
+  @override
+  String get clipboardSensitiveDetectionSubtitle =>
+      'Alertes pour donnees sensibles';
+
+  @override
+  String clipboardTimeoutSeconds(int seconds) {
+    return '${seconds}s';
+  }
+
+  @override
+  String get sensitiveDataDetectedTitle => 'Donnees sensibles detectees';
+
+  @override
+  String get sensitiveDataWarningMessage =>
+      'Le texte que vous copiez peut contenir des informations sensibles accessibles par d\'autres applications.';
+
+  @override
+  String get copyAnyway => 'Copier quand meme';
+
+  @override
+  String get detectedDataTypes => 'Detecte :';
+
+  @override
+  String get sensitiveTypeSsn => 'Numero de securite sociale';
+
+  @override
+  String get sensitiveTypeCreditCard => 'numero de carte bancaire';
+
+  @override
+  String get sensitiveTypeEmail => 'adresse e-mail';
+
+  @override
+  String get sensitiveTypePhone => 'numero de telephone';
+
+  @override
+  String get sensitiveTypeAccount => 'numero de compte';
+
+  @override
+  String get sensitiveTypePassword => 'mot de passe';
+
+  @override
+  String clipboardWillClearIn(int seconds) {
+    return 'Presse-papiers efface dans ${seconds}s';
+  }
+
+  @override
+  String get textCopiedToClipboard => 'Texte copie dans le presse-papiers';
+
+  @override
+  String clipboardSecurityError(String error) {
+    return 'Erreur securite presse-papiers : $error';
+  }
+
+  @override
   String get licenses => 'Licences open source';
 
   @override

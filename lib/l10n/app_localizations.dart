@@ -1544,6 +1544,126 @@ abstract class AppLocalizations {
   /// **'Besoin d\'aide ?'**
   String get needHelp;
 
+  /// No description provided for @clipboardSecurityTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Securite du presse-papiers'**
+  String get clipboardSecurityTitle;
+
+  /// No description provided for @clipboardAutoClear.
+  ///
+  /// In fr, this message translates to:
+  /// **'Effacement automatique'**
+  String get clipboardAutoClear;
+
+  /// No description provided for @clipboardAutoClearSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Efface apres copie'**
+  String get clipboardAutoClearSubtitle;
+
+  /// No description provided for @clipboardClearAfter.
+  ///
+  /// In fr, this message translates to:
+  /// **'Effacer apres'**
+  String get clipboardClearAfter;
+
+  /// No description provided for @clipboardSensitiveDetection.
+  ///
+  /// In fr, this message translates to:
+  /// **'Detection donnees sensibles'**
+  String get clipboardSensitiveDetection;
+
+  /// No description provided for @clipboardSensitiveDetectionSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Alertes pour donnees sensibles'**
+  String get clipboardSensitiveDetectionSubtitle;
+
+  /// No description provided for @clipboardTimeoutSeconds.
+  ///
+  /// In fr, this message translates to:
+  /// **'{seconds}s'**
+  String clipboardTimeoutSeconds(int seconds);
+
+  /// No description provided for @sensitiveDataDetectedTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Donnees sensibles detectees'**
+  String get sensitiveDataDetectedTitle;
+
+  /// No description provided for @sensitiveDataWarningMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le texte que vous copiez peut contenir des informations sensibles accessibles par d\'autres applications.'**
+  String get sensitiveDataWarningMessage;
+
+  /// No description provided for @copyAnyway.
+  ///
+  /// In fr, this message translates to:
+  /// **'Copier quand meme'**
+  String get copyAnyway;
+
+  /// No description provided for @detectedDataTypes.
+  ///
+  /// In fr, this message translates to:
+  /// **'Detecte :'**
+  String get detectedDataTypes;
+
+  /// No description provided for @sensitiveTypeSsn.
+  ///
+  /// In fr, this message translates to:
+  /// **'Numero de securite sociale'**
+  String get sensitiveTypeSsn;
+
+  /// No description provided for @sensitiveTypeCreditCard.
+  ///
+  /// In fr, this message translates to:
+  /// **'numero de carte bancaire'**
+  String get sensitiveTypeCreditCard;
+
+  /// No description provided for @sensitiveTypeEmail.
+  ///
+  /// In fr, this message translates to:
+  /// **'adresse e-mail'**
+  String get sensitiveTypeEmail;
+
+  /// No description provided for @sensitiveTypePhone.
+  ///
+  /// In fr, this message translates to:
+  /// **'numero de telephone'**
+  String get sensitiveTypePhone;
+
+  /// No description provided for @sensitiveTypeAccount.
+  ///
+  /// In fr, this message translates to:
+  /// **'numero de compte'**
+  String get sensitiveTypeAccount;
+
+  /// No description provided for @sensitiveTypePassword.
+  ///
+  /// In fr, this message translates to:
+  /// **'mot de passe'**
+  String get sensitiveTypePassword;
+
+  /// No description provided for @clipboardWillClearIn.
+  ///
+  /// In fr, this message translates to:
+  /// **'Presse-papiers efface dans {seconds}s'**
+  String clipboardWillClearIn(int seconds);
+
+  /// No description provided for @textCopiedToClipboard.
+  ///
+  /// In fr, this message translates to:
+  /// **'Texte copie dans le presse-papiers'**
+  String get textCopiedToClipboard;
+
+  /// No description provided for @clipboardSecurityError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Erreur securite presse-papiers : {error}'**
+  String clipboardSecurityError(String error);
+
   /// No description provided for @licenses.
   ///
   /// In fr, this message translates to:

@@ -314,6 +314,39 @@
   "whatAreYouLookingFor": "What are you looking for?",
   "needHelp": "Need help?",
 
+  "clipboardSecurityTitle": "Clipboard Security",
+  "clipboardAutoClear": "Auto-clear clipboard",
+  "clipboardAutoClearSubtitle": "Clears after copy",
+  "clipboardClearAfter": "Clear after",
+  "clipboardSensitiveDetection": "Sensitive data detection",
+  "clipboardSensitiveDetectionSubtitle": "Alerts for sensitive data",
+  "clipboardTimeoutSeconds": "{seconds}s",
+  "@clipboardTimeoutSeconds": {
+    "placeholders": { "seconds": { "type": "int" } }
+  },
+
+  "sensitiveDataDetectedTitle": "Sensitive Data Detected",
+  "sensitiveDataWarningMessage": "The text you are copying may contain sensitive information that could be accessed by other apps.",
+  "copyAnyway": "Copy Anyway",
+  "detectedDataTypes": "Detected:",
+
+  "sensitiveTypeSsn": "Social Security Number",
+  "sensitiveTypeCreditCard": "credit card number",
+  "sensitiveTypeEmail": "email address",
+  "sensitiveTypePhone": "phone number",
+  "sensitiveTypeAccount": "account number",
+  "sensitiveTypePassword": "password",
+
+  "clipboardWillClearIn": "Clipboard will clear in {seconds}s",
+  "@clipboardWillClearIn": {
+    "placeholders": { "seconds": { "type": "int" } }
+  },
+  "textCopiedToClipboard": "Text copied to clipboard",
+  "clipboardSecurityError": "Clipboard security error: {error}",
+  "@clipboardSecurityError": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+
   "licenses": "Open source licenses",
   "licensesSubtitle": "View library licenses",
 

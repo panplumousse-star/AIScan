@@ -844,6 +844,73 @@ class AppLocalizationsEn extends AppLocalizations {
   String get needHelp => 'Need help?';
 
   @override
+  String get clipboardSecurityTitle => 'Clipboard Security';
+
+  @override
+  String get clipboardAutoClear => 'Auto-clear clipboard';
+
+  @override
+  String get clipboardAutoClearSubtitle => 'Clears after copy';
+
+  @override
+  String get clipboardClearAfter => 'Clear after';
+
+  @override
+  String get clipboardSensitiveDetection => 'Sensitive data detection';
+
+  @override
+  String get clipboardSensitiveDetectionSubtitle => 'Alerts for sensitive data';
+
+  @override
+  String clipboardTimeoutSeconds(int seconds) {
+    return '${seconds}s';
+  }
+
+  @override
+  String get sensitiveDataDetectedTitle => 'Sensitive Data Detected';
+
+  @override
+  String get sensitiveDataWarningMessage =>
+      'The text you are copying may contain sensitive information that could be accessed by other apps.';
+
+  @override
+  String get copyAnyway => 'Copy Anyway';
+
+  @override
+  String get detectedDataTypes => 'Detected:';
+
+  @override
+  String get sensitiveTypeSsn => 'Social Security Number';
+
+  @override
+  String get sensitiveTypeCreditCard => 'credit card number';
+
+  @override
+  String get sensitiveTypeEmail => 'email address';
+
+  @override
+  String get sensitiveTypePhone => 'phone number';
+
+  @override
+  String get sensitiveTypeAccount => 'account number';
+
+  @override
+  String get sensitiveTypePassword => 'password';
+
+  @override
+  String clipboardWillClearIn(int seconds) {
+    return 'Clipboard will clear in ${seconds}s';
+  }
+
+  @override
+  String get textCopiedToClipboard => 'Text copied to clipboard';
+
+  @override
+  String clipboardSecurityError(String error) {
+    return 'Clipboard security error: $error';
+  }
+
+  @override
   String get licenses => 'Open source licenses';
 
   @override

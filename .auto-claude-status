@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "062-bundle-google-fonts-instead-of-runtime-downloads",
+  "spec": "066-add-clipboard-security-for-sensitive-ocr-text",
   "state": "building",
   "subtasks": {
-    "completed": 7,
-    "total": 8,
+    "completed": 8,
+    "total": 10,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Bundle Outfit Font Implementation",
+    "current": "Testing and Verification",
     "id": null,
-    "total": 8
+    "total": 3
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 9,
-    "started_at": "2026-01-26T12:39:36.078745"
+    "number": 10,
+    "started_at": "2026-01-26T12:39:34.821512"
   },
-  "last_update": "2026-01-26T12:59:47.114755"
+  "last_update": "2026-01-26T13:09:34.142704"
 }

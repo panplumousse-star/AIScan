@@ -314,6 +314,39 @@
   "whatAreYouLookingFor": "Que cherches-tu ?",
   "needHelp": "Besoin d'aide ?",
 
+  "clipboardSecurityTitle": "Securite du presse-papiers",
+  "clipboardAutoClear": "Effacement automatique",
+  "clipboardAutoClearSubtitle": "Efface apres copie",
+  "clipboardClearAfter": "Effacer apres",
+  "clipboardSensitiveDetection": "Detection donnees sensibles",
+  "clipboardSensitiveDetectionSubtitle": "Alertes pour donnees sensibles",
+  "clipboardTimeoutSeconds": "{seconds}s",
+  "@clipboardTimeoutSeconds": {
+    "placeholders": { "seconds": { "type": "int" } }
+  },
+
+  "sensitiveDataDetectedTitle": "Donnees sensibles detectees",
+  "sensitiveDataWarningMessage": "Le texte que vous copiez peut contenir des informations sensibles accessibles par d'autres applications.",
+  "copyAnyway": "Copier quand meme",
+  "detectedDataTypes": "Detecte :",
+
+  "sensitiveTypeSsn": "Numero de securite sociale",
+  "sensitiveTypeCreditCard": "numero de carte bancaire",
+  "sensitiveTypeEmail": "adresse e-mail",
+  "sensitiveTypePhone": "numero de telephone",
+  "sensitiveTypeAccount": "numero de compte",
+  "sensitiveTypePassword": "mot de passe",
+
+  "clipboardWillClearIn": "Presse-papiers efface dans {seconds}s",
+  "@clipboardWillClearIn": {
+    "placeholders": { "seconds": { "type": "int" } }
+  },
+  "textCopiedToClipboard": "Texte copie dans le presse-papiers",
+  "clipboardSecurityError": "Erreur securite presse-papiers : {error}",
+  "@clipboardSecurityError": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+
   "licenses": "Licences open source",
   "licensesSubtitle": "Voir les licences des bibliotheques",
 

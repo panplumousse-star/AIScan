@@ -1,11 +1,12 @@
 /// Immutable state model for the settings screen.
 ///
 /// This file defines the state representation for application settings,
-/// including theme preferences, biometric lock configuration, and initialization status.
+/// including theme preferences, biometric lock configuration, clipboard security, and initialization status.
 ///
 /// Features:
 /// - Theme mode selection (light, dark, system)
 /// - Biometric app lock settings
+/// - Clipboard security settings
 /// - Error handling
 /// - Loading state tracking
 library;
@@ -44,5 +45,14 @@ class SettingsScreenState with _$SettingsScreenState {
 
     /// Whether biometric authentication is available on this device.
     @Default(false) bool isBiometricAvailable,
+
+    /// Whether clipboard security features are enabled.
+    @Default(false) bool clipboardSecurityEnabled,
+
+    /// Timeout in seconds before clipboard is automatically cleared.
+    @Default(30) int clipboardClearTimeout,
+
+    /// Whether sensitive data detection is enabled for clipboard operations.
+    @Default(false) bool sensitiveDataDetectionEnabled,
   }) = _SettingsScreenState;
 }

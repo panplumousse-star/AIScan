@@ -117,6 +117,11 @@ class EnhancementScreenNotifier extends StateNotifier<EnhancementScreenState> {
   /// Duration to wait before applying preview updates.
   static const _debounceDuration = Duration(milliseconds: 300);
 
+  /// Maximum dimension for preview-sized images.
+  ///
+  /// Images are resized to fit within this dimension for faster processing.
+  static const int _previewMaxDimension = 1200;
+
   /// Loads an image from the given file path.
   Future<void> loadImage(String imagePath) async {
     state = state.copyWith(
@@ -136,9 +141,14 @@ class EnhancementScreenNotifier extends StateNotifier<EnhancementScreenState> {
       }
 
       final bytes = await file.readAsBytes();
+
+      // Generate preview-sized version for faster processing
+      final previewSized = await _generatePreviewSizedImage(bytes);
+
       state = state.copyWith(
         originalBytes: bytes,
-        previewBytes: bytes,
+        previewSizedBytes: previewSized,
+        previewBytes: previewSized ?? bytes,
         isProcessing: false,
       );
     } catch (e) {
@@ -150,11 +160,30 @@ class EnhancementScreenNotifier extends StateNotifier<EnhancementScreenState> {
   }
 
   /// Loads an image from raw bytes.
-  void loadImageBytes(Uint8List bytes) {
+  Future<void> loadImageBytes(Uint8List bytes) async {
     state = state.copyWith(
-      originalBytes: bytes,
-      previewBytes: bytes,
+      isProcessing: true,
+      error: null,
     );
+
+    try {
+      // Generate preview-sized version for faster processing
+      final previewSized = await _generatePreviewSizedImage(bytes);
+
+      state = state.copyWith(
+        originalBytes: bytes,
+        previewSizedBytes: previewSized,
+        previewBytes: previewSized ?? bytes,
+        isProcessing: false,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        originalBytes: bytes,
+        previewBytes: bytes,
+        isProcessing: false,
+        error: 'Failed to generate preview: $e',
+      );
+    }
   }
 
   /// Sets brightness and schedules preview update.
@@ -249,9 +278,46 @@ class EnhancementScreenNotifier extends StateNotifier<EnhancementScreenState> {
       selectedPreset: null,
     );
 
-    // Show original image immediately
+    // Show preview-sized or original image immediately
     if (state.originalBytes != null) {
-      state = state.copyWith(previewBytes: state.originalBytes);
+      state = state.copyWith(
+        previewBytes: state.previewSizedBytes ?? state.originalBytes,
+      );
+    }
+  }
+
+  /// Generates a preview-sized version of the image for faster processing.
+  ///
+  /// Resizes the image to fit within [_previewMaxDimension] while maintaining
+  /// aspect ratio. Returns null if the image is already smaller than the max
+  /// dimension or if resizing fails.
+  Future<Uint8List?> _generatePreviewSizedImage(Uint8List bytes) async {
+    try {
+      // Get image info to check dimensions
+      final info = await _imageProcessor.getImageInfo(bytes);
+
+      // If image is already small enough, use original
+      if (info.width <= _previewMaxDimension &&
+          info.height <= _previewMaxDimension) {
+        return bytes;
+      }
+
+      // Resize to preview dimensions
+      final result = await _imageProcessor.resize(
+        bytes,
+        maxWidth: _previewMaxDimension,
+        maxHeight: _previewMaxDimension,
+        quality: 85,
+      );
+
+      return result.bytes;
+    } on ImageProcessorException catch (e) {
+      // Log error but don't fail - we'll use original bytes
+      debugPrint('Failed to generate preview-sized image: ${e.message}');
+      return null;
+    } catch (e) {
+      debugPrint('Failed to generate preview-sized image: $e');
+      return null;
     }
   }
 
@@ -265,8 +331,10 @@ class EnhancementScreenNotifier extends StateNotifier<EnhancementScreenState> {
   Future<void> _updatePreview() async {
     if (state.originalBytes == null) return;
     if (!state.hasEnhancements) {
-      // No enhancements, show original
-      state = state.copyWith(previewBytes: state.originalBytes);
+      // No enhancements, show preview-sized or original
+      state = state.copyWith(
+        previewBytes: state.previewSizedBytes ?? state.originalBytes,
+      );
       return;
     }
 
@@ -276,8 +344,11 @@ class EnhancementScreenNotifier extends StateNotifier<EnhancementScreenState> {
     );
 
     try {
+      // Use preview-sized bytes for faster processing, fall back to original
+      final sourceBytes = state.previewSizedBytes ?? state.originalBytes!;
+
       final result = await _imageProcessor.enhanceFromBytes(
-        state.originalBytes!,
+        sourceBytes,
         options: state.toEnhancementOptions(),
         // ignore: avoid_redundant_argument_values
         outputFormat: ImageOutputFormat.jpeg,

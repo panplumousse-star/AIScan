@@ -7,7 +7,6 @@ import '../../../folders/domain/folder_model.dart';
 import '../../../folders/domain/folder_service.dart';
 import '../../domain/document_model.dart';
 import '../models/documents_ui_models.dart';
-import '../documents_screen.dart';
 
 /// A provider for loading folders for the filter sheet.
 final _filterFoldersProvider =
@@ -117,7 +116,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: colorScheme.onSurfaceVariant.withOpacity(0.4),
+                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -188,7 +187,6 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                   border: Border(
                     top: BorderSide(
                       color: colorScheme.outlineVariant,
-                      width: 1,
                     ),
                   ),
                 ),
@@ -329,7 +327,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
 
     return Material(
       color: isSelected
-          ? colorScheme.primaryContainer.withOpacity(0.3)
+          ? colorScheme.primaryContainer.withValues(alpha: 0.3)
           : Colors.transparent,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
@@ -343,7 +341,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.15),
+                  color: iconColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, color: iconColor, size: 22),
@@ -400,7 +398,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
           return Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -484,7 +482,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
 
     return Material(
       color: isSelected
-          ? colorScheme.primaryContainer.withOpacity(0.3)
+          ? colorScheme.primaryContainer.withValues(alpha: 0.3)
           : Colors.transparent,
       borderRadius: BorderRadius.circular(8),
       child: InkWell(
@@ -539,7 +537,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
           return Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -586,7 +584,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                   }
                 });
               },
-              selectedColor: tagColor.withOpacity(0.3),
+              selectedColor: tagColor.withValues(alpha: 0.3),
               checkmarkColor: tagColor,
               side: BorderSide(
                 color: isSelected ? tagColor : colorScheme.outline,
@@ -598,7 +596,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
               avatar: isSelected
                   ? null
                   : CircleAvatar(
-                      backgroundColor: tagColor.withOpacity(0.2),
+                      backgroundColor: tagColor.withValues(alpha: 0.2),
                       radius: 8,
                       child: Container(
                         width: 8,

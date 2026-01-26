@@ -142,8 +142,7 @@ class SearchScreenState {
 /// Manages search operations, suggestions, and history.
 class SearchScreenNotifier extends StateNotifier<SearchScreenState> {
   /// Creates a [SearchScreenNotifier] with the given search service.
-  SearchScreenNotifier(this._searchService)
-      : super(const SearchScreenState());
+  SearchScreenNotifier(this._searchService) : super(const SearchScreenState());
 
   final SearchService _searchService;
   Timer? _debounceTimer;
@@ -747,7 +746,8 @@ class _InitialView extends StatelessWidget {
               Icon(
                 Icons.search,
                 size: 64,
-                color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+                color:
+                    theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
               ),
               const SizedBox(height: 16),
               Text(
@@ -906,10 +906,10 @@ class _ResultsHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         border: Border(
           bottom: BorderSide(
-            color: theme.colorScheme.outlineVariant.withOpacity(0.5),
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
           ),
         ),
       ),
@@ -1057,7 +1057,8 @@ class _SearchResultCard extends StatelessWidget {
                             Icon(
                               Icons.text_snippet_outlined,
                               size: 14,
-                              color: theme.colorScheme.primary.withOpacity(0.7),
+                              color: theme.colorScheme.primary
+                                  .withValues(alpha: 0.7),
                             ),
                         ],
                       ),
@@ -1110,7 +1111,7 @@ class _DocumentThumbnail extends StatelessWidget {
       child: Icon(
         Icons.description_outlined,
         size: 28,
-        color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+        color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
       ),
     );
   }
@@ -1137,7 +1138,7 @@ class _MatchedFieldsBadges extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
-            color: theme.colorScheme.primaryContainer.withOpacity(0.5),
+            color: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(4),
           ),
           child: Row(
@@ -1240,7 +1241,7 @@ class _SnippetText extends StatelessWidget {
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurface,
             backgroundColor:
-                theme.colorScheme.primaryContainer.withOpacity(0.5),
+                theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
             fontWeight: FontWeight.w600,
           ),
         ));

@@ -805,7 +805,8 @@ class _ControlsPanel extends StatelessWidget {
                 width: 32,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.onSurfaceVariant.withOpacity(0.3),
+                  color:
+                      theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -992,7 +993,7 @@ class _EnhancementSlider extends StatelessWidget {
             size: 20,
             color: enabled
                 ? colorScheme.onSurfaceVariant
-                : colorScheme.onSurface.withOpacity(0.38),
+                : colorScheme.onSurface.withValues(alpha: 0.38),
           ),
           const SizedBox(width: 8),
           SizedBox(
@@ -1002,7 +1003,7 @@ class _EnhancementSlider extends StatelessWidget {
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: enabled
                     ? colorScheme.onSurface
-                    : colorScheme.onSurface.withOpacity(0.38),
+                    : colorScheme.onSurface.withValues(alpha: 0.38),
               ),
             ),
           ),
@@ -1032,7 +1033,7 @@ class _EnhancementSlider extends StatelessWidget {
               style: theme.textTheme.bodySmall?.copyWith(
                 color: enabled
                     ? colorScheme.onSurfaceVariant
-                    : colorScheme.onSurface.withOpacity(0.38),
+                    : colorScheme.onSurface.withValues(alpha: 0.38),
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),
               textAlign: TextAlign.end,

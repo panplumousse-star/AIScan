@@ -870,7 +870,7 @@ class _BreadcrumbBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         border: Border(
           bottom: BorderSide(color: colorScheme.outlineVariant, width: 0.5),
         ),
@@ -1028,7 +1028,7 @@ class _FolderListItem extends StatelessWidget {
 
     return Material(
       color: isSelected
-          ? colorScheme.primaryContainer.withOpacity(0.3)
+          ? colorScheme.primaryContainer.withValues(alpha: 0.3)
           : Colors.transparent,
       child: InkWell(
         onTap: onTap,
@@ -1070,7 +1070,7 @@ class _FolderListItem extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: folderColor.withOpacity(0.15),
+                  color: folderColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(Icons.folder, color: folderColor, size: 28),

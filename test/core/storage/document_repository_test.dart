@@ -7,10 +7,10 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:sqflite/sqflite.dart';
 
+import 'package:aiscan/core/performance/cache/thumbnail_cache_service.dart';
 import 'package:aiscan/core/security/encryption_service.dart';
 import 'package:aiscan/core/storage/database_helper.dart';
 import 'package:aiscan/core/storage/document_repository.dart';
-import 'package:aiscan/core/utils/performance_utils.dart';
 import 'package:aiscan/features/documents/domain/document_model.dart';
 
 import 'document_repository_test.mocks.dart';
@@ -553,7 +553,7 @@ void main() {
     });
 
     group('deleteDocuments', () {
-      test('should delete multiple documents', () async {
+      test('should delete multiple documents in parallel', () async {
         // Arrange
         when(mockDatabase.getById(DatabaseHelper.tableDocuments, any))
             .thenAnswer((_) async => testDocumentMap);
@@ -566,7 +566,77 @@ void main() {
         // Act
         await repository.deleteDocuments(['id-1', 'id-2', 'id-3']);
 
-        // Assert
+        // Assert - verify database.delete() is called once per document
+        verify(mockDatabase.delete(
+          DatabaseHelper.tableDocuments,
+          where: anyNamed('where'),
+          whereArgs: anyNamed('whereArgs'),
+        )).called(3);
+      });
+
+      test('should handle empty list without errors', () async {
+        // Act & Assert - should complete without any database calls
+        await expectLater(
+          repository.deleteDocuments([]),
+          completes,
+        );
+
+        // Verify no database operations were performed
+        verifyNever(mockDatabase.delete(
+          any,
+          where: anyNamed('where'),
+          whereArgs: anyNamed('whereArgs'),
+        ));
+      });
+
+      test('should throw exception if any deletion fails', () async {
+        // Arrange
+        var callCount = 0;
+        when(mockDatabase.getById(DatabaseHelper.tableDocuments, any))
+            .thenAnswer((_) async {
+          callCount++;
+          // First call succeeds, second call fails
+          if (callCount == 2) {
+            return null; // Document not found
+          }
+          return testDocumentMap;
+        });
+
+        // Act & Assert
+        expect(
+          () => repository.deleteDocuments(['id-1', 'id-2', 'id-3']),
+          throwsA(isA<DocumentRepositoryException>()),
+        );
+      });
+
+      test('should execute deletions concurrently using Future.wait', () async {
+        // Arrange
+        final executionOrder = <String>[];
+        when(mockDatabase.getById(DatabaseHelper.tableDocuments, any))
+            .thenAnswer((invocation) async {
+          final id = invocation.positionalArguments[1] as String;
+          executionOrder.add('start-$id');
+          // Simulate async operation
+          await Future.delayed(Duration.zero);
+          return testDocumentMap;
+        });
+        when(mockDatabase.delete(
+          any,
+          where: anyNamed('where'),
+          whereArgs: anyNamed('whereArgs'),
+        )).thenAnswer((invocation) async {
+          final id = (invocation.namedArguments[Symbol('whereArgs')] as List)[0];
+          executionOrder.add('delete-$id');
+          return 1;
+        });
+
+        // Act
+        await repository.deleteDocuments(['id-1', 'id-2', 'id-3']);
+
+        // Assert - all 'start' operations should happen before all 'delete' operations
+        // This verifies parallel execution (all tasks start concurrently)
+        expect(executionOrder.take(3).every((e) => e.startsWith('start-')),
+            isTrue);
         verify(mockDatabase.delete(
           DatabaseHelper.tableDocuments,
           where: anyNamed('where'),

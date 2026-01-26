@@ -443,7 +443,7 @@ class DatabaseHelper {
         await _createFts5Triggers(db);
         setFtsVersion(5);
         return;
-      } catch (e) {
+      } on Object catch (_) {
         await _cleanupFts(db);
       }
     } else {}
@@ -455,7 +455,7 @@ class DatabaseHelper {
         await _createFts4Triggers(db);
         setFtsVersion(4);
         return;
-      } catch (e) {
+      } on Object catch (_) {
         await _cleanupFts(db);
       }
     }
@@ -483,7 +483,7 @@ class DatabaseHelper {
             o.contains('ENABLE_FTS3'));
       }
       return false;
-    } catch (e) {
+    } on Object catch (_) {
       return false;
     }
   }
@@ -497,15 +497,15 @@ class DatabaseHelper {
       // Use DELETE FROM sqlite_master as fallback if DROP TABLE fails
       try {
         await db.execute('DROP TABLE IF EXISTS $tableDocumentsFts');
-      } catch (e) {
+      } on Object catch (_) {
         try {
           await db.execute(
               "DELETE FROM sqlite_master WHERE name = '$tableDocumentsFts'");
-        } catch (e2) {
+        } on Object {
           // Cleanup failed, ignore
         }
       }
-    } catch (e) {
+    } on Object catch (_) {
       // FTS cleanup error (ignored)
     }
   }

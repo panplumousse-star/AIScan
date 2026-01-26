@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -15,7 +17,7 @@ class QuickScanFab extends StatelessWidget {
 
   void _handlePressed() {
     // Provide haptic feedback for immediate tactile response
-    HapticFeedback.mediumImpact();
+    unawaited(HapticFeedback.mediumImpact());
     onPressed?.call();
   }
 

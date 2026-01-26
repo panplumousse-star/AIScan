@@ -192,7 +192,7 @@ extension TagListExtensions on List<Tag> {
   Tag? findById(String id) {
     try {
       return firstWhere((tag) => tag.id == id);
-    } catch (_) {
+    } on Object catch (_) {
       return null;
     }
   }
@@ -203,7 +203,7 @@ extension TagListExtensions on List<Tag> {
   Tag? findByName(String name) {
     try {
       return firstWhere((tag) => tag.name.toLowerCase() == name.toLowerCase());
-    } catch (_) {
+    } on Object catch (_) {
       return null;
     }
   }

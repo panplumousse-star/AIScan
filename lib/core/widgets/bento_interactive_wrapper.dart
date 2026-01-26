@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -95,7 +97,7 @@ class _BentoInteractiveWrapperState extends State<BentoInteractiveWrapper>
 
   void _handleTapDown(TapDownDetails details) {
     if (widget.onTap == null) return;
-    _controller.forward();
+    unawaited(_controller.forward());
 
     // Tilt calculation based on touch position relative to center
     final renderObject = context.findRenderObject();
@@ -111,11 +113,11 @@ class _BentoInteractiveWrapperState extends State<BentoInteractiveWrapper>
       _rotationY = (localPos.dx - centerX) / centerX * 0.08;
     });
 
-    HapticFeedback.lightImpact();
+    unawaited(HapticFeedback.lightImpact());
   }
 
   void _handleTapUp(TapUpDetails details) {
-    _controller.reverse();
+    unawaited(_controller.reverse());
     setState(() {
       _rotationX = 0.0;
       _rotationY = 0.0;
@@ -123,7 +125,7 @@ class _BentoInteractiveWrapperState extends State<BentoInteractiveWrapper>
   }
 
   void _handleTapCancel() {
-    _controller.reverse();
+    unawaited(_controller.reverse());
     setState(() {
       _rotationX = 0.0;
       _rotationY = 0.0;

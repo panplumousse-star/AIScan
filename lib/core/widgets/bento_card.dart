@@ -1,4 +1,6 @@
 import 'dart:ui';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
@@ -69,19 +71,19 @@ class _BentoCardState extends State<BentoCard>
 
   void _onTapDown(TapDownDetails details) {
     if (widget.animateOnTap && widget.onTap != null) {
-      _controller.forward();
+      unawaited(_controller.forward());
     }
   }
 
   void _onTapUp(TapUpDetails details) {
     if (widget.animateOnTap && widget.onTap != null) {
-      _controller.reverse();
+      unawaited(_controller.reverse());
     }
   }
 
   void _onTapCancel() {
     if (widget.animateOnTap && widget.onTap != null) {
-      _controller.reverse();
+      unawaited(_controller.reverse());
     }
   }
 
@@ -201,7 +203,7 @@ class _BentoAnimatedEntryState extends State<BentoAnimatedEntry>
 
     Future.delayed(widget.delay, () {
       if (mounted) {
-        _controller.forward();
+        unawaited(_controller.forward());
       }
     });
   }

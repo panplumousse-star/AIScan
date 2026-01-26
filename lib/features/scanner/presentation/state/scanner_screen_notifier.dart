@@ -19,6 +19,8 @@
 /// ```
 library;
 
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../documents/domain/document_model.dart';
@@ -68,7 +70,7 @@ class ScannerScreenNotifier extends StateNotifier<ScannerScreenState> {
         isScanning: false,
         error: e.message,
       );
-    } catch (e) {
+    } on Object catch (_) {
       state = state.copyWith(
         isScanning: false,
         error: 'An unexpected error occurred',
@@ -158,7 +160,7 @@ class ScannerScreenNotifier extends StateNotifier<ScannerScreenState> {
         error: e.message,
       );
       return null;
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(
         isSaving: false,
         error: 'Failed to save document: $e',

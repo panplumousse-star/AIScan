@@ -15,7 +15,7 @@ final _filterFoldersProvider =
   try {
     await folderService.initialize();
     return folderService.getAllFolders();
-  } catch (e) {
+  } on Object catch (_) {
     return [];
   }
 });
@@ -27,7 +27,7 @@ final _filterTagsProvider = FutureProvider.autoDispose<List<Tag>>((ref) async {
     await database.initialize();
     final tagMaps = await database.getAllTags();
     return tagMaps.map((map) => Tag.fromMap(map)).toList();
-  } catch (e) {
+  } on Object catch (_) {
     return [];
   }
 });
@@ -648,7 +648,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
       if (hex.length == 8) {
         return Color(int.parse(hex, radix: 16));
       }
-    } catch (_) {
+    } on Object catch (_) {
       // Fall through to default
     }
     return Colors.blue;

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -152,7 +154,7 @@ class OcrResultsScreenNotifier extends StateNotifier<OcrResultsScreenState> {
         isInitializing: false,
         error: 'Failed to initialize OCR: ${e.message}',
       );
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(
         isInitializing: false,
         error: 'Failed to initialize: $e',
@@ -205,7 +207,7 @@ class OcrResultsScreenNotifier extends StateNotifier<OcrResultsScreenState> {
         error: 'OCR failed: ${e.message}',
       );
       return null;
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(
         isProcessing: false,
         error: 'OCR failed: $e',
@@ -252,7 +254,7 @@ class OcrResultsScreenNotifier extends StateNotifier<OcrResultsScreenState> {
         error: 'OCR failed: ${e.message}',
       );
       return null;
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(
         isProcessing: false,
         error: 'OCR failed: $e',
@@ -713,7 +715,7 @@ class _OcrResultsScreenWidgetState extends ConsumerState<OcrResultsScreen> {
       }
 
       // Haptic feedback on successful copy
-      await HapticFeedback.mediumImpact();
+      unawaited(HapticFeedback.mediumImpact());
 
       // Count words in selected text
       final wordCount = _countWords(state.selectedText!);

@@ -657,7 +657,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
 
       // Clean up temp files
       await shareService.cleanupTempFiles(result.tempFilePaths);
-    } catch (e) {
+    } on Object catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(
@@ -886,7 +886,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
             color: color,
           );
           return newFolder;
-        } catch (e) {
+        } on Object catch (e) {
           if (context.mounted) {
             final l10n = AppLocalizations.of(context);
             ScaffoldMessenger.of(context).showSnackBar(
@@ -920,7 +920,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
             .read(documentDetailScreenProvider.notifier)
             .loadDocument(state.document!.id));
       }
-    } catch (e) {
+    } on Object catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to move document: $e')),

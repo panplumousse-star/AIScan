@@ -151,7 +151,7 @@ class _ActionWizardState extends State<ActionWizard>
           _step = 2;
         });
         _pulseController.stop();
-        _flipController.forward();
+        unawaited(_flipController.forward());
       });
     }
   }
@@ -475,7 +475,7 @@ class _ActionWizardState extends State<ActionWizard>
                                           _folderSearchQuery = '';
                                           _folderSearchController.clear();
                                         });
-                                      } catch (e) {
+                                      } on Object catch (e) {
                                         if (context.mounted) {
                                           final l10n =
                                               AppLocalizations.of(context);
@@ -695,7 +695,7 @@ class _ActionWizardState extends State<ActionWizard>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: () {
-        HapticFeedback.mediumImpact();
+        unawaited(HapticFeedback.mediumImpact());
         onTap();
       },
       child: Container(
@@ -761,7 +761,7 @@ class _ActionWizardState extends State<ActionWizard>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: () {
-        HapticFeedback.lightImpact();
+        unawaited(HapticFeedback.lightImpact());
         onTap();
       },
       child: Container(
@@ -830,7 +830,7 @@ class _ActionWizardState extends State<ActionWizard>
     try {
       final hex = hexColor.replaceFirst('#', '');
       return Color(int.parse('FF$hex', radix: 16));
-    } catch (_) {
+    } on Object catch (_) {
       return Colors.grey;
     }
   }

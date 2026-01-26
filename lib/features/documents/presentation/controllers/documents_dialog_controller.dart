@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -171,7 +173,7 @@ class DocumentsDialogController {
               if (context.mounted) {
                 Navigator.of(context).pop(newFolder.id);
               }
-            } catch (e) {
+            } on Object catch (e) {
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Failed to create folder: $e')),
@@ -229,7 +231,7 @@ class DocumentsDialogController {
           color: result.color,
         );
         await notifier.loadDocuments();
-      } catch (e) {
+      } on Object catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Échec de la création du dossier: $e')),

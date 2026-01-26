@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -56,7 +58,7 @@ class ThemePersistenceService {
         default:
           return ThemeMode.system;
       }
-    } catch (_) {
+    } on Object catch (_) {
       return ThemeMode.system;
     }
   }
@@ -70,7 +72,7 @@ class ThemePersistenceService {
         ThemeMode.system => 'system',
       };
       await _storage.write(key: _themeModeKey, value: value);
-    } catch (_) {
+    } on Object catch (_) {
       // Silently ignore storage errors for theme preferences
     }
   }
@@ -82,7 +84,7 @@ class ThemePersistenceService {
     try {
       final value = await _storage.read(key: _showSecurityWarningsKey);
       return value != 'false'; // Default to true
-    } catch (_) {
+    } on Object catch (_) {
       return true;
     }
   }
@@ -91,7 +93,7 @@ class ThemePersistenceService {
   Future<void> saveShowSecurityWarnings(bool show) async {
     try {
       await _storage.write(key: _showSecurityWarningsKey, value: show.toString());
-    } catch (_) {
+    } on Object catch (_) {
       // Silently ignore storage errors
     }
   }
@@ -171,7 +173,7 @@ class SettingsScreenNotifier extends StateNotifier<SettingsScreenState> {
         isLoading: false,
         isInitialized: true,
       );
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(
         isLoading: false,
         isInitialized: true,
@@ -191,7 +193,7 @@ class SettingsScreenNotifier extends StateNotifier<SettingsScreenState> {
     // Persist in background
     try {
       await _persistenceService.saveThemeMode(mode);
-    } catch (e) {
+    } on Object catch (_) {
       state = state.copyWith(error: 'Failed to save theme preference');
     }
   }
@@ -213,7 +215,7 @@ class SettingsScreenNotifier extends StateNotifier<SettingsScreenState> {
 
     try {
       await _appLockService.setEnabled(enabled);
-    } catch (e) {
+    } on Object catch (e) {
       // Revert on error
       state = state.copyWith(
         biometricLockEnabled: !enabled,
@@ -234,7 +236,7 @@ class SettingsScreenNotifier extends StateNotifier<SettingsScreenState> {
 
     try {
       await _appLockService.setTimeout(timeout);
-    } catch (e) {
+    } on Object catch (_) {
       state = state.copyWith(
         error: 'Failed to update timeout setting',
       );
@@ -253,7 +255,7 @@ class SettingsScreenNotifier extends StateNotifier<SettingsScreenState> {
 
     try {
       await _clipboardSecurityService.setSecurityEnabled(enabled);
-    } catch (e) {
+    } on Object catch (e) {
       // Revert on error
       state = state.copyWith(
         clipboardSecurityEnabled: !enabled,
@@ -274,7 +276,7 @@ class SettingsScreenNotifier extends StateNotifier<SettingsScreenState> {
 
     try {
       await _clipboardSecurityService.setAutoClearTimeout(Duration(seconds: seconds));
-    } catch (e) {
+    } on Object catch (_) {
       state = state.copyWith(
         error: 'Failed to update clipboard timeout',
       );
@@ -293,7 +295,7 @@ class SettingsScreenNotifier extends StateNotifier<SettingsScreenState> {
 
     try {
       await _clipboardSecurityService.setSensitiveDetectionEnabled(enabled);
-    } catch (e) {
+    } on Object catch (e) {
       // Revert on error
       state = state.copyWith(
         sensitiveDataDetectionEnabled: !enabled,
@@ -581,7 +583,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final l10n = AppLocalizations.of(context);
     return BentoInteractiveWrapper(
       onTap: () {
-        HapticFeedback.lightImpact();
+        unawaited(HapticFeedback.lightImpact());
       },
       child: SizedBox(
         height: 140, // Match mascot card height
@@ -628,7 +630,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget _buildMascotCard(bool isDark) {
     return BentoInteractiveWrapper(
       onTap: () {
-        HapticFeedback.mediumImpact();
+        unawaited(HapticFeedback.mediumImpact());
       },
       child: Container(
         height: 140,
@@ -1526,7 +1528,7 @@ Future<void> initializeTheme(ProviderContainer container) async {
     final persistenceService = container.read(themePersistenceServiceProvider);
     final savedThemeMode = await persistenceService.loadThemeMode();
     container.read(themeModeProvider.notifier).state = savedThemeMode;
-  } catch (_) {
+  } on Object catch (_) {
     // Silently fall back to system theme if loading fails
   }
 }
@@ -1572,11 +1574,11 @@ class _BentoFlipCardState extends State<_BentoFlipCard>
 
   void _toggleCard() {
     if (_controller.isAnimating) return;
-    HapticFeedback.mediumImpact();
+    unawaited(HapticFeedback.mediumImpact());
     if (_isFront) {
-      _controller.forward();
+      unawaited(_controller.forward());
     } else {
-      _controller.reverse();
+      unawaited(_controller.reverse());
     }
     setState(() => _isFront = !_isFront);
   }

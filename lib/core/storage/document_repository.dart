@@ -318,7 +318,7 @@ class DocumentRepository {
       await _database.insertDocumentPages(id, encryptedPagePaths);
 
       return document;
-    } catch (e) {
+    } on Object catch (e) {
       // Clean up any partially created files on failure
       await _cleanupPartialCreate(id);
 
@@ -359,7 +359,7 @@ class DocumentRepository {
           await entity.delete();
         }
       }
-    } catch (_) {
+    } on Object catch (_) {
       // Ignore cleanup errors
     }
   }
@@ -398,7 +398,7 @@ class DocumentRepository {
       }
 
       return Document.fromMap(result, pagesPaths: pagesPaths, tags: tags);
-    } catch (e) {
+    } on Object catch (e) {
       if (e is DocumentRepositoryException) {
         rethrow;
       }
@@ -470,7 +470,7 @@ class DocumentRepository {
       }
 
       return documents;
-    } catch (e) {
+    } on Object catch (e) {
       throw DocumentRepositoryException(
         'Failed to get all documents',
         cause: e,
@@ -537,7 +537,7 @@ class DocumentRepository {
       }
 
       return documents;
-    } catch (e) {
+    } on Object catch (e) {
       throw DocumentRepositoryException(
         'Failed to get documents in folder: $folderId',
         cause: e,
@@ -595,7 +595,7 @@ class DocumentRepository {
       }
 
       return documents;
-    } catch (e) {
+    } on Object catch (e) {
       throw DocumentRepositoryException(
         'Failed to get favorite documents',
         cause: e,
@@ -609,7 +609,7 @@ class DocumentRepository {
   Future<int> getDocumentCount() async {
     try {
       return await _database.count(DatabaseHelper.tableDocuments);
-    } catch (e) {
+    } on Object catch (e) {
       throw DocumentRepositoryException(
         'Failed to get document count',
         cause: e,
@@ -654,7 +654,7 @@ class DocumentRepository {
       await _encryption.decryptFile(encryptedPath, decryptedPath);
 
       return decryptedPath;
-    } catch (e) {
+    } on Object catch (e) {
       if (e is DocumentRepositoryException) {
         rethrow;
       }
@@ -699,7 +699,7 @@ class DocumentRepository {
       final decryptedPaths = await Future.wait(decryptionTasks);
 
       return decryptedPaths;
-    } catch (e) {
+    } on Object catch (e) {
       if (e is DocumentRepositoryException) {
         rethrow;
       }
@@ -753,12 +753,12 @@ class DocumentRepository {
       // Clean up temp file immediately
       try {
         await decryptedFile.delete();
-      } catch (_) {
+      } on Object catch (_) {
         // Ignore cleanup errors
       }
 
       return bytes.toList();
-    } catch (e) {
+    } on Object catch (e) {
       if (e is DocumentRepositoryException) {
         rethrow;
       }
@@ -815,7 +815,7 @@ class DocumentRepository {
       // Clean up temp file immediately
       try {
         await decryptedFile.delete();
-      } catch (_) {
+      } on Object catch (_) {
         // Ignore cleanup errors
       }
 
@@ -823,7 +823,7 @@ class DocumentRepository {
       _thumbnailCache.cacheThumbnail(document.id, bytes);
 
       return bytes;
-    } catch (e) {
+    } on Object catch (e) {
       throw DocumentRepositoryException(
         'Failed to decrypt thumbnail bytes: ${document.id}',
         cause: e,
@@ -884,7 +884,7 @@ class DocumentRepository {
         try {
           final bytes = await getDecryptedThumbnailBytes(document);
           return MapEntry(document.id, bytes);
-        } catch (_) {
+        } on Object catch (_) {
           // Ignore individual failures - return null for this document
           return MapEntry<String, Uint8List?>(document.id, null);
         }
@@ -902,7 +902,7 @@ class DocumentRepository {
       }
 
       return resultMap;
-    } catch (e) {
+    } on Object catch (e) {
       throw DocumentRepositoryException(
         'Failed to decrypt thumbnails in batch',
         cause: e,
@@ -945,7 +945,7 @@ class DocumentRepository {
       await decryptedFile.writeAsBytes(bytes);
 
       return decryptedPath;
-    } catch (e) {
+    } on Object catch (e) {
       if (e is DocumentRepositoryException) {
         rethrow;
       }
@@ -988,7 +988,7 @@ class DocumentRepository {
       }
 
       return updatedDocument;
-    } catch (e) {
+    } on Object catch (e) {
       if (e is DocumentRepositoryException) {
         rethrow;
       }
@@ -1050,7 +1050,7 @@ class DocumentRepository {
       );
 
       return updatedDocument;
-    } catch (e) {
+    } on Object catch (e) {
       if (e is DocumentRepositoryException) {
         rethrow;
       }
@@ -1099,7 +1099,7 @@ class DocumentRepository {
       );
 
       return updatedDocument;
-    } catch (e) {
+    } on Object catch (e) {
       if (e is DocumentRepositoryException) {
         rethrow;
       }
@@ -1127,7 +1127,7 @@ class DocumentRepository {
       return await updateDocument(
         document.copyWith(isFavorite: !document.isFavorite),
       );
-    } catch (e) {
+    } on Object catch (e) {
       if (e is DocumentRepositoryException) {
         rethrow;
       }
@@ -1162,7 +1162,7 @@ class DocumentRepository {
           clearFolderId: folderId == null,
         ),
       );
-    } catch (e) {
+    } on Object catch (e) {
       if (e is DocumentRepositoryException) {
         rethrow;
       }
@@ -1226,7 +1226,7 @@ class DocumentRepository {
         where: '${DatabaseHelper.columnId} = ?',
         whereArgs: [documentId],
       );
-    } catch (e) {
+    } on Object catch (e) {
       if (e is DocumentRepositoryException) {
         rethrow;
       }
@@ -1251,7 +1251,7 @@ class DocumentRepository {
 
       // Execute all deletion tasks in parallel
       await Future.wait(deletionTasks);
-    } catch (e) {
+    } on Object catch (e) {
       if (e is DocumentRepositoryException) {
         rethrow;
       }
@@ -1283,7 +1283,7 @@ class DocumentRepository {
       return results
           .map((row) => row[DatabaseHelper.columnTagId] as String)
           .toList();
-    } catch (e) {
+    } on Object catch (e) {
       throw DocumentRepositoryException(
         'Failed to get document tags: $documentId',
         cause: e,
@@ -1304,7 +1304,7 @@ class DocumentRepository {
           DatabaseHelper.columnCreatedAt: DateTime.now().toIso8601String(),
         },
       );
-    } catch (e) {
+    } on Object catch (e) {
       throw DocumentRepositoryException(
         'Failed to add tag to document: $documentId',
         cause: e,
@@ -1323,7 +1323,7 @@ class DocumentRepository {
             '${DatabaseHelper.columnDocumentId} = ? AND ${DatabaseHelper.columnTagId} = ?',
         whereArgs: [documentId, tagId],
       );
-    } catch (e) {
+    } on Object catch (e) {
       throw DocumentRepositoryException(
         'Failed to remove tag from document: $documentId',
         cause: e,
@@ -1387,7 +1387,7 @@ class DocumentRepository {
       }
 
       return documents;
-    } catch (e) {
+    } on Object catch (e) {
       throw DocumentRepositoryException(
         'Failed to get documents by tag: $tagId',
         cause: e,
@@ -1460,7 +1460,7 @@ class DocumentRepository {
       }
 
       return documents;
-    } catch (e) {
+    } on Object catch (e) {
       throw DocumentRepositoryException(
         'Failed to search documents: $query',
         cause: e,
@@ -1483,12 +1483,12 @@ class DocumentRepository {
         if (entity is File) {
           try {
             await entity.delete();
-          } catch (_) {
+          } on Object catch (_) {
             // Ignore individual file deletion errors
           }
         }
       }
-    } catch (_) {
+    } on Object catch (_) {
       // Ignore cleanup errors
     }
   }
@@ -1522,7 +1522,7 @@ class DocumentRepository {
       await _getTempDirectory();
 
       return true;
-    } catch (e) {
+    } on Object catch (e) {
       throw DocumentRepositoryException(
         'Failed to initialize document repository',
         cause: e,
@@ -1575,7 +1575,7 @@ class DocumentRepository {
         'tempSize': tempSize,
         'totalSize': documentsSize + thumbnailsSize,
       };
-    } catch (e) {
+    } on Object catch (e) {
       throw DocumentRepositoryException(
         'Failed to get storage info',
         cause: e,

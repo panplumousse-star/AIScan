@@ -340,7 +340,7 @@ class DocumentExportService {
       // Clean up temp files before rethrowing
       await _cleanupTempFiles(tempFilePaths);
       rethrow;
-    } catch (e) {
+    } on Object catch (e) {
       // Clean up temp files before returning error
       await _cleanupTempFiles(tempFilePaths);
 
@@ -392,7 +392,7 @@ class DocumentExportService {
       await _cleanupTempFiles(tempFilePaths);
 
       return pdfBytes;
-    } catch (e) {
+    } on Object catch (e) {
       // Clean up temp files
       await _cleanupTempFiles(tempFilePaths);
 
@@ -479,7 +479,7 @@ class DocumentExportService {
       );
 
       return pdfResult.bytes;
-    } catch (e) {
+    } on Object catch (e) {
       throw DocumentExportException(
         'Échec de la génération PDF: ${document.title}',
         cause: e,
@@ -511,7 +511,7 @@ class DocumentExportService {
         if (await file.exists()) {
           await file.delete();
         }
-      } catch (_) {
+      } on Object catch (_) {
         // Ignore cleanup errors - not critical
       }
     }
@@ -519,7 +519,7 @@ class DocumentExportService {
     // Also call repository cleanup for any orphaned temp files
     try {
       await _documentRepository.cleanupTempFiles();
-    } catch (_) {
+    } on Object catch (_) {
       // Ignore cleanup errors
     }
   }

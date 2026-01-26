@@ -248,7 +248,7 @@ class DeviceSecurityService {
       );
 
       return _cachedResult!;
-    } catch (e) {
+    } on Object catch (e) {
       // Don't throw - return an error status instead
       _cachedResult = DeviceSecurityResult(
         status: DeviceSecurityStatus.unknownError,
@@ -272,7 +272,7 @@ class DeviceSecurityService {
     try {
       final result = await checkDeviceSecurity();
       return result.isCompromised;
-    } catch (e) {
+    } on Object catch (e) {
       throw DeviceSecurityException(
         'Failed to check if device is compromised',
         cause: e,
@@ -292,7 +292,7 @@ class DeviceSecurityService {
   Future<bool> isDevelopmentModeEnabled() async {
     try {
       return await _jailbreakRootDetection.isDevMode;
-    } catch (e) {
+    } on Object catch (e) {
       throw DeviceSecurityException(
         'Failed to check development mode status',
         cause: e,
@@ -308,7 +308,7 @@ class DeviceSecurityService {
   Future<bool> isRealDevice() async {
     try {
       return await _jailbreakRootDetection.isRealDevice;
-    } catch (e) {
+    } on Object catch (e) {
       throw DeviceSecurityException(
         'Failed to check if device is real',
         cause: e,

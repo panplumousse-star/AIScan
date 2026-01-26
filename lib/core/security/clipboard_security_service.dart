@@ -242,7 +242,7 @@ class ClipboardSecurityService {
       );
     } on ClipboardSecurityException {
       rethrow;
-    } catch (e) {
+    } on Object catch (e) {
       throw ClipboardSecurityException(
         'Failed to copy to clipboard',
         cause: e,
@@ -261,7 +261,7 @@ class ClipboardSecurityService {
       // Cancel any pending auto-clear timer
       _autoClearTimer?.cancel();
       await _clearClipboard();
-    } catch (e) {
+    } on Object catch (e) {
       throw ClipboardSecurityException(
         'Failed to clear clipboard',
         cause: e,
@@ -273,7 +273,7 @@ class ClipboardSecurityService {
   Future<void> _clearClipboard() async {
     try {
       await Clipboard.setData(const ClipboardData(text: ''));
-    } catch (e) {
+    } on Object catch (e) {
       // Log error but don't throw - clearing is best-effort
       if (kDebugMode) {
         print('Failed to clear clipboard: $e');
@@ -450,7 +450,7 @@ class ClipboardSecurityService {
       };
     } on ClipboardSecurityException {
       rethrow;
-    } catch (e) {
+    } on Object catch (e) {
       throw ClipboardSecurityException(
         'Failed to get settings',
         cause: e,
@@ -474,7 +474,7 @@ class ClipboardSecurityService {
       cancelAutoClear();
     } on ClipboardSecurityException {
       rethrow;
-    } catch (e) {
+    } on Object catch (e) {
       throw ClipboardSecurityException(
         'Failed to reset settings',
         cause: e,

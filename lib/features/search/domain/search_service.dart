@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -724,7 +726,7 @@ class SearchService {
 
       _isInitialized = true;
       return true;
-    } catch (e) {
+    } on Object catch (e) {
       throw SearchException(
         'Failed to initialize search service',
         cause: e,
@@ -816,7 +818,7 @@ class SearchService {
         searchTimeMs: stopwatch.elapsedMilliseconds,
         options: options,
       );
-    } catch (e) {
+    } on Object catch (e) {
       if (e is SearchException) rethrow;
       throw SearchException(
         'Search failed for query: $query',
@@ -942,7 +944,7 @@ class SearchService {
           score: (row['score'] as num?)?.toDouble() ?? 0.0,
         );
       }).toList();
-    } catch (e) {
+    } on Object catch (_) {
       // If FTS query fails, try fallback LIKE search
       return _fallbackSearch(ftsQuery, options);
     }
@@ -1251,7 +1253,7 @@ class SearchService {
       for (final map in searchHistory) {
         _recentSearches.add(RecentSearch.fromMap(map));
       }
-    } catch (e) {
+    } on Object catch (_) {
       // Log error but don't throw - search history is not critical
     }
   }
@@ -1296,7 +1298,7 @@ class SearchService {
           resultCount: search.resultCount ?? 0,
         );
       }
-    } catch (e) {
+    } on Object catch (_) {
       // Log error but don't throw - search history persistence is not critical
     }
   }
@@ -1352,7 +1354,7 @@ class SearchService {
             suggestions.add(title);
           }
         }
-      } catch (_) {
+      } on Object catch (_) {
         // Ignore errors in suggestions
       }
     }
@@ -1382,7 +1384,7 @@ class SearchService {
     // Delete from database
     try {
       await _database.clearSearchHistory();
-    } catch (e) {
+    } on Object catch (_) {
       // Log error but don't throw - search history persistence is not critical
     }
   }
@@ -1412,7 +1414,7 @@ class SearchService {
 
     try {
       await _database.rebuildFtsIndex();
-    } catch (e) {
+    } on Object catch (e) {
       throw SearchException(
         'Failed to rebuild search index',
         cause: e,
@@ -1427,7 +1429,7 @@ class SearchService {
     try {
       // FTS5 doesn't have a direct size query, return 0
       return 0;
-    } catch (_) {
+    } on Object catch (_) {
       return 0;
     }
   }

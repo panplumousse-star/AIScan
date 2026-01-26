@@ -531,7 +531,7 @@ class PDFGenerator {
       return _generatePDF(pages: pages, options: options);
     } on PDFGeneratorException {
       rethrow;
-    } catch (e) {
+    } on Object catch (e) {
       throw PDFGeneratorException(
         'Failed to generate PDF from bytes',
         cause: e,
@@ -572,7 +572,7 @@ class PDFGenerator {
       return _generatePDF(pages: pages, options: options);
     } on PDFGeneratorException {
       rethrow;
-    } catch (e) {
+    } on Object catch (e) {
       throw PDFGeneratorException(
         'Failed to generate PDF from files',
         cause: e,
@@ -607,7 +607,7 @@ class PDFGenerator {
       return _generatePDF(pages: pages, options: options);
     } on PDFGeneratorException {
       rethrow;
-    } catch (e) {
+    } on Object catch (e) {
       throw PDFGeneratorException(
         'Failed to generate PDF from pages',
         cause: e,
@@ -646,7 +646,7 @@ class PDFGenerator {
       return result;
     } on PDFGeneratorException {
       rethrow;
-    } catch (e) {
+    } on Object catch (e) {
       throw PDFGeneratorException(
         'Failed to save PDF to: $outputPath',
         cause: e,

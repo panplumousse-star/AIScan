@@ -424,7 +424,7 @@ class DocumentShareService {
         sharedCount: documents.length,
         tempFilePaths: tempFilePaths,
       );
-    } catch (e) {
+    } on Object catch (e) {
       // Clean up any temp files created before the error
       await cleanupTempFiles(tempFilePaths);
 
@@ -482,7 +482,7 @@ class DocumentShareService {
           subject: subject ?? fileName,
         ),
       );
-    } catch (e) {
+    } on Object catch (e) {
       if (e is DocumentShareException) {
         rethrow;
       }
@@ -522,7 +522,7 @@ class DocumentShareService {
           subject: subject,
         ),
       );
-    } catch (e) {
+    } on Object catch (e) {
       throw DocumentShareException(
         'Failed to share text',
         cause: e,
@@ -560,7 +560,7 @@ class DocumentShareService {
         if (await file.exists()) {
           await file.delete();
         }
-      } catch (_) {
+      } on Object catch (_) {
         // Ignore cleanup errors - not critical
       }
     }
@@ -573,7 +573,7 @@ class DocumentShareService {
   Future<void> cleanupAllTempFiles() async {
     try {
       await _documentRepository.cleanupTempFiles();
-    } catch (_) {
+    } on Object catch (_) {
       // Ignore cleanup errors
     }
   }
@@ -635,7 +635,7 @@ class DocumentShareService {
       await pdfFile.writeAsBytes(pdfResult.bytes);
 
       return pdfPath;
-    } catch (e) {
+    } on Object catch (e) {
       throw DocumentShareException(
         'Failed to generate PDF: ${document.title}',
         cause: e,

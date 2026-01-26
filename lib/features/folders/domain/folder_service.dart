@@ -198,7 +198,7 @@ class FolderService {
       await _database.insert(DatabaseHelper.tableFolders, folder.toMap());
 
       return folder;
-    } catch (e) {
+    } on Object catch (e) {
       if (e is FolderServiceException) {
         rethrow;
       }
@@ -224,7 +224,7 @@ class FolderService {
       }
 
       return Folder.fromMap(result);
-    } catch (e) {
+    } on Object catch (e) {
       throw FolderServiceException('Failed to get folder: $id', cause: e);
     }
   }
@@ -245,7 +245,7 @@ class FolderService {
       );
 
       return results.map((row) => Folder.fromMap(row)).toList();
-    } catch (e) {
+    } on Object catch (e) {
       throw FolderServiceException('Failed to get all folders', cause: e);
     }
   }
@@ -267,7 +267,7 @@ class FolderService {
       );
 
       return results.map((row) => Folder.fromMap(row)).toList();
-    } catch (e) {
+    } on Object catch (e) {
       throw FolderServiceException('Failed to get root folders', cause: e);
     }
   }
@@ -294,7 +294,7 @@ class FolderService {
       );
 
       return results.map((row) => Folder.fromMap(row)).toList();
-    } catch (e) {
+    } on Object catch (e) {
       throw FolderServiceException(
         'Failed to get child folders of: $parentId',
         cause: e,
@@ -317,7 +317,7 @@ class FolderService {
     try {
       final allFolders = await getAllFolders();
       return allFolders.descendantsOf(parentId);
-    } catch (e) {
+    } on Object catch (e) {
       if (e is FolderServiceException) {
         rethrow;
       }
@@ -344,7 +344,7 @@ class FolderService {
     try {
       final allFolders = await getAllFolders();
       return allFolders.folderPathTo(folderId);
-    } catch (e) {
+    } on Object catch (e) {
       if (e is FolderServiceException) {
         rethrow;
       }
@@ -365,7 +365,7 @@ class FolderService {
     try {
       final allFolders = await getAllFolders();
       return allFolders.depthOf(folderId);
-    } catch (e) {
+    } on Object catch (e) {
       if (e is FolderServiceException) {
         rethrow;
       }
@@ -382,7 +382,7 @@ class FolderService {
   Future<int> getFolderCount() async {
     try {
       return await _database.count(DatabaseHelper.tableFolders);
-    } catch (e) {
+    } on Object catch (e) {
       throw FolderServiceException('Failed to get folder count', cause: e);
     }
   }
@@ -393,7 +393,7 @@ class FolderService {
   Future<bool> folderExists(String id) async {
     try {
       return await _database.exists(DatabaseHelper.tableFolders, id);
-    } catch (e) {
+    } on Object catch (e) {
       throw FolderServiceException(
         'Failed to check folder existence: $id',
         cause: e,
@@ -420,7 +420,7 @@ class FolderService {
             : '${DatabaseHelper.columnFolderId} IS NULL',
         whereArgs: folderId != null ? [folderId] : null,
       );
-    } catch (e) {
+    } on Object catch (e) {
       throw FolderServiceException(
         'Failed to get document count for folder: $folderId',
         cause: e,
@@ -460,7 +460,7 @@ class FolderService {
         subfolderCount: subfolderCount,
         totalDocuments: totalDocuments,
       );
-    } catch (e) {
+    } on Object catch (e) {
       if (e is FolderServiceException) {
         rethrow;
       }
@@ -481,7 +481,7 @@ class FolderService {
     try {
       final stats = await getFolderStats(folderId);
       return stats.isEmpty;
-    } catch (e) {
+    } on Object catch (e) {
       if (e is FolderServiceException) {
         rethrow;
       }
@@ -535,7 +535,7 @@ class FolderService {
       }
 
       return updatedFolder;
-    } catch (e) {
+    } on Object catch (e) {
       if (e is FolderServiceException) {
         rethrow;
       }
@@ -565,7 +565,7 @@ class FolderService {
       }
 
       return await updateFolder(folder.copyWith(name: newName));
-    } catch (e) {
+    } on Object catch (e) {
       if (e is FolderServiceException) {
         rethrow;
       }
@@ -595,7 +595,7 @@ class FolderService {
       return await updateFolder(
         folder.copyWith(color: color, clearColor: color == null),
       );
-    } catch (e) {
+    } on Object catch (e) {
       if (e is FolderServiceException) {
         rethrow;
       }
@@ -625,7 +625,7 @@ class FolderService {
       return await updateFolder(
         folder.copyWith(icon: icon, clearIcon: icon == null),
       );
-    } catch (e) {
+    } on Object catch (e) {
       if (e is FolderServiceException) {
         rethrow;
       }
@@ -654,7 +654,7 @@ class FolderService {
       return await updateFolder(
         folder.copyWith(isFavorite: !folder.isFavorite),
       );
-    } catch (e) {
+    } on Object catch (e) {
       if (e is FolderServiceException) {
         rethrow;
       }
@@ -690,7 +690,7 @@ class FolderService {
         }
       }
       return updatedFolders;
-    } catch (e) {
+    } on Object catch (e) {
       if (e is FolderServiceException) {
         rethrow;
       }
@@ -767,7 +767,7 @@ class FolderService {
       );
 
       return updatedFolder;
-    } catch (e) {
+    } on Object catch (e) {
       if (e is FolderServiceException) {
         rethrow;
       }
@@ -809,7 +809,7 @@ class FolderService {
         where: '${DatabaseHelper.columnId} = ?',
         whereArgs: [folderId],
       );
-    } catch (e) {
+    } on Object catch (e) {
       if (e is FolderServiceException) {
         rethrow;
       }
@@ -862,7 +862,7 @@ class FolderService {
       deleteCount++;
 
       return deleteCount;
-    } catch (e) {
+    } on Object catch (e) {
       if (e is FolderServiceException) {
         rethrow;
       }
@@ -881,7 +881,7 @@ class FolderService {
       for (final id in folderIds) {
         await deleteFolder(id);
       }
-    } catch (e) {
+    } on Object catch (e) {
       if (e is FolderServiceException) {
         rethrow;
       }
@@ -919,7 +919,7 @@ class FolderService {
       );
 
       return results.map((row) => Folder.fromMap(row)).toList();
-    } catch (e) {
+    } on Object catch (e) {
       throw FolderServiceException(
         'Failed to search folders: $query',
         cause: e,
@@ -948,7 +948,7 @@ class FolderService {
     try {
       await _database.initialize();
       return true;
-    } catch (e) {
+    } on Object catch (e) {
       throw FolderServiceException(
         'Failed to initialize folder service',
         cause: e,
@@ -985,7 +985,7 @@ class FolderService {
       }
 
       return result;
-    } catch (e) {
+    } on Object catch (e) {
       if (e is FolderServiceException) {
         rethrow;
       }
@@ -1020,7 +1020,7 @@ class FolderService {
 
       // Return folders not in exclude set
       return allFolders.where((f) => !excludeIds.contains(f.id)).toList();
-    } catch (e) {
+    } on Object catch (e) {
       if (e is FolderServiceException) {
         rethrow;
       }

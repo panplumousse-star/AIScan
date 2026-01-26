@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -140,7 +142,7 @@ class _AppHomeState extends ConsumerState<_AppHome>
 
   void _checkAndTransition() {
     if (_isInitialized && _minDurationPassed && !_fadeController.isAnimating) {
-      _fadeController.forward();
+      unawaited(_fadeController.forward());
     }
   }
 

@@ -337,7 +337,7 @@ extension FolderListExtensions on List<Folder> {
   Folder? findById(String id) {
     try {
       return firstWhere((folder) => folder.id == id);
-    } catch (_) {
+    } on Object catch (_) {
       return null;
     }
   }

@@ -109,7 +109,7 @@ class SearchScreenNotifier extends StateNotifier<SearchScreenState> {
         isInitialized: false,
         error: 'Failed to initialize search: ${e.message}',
       );
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(
         isInitialized: false,
         error: 'Failed to initialize search: $e',
@@ -198,7 +198,7 @@ class SearchScreenNotifier extends StateNotifier<SearchScreenState> {
         isLoadingMore: false,
         error: e.message,
       );
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(
         isSearching: false,
         isLoadingMore: false,
@@ -214,7 +214,7 @@ class SearchScreenNotifier extends StateNotifier<SearchScreenState> {
     try {
       final suggestions = await _searchService.getSuggestions(query);
       state = state.copyWith(suggestions: suggestions);
-    } catch (_) {
+    } on Object catch (_) {
       // Silently ignore suggestion errors
     }
   }

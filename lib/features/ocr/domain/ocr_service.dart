@@ -540,7 +540,7 @@ class OcrService {
 
       _isInitialized = true;
       return true;
-    } catch (e) {
+    } on Object catch (e) {
       throw OcrException('Failed to initialize OCR service', cause: e);
     }
   }
@@ -648,7 +648,7 @@ class OcrService {
         lineCount: lineCount,
         blocks: blocks,
       );
-    } catch (e) {
+    } on Object catch (e) {
       if (e is OcrException) rethrow;
       throw OcrException('Failed to extract text from image', cause: e);
     }
@@ -722,7 +722,7 @@ class OcrService {
           totalWords += result.wordCount ?? 0;
           totalLines += result.lineCount ?? 0;
         }
-      } catch (e) {
+      } on Object catch (e) {
         throw OcrException(
           'Failed to extract text from page ${i + 1}: ${imagePaths[i]}',
           cause: e,
@@ -801,7 +801,7 @@ class OcrService {
         options: OcrOptions(language: language),
       );
       return result.hasText;
-    } catch (_) {
+    } on Object catch (_) {
       return false;
     }
   }

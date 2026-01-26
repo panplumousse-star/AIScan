@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -349,8 +351,8 @@ class _UnlockButtonState extends State<_UnlockButton>
     return GestureDetector(
       onTapDown: (_) => _controller.forward(),
       onTapUp: (_) {
-        _controller.reverse();
-        HapticFeedback.mediumImpact();
+        unawaited(_controller.reverse());
+        unawaited(HapticFeedback.mediumImpact());
         widget.onTap();
       },
       onTapCancel: () => _controller.reverse(),

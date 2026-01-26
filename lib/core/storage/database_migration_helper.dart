@@ -169,19 +169,19 @@ class DatabaseMigrationHelper {
           await testDb.close();
           debugPrint('DatabaseMigration: Database is unencrypted, migration needed');
           return true;
-        } catch (queryError) {
+        } on Object catch (queryError) {
           // Query failed = database is encrypted, no migration needed
           await testDb.close();
           debugPrint('DatabaseMigration: Database is already encrypted: $queryError');
           return false;
         }
-      } catch (e) {
+      } on Object catch (e) {
         // Couldn't open database at all = might be encrypted or corrupted
         // Either way, no migration needed (will be handled by DatabaseHelper)
         debugPrint('DatabaseMigration: Cannot open database, assuming encrypted: $e');
         return false;
       }
-    } catch (e) {
+    } on Object catch (e) {
       throw MigrationException(
         'Failed to check migration status',
         cause: e,
@@ -236,7 +236,7 @@ class DatabaseMigrationHelper {
       debugPrint('Database backup created and verified at: $backupPath '
           '($backupSize bytes)');
       return backupPath;
-    } catch (e) {
+    } on Object catch (e) {
       throw MigrationException(
         'Failed to create database backup',
         cause: e,
@@ -291,7 +291,7 @@ class DatabaseMigrationHelper {
 
       debugPrint('Database restored and verified from backup: $backupPath '
           '($restoredSize bytes)');
-    } catch (e) {
+    } on Object catch (e) {
       throw MigrationException(
         'Failed to restore database from backup',
         cause: e,
@@ -312,7 +312,7 @@ class DatabaseMigrationHelper {
 
       final backupFile = File(backupPath);
       return await backupFile.exists();
-    } catch (e) {
+    } on Object catch (e) {
       // Return false if we can't check (e.g., permissions issue)
       debugPrint('Error checking backup existence: $e');
       return false;
@@ -335,7 +335,7 @@ class DatabaseMigrationHelper {
         await backupFile.delete();
         debugPrint('Database backup deleted: $backupPath');
       }
-    } catch (e) {
+    } on Object catch (e) {
       throw MigrationException(
         'Failed to delete backup file',
         cause: e,
@@ -407,13 +407,13 @@ class DatabaseMigrationHelper {
         rowsMigrated: rowCount,
         backupPath: backupPath,
       );
-    } catch (e) {
+    } on Object catch (e) {
       // Attempt rollback on failure
       if (backupPath != null) {
         try {
           await restoreFromBackup();
           debugPrint('Database restored from backup after migration failure');
-        } catch (rollbackError) {
+        } on Object catch (rollbackError) {
           debugPrint('Failed to restore backup: $rollbackError');
         }
       }
@@ -454,7 +454,7 @@ class DatabaseMigrationHelper {
       // Rename new database to old name
       await newDbFile.rename(oldDbPath);
       debugPrint('Encrypted database renamed to: $oldDbPath');
-    } catch (e) {
+    } on Object catch (e) {
       throw MigrationException(
         'Failed to replace old database with encrypted version',
         cause: e,
@@ -528,7 +528,7 @@ class DatabaseMigrationHelper {
 
       debugPrint('Total rows migrated: $totalRows');
       return totalRows;
-    } catch (e) {
+    } on Object catch (e) {
       throw MigrationException(
         'Failed to copy tables',
         cause: e,
@@ -575,7 +575,7 @@ class DatabaseMigrationHelper {
 
       debugPrint('Copied ${rows.length} rows from table $tableName');
       return rows.length;
-    } catch (e) {
+    } on Object catch (e) {
       throw MigrationException(
         'Failed to copy table $tableName',
         cause: e,
@@ -623,7 +623,7 @@ class DatabaseMigrationHelper {
       }
 
       debugPrint('Migration verification completed successfully');
-    } catch (e) {
+    } on Object catch (e) {
       throw MigrationException(
         'Migration verification failed',
         cause: e,
@@ -733,7 +733,7 @@ class DatabaseMigrationHelper {
 
       debugPrint('Encrypted database created at: $newDbPath');
       return db;
-    } catch (e) {
+    } on Object catch (e) {
       throw MigrationException(
         'Failed to create encrypted database',
         cause: e,

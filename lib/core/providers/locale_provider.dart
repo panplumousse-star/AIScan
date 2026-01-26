@@ -70,7 +70,7 @@ class LocalePersistenceService {
       final prefs = await _getPreferences();
       final value = prefs.getString(_localeKey);
       return AppLocale.fromCode(value);
-    } catch (_) {
+    } on Object catch (_) {
       return AppLocale.system;
     }
   }
@@ -80,7 +80,7 @@ class LocalePersistenceService {
     try {
       final prefs = await _getPreferences();
       await prefs.setString(_localeKey, locale.code);
-    } catch (_) {
+    } on Object catch (_) {
       // Silently ignore storage errors for locale preferences
     }
   }
@@ -90,7 +90,7 @@ class LocalePersistenceService {
     try {
       final prefs = await _getPreferences();
       await prefs.remove(_localeKey);
-    } catch (_) {
+    } on Object catch (_) {
       // Silently ignore storage errors
     }
   }
@@ -160,7 +160,7 @@ final flutterLocaleProvider = Provider<Locale?>((ref) {
 Future<void> initializeLocale(ProviderContainer container) async {
   try {
     await container.read(localeProvider.notifier).initialize();
-  } catch (_) {
+  } on Object catch (_) {
     // Silently fall back to system locale if loading fails
   }
 }

@@ -23,8 +23,8 @@ class DocumentsNavigationController {
   ///
   /// Plays haptic feedback and audio cue before navigation.
   static void navigateToScanner(BuildContext context, WidgetRef ref) {
-    HapticFeedback.lightImpact();
-    ref.read(audioServiceProvider).playScanLaunch();
+    unawaited(HapticFeedback.lightImpact());
+    unawaited(ref.read(audioServiceProvider).playScanLaunch());
     final isDark = Theme.of(context).brightness == Brightness.dark;
     Navigator.of(context).push(
       PageRouteBuilder(
@@ -129,7 +129,7 @@ class DocumentsNavigationController {
                 );
                 // Refresh the documents list
                 unawaited(ref.read(documentsScreenProvider.notifier).loadDocuments());
-              } catch (e) {
+              } on Object catch (_) {
                 // Error saving OCR text - silently fail
               }
             }

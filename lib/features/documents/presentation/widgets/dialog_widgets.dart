@@ -52,7 +52,7 @@ class MoveToFolderDialog extends StatelessWidget {
     try {
       final hex = hexColor.replaceFirst('#', '');
       return Color(int.parse('FF$hex', radix: 16));
-    } catch (_) {
+    } on Object catch (_) {
       return theme.colorScheme.secondary;
     }
   }

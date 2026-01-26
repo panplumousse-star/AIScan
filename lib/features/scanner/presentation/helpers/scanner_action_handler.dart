@@ -4,6 +4,8 @@
 /// operations including document sharing and export.
 library;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -98,7 +100,7 @@ class ScannerActionHandler {
               }
               return;
             }
-          } catch (e) {
+          } on Object catch (e) {
             if (context.mounted) {
               ScaffoldMessenger.of(context).hideCurrentSnackBar();
               ScaffoldMessenger.of(context).showSnackBar(
@@ -136,7 +138,7 @@ class ScannerActionHandler {
         ref.read(hasJustScannedProvider.notifier).state = true;
         _navigateToDocuments(context);
       }
-    } catch (e) {
+    } on Object catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -210,7 +212,7 @@ class ScannerActionHandler {
         );
       }
       // If cancelled, do nothing (user cancelled the picker)
-    } catch (e) {
+    } on Object catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(

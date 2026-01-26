@@ -128,7 +128,7 @@ class FoldersScreenNotifier extends StateNotifier<FoldersScreenState> {
         isInitialized: false,
         error: 'Failed to initialize: ${e.message}',
       );
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(
         isLoading: false,
         isInitialized: false,
@@ -164,7 +164,7 @@ class FoldersScreenNotifier extends StateNotifier<FoldersScreenState> {
         isLoading: false,
         error: 'Failed to load folders: ${e.message}',
       );
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(
         isLoading: false,
         error: 'Failed to load folders: $e',
@@ -181,7 +181,7 @@ class FoldersScreenNotifier extends StateNotifier<FoldersScreenState> {
     try {
       await loadFolders();
       state = state.copyWith(isRefreshing: false);
-    } catch (_) {
+    } on Object catch (_) {
       state = state.copyWith(isRefreshing: false);
     }
   }
@@ -196,7 +196,7 @@ class FoldersScreenNotifier extends StateNotifier<FoldersScreenState> {
         if (mounted) {
           stats[folder.id] = count;
         }
-      } catch (_) {
+      } on Object catch (_) {
         // Ignore stats loading errors
       }
     }
@@ -296,7 +296,7 @@ class FoldersScreenNotifier extends StateNotifier<FoldersScreenState> {
     } on FolderServiceException catch (e) {
       state = state.copyWith(error: 'Failed to create folder: ${e.message}');
       return null;
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(error: 'Failed to create folder: $e');
       return null;
     }
@@ -311,7 +311,7 @@ class FoldersScreenNotifier extends StateNotifier<FoldersScreenState> {
     } on FolderServiceException catch (e) {
       state = state.copyWith(error: 'Failed to rename folder: ${e.message}');
       return false;
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(error: 'Failed to rename folder: $e');
       return false;
     }
@@ -326,7 +326,7 @@ class FoldersScreenNotifier extends StateNotifier<FoldersScreenState> {
     } on FolderServiceException catch (e) {
       state = state.copyWith(error: 'Failed to update folder: ${e.message}');
       return false;
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(error: 'Failed to update folder: $e');
       return false;
     }
@@ -341,7 +341,7 @@ class FoldersScreenNotifier extends StateNotifier<FoldersScreenState> {
     } on FolderServiceException catch (e) {
       state = state.copyWith(error: 'Failed to delete folder: ${e.message}');
       return false;
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(error: 'Failed to delete folder: $e');
       return false;
     }
@@ -409,7 +409,7 @@ class FoldersScreenNotifier extends StateNotifier<FoldersScreenState> {
         isLoading: false,
         error: 'Failed to delete folders: ${e.message}',
       );
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(
         isLoading: false,
         error: 'Failed to delete folders: $e',
@@ -1137,7 +1137,7 @@ class _FolderListItem extends StatelessWidget {
       if (hex.length == 8) {
         return Color(int.parse(hex, radix: 16));
       }
-    } catch (_) {
+    } on Object catch (_) {
       // Fall through to default
     }
     return Colors.blue;
@@ -1266,7 +1266,7 @@ class _ColorOption extends StatelessWidget {
       if (hex.length == 8) {
         return Color(int.parse(hex, radix: 16));
       }
-    } catch (_) {
+    } on Object catch (_) {
       // Fall through to default
     }
     return Colors.blue;

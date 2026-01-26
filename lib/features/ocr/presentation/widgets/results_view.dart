@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -89,7 +91,7 @@ class _OcrResultsViewState extends State<OcrResultsView> {
           isSelectionMode: _isSelectionMode,
           onSelectionModeToggle: () {
             setState(() => _isSelectionMode = !_isSelectionMode);
-            HapticFeedback.selectionClick();
+            unawaited(HapticFeedback.selectionClick());
           },
         ),
 

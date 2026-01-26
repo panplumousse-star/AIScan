@@ -151,7 +151,7 @@ class EnhancementScreenNotifier extends StateNotifier<EnhancementScreenState> {
         previewBytes: previewSized ?? bytes,
         isProcessing: false,
       );
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(
         isProcessing: false,
         error: 'Failed to load image: $e',
@@ -176,7 +176,7 @@ class EnhancementScreenNotifier extends StateNotifier<EnhancementScreenState> {
         previewBytes: previewSized ?? bytes,
         isProcessing: false,
       );
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(
         originalBytes: bytes,
         previewBytes: bytes,
@@ -315,7 +315,7 @@ class EnhancementScreenNotifier extends StateNotifier<EnhancementScreenState> {
       // Log error but don't fail - we'll use original bytes
       debugPrint('Failed to generate preview-sized image: ${e.message}');
       return null;
-    } catch (e) {
+    } on Object catch (e) {
       debugPrint('Failed to generate preview-sized image: $e');
       return null;
     }
@@ -369,7 +369,7 @@ class EnhancementScreenNotifier extends StateNotifier<EnhancementScreenState> {
           error: e.message,
         );
       }
-    } catch (e) {
+    } on Object catch (_) {
       if (mounted) {
         state = state.copyWith(
           isProcessing: false,
@@ -419,7 +419,7 @@ class EnhancementScreenNotifier extends StateNotifier<EnhancementScreenState> {
         error: e.message,
       );
       return null;
-    } catch (e) {
+    } on Object catch (_) {
       state = state.copyWith(
         isSaving: false,
         error: 'Failed to save enhanced image',
@@ -443,7 +443,7 @@ class EnhancementScreenNotifier extends StateNotifier<EnhancementScreenState> {
       final file = File(outputPath);
       await file.writeAsBytes(bytes);
       return outputPath;
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(error: 'Failed to save file: $e');
       return null;
     }

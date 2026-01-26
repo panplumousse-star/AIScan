@@ -1219,7 +1219,7 @@ abstract final class AppTheme {
         hex = 'FF$hex'; // Add alpha if not present
       }
       return Color(int.parse(hex, radix: 16));
-    } catch (_) {
+    } on Object catch (_) {
       return null;
     }
   }

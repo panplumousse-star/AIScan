@@ -94,7 +94,7 @@ class OcrLanguagePersistenceService {
       final prefs = await _getPreferences();
       final value = prefs.getString(_ocrLanguageKey);
       return OcrLanguageOption.fromCode(value);
-    } catch (_) {
+    } on Object catch (_) {
       return OcrLanguageOption.auto;
     }
   }
@@ -104,7 +104,7 @@ class OcrLanguagePersistenceService {
     try {
       final prefs = await _getPreferences();
       await prefs.setString(_ocrLanguageKey, language.code);
-    } catch (_) {
+    } on Object catch (_) {
       // Silently ignore storage errors
     }
   }
@@ -114,7 +114,7 @@ class OcrLanguagePersistenceService {
     try {
       final prefs = await _getPreferences();
       await prefs.remove(_ocrLanguageKey);
-    } catch (_) {
+    } on Object catch (_) {
       // Silently ignore storage errors
     }
   }
@@ -181,7 +181,7 @@ final ocrLanguageForServiceProvider = Provider<OcrLanguage>((ref) {
 Future<void> initializeOcrLanguage(ProviderContainer container) async {
   try {
     await container.read(ocrLanguageProvider.notifier).initialize();
-  } catch (_) {
+  } on Object catch (_) {
     // Silently fall back to auto if loading fails
   }
 }

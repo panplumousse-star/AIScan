@@ -132,7 +132,7 @@ class ScannedPage {
         throw const ScannerException('Scanned image file not found');
       }
       return await file.readAsBytes();
-    } catch (e) {
+    } on Object catch (e) {
       if (e is ScannerException) rethrow;
       throw ScannerException('Failed to read scanned image', cause: e);
     }
@@ -153,7 +153,7 @@ class ScannedPage {
         return await file.length();
       }
       return 0;
-    } catch (_) {
+    } on Object catch (_) {
       return 0;
     }
   }
@@ -588,7 +588,7 @@ class ScannerService {
           await file.delete();
           deletedCount++;
         }
-      } catch (_) {
+      } on Object catch (_) {
         // Ignore deletion errors - file may already be deleted
       }
     }
@@ -601,7 +601,7 @@ class ScannerService {
           await pdfFile.delete();
           deletedCount++;
         }
-      } catch (_) {
+      } on Object catch (_) {
         // Ignore deletion errors
       }
     }
@@ -817,7 +817,7 @@ class ScannerStorageService {
         pagesProcessed: validPages.length,
         thumbnailGenerated: thumbnailPath != null,
       );
-    } catch (e) {
+    } on Object catch (e) {
       // Clean up temporary PNG files on error
       for (final pngPath in pngTempPaths) {
         await _deleteTempFile(pngPath);
@@ -861,7 +861,7 @@ class ScannerStorageService {
       await pngFile.writeAsBytes(pngBytes);
 
       return pngPath;
-    } catch (e) {
+    } on Object catch (e) {
       if (e is ScannerException) rethrow;
       throw ScannerException(
         'Failed to convert page $pageIndex to PNG',
@@ -923,7 +923,7 @@ class ScannerStorageService {
   Future<bool> isReady() async {
     try {
       return await _documentRepository.isReady();
-    } catch (_) {
+    } on Object catch (_) {
       return false;
     }
   }
@@ -938,7 +938,7 @@ class ScannerStorageService {
   Future<bool> initialize() async {
     try {
       return await _documentRepository.initialize();
-    } catch (_) {
+    } on Object catch (_) {
       return false;
     }
   }
@@ -979,7 +979,7 @@ class ScannerStorageService {
       await thumbnailFile.writeAsBytes(thumbnailBytes);
 
       return thumbnailFile.path;
-    } catch (e) {
+    } on Object catch (_) {
       // Thumbnail generation is not critical - return null on failure
       return null;
     }
@@ -1004,7 +1004,7 @@ class ScannerStorageService {
       if (await file.exists()) {
         await file.delete();
       }
-    } catch (_) {
+    } on Object catch (_) {
       // Ignore deletion errors - file may already be deleted
     }
   }

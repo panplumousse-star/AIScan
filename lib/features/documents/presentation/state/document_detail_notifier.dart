@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -161,7 +163,7 @@ class DocumentDetailScreenNotifier
         isLoading: false,
         error: 'Failed to load document: ${e.message}',
       );
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(
         isLoading: false,
         error: 'Failed to load document: $e',
@@ -211,7 +213,7 @@ class DocumentDetailScreenNotifier
         isDecrypting: false,
         error: 'Failed to decrypt document: ${e.message}',
       );
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(
         isDecrypting: false,
         error: 'Failed to decrypt document: $e',
@@ -244,7 +246,7 @@ class DocumentDetailScreenNotifier
         isDecrypting: false,
         error: 'Failed to load page: ${e.message}',
       );
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(
         isDecrypting: false,
         error: 'Failed to load page: $e',
@@ -265,7 +267,7 @@ class DocumentDetailScreenNotifier
       final bytes = await file.readAsBytes();
       state = state.copyWith(imageBytes: bytes);
       return bytes;
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(error: 'Failed to load image: $e');
       return null;
     }
@@ -320,7 +322,7 @@ class DocumentDetailScreenNotifier
       }
     } on DocumentRepositoryException catch (e) {
       state = state.copyWith(error: 'Failed to update favorite: ${e.message}');
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(error: 'Failed to update favorite: $e');
     }
   }
@@ -338,7 +340,7 @@ class DocumentDetailScreenNotifier
       state = state.copyWith(document: updatedDoc);
     } on DocumentRepositoryException catch (e) {
       state = state.copyWith(error: 'Failed to update title: ${e.message}');
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(error: 'Failed to update title: $e');
     }
   }
@@ -361,7 +363,7 @@ class DocumentDetailScreenNotifier
         error: 'Failed to delete document: ${e.message}',
       );
       return false;
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(
         isDeleting: false,
         error: 'Failed to delete document: $e',
@@ -388,7 +390,7 @@ class DocumentDetailScreenNotifier
         if (await file.exists()) {
           await file.delete();
         }
-      } catch (_) {
+      } on Object catch (_) {
         // Ignore cleanup errors
       }
     }
@@ -396,7 +398,7 @@ class DocumentDetailScreenNotifier
     // Clean up any temp files from repository
     try {
       await _repository.cleanupTempFiles();
-    } catch (_) {
+    } on Object catch (_) {
       // Ignore cleanup errors
     }
   }

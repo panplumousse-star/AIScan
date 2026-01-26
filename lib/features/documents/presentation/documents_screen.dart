@@ -291,7 +291,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
         isInitialized: false,
         error: 'Failed to initialize: ${e.message}',
       );
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(
         isLoading: false,
         isInitialized: false,
@@ -361,7 +361,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
         isLoading: false,
         error: 'Failed to load documents: ${e.message}',
       );
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(
         isLoading: false,
         error: 'Failed to load documents: $e',
@@ -399,7 +399,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
         error: 'Failed to load more documents: ${e.message}',
       );
       return false;
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(
         error: 'Failed to load more documents: $e',
       );
@@ -475,7 +475,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
       }
       await loadDocuments();
       return folder;
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(error: 'Failed to create folder: $e');
       return null;
     }
@@ -494,7 +494,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
       _lazyLoader.clear();
       await loadDocuments();
       state = state.copyWith(isRefreshing: false);
-    } catch (_) {
+    } on Object catch (_) {
       state = state.copyWith(isRefreshing: false);
     }
   }
@@ -543,7 +543,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
           },
         );
       }
-    } catch (_) {
+    } on Object catch (_) {
       // Ignore thumbnail loading errors
     }
   }
@@ -567,7 +567,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
           },
         );
       }
-    } catch (_) {
+    } on Object catch (_) {
       // Ignore thumbnail loading errors
     }
   }
@@ -713,7 +713,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
         isLoading: false,
         error: 'Failed to delete documents: ${e.message}',
       );
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(
         isLoading: false,
         error: 'Failed to delete documents: $e',
@@ -748,7 +748,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
         error: 'Failed to move documents: ${e.message}',
       );
       return movedCount;
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(
         isLoading: false,
         error: 'Failed to move documents: $e',
@@ -764,7 +764,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
       await loadDocuments();
     } on DocumentRepositoryException catch (e) {
       state = state.copyWith(error: 'Failed to update favorite: ${e.message}');
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(error: 'Failed to update favorite: $e');
     }
   }
@@ -781,7 +781,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
       await loadDocuments();
     } on DocumentRepositoryException catch (e) {
       state = state.copyWith(error: 'Failed to rename document: ${e.message}');
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(error: 'Failed to rename document: $e');
     }
   }
@@ -808,7 +808,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
       isSelectionMode: false,
     );
       await loadDocuments();
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(
         isLoading: false,
         error: 'Failed to update favorites: $e',
@@ -830,7 +830,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
       if (documents.isNotEmpty) {
         await _shareService.shareDocuments(documents);
       }
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(error: 'Share failed: $e');
     }
   }
@@ -893,7 +893,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
         isLoading: false,
         error: 'Failed to delete folders: ${e.message}',
       );
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(
         isLoading: false,
         error: 'Failed to delete folders: $e',
@@ -925,7 +925,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
       isSelectionMode: false,
     );
       await loadDocuments();
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(
         isLoading: false,
         error: 'Failed to delete selected items: $e',
@@ -967,7 +967,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
       isSelectionMode: false,
     );
       await loadDocuments();
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(
         isLoading: false,
         error: 'Failed to delete selected items: $e',
@@ -992,7 +992,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
       } else {
         try {
           folder = state.folders.firstWhere((f) => f.id == folderId);
-        } catch (_) {
+        } on Object catch (_) {
           throw StateError('Folder not found');
         }
       }
@@ -1009,7 +1009,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
       await loadDocuments();
     } on FolderServiceException catch (e) {
       state = state.copyWith(error: 'Failed to update folder: ${e.message}');
-    } catch (e) {
+    } on Object catch (e) {
       state = state.copyWith(error: 'Failed to update folder: $e');
     }
   }

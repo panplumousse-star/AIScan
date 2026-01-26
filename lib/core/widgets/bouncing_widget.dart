@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 /// A widget that continuously bounces its child with a subtle pulsing scale animation.

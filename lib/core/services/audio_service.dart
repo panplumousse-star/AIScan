@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/services.dart';
 import 'package:native_camera_sound/native_camera_sound.dart';
@@ -12,7 +14,7 @@ class AudioService {
     try {
       // Use native system click for the mascot for a clean, integrated feel
       await SystemSound.play(SystemSoundType.click);
-    } catch (e) {
+    } on Object catch (_) {
       // Fail silently
     }
   }
@@ -21,7 +23,7 @@ class AudioService {
     try {
       await _player.stop();
       await _player.play(AssetSource('audio/swoosh.mp3'), volume: 0.4);
-    } catch (e) {
+    } on Object catch (_) {
       // Fail silently if sound asset is missing
     }
   }
@@ -30,7 +32,7 @@ class AudioService {
     try {
       // Use native camera shutter sound for professional feel
       await NativeCameraSound.playShutter();
-    } catch (e) {
+    } on Object catch (_) {
       // Fail silently if native sound fails
     }
   }

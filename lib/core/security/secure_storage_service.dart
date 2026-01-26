@@ -280,7 +280,7 @@ class SecureStorageService {
       _cachedEncryptionKey = encodedKey;
       _keyGenerationCompleter!.complete(encodedKey);
       return encodedKey;
-    } catch (e) {
+    } on Object catch (e) {
       _keyGenerationCompleter!.completeError(e);
       rethrow;
     } finally {
@@ -390,7 +390,7 @@ class SecureStorageService {
       // Try to read a non-existent key to check if storage is accessible
       await _storage.read(key: '_aiscan_test_key');
       return true;
-    } catch (e) {
+    } on Object catch (_) {
       return false;
     }
   }

@@ -91,7 +91,7 @@ void showStoragePermissionDeniedSnackbar(
 /// ```dart
 /// try {
 ///   await shareService.shareDocument(document);
-/// } catch (e) {
+/// } on Object catch (e) {
 ///   showShareErrorSnackbar(context, e.toString());
 /// }
 /// ```

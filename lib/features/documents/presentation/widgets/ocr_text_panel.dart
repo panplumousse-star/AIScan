@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -72,7 +74,7 @@ class _OcrTextPanelState extends ConsumerState<OcrTextPanel> {
 
     if (hasSelection && !_hasTriggeredSelectionHaptic) {
       // Selection just started - trigger haptic feedback once
-      HapticFeedback.selectionClick();
+      unawaited(HapticFeedback.selectionClick());
       _hasTriggeredSelectionHaptic = true;
     } else if (!hasSelection) {
       // Selection cleared - reset flag for next selection

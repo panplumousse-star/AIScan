@@ -536,7 +536,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
       delay: const Duration(milliseconds: 0),
       child: BentoInteractiveWrapper(
         onTap: () {
-          HapticFeedback.lightImpact();
+          unawaited(HapticFeedback.lightImpact());
           if (hasJustScanned) {
             ref.read(hasJustScannedProvider.notifier).state = false;
           }
@@ -622,7 +622,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return BentoInteractiveWrapper(
       onTap: () {
-        HapticFeedback.mediumImpact();
+        unawaited(HapticFeedback.mediumImpact());
         // Potential secret animation trigger here later?
       },
       child: ExcludeSemantics(
@@ -816,8 +816,8 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
           onTap: isEmpty
               ? null
               : () {
-                  HapticFeedback.mediumImpact();
-                  ref.read(audioServiceProvider).playSwoosh();
+                  unawaited(HapticFeedback.mediumImpact());
+                  unawaited(ref.read(audioServiceProvider).playSwoosh());
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => const DocumentsScreen()),
@@ -968,7 +968,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
       enabled: true,
       child: BentoInteractiveWrapper(
         onTap: () {
-          HapticFeedback.selectionClick();
+          unawaited(HapticFeedback.selectionClick());
           Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const SettingsScreen()),
@@ -1226,8 +1226,8 @@ class _ShakeableWrapperState extends State<_ShakeableWrapper>
   }
 
   void _handleTap() {
-    _controller.forward(from: 0.0);
-    HapticFeedback.vibrate(); // Stronger feedback for launch
+    unawaited(_controller.forward(from: 0.0));
+    unawaited(HapticFeedback.vibrate()); // Stronger feedback for launch
     widget.onTap();
   }
 

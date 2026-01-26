@@ -462,7 +462,7 @@ class ImageExporter {
       return result;
     } on ImageExporterException {
       rethrow;
-    } catch (e) {
+    } on Object catch (e) {
       throw ImageExporterException(
         'Failed to export image',
         cause: e,
@@ -502,7 +502,7 @@ class ImageExporter {
       );
     } on ImageExporterException {
       rethrow;
-    } catch (e) {
+    } on Object catch (e) {
       throw ImageExporterException(
         'Failed to read image file: $filePath',
         cause: e,
@@ -538,7 +538,7 @@ class ImageExporter {
       return result;
     } on ImageExporterException {
       rethrow;
-    } catch (e) {
+    } on Object catch (e) {
       throw ImageExporterException(
         'Failed to save image to: $outputPath',
         cause: e,
@@ -578,7 +578,7 @@ class ImageExporter {
       return result;
     } on ImageExporterException {
       rethrow;
-    } catch (e) {
+    } on Object catch (e) {
       throw ImageExporterException(
         'Failed to export from $inputPath to $outputPath',
         cause: e,
@@ -625,7 +625,7 @@ class ImageExporter {
       );
     } on ImageExporterException {
       rethrow;
-    } catch (e) {
+    } on Object catch (e) {
       throw ImageExporterException(
         'Failed to export batch',
         cause: e,
@@ -668,7 +668,7 @@ class ImageExporter {
       );
     } on ImageExporterException {
       rethrow;
-    } catch (e) {
+    } on Object catch (e) {
       throw ImageExporterException(
         'Failed to export batch from files',
         cause: e,
@@ -741,7 +741,7 @@ class ImageExporter {
       );
     } on ImageExporterException {
       rethrow;
-    } catch (e) {
+    } on Object catch (e) {
       throw ImageExporterException(
         'Failed to export batch to directory: $outputDirectory',
         cause: e,
@@ -828,7 +828,7 @@ class ImageExporter {
       return result;
     } on ImageExporterException {
       rethrow;
-    } catch (e) {
+    } on Object catch (e) {
       throw ImageExporterException(
         'Failed to stitch images',
         cause: e,
@@ -871,7 +871,7 @@ class ImageExporter {
       return result;
     } on ImageExporterException {
       rethrow;
-    } catch (e) {
+    } on Object catch (e) {
       throw ImageExporterException(
         'Failed to stitch images horizontally',
         cause: e,

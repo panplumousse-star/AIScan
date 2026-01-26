@@ -87,7 +87,7 @@ class _MoveToFolderDialogState extends State<MoveToFolderDialog> {
     try {
       final hex = hexColor.replaceFirst('#', '');
       return Color(int.parse('FF$hex', radix: 16));
-    } catch (_) {
+    } on Object catch (_) {
       return const Color(0xFF4F46E5);
     }
   }

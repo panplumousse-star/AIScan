@@ -123,7 +123,7 @@ class _BentoFolderDialogState extends State<BentoFolderDialog> {
     try {
       final hex = hexColor.replaceFirst('#', '');
       return Color(int.parse('FF$hex', radix: 16));
-    } catch (_) {
+    } on Object catch (_) {
       return Colors.grey;
     }
   }

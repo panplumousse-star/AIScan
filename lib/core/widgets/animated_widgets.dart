@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
@@ -512,19 +514,19 @@ class _TapScaleFeedbackState extends State<TapScaleFeedback>
 
   void _handleTapDown(TapDownDetails details) {
     if (widget.enabled) {
-      _controller.forward();
+      unawaited(_controller.forward());
     }
   }
 
   void _handleTapUp(TapUpDetails details) {
     if (widget.enabled) {
-      _controller.reverse();
+      unawaited(_controller.reverse());
     }
   }
 
   void _handleTapCancel() {
     if (widget.enabled) {
-      _controller.reverse();
+      unawaited(_controller.reverse());
     }
   }
 
@@ -612,20 +614,20 @@ class _AnimatedIconButtonState extends State<AnimatedIconButton>
 
   void _handleTapDown(TapDownDetails details) {
     if (widget.enabled) {
-      _controller.forward();
+      unawaited(_controller.forward());
     }
   }
 
   void _handleTapUp(TapUpDetails details) {
     if (widget.enabled) {
-      _controller.reverse();
+      unawaited(_controller.reverse());
       widget.onPressed();
     }
   }
 
   void _handleTapCancel() {
     if (widget.enabled) {
-      _controller.reverse();
+      unawaited(_controller.reverse());
     }
   }
 

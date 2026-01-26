@@ -412,7 +412,7 @@ class ImageProcessor {
       );
     } on ImageProcessorException {
       rethrow;
-    } catch (e) {
+    } on Object catch (e) {
       throw ImageProcessorException(
         'Failed to read image file: $filePath',
         cause: e,
@@ -459,7 +459,7 @@ class ImageProcessor {
       return result;
     } on ImageProcessorException {
       rethrow;
-    } catch (e) {
+    } on Object catch (e) {
       throw ImageProcessorException(
         'Failed to process image',
         cause: e,
@@ -509,7 +509,7 @@ class ImageProcessor {
       return result;
     } on ImageProcessorException {
       rethrow;
-    } catch (e) {
+    } on Object catch (e) {
       throw ImageProcessorException(
         'Failed to save enhanced image to: $outputPath',
         cause: e,
@@ -654,7 +654,7 @@ class ImageProcessor {
       );
 
       return result;
-    } catch (e) {
+    } on Object catch (e) {
       throw ImageProcessorException(
         'Failed to resize image',
         cause: e,
@@ -704,7 +704,7 @@ class ImageProcessor {
       );
 
       return result;
-    } catch (e) {
+    } on Object catch (e) {
       throw ImageProcessorException(
         'Failed to crop image',
         cause: e,
@@ -736,7 +736,7 @@ class ImageProcessor {
       );
 
       return result;
-    } catch (e) {
+    } on Object catch (e) {
       throw ImageProcessorException(
         'Failed to rotate image',
         cause: e,
@@ -757,7 +757,7 @@ class ImageProcessor {
     try {
       final result = await compute(_getImageInfoIsolate, bytes);
       return result;
-    } catch (e) {
+    } on Object catch (e) {
       throw ImageProcessorException(
         'Failed to get image info',
         cause: e,

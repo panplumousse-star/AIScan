@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
@@ -249,9 +251,9 @@ class _BentoSearchBarState extends State<BentoSearchBar>
     super.didUpdateWidget(oldWidget);
     if (widget.isSelectionMode != oldWidget.isSelectionMode) {
       if (widget.isSelectionMode) {
-        _flipController.forward();
+        unawaited(_flipController.forward());
       } else {
-        _flipController.reverse();
+        unawaited(_flipController.reverse());
       }
     }
   }

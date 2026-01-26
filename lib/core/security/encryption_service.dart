@@ -99,7 +99,7 @@ Uint8List _decryptInIsolate(_DecryptParams params) {
     return Uint8List.fromList(decrypted);
   } on EncryptionException {
     rethrow;
-  } catch (e) {
+  } on Object catch (e) {
     throw EncryptionException('Failed to decrypt data', cause: e);
   }
 }
@@ -202,7 +202,7 @@ class EncryptionService {
       return result;
     } on EncryptionException {
       rethrow;
-    } catch (e) {
+    } on Object catch (e) {
       throw EncryptionException('Failed to encrypt data', cause: e);
     }
   }
@@ -247,7 +247,7 @@ class EncryptionService {
       return Uint8List.fromList(decrypted);
     } on EncryptionException {
       rethrow;
-    } catch (e) {
+    } on Object catch (e) {
       throw EncryptionException('Failed to decrypt data', cause: e);
     }
   }
@@ -289,7 +289,7 @@ class EncryptionService {
       return await compute(_decryptInIsolate, params);
     } on EncryptionException {
       rethrow;
-    } catch (e) {
+    } on Object catch (e) {
       throw EncryptionException('Failed to decrypt data', cause: e);
     }
   }
@@ -325,7 +325,7 @@ class EncryptionService {
       );
     } on EncryptionException {
       rethrow;
-    } catch (e) {
+    } on Object catch (e) {
       throw EncryptionException(
         'Failed to encrypt file: $inputPath',
         cause: e,
@@ -364,7 +364,7 @@ class EncryptionService {
       );
     } on EncryptionException {
       rethrow;
-    } catch (e) {
+    } on Object catch (e) {
       throw EncryptionException(
         'Failed to decrypt file: $inputPath',
         cause: e,
@@ -476,7 +476,7 @@ class EncryptionService {
     try {
       _cachedKey = await _secureStorage.getOrCreateEncryptionKey();
       return _cachedKey!;
-    } catch (e) {
+    } on Object catch (e) {
       throw EncryptionException('Failed to get encryption key', cause: e);
     }
   }

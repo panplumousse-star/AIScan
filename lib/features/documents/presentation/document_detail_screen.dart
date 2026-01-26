@@ -628,8 +628,8 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
           await notifier.loadDocument(state.document!.id);
         }
 
-        // Final null check before sharing
-        if (textToShare == null || textToShare.isEmpty) {
+        // Final check before sharing
+        if (textToShare == null || textToShare!.isEmpty) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

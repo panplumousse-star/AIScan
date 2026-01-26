@@ -314,43 +314,17 @@
   "whatAreYouLookingFor": "What are you looking for?",
   "needHelp": "Need help?",
 
-  "clipboardSecurityTitle": "Clipboard Security",
-  "clipboardAutoClear": "Auto-clear clipboard",
-  "clipboardAutoClearSubtitle": "Clears after copy",
-  "clipboardClearAfter": "Clear after",
-  "clipboardSensitiveDetection": "Sensitive data detection",
-  "clipboardSensitiveDetectionSubtitle": "Alerts for sensitive data",
-  "clipboardTimeoutSeconds": "{seconds}s",
-  "@clipboardTimeoutSeconds": {
-    "placeholders": { "seconds": { "type": "int" } }
-  },
-
-  "sensitiveDataDetectedTitle": "Sensitive Data Detected",
-  "sensitiveDataWarningMessage": "The text you are copying may contain sensitive information that could be accessed by other apps.",
-  "copyAnyway": "Copy Anyway",
-  "detectedDataTypes": "Detected:",
-
-  "sensitiveTypeSsn": "Social Security Number",
-  "sensitiveTypeCreditCard": "credit card number",
-  "sensitiveTypeEmail": "email address",
-  "sensitiveTypePhone": "phone number",
-  "sensitiveTypeAccount": "account number",
-  "sensitiveTypePassword": "password",
-
-  "clipboardWillClearIn": "Clipboard will clear in {seconds}s",
-  "@clipboardWillClearIn": {
-    "placeholders": { "seconds": { "type": "int" } }
-  },
-  "textCopiedToClipboard": "Text copied to clipboard",
-  "clipboardSecurityError": "Clipboard security error: {error}",
-  "@clipboardSecurityError": {
-    "placeholders": { "error": { "type": "String" } }
-  },
-
   "licenses": "Open source licenses",
   "licensesSubtitle": "View library licenses",
 
   "localStorageWarningTitle": "Local storage only",
   "localStorageWarningMessage": "Your documents are stored on your device and encrypted. If you uninstall the app, they will be permanently deleted.\n\nRemember to export your important documents!",
-  "localStorageWarningButton": "Got it"
+  "localStorageWarningButton": "Got it",
+
+  "deviceSecurityWarningTitle": "Security Warning",
+  "deviceSecurityWarningMessage": "Your device appears to be rooted or jailbroken.",
+  "deviceSecurityWarningDetails": "On modified devices, security features like encryption, secure storage, and biometric authentication may be compromised. Your documents may be at risk.\n\nThe app will continue to function, but please be aware of the reduced security.",
+  "deviceSecurityContinue": "I Understand",
+  "showSecurityWarnings": "Show security warnings",
+  "showSecurityWarningsDescription": "Display warnings when running on rooted or jailbroken devices"
 }

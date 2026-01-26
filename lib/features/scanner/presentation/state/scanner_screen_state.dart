@@ -11,41 +11,38 @@
 /// - Saved document reference
 library;
 
-import 'package:flutter/foundation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../../documents/domain/document_model.dart';
 import '../../domain/scanner_service.dart';
 
+part 'scanner_screen_state.freezed.dart';
+
 /// State for the scanner screen.
-@immutable
-class ScannerScreenState {
+@freezed
+class ScannerScreenState with _$ScannerScreenState {
+  const ScannerScreenState._();
+
   /// Creates a [ScannerScreenState] with default values.
-  const ScannerScreenState({
-    this.scanResult,
-    this.savedDocument,
-    this.isScanning = false,
-    this.isSaving = false,
-    this.error,
-    this.selectedPageIndex = 0,
-  });
+  const factory ScannerScreenState({
+    /// The current scan result, if any.
+    ScanResult? scanResult,
 
-  /// The current scan result, if any.
-  final ScanResult? scanResult;
+    /// The document created after saving to encrypted storage.
+    Document? savedDocument,
 
-  /// The document created after saving to encrypted storage.
-  final Document? savedDocument;
+    /// Whether a scan is currently in progress.
+    @Default(false) bool isScanning,
 
-  /// Whether a scan is currently in progress.
-  final bool isScanning;
+    /// Whether the scan is being saved.
+    @Default(false) bool isSaving,
 
-  /// Whether the scan is being saved.
-  final bool isSaving;
+    /// Error message, if any.
+    String? error,
 
-  /// Error message, if any.
-  final String? error;
-
-  /// Currently selected page index for preview.
-  final int selectedPageIndex;
+    /// Currently selected page index for preview.
+    @Default(0) int selectedPageIndex,
+  }) = _ScannerScreenState;
 
   /// Whether we have a scan result to preview.
   bool get hasResult => scanResult != null && scanResult!.isNotEmpty;
@@ -58,49 +55,4 @@ class ScannerScreenState {
 
   /// Whether we have an error.
   bool get hasError => error != null;
-
-  /// Creates a copy with updated fields.
-  ScannerScreenState copyWith({
-    ScanResult? scanResult,
-    Document? savedDocument,
-    bool? isScanning,
-    bool? isSaving,
-    String? error,
-    int? selectedPageIndex,
-    bool clearResult = false,
-    bool clearError = false,
-    bool clearSavedDocument = false,
-  }) {
-    return ScannerScreenState(
-      scanResult: clearResult ? null : (scanResult ?? this.scanResult),
-      savedDocument:
-          clearSavedDocument ? null : (savedDocument ?? this.savedDocument),
-      isScanning: isScanning ?? this.isScanning,
-      isSaving: isSaving ?? this.isSaving,
-      error: clearError ? null : (error ?? this.error),
-      selectedPageIndex: selectedPageIndex ?? this.selectedPageIndex,
-    );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is ScannerScreenState &&
-        other.scanResult == scanResult &&
-        other.savedDocument?.id == savedDocument?.id &&
-        other.isScanning == isScanning &&
-        other.isSaving == isSaving &&
-        other.error == error &&
-        other.selectedPageIndex == selectedPageIndex;
-  }
-
-  @override
-  int get hashCode => Object.hash(
-        scanResult,
-        savedDocument?.id,
-        isScanning,
-        isSaving,
-        error,
-        selectedPageIndex,
-      );
 }

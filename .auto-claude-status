@@ -1,15 +1,15 @@
 {
   "active": true,
-  "spec": "056-migrate-withopacity-to-withvalues-alpha",
+  "spec": "050-adopt-freezed-for-state-class-code-generation",
   "state": "building",
   "subtasks": {
-    "completed": 5,
-    "total": 7,
+    "completed": 18,
+    "total": 20,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Final Verification",
+    "current": "Documentation and Cleanup",
     "id": null,
     "total": 3
   },
@@ -18,8 +18,8 @@
     "max": 1
   },
   "session": {
-    "number": 7,
-    "started_at": "2026-01-26T09:04:05.044813"
+    "number": 20,
+    "started_at": "2026-01-26T09:03:29.871584"
   },
-  "last_update": "2026-01-26T09:12:43.472315"
+  "last_update": "2026-01-26T10:21:23.564145"
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../../core/widgets/bento_confirmation_dialog.dart';
 import '../../../core/widgets/bento_state_views.dart';
@@ -7,6 +8,8 @@ import '../../../l10n/app_localizations.dart';
 import '../domain/folder_model.dart';
 import '../domain/folder_service.dart';
 import 'widgets/bento_folder_dialog.dart';
+
+part 'folders_screen.freezed.dart';
 
 /// Sort options for folders.
 enum FoldersSortBy {
@@ -32,55 +35,47 @@ enum FoldersSortBy {
 }
 
 /// State for the folders screen.
-@immutable
-class FoldersScreenState {
+///
+/// Tracks the current folder hierarchy, sorting, and UI state.
+@freezed
+class FoldersScreenState with _$FoldersScreenState {
+  const FoldersScreenState._();
+
   /// Creates a [FoldersScreenState] with default values.
-  const FoldersScreenState({
-    this.folders = const [],
-    this.currentFolderId,
-    this.breadcrumbs = const [],
-    this.sortBy = FoldersSortBy.name,
-    this.isLoading = false,
-    this.isRefreshing = false,
-    this.isInitialized = false,
-    this.error,
-    this.selectedFolderIds = const {},
-    this.isSelectionMode = false,
-    this.folderStats = const {},
-  });
+  const factory FoldersScreenState({
+    /// The list of folders at the current level.
+    @Default([]) List<Folder> folders,
 
-  /// The list of folders at the current level.
-  final List<Folder> folders;
+    /// The current folder ID (null for root level).
+    String? currentFolderId,
 
-  /// The current folder ID (null for root level).
-  final String? currentFolderId;
+    /// Breadcrumb path from root to current folder.
+    @Default([]) List<Folder> breadcrumbs,
 
-  /// Breadcrumb path from root to current folder.
-  final List<Folder> breadcrumbs;
+    /// Current sort option.
+    @Default(FoldersSortBy.name) FoldersSortBy sortBy,
 
-  /// Current sort option.
-  final FoldersSortBy sortBy;
+    /// Whether folders are being loaded.
+    @Default(false) bool isLoading,
 
-  /// Whether folders are being loaded.
-  final bool isLoading;
+    /// Whether folders are being refreshed.
+    @Default(false) bool isRefreshing,
 
-  /// Whether folders are being refreshed.
-  final bool isRefreshing;
+    /// Whether the service has been initialized.
+    @Default(false) bool isInitialized,
 
-  /// Whether the service has been initialized.
-  final bool isInitialized;
+    /// Error message, if any.
+    String? error,
 
-  /// Error message, if any.
-  final String? error;
+    /// Set of selected folder IDs for multi-select mode.
+    @Default({}) Set<String> selectedFolderIds,
 
-  /// Set of selected folder IDs for multi-select mode.
-  final Set<String> selectedFolderIds;
+    /// Whether multi-select mode is active.
+    @Default(false) bool isSelectionMode,
 
-  /// Whether multi-select mode is active.
-  final bool isSelectionMode;
-
-  /// Map of folder IDs to their document counts.
-  final Map<String, int> folderStats;
+    /// Map of folder IDs to their document counts.
+    @Default({}) Map<String, int> folderStats,
+  }) = _FoldersScreenState;
 
   /// Whether we have any folders.
   bool get hasFolders => folders.isNotEmpty;
@@ -103,69 +98,6 @@ class FoldersScreenState {
 
   /// The current folder (null if at root).
   Folder? get currentFolder => breadcrumbs.isNotEmpty ? breadcrumbs.last : null;
-
-  /// Creates a copy with updated values.
-  FoldersScreenState copyWith({
-    List<Folder>? folders,
-    String? currentFolderId,
-    List<Folder>? breadcrumbs,
-    FoldersSortBy? sortBy,
-    bool? isLoading,
-    bool? isRefreshing,
-    bool? isInitialized,
-    String? error,
-    Set<String>? selectedFolderIds,
-    bool? isSelectionMode,
-    Map<String, int>? folderStats,
-    bool clearError = false,
-    bool clearSelection = false,
-    bool clearCurrentFolder = false,
-  }) {
-    return FoldersScreenState(
-      folders: folders ?? this.folders,
-      currentFolderId:
-          clearCurrentFolder ? null : (currentFolderId ?? this.currentFolderId),
-      breadcrumbs:
-          clearCurrentFolder ? const [] : (breadcrumbs ?? this.breadcrumbs),
-      sortBy: sortBy ?? this.sortBy,
-      isLoading: isLoading ?? this.isLoading,
-      isRefreshing: isRefreshing ?? this.isRefreshing,
-      isInitialized: isInitialized ?? this.isInitialized,
-      error: clearError ? null : (error ?? this.error),
-      selectedFolderIds: clearSelection
-          ? const {}
-          : (selectedFolderIds ?? this.selectedFolderIds),
-      isSelectionMode:
-          clearSelection ? false : (isSelectionMode ?? this.isSelectionMode),
-      folderStats: folderStats ?? this.folderStats,
-    );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is FoldersScreenState &&
-        other.currentFolderId == currentFolderId &&
-        other.sortBy == sortBy &&
-        other.isLoading == isLoading &&
-        other.isRefreshing == isRefreshing &&
-        other.isInitialized == isInitialized &&
-        other.error == error &&
-        other.isSelectionMode == isSelectionMode &&
-        other.folderCount == folderCount;
-  }
-
-  @override
-  int get hashCode => Object.hash(
-        currentFolderId,
-        sortBy,
-        isLoading,
-        isRefreshing,
-        isInitialized,
-        error,
-        isSelectionMode,
-        folderCount,
-      );
 }
 
 /// State notifier for the folders screen.
@@ -182,7 +114,7 @@ class FoldersScreenNotifier extends StateNotifier<FoldersScreenState> {
   Future<void> initialize() async {
     if (state.isInitialized) return;
 
-    state = state.copyWith(isLoading: true, clearError: true);
+    state = state.copyWith(isLoading: true, error: null);
 
     try {
       await _folderService.initialize();
@@ -207,7 +139,7 @@ class FoldersScreenNotifier extends StateNotifier<FoldersScreenState> {
   Future<void> loadFolders() async {
     if (!state.isInitialized) return;
 
-    state = state.copyWith(isLoading: true, clearError: true);
+    state = state.copyWith(isLoading: true, error: null);
 
     try {
       List<Folder> folders;
@@ -242,7 +174,7 @@ class FoldersScreenNotifier extends StateNotifier<FoldersScreenState> {
   Future<void> refresh() async {
     if (!state.isInitialized) return;
 
-    state = state.copyWith(isRefreshing: true, clearError: true);
+    state = state.copyWith(isRefreshing: true, error: null);
 
     try {
       await loadFolders();
@@ -299,7 +231,8 @@ class FoldersScreenNotifier extends StateNotifier<FoldersScreenState> {
     state = state.copyWith(
       currentFolderId: folder.id,
       breadcrumbs: [...state.breadcrumbs, folder],
-      clearSelection: true,
+      selectedFolderIds: const {},
+      isSelectionMode: false,
     );
     await loadFolders();
   }
@@ -315,7 +248,8 @@ class FoldersScreenNotifier extends StateNotifier<FoldersScreenState> {
       currentFolderId:
           newBreadcrumbs.isNotEmpty ? newBreadcrumbs.last.id : null,
       breadcrumbs: newBreadcrumbs,
-      clearSelection: true,
+      selectedFolderIds: const {},
+      isSelectionMode: false,
     );
     await loadFolders();
   }
@@ -324,13 +258,19 @@ class FoldersScreenNotifier extends StateNotifier<FoldersScreenState> {
   Future<void> navigateToBreadcrumb(int index) async {
     if (index < 0) {
       // Navigate to root
-      state = state.copyWith(clearCurrentFolder: true, clearSelection: true);
+      state = state.copyWith(
+        currentFolderId: null,
+        breadcrumbs: const [],
+        selectedFolderIds: const {},
+        isSelectionMode: false,
+      );
     } else if (index < state.breadcrumbs.length) {
       final newBreadcrumbs = state.breadcrumbs.sublist(0, index + 1);
       state = state.copyWith(
         currentFolderId: newBreadcrumbs.last.id,
         breadcrumbs: newBreadcrumbs,
-        clearSelection: true,
+        selectedFolderIds: const {},
+        isSelectionMode: false,
       );
     }
     await loadFolders();
@@ -412,7 +352,10 @@ class FoldersScreenNotifier extends StateNotifier<FoldersScreenState> {
 
   /// Exits multi-select mode.
   void exitSelectionMode() {
-    state = state.copyWith(clearSelection: true);
+    state = state.copyWith(
+      selectedFolderIds: const {},
+      isSelectionMode: false,
+    );
   }
 
   /// Toggles selection of a folder.
@@ -440,18 +383,24 @@ class FoldersScreenNotifier extends StateNotifier<FoldersScreenState> {
 
   /// Clears selection.
   void clearSelection() {
-    state = state.copyWith(clearSelection: true);
+    state = state.copyWith(
+      selectedFolderIds: const {},
+      isSelectionMode: false,
+    );
   }
 
   /// Deletes selected folders.
   Future<void> deleteSelected() async {
     if (state.selectedFolderIds.isEmpty) return;
 
-    state = state.copyWith(isLoading: true, clearError: true);
+    state = state.copyWith(isLoading: true, error: null);
 
     try {
       await _folderService.deleteFolders(state.selectedFolderIds.toList());
-      state = state.copyWith(clearSelection: true);
+      state = state.copyWith(
+        selectedFolderIds: const {},
+        isSelectionMode: false,
+      );
       await loadFolders();
     } on FolderServiceException catch (e) {
       state = state.copyWith(
@@ -468,7 +417,7 @@ class FoldersScreenNotifier extends StateNotifier<FoldersScreenState> {
 
   /// Clears the current error.
   void clearError() {
-    state = state.copyWith(clearError: true);
+    state = state.copyWith(error: null);
   }
 }
 
@@ -516,10 +465,10 @@ class FoldersScreen extends ConsumerStatefulWidget {
   final String? excludeFolderId;
 
   @override
-  ConsumerState<FoldersScreen> createState() => _FoldersScreenState();
+  ConsumerState<FoldersScreen> createState() => _FoldersScreenWidgetState();
 }
 
-class _FoldersScreenState extends ConsumerState<FoldersScreen> {
+class _FoldersScreenWidgetState extends ConsumerState<FoldersScreen> {
   @override
   void initState() {
     super.initState();

@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,6 +16,7 @@ import '../../../core/widgets/bento_mascot.dart';
 import '../../../core/widgets/bento_speech_bubble.dart';
 import '../../../core/widgets/bento_interactive_wrapper.dart';
 import '../../../core/widgets/bouncing_widget.dart';
+import 'state/settings_screen_state.dart';
 
 // ============================================================================
 // Theme Persistence Service
@@ -87,92 +87,6 @@ final themePersistenceServiceProvider = Provider<ThemePersistenceService>((ref) 
 });
 
 // ============================================================================
-// Settings State
-// ============================================================================
-
-/// State for the settings screen.
-@immutable
-class SettingsScreenState {
-  /// Creates a [SettingsScreenState] with default values.
-  const SettingsScreenState({
-    this.themeMode = ThemeMode.system,
-    this.isLoading = false,
-    this.isInitialized = false,
-    this.error,
-    this.biometricLockEnabled = false,
-    this.biometricLockTimeout = AppLockTimeout.immediate,
-    this.isBiometricAvailable = false,
-  });
-
-  /// Current theme mode setting.
-  final ThemeMode themeMode;
-
-  /// Whether settings are being loaded or saved.
-  final bool isLoading;
-
-  /// Whether settings have been loaded from storage.
-  final bool isInitialized;
-
-  /// Error message, if any.
-  final String? error;
-
-  /// Whether biometric app lock is enabled.
-  final bool biometricLockEnabled;
-
-  /// Timeout setting for biometric lock.
-  final AppLockTimeout biometricLockTimeout;
-
-  /// Whether biometric authentication is available on this device.
-  final bool isBiometricAvailable;
-
-  /// Creates a copy with updated values.
-  SettingsScreenState copyWith({
-    ThemeMode? themeMode,
-    bool? isLoading,
-    bool? isInitialized,
-    String? error,
-    bool clearError = false,
-    bool? biometricLockEnabled,
-    AppLockTimeout? biometricLockTimeout,
-    bool? isBiometricAvailable,
-  }) {
-    return SettingsScreenState(
-      themeMode: themeMode ?? this.themeMode,
-      isLoading: isLoading ?? this.isLoading,
-      isInitialized: isInitialized ?? this.isInitialized,
-      error: clearError ? null : (error ?? this.error),
-      biometricLockEnabled: biometricLockEnabled ?? this.biometricLockEnabled,
-      biometricLockTimeout: biometricLockTimeout ?? this.biometricLockTimeout,
-      isBiometricAvailable: isBiometricAvailable ?? this.isBiometricAvailable,
-    );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is SettingsScreenState &&
-        other.themeMode == themeMode &&
-        other.isLoading == isLoading &&
-        other.isInitialized == isInitialized &&
-        other.error == error &&
-        other.biometricLockEnabled == biometricLockEnabled &&
-        other.biometricLockTimeout == biometricLockTimeout &&
-        other.isBiometricAvailable == isBiometricAvailable;
-  }
-
-  @override
-  int get hashCode => Object.hash(
-        themeMode,
-        isLoading,
-        isInitialized,
-        error,
-        biometricLockEnabled,
-        biometricLockTimeout,
-        isBiometricAvailable,
-      );
-}
-
-// ============================================================================
 // Settings Notifier
 // ============================================================================
 
@@ -195,7 +109,7 @@ class SettingsScreenNotifier extends StateNotifier<SettingsScreenState> {
   Future<void> initialize() async {
     if (state.isInitialized) return;
 
-    state = state.copyWith(isLoading: true, clearError: true);
+    state = state.copyWith(isLoading: true, error: null);
 
     try {
       // Load theme mode
@@ -231,7 +145,7 @@ class SettingsScreenNotifier extends StateNotifier<SettingsScreenState> {
 
     // Update immediately for responsive UI
     _themeModeNotifier.state = mode;
-    state = state.copyWith(themeMode: mode, clearError: true);
+    state = state.copyWith(themeMode: mode, error: null);
 
     // Persist in background
     try {
@@ -243,7 +157,7 @@ class SettingsScreenNotifier extends StateNotifier<SettingsScreenState> {
 
   /// Clears the current error.
   void clearError() {
-    state = state.copyWith(clearError: true);
+    state = state.copyWith(error: null);
   }
 
   /// Toggles biometric lock enabled state.
@@ -253,7 +167,7 @@ class SettingsScreenNotifier extends StateNotifier<SettingsScreenState> {
     // Optimistically update UI
     state = state.copyWith(
       biometricLockEnabled: enabled,
-      clearError: true,
+      error: null,
     );
 
     try {
@@ -274,7 +188,7 @@ class SettingsScreenNotifier extends StateNotifier<SettingsScreenState> {
     // Optimistically update UI
     state = state.copyWith(
       biometricLockTimeout: timeout,
-      clearError: true,
+      error: null,
     );
 
     try {
@@ -516,14 +430,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                   ),
                                 ),
                                 
-                                const SizedBox(height: 16),
-
-                                // Licenses Card
-                                BentoAnimatedEntry(
-                                  delay: const Duration(milliseconds: 350),
-                                  child: _buildLicensesCard(isDark),
-                                ),
-
                                 const SizedBox(height: 40),
                               ],
                             ),
@@ -532,66 +438,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ],
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLicensesCard(bool isDark) {
-    final l10n = AppLocalizations.of(context);
-    return BentoCard(
-      borderRadius: 32,
-      padding: const EdgeInsets.all(20),
-      backgroundColor: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : Colors.white,
-      onTap: () {
-        showLicensePage(
-          context: context,
-          applicationName: 'Scanai',
-          applicationVersion: '1.0.0',
-          applicationLegalese: '© 2026 Scanai. All rights reserved.',
-        );
-      },
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              Icons.description_outlined,
-              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  l10n?.licenses ?? 'Licences open source',
-                  style: GoogleFonts.outfit(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
-                  ),
-                ),
-                Text(
-                  l10n?.licensesSubtitle ?? 'Voir les licences des bibliotheques',
-                  style: GoogleFonts.outfit(
-                    fontSize: 11,
-                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Icon(
-            Icons.chevron_right_rounded,
-            color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
           ),
         ],
       ),

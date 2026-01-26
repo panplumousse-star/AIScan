@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/bento_background.dart';
 import '../../../core/widgets/bento_card.dart';
 import '../../../l10n/app_localizations.dart';
@@ -13,47 +13,23 @@ import '../../../core/widgets/bento_mascot.dart';
 // Re-export justUnlockedProvider for convenience
 export '../domain/app_lock_service.dart' show justUnlockedProvider;
 
+part 'lock_screen.freezed.dart';
+
 // ============================================================================
 // Lock Screen State
 // ============================================================================
 
 /// State for the lock screen.
-@immutable
-class LockScreenState {
+@freezed
+class LockScreenState with _$LockScreenState {
   /// Creates a [LockScreenState] with default values.
-  const LockScreenState({
-    this.isAuthenticating = false,
-    this.error,
-  });
+  const factory LockScreenState({
+    /// Whether authentication is in progress.
+    @Default(false) bool isAuthenticating,
 
-  /// Whether authentication is in progress.
-  final bool isAuthenticating;
-
-  /// Error message, if any.
-  final String? error;
-
-  /// Creates a copy with updated values.
-  LockScreenState copyWith({
-    bool? isAuthenticating,
+    /// Error message, if any.
     String? error,
-    bool clearError = false,
-  }) {
-    return LockScreenState(
-      isAuthenticating: isAuthenticating ?? this.isAuthenticating,
-      error: clearError ? null : (error ?? this.error),
-    );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is LockScreenState &&
-        other.isAuthenticating == isAuthenticating &&
-        other.error == error;
-  }
-
-  @override
-  int get hashCode => Object.hash(isAuthenticating, error);
+  }) = _LockScreenState;
 }
 
 // ============================================================================
@@ -79,7 +55,7 @@ class LockScreenNotifier extends StateNotifier<LockScreenState> {
   /// Returns `true` if authentication succeeded, `false` otherwise.
   Future<bool> authenticate() async {
     // Clear any previous errors and show loading state
-    state = state.copyWith(isAuthenticating: true, clearError: true);
+    state = state.copyWith(isAuthenticating: true, error: null);
 
     try {
       // Attempt biometric authentication
@@ -90,7 +66,7 @@ class LockScreenNotifier extends StateNotifier<LockScreenState> {
         _appLockService.recordSuccessfulAuth();
 
         // Update state
-        state = state.copyWith(isAuthenticating: false, clearError: true);
+        state = state.copyWith(isAuthenticating: false, error: null);
 
         // Notify success callback
         onAuthenticationSuccess?.call();
@@ -123,7 +99,7 @@ class LockScreenNotifier extends StateNotifier<LockScreenState> {
 
   /// Clears the current error message.
   void clearError() {
-    state = state.copyWith(clearError: true);
+    state = state.copyWith(error: null);
   }
 }
 
@@ -172,10 +148,10 @@ class LockScreen extends ConsumerStatefulWidget {
   const LockScreen({super.key});
 
   @override
-  ConsumerState<LockScreen> createState() => _LockScreenState();
+  ConsumerState<LockScreen> createState() => _LockScreenWidgetState();
 }
 
-class _LockScreenState extends ConsumerState<LockScreen> {
+class _LockScreenWidgetState extends ConsumerState<LockScreen> {
   @override
   void initState() {
     super.initState();

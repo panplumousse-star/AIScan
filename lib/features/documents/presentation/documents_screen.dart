@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../../core/storage/document_repository.dart';
 import '../../../core/performance/lazy_loader.dart';
@@ -25,78 +26,68 @@ import '../../../core/widgets/bento_share_format_dialog.dart';
 import '../../../core/widgets/bento_state_views.dart';
 import '../../../l10n/app_localizations.dart';
 
+part 'documents_screen.freezed.dart';
+
 // View models have been moved to models/documents_ui_models.dart
 
 /// State for the documents screen.
-@immutable
-class DocumentsScreenState {
+///
+/// Tracks documents, folders, view settings, selection state, and UI state.
+@freezed
+class DocumentsScreenState with _$DocumentsScreenState {
+  const DocumentsScreenState._();
+
   /// Creates a [DocumentsScreenState] with default values.
-  const DocumentsScreenState({
-    this.documents = const [],
-    this.folders = const [],
-    this.currentFolderId,
-    this.currentFolder,
-    this.viewMode = DocumentsViewMode.list,
-    this.sortBy = DocumentsSortBy.createdDesc,
-    this.filter = const DocumentsFilter(),
-    this.searchQuery = '',
-    this.isLoading = false,
-    this.isRefreshing = false,
-    this.isInitialized = false,
-    this.error,
-    this.selectedDocumentIds = const {},
-    this.selectedFolderIds = const {},
-    this.isSelectionMode = false,
-    this.decryptedThumbnails = const {},
-  });
+  factory DocumentsScreenState({
+    /// The list of documents to display.
+    @Default([]) List<Document> documents,
 
-  /// The list of documents to display.
-  final List<Document> documents;
+    /// The list of folders at the current level.
+    @Default([]) List<Folder> folders,
 
-  /// The list of folders at the current level.
-  final List<Folder> folders;
+    /// The current folder ID (null for root level).
+    String? currentFolderId,
 
-  /// The current folder ID (null for root level).
-  final String? currentFolderId;
+    /// The current folder object (null for root level).
+    Folder? currentFolder,
 
-  /// The current folder object (null for root level).
-  final Folder? currentFolder;
+    /// Current view mode (grid or list).
+    @Default(DocumentsViewMode.list) DocumentsViewMode viewMode,
 
-  /// Current view mode (grid or list).
-  final DocumentsViewMode viewMode;
+    /// Current sort option.
+    @Default(DocumentsSortBy.createdDesc) DocumentsSortBy sortBy,
 
-  /// Current sort option.
-  final DocumentsSortBy sortBy;
+    /// Current filter settings.
+    @Default(DocumentsFilter()) DocumentsFilter filter,
 
-  /// Current filter settings.
-  final DocumentsFilter filter;
+    /// Current search query (searches title and OCR text).
+    @Default('') String searchQuery,
 
-  /// Current search query (searches title and OCR text).
-  final String searchQuery;
+    /// Whether documents are being loaded.
+    @Default(false) bool isLoading,
 
-  /// Whether documents are being loaded.
-  final bool isLoading;
+    /// Whether documents are being refreshed.
+    @Default(false) bool isRefreshing,
 
-  /// Whether documents are being refreshed.
-  final bool isRefreshing;
+    /// Whether the repository has been initialized.
+    @Default(false) bool isInitialized,
 
-  /// Whether the repository has been initialized.
-  final bool isInitialized;
+    /// Error message, if any.
+    String? error,
 
-  /// Error message, if any.
-  final String? error;
+    /// Set of selected document IDs for multi-select mode.
+    @Default({}) Set<String> selectedDocumentIds,
 
-  /// Set of selected document IDs for multi-select mode.
-  final Set<String> selectedDocumentIds;
+    /// Set of selected folder IDs for multi-select mode.
+    @Default({}) Set<String> selectedFolderIds,
 
-  /// Set of selected folder IDs for multi-select mode.
-  final Set<String> selectedFolderIds;
+    /// Whether multi-select mode is active.
+    @Default(false) bool isSelectionMode,
 
-  /// Whether multi-select mode is active.
-  final bool isSelectionMode;
-
-  /// Map of document IDs to decrypted thumbnail bytes.
-  final Map<String, Uint8List> decryptedThumbnails;
+    /// Map of document IDs to decrypted thumbnail bytes.
+    @Default({}) Map<String, Uint8List> decryptedThumbnails,
+    // ignore: redirect_to_invalid_return_type
+  }) = _DocumentsScreenState;
 
   /// Whether we have any documents.
   bool get hasDocuments => documents.isNotEmpty;
@@ -178,85 +169,6 @@ class DocumentsScreenState {
 
   /// Whether all items (documents + folders) are selected.
   bool get allSelected => allDocumentsSelected && allFoldersSelected;
-
-  /// Creates a copy with updated values.
-  DocumentsScreenState copyWith({
-    List<Document>? documents,
-    List<Folder>? folders,
-    String? currentFolderId,
-    Folder? currentFolder,
-    DocumentsViewMode? viewMode,
-    DocumentsSortBy? sortBy,
-    DocumentsFilter? filter,
-    String? searchQuery,
-    bool? isLoading,
-    bool? isRefreshing,
-    bool? isInitialized,
-    String? error,
-    Set<String>? selectedDocumentIds,
-    Set<String>? selectedFolderIds,
-    bool? isSelectionMode,
-    Map<String, Uint8List>? decryptedThumbnails,
-    bool clearError = false,
-    bool clearSelection = false,
-    bool clearCurrentFolder = false,
-  }) {
-    return DocumentsScreenState(
-      documents: documents ?? this.documents,
-      folders: folders ?? this.folders,
-      currentFolderId:
-          clearCurrentFolder ? null : (currentFolderId ?? this.currentFolderId),
-      currentFolder:
-          clearCurrentFolder ? null : (currentFolder ?? this.currentFolder),
-      viewMode: viewMode ?? this.viewMode,
-      sortBy: sortBy ?? this.sortBy,
-      filter: filter ?? this.filter,
-      searchQuery: searchQuery ?? this.searchQuery,
-      isLoading: isLoading ?? this.isLoading,
-      isRefreshing: isRefreshing ?? this.isRefreshing,
-      isInitialized: isInitialized ?? this.isInitialized,
-      error: clearError ? null : (error ?? this.error),
-      selectedDocumentIds: clearSelection
-          ? const {}
-          : (selectedDocumentIds ?? this.selectedDocumentIds),
-      selectedFolderIds: clearSelection
-          ? const {}
-          : (selectedFolderIds ?? this.selectedFolderIds),
-      isSelectionMode:
-          clearSelection ? false : (isSelectionMode ?? this.isSelectionMode),
-      decryptedThumbnails: decryptedThumbnails ?? this.decryptedThumbnails,
-    );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is DocumentsScreenState &&
-        other.viewMode == viewMode &&
-        other.sortBy == sortBy &&
-        other.filter == filter &&
-        other.searchQuery == searchQuery &&
-        other.isLoading == isLoading &&
-        other.isRefreshing == isRefreshing &&
-        other.isInitialized == isInitialized &&
-        other.error == error &&
-        other.isSelectionMode == isSelectionMode &&
-        other.documentCount == documentCount;
-  }
-
-  @override
-  int get hashCode => Object.hash(
-        viewMode,
-        sortBy,
-        filter,
-        searchQuery,
-        isLoading,
-        isRefreshing,
-        isInitialized,
-        error,
-        isSelectionMode,
-        documentCount,
-      );
 }
 
 /// State notifier for the documents screen.
@@ -268,7 +180,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
     this._repository,
     this._folderService,
     this._shareService,
-  ) : super(const DocumentsScreenState()) {
+  ) : super(DocumentsScreenState()) {
     // Initialize LazyLoader for document pagination
     _initializeLazyLoader();
   }
@@ -366,7 +278,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
   Future<void> initialize() async {
     if (state.isInitialized) return;
 
-    state = state.copyWith(isLoading: true, clearError: true);
+    state = state.copyWith(isLoading: true, error: null);
 
     try {
       await _repository.initialize();
@@ -394,7 +306,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
   Future<void> loadDocuments() async {
     if (!state.isInitialized) return;
 
-    state = state.copyWith(isLoading: true, clearError: true);
+    state = state.copyWith(isLoading: true, error: null);
 
     try {
       List<Folder> folders = [];
@@ -507,7 +419,9 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
     state = state.copyWith(
       currentFolderId: folder.id,
       currentFolder: folder,
-      clearSelection: true,
+      selectedDocumentIds: const {},
+      selectedFolderIds: const {},
+      isSelectionMode: false,
     );
     await loadDocuments();
   }
@@ -521,13 +435,18 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
       state = state.copyWith(
         currentFolderId: parentFolder?.id,
         currentFolder: parentFolder,
-        clearSelection: true,
+        selectedDocumentIds: const {},
+        selectedFolderIds: const {},
+        isSelectionMode: false,
       );
     } else {
       // Go to root
       state = state.copyWith(
-        clearCurrentFolder: true,
-        clearSelection: true,
+        currentFolderId: null,
+        currentFolder: null,
+        selectedDocumentIds: const {},
+        selectedFolderIds: const {},
+        isSelectionMode: false,
       );
     }
     await loadDocuments();
@@ -567,7 +486,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
   Future<void> refresh() async {
     if (!state.isInitialized) return;
 
-    state = state.copyWith(isRefreshing: true, clearError: true);
+    state = state.copyWith(isRefreshing: true, error: null);
 
     try {
       // Reset lazy loader to start fresh
@@ -608,20 +527,11 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
 
     try {
       // Start performance measurement
-      final stopwatch = Stopwatch()..start();
-
       // Load all thumbnails in parallel using batch method
       final decryptedThumbnails =
           await _repository.getBatchDecryptedThumbnailBytes(
         documentsNeedingThumbnails,
       );
-
-      // Stop measurement and log results
-      stopwatch.stop();
-      final elapsedMs = stopwatch.elapsedMilliseconds;
-      final avgMs = documentsNeedingThumbnails.isNotEmpty
-          ? (elapsedMs / documentsNeedingThumbnails.length).toStringAsFixed(1)
-          : '0';
 
       // Update state once with all results
       if (decryptedThumbnails.isNotEmpty && mounted) {
@@ -740,7 +650,11 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
 
   /// Exits multi-select mode.
   void exitSelectionMode() {
-    state = state.copyWith(clearSelection: true);
+    state = state.copyWith(
+      selectedDocumentIds: const {},
+      selectedFolderIds: const {},
+      isSelectionMode: false,
+    );
   }
 
   /// Toggles selection of a document.
@@ -772,18 +686,26 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
 
   /// Clears selection.
   void clearSelection() {
-    state = state.copyWith(clearSelection: true);
+    state = state.copyWith(
+      selectedDocumentIds: const {},
+      selectedFolderIds: const {},
+      isSelectionMode: false,
+    );
   }
 
   /// Deletes selected documents.
   Future<void> deleteSelected() async {
     if (state.selectedDocumentIds.isEmpty) return;
 
-    state = state.copyWith(isLoading: true, clearError: true);
+    state = state.copyWith(isLoading: true, error: null);
 
     try {
       await _repository.deleteDocuments(state.selectedDocumentIds.toList());
-      state = state.copyWith(clearSelection: true);
+      state = state.copyWith(
+      selectedDocumentIds: const {},
+      selectedFolderIds: const {},
+      isSelectionMode: false,
+    );
       await loadDocuments();
     } on DocumentRepositoryException catch (e) {
       state = state.copyWith(
@@ -804,7 +726,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
   Future<int> moveSelectedToFolder(String? folderId) async {
     if (state.selectedDocumentIds.isEmpty) return 0;
 
-    state = state.copyWith(isLoading: true, clearError: true);
+    state = state.copyWith(isLoading: true, error: null);
     int movedCount = 0;
 
     try {
@@ -812,7 +734,11 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
         await _repository.moveToFolder(documentId, folderId);
         movedCount++;
       }
-      state = state.copyWith(clearSelection: true);
+      state = state.copyWith(
+      selectedDocumentIds: const {},
+      selectedFolderIds: const {},
+      isSelectionMode: false,
+    );
       await loadDocuments();
       return movedCount;
     } on DocumentRepositoryException catch (e) {
@@ -861,10 +787,11 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
 
   /// Toggles favorite status for all selected documents.
   Future<void> toggleFavoriteSelected() async {
-    if (state.selectedDocumentIds.isEmpty && state.selectedFolderIds.isEmpty)
+    if (state.selectedDocumentIds.isEmpty && state.selectedFolderIds.isEmpty) {
       return;
+    }
 
-    state = state.copyWith(isLoading: true, clearError: true);
+    state = state.copyWith(isLoading: true, error: null);
     try {
       // Toggle favorites for selected documents
       for (final id in state.selectedDocumentIds) {
@@ -874,7 +801,11 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
       for (final id in state.selectedFolderIds) {
         await _folderService.toggleFavorite(id);
       }
-      state = state.copyWith(clearSelection: true);
+      state = state.copyWith(
+      selectedDocumentIds: const {},
+      selectedFolderIds: const {},
+      isSelectionMode: false,
+    );
       await loadDocuments();
     } catch (e) {
       state = state.copyWith(
@@ -947,7 +878,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
   Future<void> deleteSelectedFolders() async {
     if (state.selectedFolderIds.isEmpty) return;
 
-    state = state.copyWith(isLoading: true, clearError: true);
+    state = state.copyWith(isLoading: true, error: null);
 
     try {
       await _folderService.deleteFolders(state.selectedFolderIds.toList());
@@ -972,10 +903,11 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
   /// Deletes all selected items (documents and folders).
   /// Documents in deleted folders are moved to root level.
   Future<void> deleteAllSelected() async {
-    if (state.selectedDocumentIds.isEmpty && state.selectedFolderIds.isEmpty)
+    if (state.selectedDocumentIds.isEmpty && state.selectedFolderIds.isEmpty) {
       return;
+    }
 
-    state = state.copyWith(isLoading: true, clearError: true);
+    state = state.copyWith(isLoading: true, error: null);
 
     try {
       // Delete folders first (documents inside become root-level)
@@ -986,7 +918,11 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
       if (state.selectedDocumentIds.isNotEmpty) {
         await _repository.deleteDocuments(state.selectedDocumentIds.toList());
       }
-      state = state.copyWith(clearSelection: true);
+      state = state.copyWith(
+      selectedDocumentIds: const {},
+      selectedFolderIds: const {},
+      isSelectionMode: false,
+    );
       await loadDocuments();
     } catch (e) {
       state = state.copyWith(
@@ -998,10 +934,11 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
 
   /// Deletes all selected folders AND documents inside them.
   Future<void> deleteAllSelectedWithDocuments() async {
-    if (state.selectedDocumentIds.isEmpty && state.selectedFolderIds.isEmpty)
+    if (state.selectedDocumentIds.isEmpty && state.selectedFolderIds.isEmpty) {
       return;
+    }
 
-    state = state.copyWith(isLoading: true, clearError: true);
+    state = state.copyWith(isLoading: true, error: null);
 
     try {
       // Collect all document IDs from folders being deleted
@@ -1023,7 +960,11 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
         await _repository.deleteDocuments(documentIdsToDelete.toList());
       }
 
-      state = state.copyWith(clearSelection: true);
+      state = state.copyWith(
+      selectedDocumentIds: const {},
+      selectedFolderIds: const {},
+      isSelectionMode: false,
+    );
       await loadDocuments();
     } catch (e) {
       state = state.copyWith(
@@ -1074,7 +1015,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
 
   /// Clears the current error.
   void clearError() {
-    state = state.copyWith(clearError: true);
+    state = state.copyWith(error: null);
   }
 }
 
@@ -1553,6 +1494,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
     // Show format selection dialog
     final format = await showBentoShareFormatDialog(context);
     if (format == null) return; // User cancelled
+    if (!context.mounted) return; // Widget was disposed
 
     // Share with selected format
     await _shareDocuments(context, shareService, selectedDocuments, format);

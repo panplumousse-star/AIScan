@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/widgets/bento_background.dart';
@@ -11,70 +12,60 @@ import '../../../core/widgets/bento_confirmation_dialog.dart';
 import '../../../core/widgets/scanai_loader.dart';
 import '../domain/image_processor.dart';
 
+part 'enhancement_screen.freezed.dart';
+
 /// State for the enhancement screen.
 ///
 /// Contains all adjustment values and processing state.
-@immutable
-class EnhancementScreenState {
+@freezed
+class EnhancementScreenState with _$EnhancementScreenState {
+  const EnhancementScreenState._();
+
   /// Creates an [EnhancementScreenState] with default values.
-  const EnhancementScreenState({
-    this.brightness = 0,
-    this.contrast = 0,
-    this.sharpness = 0,
-    this.saturation = 0,
-    this.grayscale = false,
-    this.autoEnhance = false,
-    this.denoise = false,
-    this.selectedPreset,
-    this.isProcessing = false,
-    this.isSaving = false,
-    this.error,
-    this.previewBytes,
-    this.originalBytes,
-    this.imagePath,
-  });
+  factory EnhancementScreenState({
+    /// Brightness adjustment (-100 to 100).
+    @Default(0) int brightness,
 
-  /// Brightness adjustment (-100 to 100).
-  final int brightness;
+    /// Contrast adjustment (-100 to 100).
+    @Default(0) int contrast,
 
-  /// Contrast adjustment (-100 to 100).
-  final int contrast;
+    /// Sharpness enhancement (0 to 100).
+    @Default(0) int sharpness,
 
-  /// Sharpness enhancement (0 to 100).
-  final int sharpness;
+    /// Saturation adjustment (-100 to 100).
+    @Default(0) int saturation,
 
-  /// Saturation adjustment (-100 to 100).
-  final int saturation;
+    /// Whether grayscale/B&W mode is enabled.
+    @Default(false) bool grayscale,
 
-  /// Whether grayscale/B&W mode is enabled.
-  final bool grayscale;
+    /// Whether auto-enhancement is enabled.
+    @Default(false) bool autoEnhance,
 
-  /// Whether auto-enhancement is enabled.
-  final bool autoEnhance;
+    /// Whether noise reduction is enabled.
+    @Default(false) bool denoise,
 
-  /// Whether noise reduction is enabled.
-  final bool denoise;
+    /// Currently selected enhancement preset, if any.
+    EnhancementPreset? selectedPreset,
 
-  /// Currently selected enhancement preset, if any.
-  final EnhancementPreset? selectedPreset;
+    /// Whether image processing is in progress.
+    @Default(false) bool isProcessing,
 
-  /// Whether image processing is in progress.
-  final bool isProcessing;
+    /// Whether the enhanced image is being saved.
+    @Default(false) bool isSaving,
 
-  /// Whether the enhanced image is being saved.
-  final bool isSaving;
+    /// Error message, if any.
+    String? error,
 
-  /// Error message, if any.
-  final String? error;
+    /// Preview image bytes after enhancement.
+    Uint8List? previewBytes,
 
-  /// Preview image bytes after enhancement.
-  final Uint8List? previewBytes;
+    /// Original image bytes before enhancement.
+    Uint8List? originalBytes,
 
-  /// Original image bytes before enhancement.
-  final Uint8List? originalBytes;
-
-  /// Path to the source image file.
-  final String? imagePath;
+    /// Path to the source image file.
+    String? imagePath,
+    // ignore: redirect_to_invalid_return_type
+  }) = _EnhancementScreenState;
 
   /// Whether we're in any loading state.
   bool get isLoading => isProcessing || isSaving;
@@ -107,79 +98,6 @@ class EnhancementScreenState {
       denoise: denoise,
     );
   }
-
-  /// Creates a copy with updated values.
-  EnhancementScreenState copyWith({
-    int? brightness,
-    int? contrast,
-    int? sharpness,
-    int? saturation,
-    bool? grayscale,
-    bool? autoEnhance,
-    bool? denoise,
-    EnhancementPreset? selectedPreset,
-    bool? isProcessing,
-    bool? isSaving,
-    String? error,
-    Uint8List? previewBytes,
-    Uint8List? originalBytes,
-    String? imagePath,
-    bool clearPreset = false,
-    bool clearError = false,
-    bool clearPreview = false,
-  }) {
-    return EnhancementScreenState(
-      brightness: brightness ?? this.brightness,
-      contrast: contrast ?? this.contrast,
-      sharpness: sharpness ?? this.sharpness,
-      saturation: saturation ?? this.saturation,
-      grayscale: grayscale ?? this.grayscale,
-      autoEnhance: autoEnhance ?? this.autoEnhance,
-      denoise: denoise ?? this.denoise,
-      selectedPreset:
-          clearPreset ? null : (selectedPreset ?? this.selectedPreset),
-      isProcessing: isProcessing ?? this.isProcessing,
-      isSaving: isSaving ?? this.isSaving,
-      error: clearError ? null : (error ?? this.error),
-      previewBytes: clearPreview ? null : (previewBytes ?? this.previewBytes),
-      originalBytes: originalBytes ?? this.originalBytes,
-      imagePath: imagePath ?? this.imagePath,
-    );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is EnhancementScreenState &&
-        other.brightness == brightness &&
-        other.contrast == contrast &&
-        other.sharpness == sharpness &&
-        other.saturation == saturation &&
-        other.grayscale == grayscale &&
-        other.autoEnhance == autoEnhance &&
-        other.denoise == denoise &&
-        other.selectedPreset == selectedPreset &&
-        other.isProcessing == isProcessing &&
-        other.isSaving == isSaving &&
-        other.error == error &&
-        other.imagePath == imagePath;
-  }
-
-  @override
-  int get hashCode => Object.hash(
-        brightness,
-        contrast,
-        sharpness,
-        saturation,
-        grayscale,
-        autoEnhance,
-        denoise,
-        selectedPreset,
-        isProcessing,
-        isSaving,
-        error,
-        imagePath,
-      );
 }
 
 /// State notifier for the enhancement screen.
@@ -189,7 +107,7 @@ class EnhancementScreenNotifier extends StateNotifier<EnhancementScreenState> {
   /// Creates an [EnhancementScreenNotifier] with the given image processor.
   EnhancementScreenNotifier(
     this._imageProcessor,
-  ) : super(const EnhancementScreenState());
+  ) : super(EnhancementScreenState());
 
   final ImageProcessor _imageProcessor;
   Timer? _debounceTimer;
@@ -202,7 +120,7 @@ class EnhancementScreenNotifier extends StateNotifier<EnhancementScreenState> {
     state = state.copyWith(
       imagePath: imagePath,
       isProcessing: true,
-      clearError: true,
+      error: null,
     );
 
     try {
@@ -239,45 +157,64 @@ class EnhancementScreenNotifier extends StateNotifier<EnhancementScreenState> {
 
   /// Sets brightness and schedules preview update.
   void setBrightness(int value) {
-    state =
-        state.copyWith(brightness: value.clamp(-100, 100), clearPreset: true);
+    state = state.copyWith(
+      brightness: value.clamp(-100, 100),
+      selectedPreset: null,
+    );
     _schedulePreviewUpdate();
   }
 
   /// Sets contrast and schedules preview update.
   void setContrast(int value) {
-    state = state.copyWith(contrast: value.clamp(-100, 100), clearPreset: true);
+    state = state.copyWith(
+      contrast: value.clamp(-100, 100),
+      selectedPreset: null,
+    );
     _schedulePreviewUpdate();
   }
 
   /// Sets sharpness and schedules preview update.
   void setSharpness(int value) {
-    state = state.copyWith(sharpness: value.clamp(0, 100), clearPreset: true);
+    state = state.copyWith(
+      sharpness: value.clamp(0, 100),
+      selectedPreset: null,
+    );
     _schedulePreviewUpdate();
   }
 
   /// Sets saturation and schedules preview update.
   void setSaturation(int value) {
-    state =
-        state.copyWith(saturation: value.clamp(-100, 100), clearPreset: true);
+    state = state.copyWith(
+      saturation: value.clamp(-100, 100),
+      selectedPreset: null,
+    );
     _schedulePreviewUpdate();
   }
 
   /// Toggles grayscale mode.
   void setGrayscale(bool enabled) {
-    state = state.copyWith(grayscale: enabled, clearPreset: true);
+    state = state.copyWith(
+      grayscale: enabled,
+      selectedPreset: null,
+    );
     _schedulePreviewUpdate();
   }
 
   /// Toggles auto-enhancement.
   void setAutoEnhance(bool enabled) {
-    state = state.copyWith(autoEnhance: enabled, clearPreset: true);
+    state = state.copyWith(
+      autoEnhance: enabled,
+      selectedPreset: null,
+    );
     _schedulePreviewUpdate();
   }
 
   /// Toggles noise reduction.
   void setDenoise(bool enabled) {
-    state = state.copyWith(denoise: enabled, clearPreset: true);
+    state = state.copyWith(
+      denoise: enabled,
+      selectedPreset: null,
+    );
     _schedulePreviewUpdate();
   }
 
@@ -307,7 +244,7 @@ class EnhancementScreenNotifier extends StateNotifier<EnhancementScreenState> {
       grayscale: false,
       autoEnhance: false,
       denoise: false,
-      clearPreset: true,
+      selectedPreset: null,
     );
 
     // Show original image immediately
@@ -331,12 +268,16 @@ class EnhancementScreenNotifier extends StateNotifier<EnhancementScreenState> {
       return;
     }
 
-    state = state.copyWith(isProcessing: true, clearError: true);
+    state = state.copyWith(
+      isProcessing: true,
+      error: null,
+    );
 
     try {
       final result = await _imageProcessor.enhanceFromBytes(
         state.originalBytes!,
         options: state.toEnhancementOptions(),
+        // ignore: avoid_redundant_argument_values
         outputFormat: ImageOutputFormat.jpeg,
         quality: 85, // Lower quality for preview
       );
@@ -384,7 +325,10 @@ class EnhancementScreenNotifier extends StateNotifier<EnhancementScreenState> {
       return state.originalBytes;
     }
 
-    state = state.copyWith(isSaving: true, clearError: true);
+    state = state.copyWith(
+      isSaving: true,
+      error: null,
+    );
 
     try {
       final result = await _imageProcessor.enhanceFromBytes(
@@ -434,7 +378,7 @@ class EnhancementScreenNotifier extends StateNotifier<EnhancementScreenState> {
 
   /// Clears the current error.
   void clearError() {
-    state = state.copyWith(clearError: true);
+    state = state.copyWith(error: null);
   }
 
   @override
@@ -621,6 +565,7 @@ class _EnhancementScreenState extends ConsumerState<EnhancementScreen> {
       );
 
       if (shouldDiscard == true && mounted) {
+        // ignore: use_build_context_synchronously
         Navigator.of(context).pop();
       }
     } else {
@@ -639,6 +584,7 @@ class _EnhancementScreenState extends ConsumerState<EnhancementScreen> {
 
       if (mounted) {
         // Return the enhanced bytes
+        // ignore: use_build_context_synchronously
         Navigator.of(context).pop(bytes);
       }
     }
@@ -805,8 +751,8 @@ class _ControlsPanel extends StatelessWidget {
                 width: 32,
                 height: 4,
                 decoration: BoxDecoration(
-                  color:
-                      theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                  // ignore: deprecated_member_use
+                  color: theme.colorScheme.onSurfaceVariant.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -993,7 +939,8 @@ class _EnhancementSlider extends StatelessWidget {
             size: 20,
             color: enabled
                 ? colorScheme.onSurfaceVariant
-                : colorScheme.onSurface.withValues(alpha: 0.38),
+                // ignore: deprecated_member_use
+                : colorScheme.onSurface.withOpacity(0.38),
           ),
           const SizedBox(width: 8),
           SizedBox(
@@ -1003,7 +950,8 @@ class _EnhancementSlider extends StatelessWidget {
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: enabled
                     ? colorScheme.onSurface
-                    : colorScheme.onSurface.withValues(alpha: 0.38),
+                    // ignore: deprecated_member_use
+                    : colorScheme.onSurface.withOpacity(0.38),
               ),
             ),
           ),
@@ -1033,7 +981,8 @@ class _EnhancementSlider extends StatelessWidget {
               style: theme.textTheme.bodySmall?.copyWith(
                 color: enabled
                     ? colorScheme.onSurfaceVariant
-                    : colorScheme.onSurface.withValues(alpha: 0.38),
+                    // ignore: deprecated_member_use
+                    : colorScheme.onSurface.withOpacity(0.38),
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),
               textAlign: TextAlign.end,

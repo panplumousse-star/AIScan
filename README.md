@@ -176,6 +176,35 @@ For detailed verification procedures, see:
 - Keep device OS and app updated
 - Avoid rooting/jailbreaking device
 
+## Development
+
+### Code Generation
+
+This project uses [Freezed](https://pub.dev/packages/freezed) for generating immutable state classes with copyWith methods, equality operators, and other boilerplate code. After modifying any files with `@freezed` annotations, you need to regenerate the code:
+
+#### One-Time Code Generation
+
+For a one-time build (use after pulling changes or when starting fresh):
+
+```bash
+flutter pub run build_runner build --delete-conflicting-outputs
+```
+
+#### Watch Mode (Recommended for Development)
+
+For automatic code generation during development (regenerates on file save):
+
+```bash
+flutter pub run build_runner watch --delete-conflicting-outputs
+```
+
+The `--delete-conflicting-outputs` flag automatically resolves conflicts with existing generated files.
+
+**Note:** Generated `.freezed.dart` files are committed to version control, so you only need to run code generation when:
+- You modify a file with `@freezed` annotations
+- You pull changes that modify freezed-annotated files
+- Generated files are missing or out of sync
+
 ## License
 
 [Your License Here]

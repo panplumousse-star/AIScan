@@ -45,9 +45,9 @@ class ScannerScreenNotifier extends StateNotifier<ScannerScreenState> {
 
     state = state.copyWith(
       isScanning: true,
-      clearError: true,
-      clearResult: true,
-      clearSavedDocument: true,
+      error: null,
+      scanResult: null,
+      savedDocument: null,
     );
 
     try {
@@ -110,8 +110,8 @@ class ScannerScreenNotifier extends StateNotifier<ScannerScreenState> {
       await _scannerService.cleanupScanResult(state.scanResult!);
     }
     state = state.copyWith(
-      clearResult: true,
-      clearSavedDocument: true,
+      scanResult: null,
+      savedDocument: null,
       selectedPageIndex: 0,
     );
   }
@@ -135,7 +135,7 @@ class ScannerScreenNotifier extends StateNotifier<ScannerScreenState> {
   }) async {
     if (state.scanResult == null || state.isLoading) return null;
 
-    state = state.copyWith(isSaving: true, clearError: true);
+    state = state.copyWith(isSaving: true, error: null);
 
     try {
       final savedResult = await _storageService.saveScanResult(
@@ -176,7 +176,7 @@ class ScannerScreenNotifier extends StateNotifier<ScannerScreenState> {
 
   /// Clears the error state.
   void clearError() {
-    state = state.copyWith(clearError: true);
+    state = state.copyWith(error: null);
   }
 
   /// Sets the saving state.

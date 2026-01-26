@@ -331,12 +331,12 @@ void main() {
       expect(newState.error, 'Test error');
     });
 
-    test('copyWith clears error when clearError is true', () {
+    test('copyWith clears error when error is set to null', () {
       // Arrange
       const state = LockScreenState(error: 'Old error');
 
       // Act
-      final newState = state.copyWith(clearError: true);
+      final newState = state.copyWith(error: null);
 
       // Assert
       expect(newState.error, isNull);

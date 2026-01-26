@@ -3,59 +3,53 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../../core/widgets/bento_state_views.dart';
 import '../../documents/domain/document_model.dart';
 import '../domain/search_service.dart';
 
+part 'search_screen.freezed.dart';
+
 /// State for the search screen.
 ///
 /// Tracks the current search query, results, and UI state.
-@immutable
-class SearchScreenState {
+@freezed
+class SearchScreenState with _$SearchScreenState {
+  const SearchScreenState._();
+
   /// Creates a [SearchScreenState] with default values.
-  const SearchScreenState({
-    this.query = '',
-    this.results,
-    this.suggestions = const [],
-    this.recentSearches = const [],
-    this.isSearching = false,
-    this.isLoadingMore = false,
-    this.isInitialized = false,
-    this.error,
-    this.showFilters = false,
-    this.options = const SearchOptions.defaults(),
-  });
+  const factory SearchScreenState({
+    /// The current search query.
+    @Default('') String query,
 
-  /// The current search query.
-  final String query;
+    /// Search results, or null if no search has been performed.
+    SearchResults? results,
 
-  /// Search results, or null if no search has been performed.
-  final SearchResults? results;
+    /// Search suggestions based on partial query.
+    @Default([]) List<String> suggestions,
 
-  /// Search suggestions based on partial query.
-  final List<String> suggestions;
+    /// Recent search history.
+    @Default([]) List<RecentSearch> recentSearches,
 
-  /// Recent search history.
-  final List<RecentSearch> recentSearches;
+    /// Whether a search is currently in progress.
+    @Default(false) bool isSearching,
 
-  /// Whether a search is currently in progress.
-  final bool isSearching;
+    /// Whether more results are being loaded (pagination).
+    @Default(false) bool isLoadingMore,
 
-  /// Whether more results are being loaded (pagination).
-  final bool isLoadingMore;
+    /// Whether the search service has been initialized.
+    @Default(false) bool isInitialized,
 
-  /// Whether the search service has been initialized.
-  final bool isInitialized;
+    /// Error message, if any.
+    String? error,
 
-  /// Error message, if any.
-  final String? error;
+    /// Whether the filter options are visible.
+    @Default(false) bool showFilters,
 
-  /// Whether the filter options are visible.
-  final bool showFilters;
-
-  /// Current search options/filters.
-  final SearchOptions options;
+    /// Current search options/filters.
+    @Default(SearchOptions()) SearchOptions options,
+  }) = _SearchScreenState;
 
   /// Whether we have search results.
   bool get hasResults => results != null && results!.hasResults;
@@ -78,63 +72,6 @@ class SearchScreenState {
 
   /// Whether we should show the initial state (no query).
   bool get showInitialState => query.isEmpty && results == null;
-
-  /// Creates a copy with updated values.
-  SearchScreenState copyWith({
-    String? query,
-    SearchResults? results,
-    List<String>? suggestions,
-    List<RecentSearch>? recentSearches,
-    bool? isSearching,
-    bool? isLoadingMore,
-    bool? isInitialized,
-    String? error,
-    bool? showFilters,
-    SearchOptions? options,
-    bool clearResults = false,
-    bool clearError = false,
-    bool clearSuggestions = false,
-  }) {
-    return SearchScreenState(
-      query: query ?? this.query,
-      results: clearResults ? null : (results ?? this.results),
-      suggestions:
-          clearSuggestions ? const [] : (suggestions ?? this.suggestions),
-      recentSearches: recentSearches ?? this.recentSearches,
-      isSearching: isSearching ?? this.isSearching,
-      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
-      isInitialized: isInitialized ?? this.isInitialized,
-      error: clearError ? null : (error ?? this.error),
-      showFilters: showFilters ?? this.showFilters,
-      options: options ?? this.options,
-    );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is SearchScreenState &&
-        other.query == query &&
-        other.results == results &&
-        other.isSearching == isSearching &&
-        other.isLoadingMore == isLoadingMore &&
-        other.isInitialized == isInitialized &&
-        other.error == error &&
-        other.showFilters == showFilters &&
-        other.options == options;
-  }
-
-  @override
-  int get hashCode => Object.hash(
-        query,
-        results,
-        isSearching,
-        isLoadingMore,
-        isInitialized,
-        error,
-        showFilters,
-        options,
-      );
 }
 
 /// State notifier for the search screen.
@@ -142,7 +79,8 @@ class SearchScreenState {
 /// Manages search operations, suggestions, and history.
 class SearchScreenNotifier extends StateNotifier<SearchScreenState> {
   /// Creates a [SearchScreenNotifier] with the given search service.
-  SearchScreenNotifier(this._searchService) : super(const SearchScreenState());
+  SearchScreenNotifier(this._searchService)
+      : super(const SearchScreenState());
 
   final SearchService _searchService;
   Timer? _debounceTimer;
@@ -188,8 +126,8 @@ class SearchScreenNotifier extends StateNotifier<SearchScreenState> {
 
     if (trimmedQuery.isEmpty) {
       state = state.copyWith(
-        clearResults: true,
-        clearSuggestions: true,
+        results: null,
+        suggestions: const [],
       );
       return;
     }
@@ -213,12 +151,12 @@ class SearchScreenNotifier extends StateNotifier<SearchScreenState> {
     if (query.isEmpty) return;
 
     if (loadMore) {
-      state = state.copyWith(isLoadingMore: true, clearError: true);
+      state = state.copyWith(isLoadingMore: true, error: null);
     } else {
       state = state.copyWith(
         isSearching: true,
-        clearError: true,
-        clearSuggestions: true,
+        error: null,
+        suggestions: const [],
       );
     }
 
@@ -285,7 +223,7 @@ class SearchScreenNotifier extends StateNotifier<SearchScreenState> {
   void selectSuggestion(String suggestion) {
     state = state.copyWith(
       query: suggestion,
-      clearSuggestions: true,
+      suggestions: const [],
     );
     performSearch();
   }
@@ -294,7 +232,7 @@ class SearchScreenNotifier extends StateNotifier<SearchScreenState> {
   void selectRecentSearch(RecentSearch recent) {
     state = state.copyWith(
       query: recent.query,
-      clearSuggestions: true,
+      suggestions: const [],
     );
     performSearch();
   }
@@ -345,15 +283,15 @@ class SearchScreenNotifier extends StateNotifier<SearchScreenState> {
     _debounceTimer?.cancel();
     state = state.copyWith(
       query: '',
-      clearResults: true,
-      clearSuggestions: true,
-      clearError: true,
+      results: null,
+      suggestions: const [],
+      error: null,
     );
   }
 
   /// Clears the current error.
   void clearError() {
-    state = state.copyWith(clearError: true);
+    state = state.copyWith(error: null);
   }
 
   @override
@@ -413,10 +351,10 @@ class SearchScreen extends ConsumerStatefulWidget {
   final bool autoFocus;
 
   @override
-  ConsumerState<SearchScreen> createState() => _SearchScreenState();
+  ConsumerState<SearchScreen> createState() => _SearchScreenWidgetState();
 }
 
-class _SearchScreenState extends ConsumerState<SearchScreen> {
+class _SearchScreenWidgetState extends ConsumerState<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
@@ -746,8 +684,7 @@ class _InitialView extends StatelessWidget {
               Icon(
                 Icons.search,
                 size: 64,
-                color:
-                    theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
               ),
               const SizedBox(height: 16),
               Text(
@@ -906,10 +843,10 @@ class _ResultsHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
         border: Border(
           bottom: BorderSide(
-            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+            color: theme.colorScheme.outlineVariant.withOpacity(0.5),
           ),
         ),
       ),
@@ -1057,8 +994,7 @@ class _SearchResultCard extends StatelessWidget {
                             Icon(
                               Icons.text_snippet_outlined,
                               size: 14,
-                              color: theme.colorScheme.primary
-                                  .withValues(alpha: 0.7),
+                              color: theme.colorScheme.primary.withOpacity(0.7),
                             ),
                         ],
                       ),
@@ -1111,7 +1047,7 @@ class _DocumentThumbnail extends StatelessWidget {
       child: Icon(
         Icons.description_outlined,
         size: 28,
-        color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+        color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
       ),
     );
   }
@@ -1138,7 +1074,7 @@ class _MatchedFieldsBadges extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
-            color: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
+            color: theme.colorScheme.primaryContainer.withOpacity(0.5),
             borderRadius: BorderRadius.circular(4),
           ),
           child: Row(
@@ -1241,7 +1177,7 @@ class _SnippetText extends StatelessWidget {
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurface,
             backgroundColor:
-                theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
+                theme.colorScheme.primaryContainer.withOpacity(0.5),
             fontWeight: FontWeight.w600,
           ),
         ));

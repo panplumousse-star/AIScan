@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
@@ -16,66 +17,57 @@ import 'widgets/processing_view.dart';
 import 'widgets/prompt_view.dart';
 import 'widgets/results_view.dart';
 
+part 'ocr_results_screen.freezed.dart';
+
 /// State for the OCR results screen.
 ///
 /// Tracks the current OCR result, processing state, and user actions.
-@immutable
-class OcrResultsScreenState {
+@freezed
+class OcrResultsScreenState with _$OcrResultsScreenState {
+  const OcrResultsScreenState._();
+
   /// Creates an [OcrResultsScreenState] with default values.
-  const OcrResultsScreenState({
-    this.isProcessing = false,
-    this.isInitializing = false,
-    this.ocrResult,
-    this.error,
-    this.documentTitle,
-    this.documentId,
-    this.sourceImagePath,
-    this.sourceImageBytes,
-    this.options = OcrOptions.defaultDocument,
-    this.selectedText,
-    this.progress = 0.0,
-    this.currentPage = 0,
-    this.totalPages = 1,
-  });
+  factory OcrResultsScreenState({
+    /// Whether OCR processing is currently in progress.
+    @Default(false) bool isProcessing,
 
-  /// Whether OCR processing is currently in progress.
-  final bool isProcessing;
+    /// Whether the screen is initializing (loading image, etc.).
+    @Default(false) bool isInitializing,
 
-  /// Whether the screen is initializing (loading image, etc.).
-  final bool isInitializing;
+    /// The OCR result after text extraction.
+    OcrResult? ocrResult,
 
-  /// The OCR result after text extraction.
-  final OcrResult? ocrResult;
+    /// Error message if OCR failed.
+    String? error,
 
-  /// Error message if OCR failed.
-  final String? error;
+    /// Title of the document being processed.
+    String? documentTitle,
 
-  /// Title of the document being processed.
-  final String? documentTitle;
+    /// ID of the document being processed (for saving results).
+    String? documentId,
 
-  /// ID of the document being processed (for saving results).
-  final String? documentId;
+    /// Path to the source image file.
+    String? sourceImagePath,
 
-  /// Path to the source image file.
-  final String? sourceImagePath;
+    /// Source image bytes (alternative to file path).
+    Uint8List? sourceImageBytes,
 
-  /// Source image bytes (alternative to file path).
-  final Uint8List? sourceImageBytes;
+    /// OCR options being used.
+    @Default(OcrOptions.defaultDocument) OcrOptions options,
 
-  /// OCR options being used.
-  final OcrOptions options;
+    /// Currently selected text (for partial copy).
+    String? selectedText,
 
-  /// Currently selected text (for partial copy).
-  final String? selectedText;
+    /// Processing progress (0.0 - 1.0) for multi-page documents.
+    @Default(0.0) double progress,
 
-  /// Processing progress (0.0 - 1.0) for multi-page documents.
-  final double progress;
+    /// Current page being processed (for multi-page).
+    @Default(0) int currentPage,
 
-  /// Current page being processed (for multi-page).
-  final int currentPage;
-
-  /// Total pages to process (for multi-page).
-  final int totalPages;
+    /// Total pages to process (for multi-page).
+    @Default(1) int totalPages,
+    // ignore: redirect_to_invalid_return_type
+  }) = _OcrResultsScreenState;
 
   /// Whether OCR has been completed successfully.
   bool get hasResult => ocrResult != null && ocrResult!.hasText;
@@ -95,77 +87,6 @@ class OcrResultsScreenState {
 
   /// Whether we can copy text.
   bool get canCopy => hasResult && !isLoading;
-
-  /// Creates a copy with updated values.
-  OcrResultsScreenState copyWith({
-    bool? isProcessing,
-    bool? isInitializing,
-    OcrResult? ocrResult,
-    String? error,
-    String? documentTitle,
-    String? documentId,
-    String? sourceImagePath,
-    Uint8List? sourceImageBytes,
-    OcrOptions? options,
-    String? selectedText,
-    double? progress,
-    int? currentPage,
-    int? totalPages,
-    bool clearError = false,
-    bool clearResult = false,
-    bool clearSelectedText = false,
-  }) {
-    return OcrResultsScreenState(
-      isProcessing: isProcessing ?? this.isProcessing,
-      isInitializing: isInitializing ?? this.isInitializing,
-      ocrResult: clearResult ? null : (ocrResult ?? this.ocrResult),
-      error: clearError ? null : (error ?? this.error),
-      documentTitle: documentTitle ?? this.documentTitle,
-      documentId: documentId ?? this.documentId,
-      sourceImagePath: sourceImagePath ?? this.sourceImagePath,
-      sourceImageBytes: sourceImageBytes ?? this.sourceImageBytes,
-      options: options ?? this.options,
-      selectedText:
-          clearSelectedText ? null : (selectedText ?? this.selectedText),
-      progress: progress ?? this.progress,
-      currentPage: currentPage ?? this.currentPage,
-      totalPages: totalPages ?? this.totalPages,
-    );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is OcrResultsScreenState &&
-        other.isProcessing == isProcessing &&
-        other.isInitializing == isInitializing &&
-        other.ocrResult == ocrResult &&
-        other.error == error &&
-        other.documentTitle == documentTitle &&
-        other.documentId == documentId &&
-        other.sourceImagePath == sourceImagePath &&
-        other.options == options &&
-        other.selectedText == selectedText &&
-        other.progress == progress &&
-        other.currentPage == currentPage &&
-        other.totalPages == totalPages;
-  }
-
-  @override
-  int get hashCode => Object.hash(
-        isProcessing,
-        isInitializing,
-        ocrResult,
-        error,
-        documentTitle,
-        documentId,
-        sourceImagePath,
-        options,
-        selectedText,
-        progress,
-        currentPage,
-        totalPages,
-      );
 }
 
 /// State notifier for the OCR results screen.
@@ -174,7 +95,7 @@ class OcrResultsScreenState {
 class OcrResultsScreenNotifier extends StateNotifier<OcrResultsScreenState> {
   /// Creates an [OcrResultsScreenNotifier] with the given OCR service.
   OcrResultsScreenNotifier(this._ocrService)
-      : super(const OcrResultsScreenState());
+      : super(OcrResultsScreenState());
 
   final OcrService _ocrService;
 
@@ -200,7 +121,7 @@ class OcrResultsScreenNotifier extends StateNotifier<OcrResultsScreenState> {
       documentId: documentId,
       options: options,
       totalPages: imagePathsList?.length ?? 1,
-      clearError: true,
+      error: null,
     );
 
     try {
@@ -244,8 +165,8 @@ class OcrResultsScreenNotifier extends StateNotifier<OcrResultsScreenState> {
     state = state.copyWith(
       isProcessing: true,
       progress: 0.0,
-      clearError: true,
-      clearResult: true,
+      error: null,
+      ocrResult: null,
     );
 
     try {
@@ -300,8 +221,8 @@ class OcrResultsScreenNotifier extends StateNotifier<OcrResultsScreenState> {
       progress: 0.0,
       totalPages: imagePaths.length,
       currentPage: 0,
-      clearError: true,
-      clearResult: true,
+      error: null,
+      ocrResult: null,
     );
 
     try {
@@ -348,20 +269,19 @@ class OcrResultsScreenNotifier extends StateNotifier<OcrResultsScreenState> {
 
   /// Clears the current error.
   void clearError() {
-    state = state.copyWith(clearError: true);
+    state = state.copyWith(error: null);
   }
 
   /// Sets the selected text (for partial copying).
   void setSelectedText(String? text) {
     state = state.copyWith(
       selectedText: text,
-      clearSelectedText: text == null,
     );
   }
 
   /// Clears the selected text.
   void clearSelectedText() {
-    state = state.copyWith(clearSelectedText: true);
+    state = state.copyWith(selectedText: null);
   }
 
   /// Gets the text to copy (selected text or full text).
@@ -816,9 +736,11 @@ class _OcrResultsScreenState extends ConsumerState<OcrResultsScreen> {
     final file = File(filePath);
     await file.writeAsString(text);
 
-    await Share.shareXFiles(
-      [XFile(filePath, mimeType: 'text/plain')],
-      subject: title,
+    await SharePlus.instance.share(
+      ShareParams(
+        files: [XFile(filePath, mimeType: 'text/plain')],
+        subject: title,
+      ),
     );
   }
 

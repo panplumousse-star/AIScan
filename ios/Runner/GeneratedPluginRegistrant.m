@@ -24,12 +24,6 @@
 @import file_picker;
 #endif
 
-#if __has_include(<flutter_native_splash/FlutterNativeSplashPlugin.h>)
-#import <flutter_native_splash/FlutterNativeSplashPlugin.h>
-#else
-@import flutter_native_splash;
-#endif
-
 #if __has_include(<flutter_secure_storage_darwin/FlutterSecureStorageDarwinPlugin.h>)
 #import <flutter_secure_storage_darwin/FlutterSecureStorageDarwinPlugin.h>
 #else
@@ -58,6 +52,12 @@
 #import <google_mlkit_text_recognition/GoogleMlKitTextRecognitionPlugin.h>
 #else
 @import google_mlkit_text_recognition;
+#endif
+
+#if __has_include(<jailbreak_root_detection/JailbreakRootDetectionPlugin.h>)
+#import <jailbreak_root_detection/JailbreakRootDetectionPlugin.h>
+#else
+@import jailbreak_root_detection;
 #endif
 
 #if __has_include(<local_auth_darwin/LocalAuthPlugin.h>)
@@ -120,12 +120,12 @@
   [AesEncryptFilePlugin registerWithRegistrar:[registry registrarForPlugin:@"AesEncryptFilePlugin"]];
   [AudioplayersDarwinPlugin registerWithRegistrar:[registry registrarForPlugin:@"AudioplayersDarwinPlugin"]];
   [FilePickerPlugin registerWithRegistrar:[registry registrarForPlugin:@"FilePickerPlugin"]];
-  [FlutterNativeSplashPlugin registerWithRegistrar:[registry registrarForPlugin:@"FlutterNativeSplashPlugin"]];
   [FlutterSecureStorageDarwinPlugin registerWithRegistrar:[registry registrarForPlugin:@"FlutterSecureStorageDarwinPlugin"]];
   [FlutterTesseractOcrPlugin registerWithRegistrar:[registry registrarForPlugin:@"FlutterTesseractOcrPlugin"]];
   [GoogleMlKitCommonsPlugin registerWithRegistrar:[registry registrarForPlugin:@"GoogleMlKitCommonsPlugin"]];
   [GoogleMlKitDocumentScannerPlugin registerWithRegistrar:[registry registrarForPlugin:@"GoogleMlKitDocumentScannerPlugin"]];
   [GoogleMlKitTextRecognitionPlugin registerWithRegistrar:[registry registrarForPlugin:@"GoogleMlKitTextRecognitionPlugin"]];
+  [JailbreakRootDetectionPlugin registerWithRegistrar:[registry registrarForPlugin:@"JailbreakRootDetectionPlugin"]];
   [LocalAuthPlugin registerWithRegistrar:[registry registrarForPlugin:@"LocalAuthPlugin"]];
   [NativeCameraSoundPlugin registerWithRegistrar:[registry registrarForPlugin:@"NativeCameraSoundPlugin"]];
   [PermissionHandlerPlugin registerWithRegistrar:[registry registrarForPlugin:@"PermissionHandlerPlugin"]];

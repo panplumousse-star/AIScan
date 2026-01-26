@@ -17,6 +17,7 @@ import 'package:flutter/services.dart';
 ///
 /// ## Usage
 /// ```dart
+/// // Basic interactive card
 /// BentoInteractiveWrapper(
 ///   onTap: () => print('Card tapped!'),
 ///   child: Container(
@@ -28,12 +29,22 @@ import 'package:flutter/services.dart';
 ///     child: Text('Interactive Card'),
 ///   ),
 /// )
+///
+/// // Card with semantic labels for accessibility
+/// BentoInteractiveWrapper(
+///   semanticLabel: 'Scan Document',
+///   semanticHint: 'Opens camera to scan a new document',
+///   onTap: () => startScanning(),
+///   child: ScanCard(),
+/// )
 /// ```
 class BentoInteractiveWrapper extends StatefulWidget {
   /// Creates a [BentoInteractiveWrapper].
   const BentoInteractiveWrapper({
     required this.child,
     this.onTap,
+    this.semanticLabel,
+    this.semanticHint,
     super.key,
   });
 
@@ -43,6 +54,12 @@ class BentoInteractiveWrapper extends StatefulWidget {
   /// Callback invoked when the widget is tapped.
   /// If null, the widget will not respond to taps.
   final VoidCallback? onTap;
+
+  /// Semantic label for screen readers.
+  final String? semanticLabel;
+
+  /// Semantic hint for screen readers.
+  final String? semanticHint;
 
   @override
   State<BentoInteractiveWrapper> createState() => _BentoInteractiveWrapperState();
@@ -54,6 +71,9 @@ class _BentoInteractiveWrapperState extends State<BentoInteractiveWrapper>
   late Animation<double> _scaleAnimation;
   double _rotationX = 0.0;
   double _rotationY = 0.0;
+
+  /// Whether the wrapper is interactive.
+  bool get _isInteractive => widget.onTap != null;
 
   @override
   void initState() {
@@ -110,27 +130,33 @@ class _BentoInteractiveWrapperState extends State<BentoInteractiveWrapper>
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: _handleTapDown,
-      onTapUp: _handleTapUp,
-      onTapCancel: _handleTapCancel,
-      onTap: widget.onTap,
-      child: AnimatedBuilder(
-        animation: _scaleAnimation,
-        builder: (context, child) {
-          return Transform.scale(
-            scale: _scaleAnimation.value,
-            child: Transform(
-              alignment: Alignment.center,
-              transform: Matrix4.identity()
-                ..setEntry(3, 2, 0.001) // perspective
-                ..rotateX(_rotationX)
-                ..rotateY(_rotationY),
-              child: child,
-            ),
-          );
-        },
-        child: widget.child,
+    return Semantics(
+      label: widget.semanticLabel,
+      hint: widget.semanticHint,
+      button: _isInteractive,
+      enabled: _isInteractive,
+      child: GestureDetector(
+        onTapDown: _handleTapDown,
+        onTapUp: _handleTapUp,
+        onTapCancel: _handleTapCancel,
+        onTap: widget.onTap,
+        child: AnimatedBuilder(
+          animation: _scaleAnimation,
+          builder: (context, child) {
+            return Transform.scale(
+              scale: _scaleAnimation.value,
+              child: Transform(
+                alignment: Alignment.center,
+                transform: Matrix4.identity()
+                  ..setEntry(3, 2, 0.001) // perspective
+                  ..rotateX(_rotationX)
+                  ..rotateY(_rotationY),
+                child: child,
+              ),
+            );
+          },
+          child: widget.child,
+        ),
       ),
     );
   }

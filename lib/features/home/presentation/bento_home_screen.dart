@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // For HapticFeedback
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/accessibility/accessibility_config.dart';
 import '../../../core/permissions/camera_permission_service.dart';
 import '../../../core/permissions/permission_dialog.dart';
 import '../../../l10n/app_localizations.dart';
@@ -250,11 +251,9 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
     final l10n = AppLocalizations.of(context);
     const playStoreUrl = 'https://play.google.com/store/apps/details?id=com.plumstudio.scanai';
     final shareText = '${l10n?.shareAppText ?? 'I use Scanai to secure and organize my important documents.'}\n\n$playStoreUrl';
-    SharePlus.instance.share(
-      ShareParams(
-        text: shareText,
-        subject: l10n?.shareAppSubject ?? 'Scanai: Your secure pocket scanner',
-      ),
+    Share.share(
+      shareText,
+      subject: l10n?.shareAppSubject ?? 'Scanai: Your secure pocket scanner',
     );
   }
 
@@ -394,9 +393,14 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-      child: BentoInteractiveWrapper(
-        onTap: () => _handleAppShare(context),
-        child: Container(
+      child: Semantics(
+        label: 'Share Scanai app',
+        hint: 'Share this app with others',
+        button: true,
+        enabled: true,
+        child: BentoInteractiveWrapper(
+          onTap: () => _handleAppShare(context),
+          child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : AppColors.bentoCardWhite,
@@ -482,6 +486,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
           ),
         ),
       ),
+      ),
     );
   }
 
@@ -512,6 +517,21 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
     ];
     final celebrationMessage = celebrationMessages[celebrationMessageIndex];
 
+    // Build semantic label for screen readers
+    final String greetingText = _isSleeping
+        ? [
+            "Zzz",
+            "Zzz .",
+            "Zzz ..",
+            "Zzz ...",
+            "Zzz ... Zzz"
+          ][_sleepMessageIndex]
+        : (hasJustScanned ? celebrationMessage : _getGreeting(context));
+
+    final String semanticLabel = (!hasJustScanned && !_isSleeping)
+        ? '$greetingText. $greetingSubtitle'
+        : greetingText;
+
     return BentoAnimatedEntry(
       delay: const Duration(milliseconds: 0),
       child: BentoInteractiveWrapper(
@@ -521,69 +541,73 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
             ref.read(hasJustScannedProvider.notifier).state = false;
           }
         },
-        child: SizedBox(
-          height: 140, // Match mascot card height
-          child: Align(
-            alignment: Alignment.bottomCenter, // Align bubble to the bottom
-            child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 500),
-              opacity: _isSleeping ? (0.8 + (_sleepMessageIndex % 2 == 0 ? 0.2 : 0.0)) : 1.0,
-              child: SizedBox(
-                height: 85,
-                child: BentoSpeechBubble(
-                  tailDirection: BubbleTailDirection.right,
-                  color: isDark ? AppColors.surfaceDark.withValues(alpha: 0.6) : AppColors.surfaceLight,
-                  borderColor: isDark
-                      ? AppColors.surfaceLight.withValues(alpha: 0.1)
-                      : const Color(0xFFE2E8F0),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SizedBox(
-                        height: 32, // Fixed height to prevent vertical jumps
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
+        child: Semantics(
+          label: semanticLabel,
+          excludeSemantics: true,
+          child: SizedBox(
+            height: 140, // Match mascot card height
+            child: Align(
+              alignment: Alignment.bottomCenter, // Align bubble to the bottom
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 500),
+                opacity: _isSleeping ? (0.8 + (_sleepMessageIndex % 2 == 0 ? 0.2 : 0.0)) : 1.0,
+                child: SizedBox(
+                  height: 85,
+                  child: BentoSpeechBubble(
+                    tailDirection: BubbleTailDirection.right,
+                    color: isDark ? AppColors.surfaceDark.withValues(alpha: 0.6) : AppColors.surfaceLight,
+                    borderColor: isDark
+                        ? AppColors.surfaceLight.withValues(alpha: 0.1)
+                        : const Color(0xFFE2E8F0),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          height: 32, // Fixed height to prevent vertical jumps
+                          child: Align(
                             alignment: Alignment.centerLeft,
-                            child: Text(
-                              _isSleeping
-                                  ? [
-                                      "Zzz",
-                                      "Zzz .",
-                                      "Zzz ..",
-                                      "Zzz ...",
-                                      "Zzz ... Zzz"
-                                    ][_sleepMessageIndex]
-                                  : (hasJustScanned ? celebrationMessage : _getGreeting(context)),
-                              style: TextStyle(
-                        fontFamily: 'Outfit',
-                                fontSize: (hasJustScanned || _isSleeping) ? 22 : 24,
-                                fontWeight: FontWeight.w800,
-                                color: isDark ? AppColors.surfaceVariantLight : AppColors.surfaceVariantDark,
-                                letterSpacing: -0.5,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                _isSleeping
+                                    ? [
+                                        "Zzz",
+                                        "Zzz .",
+                                        "Zzz ..",
+                                        "Zzz ...",
+                                        "Zzz ... Zzz"
+                                      ][_sleepMessageIndex]
+                                    : (hasJustScanned ? celebrationMessage : _getGreeting(context)),
+                                style: TextStyle(
+                          fontFamily: 'Outfit',
+                                  fontSize: (hasJustScanned || _isSleeping) ? 22 : 24,
+                                  fontWeight: FontWeight.w800,
+                                  color: isDark ? AppColors.surfaceVariantLight : AppColors.surfaceVariantDark,
+                                  letterSpacing: -0.5,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                      if (!hasJustScanned && !_isSleeping) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          greetingSubtitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                        fontFamily: 'Outfit',
-                            fontSize: 12,
-                            color: isDark ? AppColors.neutralDark : AppColors.neutralLight,
-                            letterSpacing: 0.2,
+                        if (!hasJustScanned && !_isSleeping) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            greetingSubtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                          fontFamily: 'Outfit',
+                              fontSize: 12,
+                              color: isDark ? AppColors.neutralDark : AppColors.neutralLight,
+                              letterSpacing: 0.2,
+                            ),
                           ),
-                        ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -601,53 +625,55 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
         HapticFeedback.mediumImpact();
         // Potential secret animation trigger here later?
       },
-      child: Container(
-        height: 140,
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDark.withValues(alpha: 0.6) : AppColors.surfaceVariantLight,
-          borderRadius: BorderRadius.circular(32),
-          border: Border.all(
-            color: isDark
-                ? AppColors.surfaceLight.withValues(alpha: 0.1)
-                : const Color(0xFFE2E8F0),
-            width: 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.surfaceDark.withValues(alpha: isDark ? 0.2 : 0.05),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
+      child: ExcludeSemantics(
+        child: Container(
+          height: 140,
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.surfaceDark.withValues(alpha: 0.6) : AppColors.surfaceVariantLight,
+            borderRadius: BorderRadius.circular(32),
+            border: Border.all(
+              color: isDark
+                  ? AppColors.surfaceLight.withValues(alpha: 0.1)
+                  : const Color(0xFFE2E8F0),
+              width: 1.5,
             ),
-          ],
-        ),
-        child: Stack(
-          clipBehavior: Clip.none,
-          alignment: Alignment.center,
-          children: [
-            if (_isSleeping)
-              BouncingWidget(
-                child: Image.asset(
-                  'assets/images/scanai_zzz.png',
-                  height: 180, // Enlarged
-                  fit: BoxFit.contain,
-                ),
-              )
-            else if (_showUnlockMascot)
-              BouncingWidget(
-                child: BentoMascot(
-                  key: const ValueKey('unlock_mascot'),
-                  height: 180,
-                  variant: BentoMascotVariant.unlock,
-                ),
-              )
-            else
-              BentoMascot(
-                key: ValueKey('home_mascot_$_mascotKey'),
-                height: 180,
-                // animateOnce: false → loops 6 cycles, pauses 10s, repeats
-                // Stops only on sleep mode or page navigation
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.surfaceDark.withValues(alpha: isDark ? 0.2 : 0.05),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
               ),
-          ],
+            ],
+          ),
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.center,
+            children: [
+              if (_isSleeping)
+                BouncingWidget(
+                  child: Image.asset(
+                    'assets/images/scanai_zzz.png',
+                    height: 180, // Enlarged
+                    fit: BoxFit.contain,
+                  ),
+                )
+              else if (_showUnlockMascot)
+                BouncingWidget(
+                  child: BentoMascot(
+                    key: const ValueKey('unlock_mascot'),
+                    height: 180,
+                    variant: BentoMascotVariant.unlock,
+                  ),
+                )
+              else
+                BentoMascot(
+                  key: ValueKey('home_mascot_$_mascotKey'),
+                  height: 180,
+                  // animateOnce: false → loops 6 cycles, pauses 10s, repeats
+                  // Stops only on sleep mode or page navigation
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -658,6 +684,8 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
     final l10n = AppLocalizations.of(context);
     return _ShakeableWrapper(
       onTap: () => _navigateToScanner(context, ref),
+      semanticLabel: A11yLabels.scanDocument,
+      semanticHint: A11yLabels.scanDocumentHint,
       child: Container(
         width: double.infinity,
         height: 180, // Reduced height for better fit
@@ -762,20 +790,40 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
     final isEmpty = count == 0 && !isLoading;
     final l10n = AppLocalizations.of(context);
 
-    return Opacity(
-      opacity: isEmpty ? 0.5 : 1.0,
-      child: BentoInteractiveWrapper(
-        onTap: isEmpty
-            ? null
-            : () {
-                HapticFeedback.mediumImpact();
-                ref.read(audioServiceProvider).playSwoosh();
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const DocumentsScreen()),
-                );
-              },
-        child: Container(
+    // Generate semantic label based on state
+    String semanticLabel;
+    String? semanticHint;
+
+    if (isLoading) {
+      semanticLabel = A11yLabels.loadingDocuments;
+      semanticHint = null;
+    } else if (isEmpty) {
+      semanticLabel = 'Documents, no documents available';
+      semanticHint = 'Scan a document to get started';
+    } else {
+      semanticLabel = A11yLabels.folderWithCount('Documents', count);
+      semanticHint = 'Opens your documents library';
+    }
+
+    return Semantics(
+      label: semanticLabel,
+      hint: semanticHint,
+      button: true,
+      enabled: !isEmpty,
+      child: Opacity(
+        opacity: isEmpty ? 0.5 : 1.0,
+        child: BentoInteractiveWrapper(
+          onTap: isEmpty
+              ? null
+              : () {
+                  HapticFeedback.mediumImpact();
+                  ref.read(audioServiceProvider).playSwoosh();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const DocumentsScreen()),
+                  );
+                },
+          child: Container(
         height: 140,
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : AppColors.bentoCardWhite,
@@ -904,6 +952,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
               ),
           ],
         ),
+        ),
       ),
       ),
     );
@@ -912,15 +961,20 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
   Widget _buildSettingsCard(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = AppLocalizations.of(context);
-    return BentoInteractiveWrapper(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const SettingsScreen()),
-        );
-      },
-      child: Container(
+    return Semantics(
+      label: A11yLabels.settings,
+      hint: 'Open app settings',
+      button: true,
+      enabled: true,
+      child: BentoInteractiveWrapper(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const SettingsScreen()),
+          );
+        },
+        child: Container(
         height: 140,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -986,6 +1040,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
             ),
           ],
         ),
+      ),
       ),
     );
   }
@@ -1124,10 +1179,14 @@ class _PulsingGlowState extends State<_PulsingGlow>
 class _ShakeableWrapper extends StatefulWidget {
   final Widget child;
   final VoidCallback onTap;
+  final String? semanticLabel;
+  final String? semanticHint;
 
   const _ShakeableWrapper({
     required this.child,
     required this.onTap,
+    this.semanticLabel,
+    this.semanticHint,
   });
 
   @override
@@ -1174,20 +1233,26 @@ class _ShakeableWrapperState extends State<_ShakeableWrapper>
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: _handleTap,
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, child) {
-          return Transform.translate(
-            offset: Offset(_shakeAnimation.value, 0),
-            child: Transform.scale(
-              scale: _scaleAnimation.value,
-              child: child,
-            ),
-          );
-        },
-        child: widget.child,
+    return Semantics(
+      label: widget.semanticLabel,
+      hint: widget.semanticHint,
+      button: true,
+      enabled: true,
+      child: GestureDetector(
+        onTap: _handleTap,
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            return Transform.translate(
+              offset: Offset(_shakeAnimation.value, 0),
+              child: Transform.scale(
+                scale: _scaleAnimation.value,
+                child: child,
+              ),
+            );
+          },
+          child: widget.child,
+        ),
       ),
     );
   }

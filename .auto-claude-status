@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "064-implement-progressive-image-enhancement-preview",
+  "spec": "068-add-accessibility-semantics-to-home-screen-interac",
   "state": "building",
   "subtasks": {
-    "completed": 2,
-    "total": 6,
+    "completed": 6,
+    "total": 10,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Optimize Preview Generation",
-    "id": null,
-    "total": 4
+    "current": "Phase 1",
+    "id": 1,
+    "total": 10
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 1,
-    "started_at": "2026-01-26T17:13:14.676995"
+    "number": 5,
+    "started_at": "2026-01-26T17:13:16.701338"
   },
-  "last_update": "2026-01-26T17:13:14.730836"
+  "last_update": "2026-01-26T17:20:18.454408"
 }

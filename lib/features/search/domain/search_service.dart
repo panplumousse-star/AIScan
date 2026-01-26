@@ -1135,12 +1135,10 @@ class SearchService {
 
       // Find the first matching term
       int? matchStart;
-      String? matchedTerm;
       for (final term in queryTerms) {
         final index = textLower.indexOf(term);
         if (index != -1 && (matchStart == null || index < matchStart)) {
           matchStart = index;
-          matchedTerm = term;
         }
       }
 

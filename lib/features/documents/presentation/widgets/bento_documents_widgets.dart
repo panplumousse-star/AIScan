@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../models/documents_ui_models.dart';
@@ -25,13 +24,18 @@ class BentoStatsHeader extends StatelessWidget {
     final now = DateTime.now();
     final diff = now.difference(lastUpdated!);
 
-    if (diff.inMinutes < 1) return l10n?.justNow ?? 'Just now';
-    if (diff.inMinutes < 60)
+    if (diff.inMinutes < 1) {
+      return l10n?.justNow ?? 'Just now';
+    }
+    if (diff.inMinutes < 60) {
       return l10n?.minutesAgo(diff.inMinutes) ?? '${diff.inMinutes} min ago';
-    if (diff.inHours < 24)
+    }
+    if (diff.inHours < 24) {
       return l10n?.hoursAgo(diff.inHours) ?? '${diff.inHours}h ago';
-    if (diff.inDays < 7)
+    }
+    if (diff.inDays < 7) {
       return l10n?.daysAgo(diff.inDays) ?? '${diff.inDays} days ago';
+    }
     return '${lastUpdated!.day}/${lastUpdated!.month}/${lastUpdated!.year}';
   }
 

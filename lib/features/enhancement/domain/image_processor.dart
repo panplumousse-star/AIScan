@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:math' as math;
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -1148,14 +1147,6 @@ Uint8List _encodeImage(
     case ImageOutputFormat.png:
       return Uint8List.fromList(img.encodePng(image));
   }
-}
-
-/// Adjusts brightness of an image.
-img.Image _adjustBrightness(img.Image image, int amount) {
-  // Use built-in adjustColor for optimized brightness adjustment
-  // Convert amount from -255..255 to brightness factor for adjustColor
-  // adjustColor expects brightness offset in range suitable for direct application
-  return img.adjustColor(image, brightness: amount);
 }
 
 /// Applies unsharp mask sharpening to an image.

@@ -250,9 +250,11 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
     final l10n = AppLocalizations.of(context);
     const playStoreUrl = 'https://play.google.com/store/apps/details?id=com.plumstudio.scanai';
     final shareText = '${l10n?.shareAppText ?? 'I use Scanai to secure and organize my important documents.'}\n\n$playStoreUrl';
-    Share.share(
-      shareText,
-      subject: l10n?.shareAppSubject ?? 'Scanai: Your secure pocket scanner',
+    SharePlus.instance.share(
+      ShareParams(
+        text: shareText,
+        subject: l10n?.shareAppSubject ?? 'Scanai: Your secure pocket scanner',
+      ),
     );
   }
 

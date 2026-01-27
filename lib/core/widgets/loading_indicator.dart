@@ -357,7 +357,7 @@ class _LoadingDotsState extends State<_LoadingDots>
 
             return Padding(
               padding:
-                  EdgeInsets.symmetric(horizontal: _LoadingDots._spacing / 2),
+                  const EdgeInsets.symmetric(horizontal: _LoadingDots._spacing / 2),
               child: Transform.scale(
                 scale: scale,
                 child: Container(

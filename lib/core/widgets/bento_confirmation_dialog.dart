@@ -202,7 +202,7 @@ class BentoConfirmationDialog extends StatelessWidget {
                                 child: Center(
                                   child: Text(
                                     confirmButtonText ?? (l10n?.ok ?? 'OK'),
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       fontFamily: 'Outfit',
                                       fontWeight: FontWeight.w700,
                                       color: Colors.white,

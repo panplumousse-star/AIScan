@@ -276,7 +276,7 @@ class _BentoMoveToFolderDialogState extends State<BentoMoveToFolderDialog> {
                               widget.selectedCount == 1
                                   ? (l10n?.save ?? 'Save')
                                   : (l10n?.move ?? 'Move'),
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontFamily: 'Outfit',
                                 fontWeight: FontWeight.w700,
                               ),

@@ -135,7 +135,7 @@ class BentoErrorView extends StatelessWidget {
                 icon: const Icon(Icons.refresh_rounded),
                 label: Text(
                   displayRetryLabel,
-                  style: TextStyle(
+                  style: const TextStyle(
                       fontFamily: 'Outfit', fontWeight: FontWeight.w600),
                 ),
                 style: ElevatedButton.styleFrom(
@@ -240,7 +240,7 @@ class BentoEmptyView extends StatelessWidget {
                 ),
                 child: Text(
                   actionLabel!,
-                  style: TextStyle(
+                  style: const TextStyle(
                       fontFamily: 'Outfit', fontWeight: FontWeight.w600),
                 ),
               ),
@@ -340,7 +340,7 @@ class BentoNoResultsView extends StatelessWidget {
                 ),
                 child: Text(
                   actionLabel!,
-                  style: TextStyle(
+                  style: const TextStyle(
                       fontFamily: 'Outfit', fontWeight: FontWeight.w600),
                 ),
               ),

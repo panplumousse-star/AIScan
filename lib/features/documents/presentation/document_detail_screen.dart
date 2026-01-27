@@ -811,7 +811,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                             child: Text(
                                 AppLocalizations.of(context)?.cancel ??
                                     'Cancel',
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontFamily: 'Outfit',
                                 )),
                           ),
@@ -834,7 +834,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                                 child: Text(
                                   AppLocalizations.of(context)?.delete ??
                                       'Delete',
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontFamily: 'Outfit',
                                     fontWeight: FontWeight.w700,
                                     color: Colors.redAccent,

@@ -282,7 +282,7 @@ class DatabaseMigrationHelper {
 
       // Verify restoration was successful
       if (!await oldDbFile.exists()) {
-        throw MigrationException(
+        throw const MigrationException(
             'Database restoration failed: file not created');
       }
 

@@ -182,7 +182,7 @@ class _BentoRenameDocumentDialogState extends State<BentoRenameDocumentDialog> {
                           vertical: 14,
                         ),
                       ),
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontFamily: 'Outfit',
                       ),
                       textCapitalization: TextCapitalization.sentences,

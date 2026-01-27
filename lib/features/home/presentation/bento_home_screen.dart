@@ -576,7 +576,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
               child: AnimatedOpacity(
                 duration: const Duration(milliseconds: 500),
                 opacity: _isSleeping
-                    ? (0.8 + (_sleepMessageIndex % 2 == 0 ? 0.2 : 0.0))
+                    ? (0.8 + (_sleepMessageIndex.isEven ? 0.2 : 0.0))
                     : 1.0,
                 child: SizedBox(
                   height: 85,

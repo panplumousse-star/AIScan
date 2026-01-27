@@ -543,7 +543,8 @@ abstract final class AppTheme {
         thumbColor: colorScheme.primary,
         overlayColor: colorScheme.primary.withValues(alpha: 0.12),
         valueIndicatorColor: colorScheme.primaryContainer,
-        valueIndicatorTextStyle: AppTextStyles.sliderValueIndicator(colorScheme),
+        valueIndicatorTextStyle:
+            AppTextStyles.sliderValueIndicator(colorScheme),
       ),
 
       // Switch Theme
@@ -917,7 +918,8 @@ abstract final class AppTheme {
         thumbColor: colorScheme.primary,
         overlayColor: colorScheme.primary.withValues(alpha: 0.12),
         valueIndicatorColor: colorScheme.primaryContainer,
-        valueIndicatorTextStyle: AppTextStyles.sliderValueIndicator(colorScheme),
+        valueIndicatorTextStyle:
+            AppTextStyles.sliderValueIndicator(colorScheme),
       ),
 
       // Switch Theme

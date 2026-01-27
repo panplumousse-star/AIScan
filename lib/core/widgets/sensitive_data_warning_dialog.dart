@@ -7,7 +7,8 @@ import '../security/sensitive_data_detector.dart';
 /// Shows a warning dialog when sensitive data is detected in text.
 ///
 /// This dialog warns users when they attempt to copy text that may contain
-/// sensitive information (credit cards, passwords, SSNs, etc.) to the clipboard,
+/// sensitive information (credit cards, passwords, SSNs, etc.) to the
+/// clipboard,
 /// as clipboard content can be accessed by other apps.
 ///
 /// Returns `true` if the user chooses to copy anyway, `false` if cancelled.
@@ -49,7 +50,8 @@ Future<bool> showSensitiveDataWarningDialog({
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'The text you are copying may contain sensitive information that could be accessed by other apps.',
+            'The text you are copying may contain sensitive information '
+            'that could be accessed by other apps.',
           ),
           const SizedBox(height: 16),
           Container(

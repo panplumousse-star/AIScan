@@ -47,6 +47,62 @@ void main() {
     );
   }
 
+  /// Sets up batch query mocks for search results.
+  ///
+  /// This helper configures the mock database to respond to batch queries
+  /// used by the optimized _buildSearchResults method.
+  void setupBatchQueryMocks(List<Document> documents) {
+    final documentIds = documents.map((d) => d.id).toList();
+
+    // Mock the batch query for document metadata
+    when(mockDatabaseHelper.query(
+      DatabaseHelper.tableDocuments,
+      where: argThat(contains('IN'), named: 'where'),
+      whereArgs: anyNamed('whereArgs'),
+      orderBy: anyNamed('orderBy'),
+      limit: anyNamed('limit'),
+      offset: anyNamed('offset'),
+    )).thenAnswer((_) async {
+      return documents.map((doc) {
+        return {
+          'id': doc.id,
+          'title': doc.title,
+          'description': doc.description,
+          'ocr_text': doc.ocrText,
+          'created_at': doc.createdAt.toIso8601String(),
+          'updated_at': doc.updatedAt.toIso8601String(),
+          'file_size': doc.fileSize,
+          'mime_type': doc.mimeType,
+          'original_file_name': doc.originalFileName,
+          'thumbnail_path': doc.thumbnailPath,
+          'folder_id': doc.folderId,
+          'is_favorite': doc.isFavorite ? 1 : 0,
+          'ocr_status': doc.ocrStatus.name,
+        };
+      }).toList();
+    });
+
+    // Mock batch fetch for page paths
+    when(mockDatabaseHelper.getBatchDocumentPagePaths(any))
+        .thenAnswer((_) async {
+      final pagePaths = <String, List<String>>{};
+      for (final doc in documents) {
+        pagePaths[doc.id] = doc.pagesPaths;
+      }
+      return pagePaths;
+    });
+
+    // Mock batch fetch for tags
+    when(mockDatabaseHelper.getBatchDocumentTags(any))
+        .thenAnswer((_) async {
+      final tags = <String, List<String>>{};
+      for (final doc in documents) {
+        tags[doc.id] = doc.tags ?? [];
+      }
+      return tags;
+    });
+  }
+
   setUp(() {
     mockDatabaseHelper = MockDatabaseHelper();
     mockDocumentRepository = MockDocumentRepository();
@@ -871,10 +927,8 @@ void main() {
             },
           ]);
 
-      when(mockDocumentRepository.getDocument('doc-1'))
-          .thenAnswer((_) async => createTestDocument(
-                
-              ));
+      final testDoc = createTestDocument();
+      setupBatchQueryMocks([testDoc]);
 
       final results = await searchService.search('test');
 
@@ -1311,10 +1365,9 @@ void main() {
             },
           ]);
 
-      when(mockDocumentRepository.getDocument('doc-1'))
-          .thenAnswer((_) async => createTestDocument());
-      when(mockDocumentRepository.getDocument('doc-2'))
-          .thenAnswer((_) async => createTestDocument(id: 'doc-2'));
+      final doc1 = createTestDocument();
+      final doc2 = createTestDocument(id: 'doc-2');
+      setupBatchQueryMocks([doc1, doc2]);
 
       // Use sortDescending: false to get best matches first (more negative scores)
       final results = await searchService.search(
@@ -1357,12 +1410,9 @@ void main() {
             },
           ]);
 
-      when(mockDocumentRepository.getDocument('doc-1'))
-          .thenAnswer(
-              (_) async => createTestDocument(title: 'Zebra'));
-      when(mockDocumentRepository.getDocument('doc-2'))
-          .thenAnswer(
-              (_) async => createTestDocument(id: 'doc-2', title: 'Apple'));
+      final doc1 = createTestDocument(title: 'Zebra');
+      final doc2 = createTestDocument(id: 'doc-2', title: 'Apple');
+      setupBatchQueryMocks([doc1, doc2]);
 
       final results = await searchService.search(
         'test',
@@ -1396,12 +1446,9 @@ void main() {
             },
           ]);
 
-      when(mockDocumentRepository.getDocument('doc-1'))
-          .thenAnswer(
-              (_) async => createTestDocument(fileSize: 100));
-      when(mockDocumentRepository.getDocument('doc-2'))
-          .thenAnswer(
-              (_) async => createTestDocument(id: 'doc-2', fileSize: 1000));
+      final doc1 = createTestDocument(fileSize: 100);
+      final doc2 = createTestDocument(id: 'doc-2', fileSize: 1000);
+      setupBatchQueryMocks([doc1, doc2]);
 
       final results = await searchService.search(
         'test',
@@ -1446,12 +1493,12 @@ void main() {
             },
           ]);
 
-      when(mockDocumentRepository.getDocument('doc-1'))
-          .thenAnswer((_) async => createTestDocument(
-                title: 'Invoice 2024',
-                description: 'Annual invoice',
-                ocrText: 'Total: \$500',
-              ));
+      final testDoc = createTestDocument(
+        title: 'Invoice 2024',
+        description: 'Annual invoice',
+        ocrText: 'Total: \$500',
+      );
+      setupBatchQueryMocks([testDoc]);
 
       // Perform search
       final results = await searchService.search(
@@ -1490,10 +1537,10 @@ void main() {
               },
           ]);
 
-      for (var i = 1; i <= 5; i++) {
-        when(mockDocumentRepository.getDocument('doc-$i'))
-            .thenAnswer((_) async => createTestDocument(id: 'doc-$i'));
-      }
+      final docs = [
+        for (var i = 1; i <= 5; i++) createTestDocument(id: 'doc-$i'),
+      ];
+      setupBatchQueryMocks(docs);
 
       // Get first page
       final page1 = await searchService.search(

@@ -54,6 +54,26 @@ void main() {
     when(mockDatabaseHelper.getSearchHistory(limit: anyNamed('limit')))
         .thenAnswer((_) async => []);
 
+    // Default stubs for batch loading methods
+    when(mockDatabaseHelper.query(
+      any,
+      distinct: anyNamed('distinct'),
+      columns: anyNamed('columns'),
+      where: anyNamed('where'),
+      whereArgs: anyNamed('whereArgs'),
+      groupBy: anyNamed('groupBy'),
+      having: anyNamed('having'),
+      orderBy: anyNamed('orderBy'),
+      limit: anyNamed('limit'),
+      offset: anyNamed('offset'),
+    )).thenAnswer((_) async => []);
+
+    when(mockDatabaseHelper.getBatchDocumentPagePaths(any))
+        .thenAnswer((_) async => {});
+
+    when(mockDatabaseHelper.getBatchDocumentTags(any))
+        .thenAnswer((_) async => {});
+
     searchService = SearchService(
       databaseHelper: mockDatabaseHelper,
       documentRepository: mockDocumentRepository,
@@ -87,12 +107,40 @@ void main() {
         ];
       });
 
-      when(mockDocumentRepository.getDocument('doc-fav-1'))
-          .thenAnswer((_) async => createTestDocument(
-                id: 'doc-fav-1',
-                title: 'Favorite Document',
-                isFavorite: true,
-              ));
+      // Mock batch document loading
+      when(mockDatabaseHelper.query(
+        DatabaseHelper.tableDocuments,
+        where: anyNamed('where'),
+        whereArgs: anyNamed('whereArgs'),
+        distinct: anyNamed('distinct'),
+        columns: anyNamed('columns'),
+        groupBy: anyNamed('groupBy'),
+        having: anyNamed('having'),
+        orderBy: anyNamed('orderBy'),
+        limit: anyNamed('limit'),
+        offset: anyNamed('offset'),
+      )).thenAnswer((_) async => [
+        {
+          'id': 'doc-fav-1',
+          'title': 'Favorite Document',
+          'description': 'A favorite',
+          'thumbnail_path': '/path/to/doc-fav-1-thumb.enc',
+          'original_file_name': 'doc-fav-1.jpg',
+          'file_size': 1024,
+          'mime_type': 'image/jpeg',
+          'ocr_text': null,
+          'ocr_status': 'pending',
+          'created_at': DateTime.now().toIso8601String(),
+          'updated_at': DateTime.now().toIso8601String(),
+          'folder_id': null,
+          'is_favorite': 1,
+        },
+      ]);
+
+      when(mockDatabaseHelper.getBatchDocumentPagePaths(['doc-fav-1']))
+          .thenAnswer((_) async => {
+        'doc-fav-1': ['/path/to/doc-fav-1-page-1.enc'],
+      });
 
       final results = await searchService.search(
         'test',
@@ -103,10 +151,19 @@ void main() {
       expect(results.results.length, 1);
       expect(results.results.first.document.isFavorite, isTrue);
 
-      // Verify that getDocument was only called once to build the result,
-      // not for filtering (which would indicate N+1 queries)
-      verify(mockDocumentRepository.getDocument('doc-fav-1'))
-          .called(1);
+      // Verify batch loading was used (query called once for all documents)
+      verify(mockDatabaseHelper.query(
+        DatabaseHelper.tableDocuments,
+        where: anyNamed('where'),
+        whereArgs: anyNamed('whereArgs'),
+        distinct: anyNamed('distinct'),
+        columns: anyNamed('columns'),
+        groupBy: anyNamed('groupBy'),
+        having: anyNamed('having'),
+        orderBy: anyNamed('orderBy'),
+        limit: anyNamed('limit'),
+        offset: anyNamed('offset'),
+      )).called(1);
     });
 
     test('hasOcrOnly filter applies SQL WHERE clause', () async {
@@ -134,12 +191,40 @@ void main() {
         ];
       });
 
-      when(mockDocumentRepository.getDocument('doc-ocr-1'))
-          .thenAnswer((_) async => createTestDocument(
-                id: 'doc-ocr-1',
-                title: 'Document with OCR',
-                ocrText: 'Extracted text content',
-              ));
+      // Mock batch document loading
+      when(mockDatabaseHelper.query(
+        DatabaseHelper.tableDocuments,
+        where: anyNamed('where'),
+        whereArgs: anyNamed('whereArgs'),
+        distinct: anyNamed('distinct'),
+        columns: anyNamed('columns'),
+        groupBy: anyNamed('groupBy'),
+        having: anyNamed('having'),
+        orderBy: anyNamed('orderBy'),
+        limit: anyNamed('limit'),
+        offset: anyNamed('offset'),
+      )).thenAnswer((_) async => [
+        {
+          'id': 'doc-ocr-1',
+          'title': 'Document with OCR',
+          'description': null,
+          'thumbnail_path': '/path/to/doc-ocr-1-thumb.enc',
+          'original_file_name': 'doc-ocr-1.jpg',
+          'file_size': 1024,
+          'mime_type': 'image/jpeg',
+          'ocr_text': 'Extracted text content',
+          'ocr_status': 'completed',
+          'created_at': DateTime.now().toIso8601String(),
+          'updated_at': DateTime.now().toIso8601String(),
+          'folder_id': null,
+          'is_favorite': 0,
+        },
+      ]);
+
+      when(mockDatabaseHelper.getBatchDocumentPagePaths(['doc-ocr-1']))
+          .thenAnswer((_) async => {
+        'doc-ocr-1': ['/path/to/doc-ocr-1-page-1.enc'],
+      });
 
       final results = await searchService.search(
         'test',
@@ -149,9 +234,19 @@ void main() {
       expect(results.hasResults, isTrue);
       expect(results.results.first.document.hasOcrText, isTrue);
 
-      // Verify no N+1 query pattern
-      verify(mockDocumentRepository.getDocument('doc-ocr-1'))
-          .called(1);
+      // Verify batch loading was used (query called once for all documents)
+      verify(mockDatabaseHelper.query(
+        DatabaseHelper.tableDocuments,
+        where: anyNamed('where'),
+        whereArgs: anyNamed('whereArgs'),
+        distinct: anyNamed('distinct'),
+        columns: anyNamed('columns'),
+        groupBy: anyNamed('groupBy'),
+        having: anyNamed('having'),
+        orderBy: anyNamed('orderBy'),
+        limit: anyNamed('limit'),
+        offset: anyNamed('offset'),
+      )).called(1);
     });
 
     test('folderId filter applies SQL WHERE clause with parameter', () async {
@@ -189,12 +284,40 @@ void main() {
         ];
       });
 
-      when(mockDocumentRepository.getDocument('doc-folder-1'))
-          .thenAnswer((_) async => createTestDocument(
-                id: 'doc-folder-1',
-                title: 'Document in folder',
-                folderId: testFolderId,
-              ));
+      // Mock batch document loading
+      when(mockDatabaseHelper.query(
+        DatabaseHelper.tableDocuments,
+        where: anyNamed('where'),
+        whereArgs: anyNamed('whereArgs'),
+        distinct: anyNamed('distinct'),
+        columns: anyNamed('columns'),
+        groupBy: anyNamed('groupBy'),
+        having: anyNamed('having'),
+        orderBy: anyNamed('orderBy'),
+        limit: anyNamed('limit'),
+        offset: anyNamed('offset'),
+      )).thenAnswer((_) async => [
+        {
+          'id': 'doc-folder-1',
+          'title': 'Document in folder',
+          'description': null,
+          'thumbnail_path': '/path/to/doc-folder-1-thumb.enc',
+          'original_file_name': 'doc-folder-1.jpg',
+          'file_size': 1024,
+          'mime_type': 'image/jpeg',
+          'ocr_text': null,
+          'ocr_status': 'pending',
+          'created_at': DateTime.now().toIso8601String(),
+          'updated_at': DateTime.now().toIso8601String(),
+          'folder_id': testFolderId,
+          'is_favorite': 0,
+        },
+      ]);
+
+      when(mockDatabaseHelper.getBatchDocumentPagePaths(['doc-folder-1']))
+          .thenAnswer((_) async => {
+        'doc-folder-1': ['/path/to/doc-folder-1-page-1.enc'],
+      });
 
       final results = await searchService.search(
         'test',
@@ -204,9 +327,19 @@ void main() {
       expect(results.hasResults, isTrue);
       expect(results.results.first.document.folderId, testFolderId);
 
-      // Verify no N+1 query pattern
-      verify(mockDocumentRepository.getDocument('doc-folder-1'))
-          .called(1);
+      // Verify batch loading was used (query called once for all documents)
+      verify(mockDatabaseHelper.query(
+        DatabaseHelper.tableDocuments,
+        where: anyNamed('where'),
+        whereArgs: anyNamed('whereArgs'),
+        distinct: anyNamed('distinct'),
+        columns: anyNamed('columns'),
+        groupBy: anyNamed('groupBy'),
+        having: anyNamed('having'),
+        orderBy: anyNamed('orderBy'),
+        limit: anyNamed('limit'),
+        offset: anyNamed('offset'),
+      )).called(1);
     });
 
     test('combination of favoritesOnly and hasOcrOnly filters', () async {
@@ -239,13 +372,40 @@ void main() {
         ];
       });
 
-      when(mockDocumentRepository.getDocument('doc-both-1'))
-          .thenAnswer((_) async => createTestDocument(
-                id: 'doc-both-1',
-                title: 'Favorite with OCR',
-                ocrText: 'OCR content',
-                isFavorite: true,
-              ));
+      // Mock batch document loading
+      when(mockDatabaseHelper.query(
+        DatabaseHelper.tableDocuments,
+        where: anyNamed('where'),
+        whereArgs: anyNamed('whereArgs'),
+        distinct: anyNamed('distinct'),
+        columns: anyNamed('columns'),
+        groupBy: anyNamed('groupBy'),
+        having: anyNamed('having'),
+        orderBy: anyNamed('orderBy'),
+        limit: anyNamed('limit'),
+        offset: anyNamed('offset'),
+      )).thenAnswer((_) async => [
+        {
+          'id': 'doc-both-1',
+          'title': 'Favorite with OCR',
+          'description': null,
+          'thumbnail_path': '/path/to/doc-both-1-thumb.enc',
+          'original_file_name': 'doc-both-1.jpg',
+          'file_size': 1024,
+          'mime_type': 'image/jpeg',
+          'ocr_text': 'OCR content',
+          'ocr_status': 'completed',
+          'created_at': DateTime.now().toIso8601String(),
+          'updated_at': DateTime.now().toIso8601String(),
+          'folder_id': null,
+          'is_favorite': 1,
+        },
+      ]);
+
+      when(mockDatabaseHelper.getBatchDocumentPagePaths(['doc-both-1']))
+          .thenAnswer((_) async => {
+        'doc-both-1': ['/path/to/doc-both-1-page-1.enc'],
+      });
 
       final results = await searchService.search(
         'test',
@@ -259,9 +419,19 @@ void main() {
       expect(results.results.first.document.isFavorite, isTrue);
       expect(results.results.first.document.hasOcrText, isTrue);
 
-      // Verify single getDocument call per result
-      verify(mockDocumentRepository.getDocument('doc-both-1'))
-          .called(1);
+      // Verify batch loading was used (query called once for all documents)
+      verify(mockDatabaseHelper.query(
+        DatabaseHelper.tableDocuments,
+        where: anyNamed('where'),
+        whereArgs: anyNamed('whereArgs'),
+        distinct: anyNamed('distinct'),
+        columns: anyNamed('columns'),
+        groupBy: anyNamed('groupBy'),
+        having: anyNamed('having'),
+        orderBy: anyNamed('orderBy'),
+        limit: anyNamed('limit'),
+        offset: anyNamed('offset'),
+      )).called(1);
     });
 
     test('combination of favoritesOnly and folderId filters', () async {
@@ -302,13 +472,40 @@ void main() {
         ];
       });
 
-      when(mockDocumentRepository.getDocument('doc-combo-1'))
-          .thenAnswer((_) async => createTestDocument(
-                id: 'doc-combo-1',
-                title: 'Favorite in folder',
-                folderId: testFolderId,
-                isFavorite: true,
-              ));
+      // Mock batch document loading
+      when(mockDatabaseHelper.query(
+        DatabaseHelper.tableDocuments,
+        where: anyNamed('where'),
+        whereArgs: anyNamed('whereArgs'),
+        distinct: anyNamed('distinct'),
+        columns: anyNamed('columns'),
+        groupBy: anyNamed('groupBy'),
+        having: anyNamed('having'),
+        orderBy: anyNamed('orderBy'),
+        limit: anyNamed('limit'),
+        offset: anyNamed('offset'),
+      )).thenAnswer((_) async => [
+        {
+          'id': 'doc-combo-1',
+          'title': 'Favorite in folder',
+          'description': null,
+          'thumbnail_path': '/path/to/doc-combo-1-thumb.enc',
+          'original_file_name': 'doc-combo-1.jpg',
+          'file_size': 1024,
+          'mime_type': 'image/jpeg',
+          'ocr_text': null,
+          'ocr_status': 'pending',
+          'created_at': DateTime.now().toIso8601String(),
+          'updated_at': DateTime.now().toIso8601String(),
+          'folder_id': testFolderId,
+          'is_favorite': 1,
+        },
+      ]);
+
+      when(mockDatabaseHelper.getBatchDocumentPagePaths(['doc-combo-1']))
+          .thenAnswer((_) async => {
+        'doc-combo-1': ['/path/to/doc-combo-1-page-1.enc'],
+      });
 
       final results = await searchService.search(
         'test',
@@ -322,9 +519,19 @@ void main() {
       expect(results.results.first.document.isFavorite, isTrue);
       expect(results.results.first.document.folderId, testFolderId);
 
-      // Verify no N+1 queries
-      verify(mockDocumentRepository.getDocument('doc-combo-1'))
-          .called(1);
+      // Verify batch loading was used (query called once for all documents)
+      verify(mockDatabaseHelper.query(
+        DatabaseHelper.tableDocuments,
+        where: anyNamed('where'),
+        whereArgs: anyNamed('whereArgs'),
+        distinct: anyNamed('distinct'),
+        columns: anyNamed('columns'),
+        groupBy: anyNamed('groupBy'),
+        having: anyNamed('having'),
+        orderBy: anyNamed('orderBy'),
+        limit: anyNamed('limit'),
+        offset: anyNamed('offset'),
+      )).called(1);
     });
 
     test('all three filters combined (favoritesOnly, hasOcrOnly, folderId)',
@@ -371,15 +578,40 @@ void main() {
         ];
       });
 
-      when(mockDocumentRepository.getDocument('doc-all-1'))
-          .thenAnswer((_) async => createTestDocument(
-                id: 'doc-all-1',
-                title: 'All filters match',
-                description: 'Test',
-                ocrText: 'Complete OCR text',
-                folderId: testFolderId,
-                isFavorite: true,
-              ));
+      // Mock batch document loading
+      when(mockDatabaseHelper.query(
+        DatabaseHelper.tableDocuments,
+        where: anyNamed('where'),
+        whereArgs: anyNamed('whereArgs'),
+        distinct: anyNamed('distinct'),
+        columns: anyNamed('columns'),
+        groupBy: anyNamed('groupBy'),
+        having: anyNamed('having'),
+        orderBy: anyNamed('orderBy'),
+        limit: anyNamed('limit'),
+        offset: anyNamed('offset'),
+      )).thenAnswer((_) async => [
+        {
+          'id': 'doc-all-1',
+          'title': 'All filters match',
+          'description': 'Test',
+          'thumbnail_path': '/path/to/doc-all-1-thumb.enc',
+          'original_file_name': 'doc-all-1.jpg',
+          'file_size': 1024,
+          'mime_type': 'image/jpeg',
+          'ocr_text': 'Complete OCR text',
+          'ocr_status': 'completed',
+          'created_at': DateTime.now().toIso8601String(),
+          'updated_at': DateTime.now().toIso8601String(),
+          'folder_id': testFolderId,
+          'is_favorite': 1,
+        },
+      ]);
+
+      when(mockDatabaseHelper.getBatchDocumentPagePaths(['doc-all-1']))
+          .thenAnswer((_) async => {
+        'doc-all-1': ['/path/to/doc-all-1-page-1.enc'],
+      });
 
       final results = await searchService.search(
         'test',
@@ -395,9 +627,19 @@ void main() {
       expect(results.results.first.document.hasOcrText, isTrue);
       expect(results.results.first.document.folderId, testFolderId);
 
-      // Verify only one getDocument call per result (no N+1 pattern)
-      verify(mockDocumentRepository.getDocument('doc-all-1'))
-          .called(1);
+      // Verify batch loading was used (query called once for all documents)
+      verify(mockDatabaseHelper.query(
+        DatabaseHelper.tableDocuments,
+        where: anyNamed('where'),
+        whereArgs: anyNamed('whereArgs'),
+        distinct: anyNamed('distinct'),
+        columns: anyNamed('columns'),
+        groupBy: anyNamed('groupBy'),
+        having: anyNamed('having'),
+        orderBy: anyNamed('orderBy'),
+        limit: anyNamed('limit'),
+        offset: anyNamed('offset'),
+      )).called(1);
     });
 
     test('no filters applied when all are false/null', () async {
@@ -436,11 +678,40 @@ void main() {
         ];
       });
 
-      when(mockDocumentRepository.getDocument('doc-no-filter-1'))
-          .thenAnswer((_) async => createTestDocument(
-                id: 'doc-no-filter-1',
-                title: 'Any document',
-              ));
+      // Mock batch document loading
+      when(mockDatabaseHelper.query(
+        DatabaseHelper.tableDocuments,
+        where: anyNamed('where'),
+        whereArgs: anyNamed('whereArgs'),
+        distinct: anyNamed('distinct'),
+        columns: anyNamed('columns'),
+        groupBy: anyNamed('groupBy'),
+        having: anyNamed('having'),
+        orderBy: anyNamed('orderBy'),
+        limit: anyNamed('limit'),
+        offset: anyNamed('offset'),
+      )).thenAnswer((_) async => [
+        {
+          'id': 'doc-no-filter-1',
+          'title': 'Any document',
+          'description': null,
+          'thumbnail_path': '/path/to/doc-no-filter-1-thumb.enc',
+          'original_file_name': 'doc-no-filter-1.jpg',
+          'file_size': 1024,
+          'mime_type': 'image/jpeg',
+          'ocr_text': null,
+          'ocr_status': 'pending',
+          'created_at': DateTime.now().toIso8601String(),
+          'updated_at': DateTime.now().toIso8601String(),
+          'folder_id': null,
+          'is_favorite': 0,
+        },
+      ]);
+
+      when(mockDatabaseHelper.getBatchDocumentPagePaths(['doc-no-filter-1']))
+          .thenAnswer((_) async => {
+        'doc-no-filter-1': ['/path/to/doc-no-filter-1-page-1.enc'],
+      });
 
       final results = await searchService.search(
         'test',
@@ -448,9 +719,19 @@ void main() {
 
       expect(results.hasResults, isTrue);
 
-      // Verify single getDocument call
-      verify(mockDocumentRepository.getDocument('doc-no-filter-1'))
-          .called(1);
+      // Verify batch loading was used (query called once for all documents)
+      verify(mockDatabaseHelper.query(
+        DatabaseHelper.tableDocuments,
+        where: anyNamed('where'),
+        whereArgs: anyNamed('whereArgs'),
+        distinct: anyNamed('distinct'),
+        columns: anyNamed('columns'),
+        groupBy: anyNamed('groupBy'),
+        having: anyNamed('having'),
+        orderBy: anyNamed('orderBy'),
+        limit: anyNamed('limit'),
+        offset: anyNamed('offset'),
+      )).called(1);
     });
 
     test('verifies no N+1 query issue with multiple results', () async {
@@ -481,16 +762,72 @@ void main() {
             },
           ]);
 
-      // Mock document repository for building full results
-      when(mockDocumentRepository.getDocument('doc-1'))
-          .thenAnswer(
-              (_) async => createTestDocument(ocrText: 'OCR 1'));
-      when(mockDocumentRepository.getDocument('doc-2'))
-          .thenAnswer(
-              (_) async => createTestDocument(id: 'doc-2', ocrText: 'OCR 2'));
-      when(mockDocumentRepository.getDocument('doc-3'))
-          .thenAnswer(
-              (_) async => createTestDocument(id: 'doc-3', ocrText: 'OCR 3'));
+      // Mock batch document loading for all three documents
+      when(mockDatabaseHelper.query(
+        DatabaseHelper.tableDocuments,
+        where: anyNamed('where'),
+        whereArgs: anyNamed('whereArgs'),
+        distinct: anyNamed('distinct'),
+        columns: anyNamed('columns'),
+        groupBy: anyNamed('groupBy'),
+        having: anyNamed('having'),
+        orderBy: anyNamed('orderBy'),
+        limit: anyNamed('limit'),
+        offset: anyNamed('offset'),
+      )).thenAnswer((_) async => [
+        {
+          'id': 'doc-1',
+          'title': 'Document 1',
+          'description': null,
+          'thumbnail_path': '/path/to/doc-1-thumb.enc',
+          'original_file_name': 'doc-1.jpg',
+          'file_size': 1024,
+          'mime_type': 'image/jpeg',
+          'ocr_text': 'OCR 1',
+          'ocr_status': 'completed',
+          'created_at': DateTime.now().toIso8601String(),
+          'updated_at': DateTime.now().toIso8601String(),
+          'folder_id': null,
+          'is_favorite': 1,
+        },
+        {
+          'id': 'doc-2',
+          'title': 'Document 2',
+          'description': null,
+          'thumbnail_path': '/path/to/doc-2-thumb.enc',
+          'original_file_name': 'doc-2.jpg',
+          'file_size': 1024,
+          'mime_type': 'image/jpeg',
+          'ocr_text': 'OCR 2',
+          'ocr_status': 'completed',
+          'created_at': DateTime.now().toIso8601String(),
+          'updated_at': DateTime.now().toIso8601String(),
+          'folder_id': null,
+          'is_favorite': 1,
+        },
+        {
+          'id': 'doc-3',
+          'title': 'Document 3',
+          'description': null,
+          'thumbnail_path': '/path/to/doc-3-thumb.enc',
+          'original_file_name': 'doc-3.jpg',
+          'file_size': 1024,
+          'mime_type': 'image/jpeg',
+          'ocr_text': 'OCR 3',
+          'ocr_status': 'completed',
+          'created_at': DateTime.now().toIso8601String(),
+          'updated_at': DateTime.now().toIso8601String(),
+          'folder_id': null,
+          'is_favorite': 1,
+        },
+      ]);
+
+      when(mockDatabaseHelper.getBatchDocumentPagePaths(['doc-1', 'doc-2', 'doc-3']))
+          .thenAnswer((_) async => {
+        'doc-1': ['/path/to/doc-1-page-1.enc'],
+        'doc-2': ['/path/to/doc-2-page-1.enc'],
+        'doc-3': ['/path/to/doc-3-page-1.enc'],
+      });
 
       final results = await searchService.search(
         'test',
@@ -505,17 +842,22 @@ void main() {
       // Verify exactly 1 database query was made (not N queries for filtering)
       verify(mockDatabaseHelper.rawQuery(any, any)).called(1);
 
-      // Verify getDocument was called exactly 3 times (once per result to build full data)
-      // NOT called for filtering - that's done in SQL
-      verify(mockDocumentRepository.getDocument('doc-1'))
-          .called(1);
-      verify(mockDocumentRepository.getDocument('doc-2'))
-          .called(1);
-      verify(mockDocumentRepository.getDocument('doc-3'))
-          .called(1);
+      // Verify batch loading was called once for all documents (not N times)
+      verify(mockDatabaseHelper.query(
+        DatabaseHelper.tableDocuments,
+        where: anyNamed('where'),
+        whereArgs: anyNamed('whereArgs'),
+        distinct: anyNamed('distinct'),
+        columns: anyNamed('columns'),
+        groupBy: anyNamed('groupBy'),
+        having: anyNamed('having'),
+        orderBy: anyNamed('orderBy'),
+        limit: anyNamed('limit'),
+        offset: anyNamed('offset'),
+      )).called(1);
 
-      // Verify no additional calls were made beyond building the results
-      verifyNever(mockDocumentRepository.getDocument(any));
+      // Verify page paths batch loading was called once
+      verify(mockDatabaseHelper.getBatchDocumentPagePaths(any)).called(1);
     });
 
     test('filters work correctly in fallback LIKE search', () async {
@@ -556,13 +898,40 @@ void main() {
         ];
       });
 
-      when(mockDocumentRepository.getDocument('doc-fallback-1'))
-          .thenAnswer((_) async => createTestDocument(
-                id: 'doc-fallback-1',
-                title: 'Fallback result',
-                ocrText: 'Fallback OCR',
-                isFavorite: true,
-              ));
+      // Mock batch document loading
+      when(mockDatabaseHelper.query(
+        DatabaseHelper.tableDocuments,
+        where: anyNamed('where'),
+        whereArgs: anyNamed('whereArgs'),
+        distinct: anyNamed('distinct'),
+        columns: anyNamed('columns'),
+        groupBy: anyNamed('groupBy'),
+        having: anyNamed('having'),
+        orderBy: anyNamed('orderBy'),
+        limit: anyNamed('limit'),
+        offset: anyNamed('offset'),
+      )).thenAnswer((_) async => [
+        {
+          'id': 'doc-fallback-1',
+          'title': 'Fallback result',
+          'description': null,
+          'thumbnail_path': '/path/to/doc-fallback-1-thumb.enc',
+          'original_file_name': 'doc-fallback-1.jpg',
+          'file_size': 1024,
+          'mime_type': 'image/jpeg',
+          'ocr_text': 'Fallback OCR',
+          'ocr_status': 'completed',
+          'created_at': DateTime.now().toIso8601String(),
+          'updated_at': DateTime.now().toIso8601String(),
+          'folder_id': null,
+          'is_favorite': 1,
+        },
+      ]);
+
+      when(mockDatabaseHelper.getBatchDocumentPagePaths(['doc-fallback-1']))
+          .thenAnswer((_) async => {
+        'doc-fallback-1': ['/path/to/doc-fallback-1-page-1.enc'],
+      });
 
       final results = await searchService.search(
         'test',
@@ -579,9 +948,19 @@ void main() {
       // Verify fallback was called
       verify(mockDatabaseHelper.rawQuery(any, any)).called(2);
 
-      // Verify no N+1 pattern in fallback
-      verify(mockDocumentRepository.getDocument('doc-fallback-1'))
-          .called(1);
+      // Verify batch loading was used (query called once for all documents)
+      verify(mockDatabaseHelper.query(
+        DatabaseHelper.tableDocuments,
+        where: anyNamed('where'),
+        whereArgs: anyNamed('whereArgs'),
+        distinct: anyNamed('distinct'),
+        columns: anyNamed('columns'),
+        groupBy: anyNamed('groupBy'),
+        having: anyNamed('having'),
+        orderBy: anyNamed('orderBy'),
+        limit: anyNamed('limit'),
+        offset: anyNamed('offset'),
+      )).called(1);
     });
   });
 }

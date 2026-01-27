@@ -28,7 +28,7 @@ class ScanaiApp extends ConsumerWidget {
     final locale = ref.watch(flutterLocaleProvider);
 
     // Configure page transitions for smooth navigation
-    final pageTransitionsTheme = const PageTransitionsTheme(
+    const pageTransitionsTheme = PageTransitionsTheme(
       builders: <TargetPlatform, PageTransitionsBuilder>{
         // Use zoom transition for Android (Material 3 style)
         TargetPlatform.android: ZoomPageTransitionsBuilder(

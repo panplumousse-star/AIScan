@@ -711,7 +711,7 @@ class _SkeletonLoaderState extends State<SkeletonLoader>
             borderRadius: isCircle ? null : borderRadius,
             gradient: LinearGradient(
               colors: [baseColor, highlightColor, baseColor],
-              stops: [0.0, 0.5, 1.0],
+              stops: const [0.0, 0.5, 1.0],
               transform: _GradientTransform(_animation.value),
             ),
           ),

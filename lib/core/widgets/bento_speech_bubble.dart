@@ -209,7 +209,7 @@ class _BentoSpeechBubblePainter extends CustomPainter {
   /// Builds path with tail pointing left (speaker on left side).
   Path _buildLeftTailPath(double w, double h, double r) {
     final path = Path();
-    final tailOffset = _tailWidth;
+    const tailOffset = _tailWidth;
 
     // Start at top-left after tail area
     path.moveTo(tailOffset + r, 0);
@@ -319,7 +319,7 @@ class _BentoSpeechBubblePainter extends CustomPainter {
   /// Builds path with tail pointing down-left (speaker below-left).
   Path _buildDownLeftTailPath(double w, double h, double r) {
     final path = Path();
-    final tailOffset = _tailHeight;
+    const tailOffset = _tailHeight;
     final bodyH = h - tailOffset;
 
     // Start at top-left
@@ -375,7 +375,7 @@ class _BentoSpeechBubblePainter extends CustomPainter {
   /// Builds path with tail pointing down-right (speaker below-right).
   Path _buildDownRightTailPath(double w, double h, double r) {
     final path = Path();
-    final tailOffset = _tailHeight;
+    const tailOffset = _tailHeight;
     final bodyH = h - tailOffset;
 
     // Start at top-left

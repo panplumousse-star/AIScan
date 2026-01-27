@@ -1,6 +1,24 @@
 import 'dart:collection';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../device_performance.dart';
+
+// ============================================================================
+// Image Cache Manager Provider
+// ============================================================================
+
+/// Riverpod provider for the image cache manager.
+///
+/// Provides memory-efficient image caching with automatic eviction.
+final imageCacheManagerProvider = Provider<ImageCacheManager>((ref) {
+  final devicePerformance = ref.watch(devicePerformanceProvider);
+  return ImageCacheManager(
+    maxSizeBytes: devicePerformance.recommendedImageCacheSize,
+    maxItems: devicePerformance.isLowEndDevice ? 50 : 100,
+  );
+});
 
 // ============================================================================
 // Image Cache Manager

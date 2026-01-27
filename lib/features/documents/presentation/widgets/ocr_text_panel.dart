@@ -6,8 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/security/clipboard_security_service.dart';
-import '../../../../core/security/sensitive_data_detector.dart';
 import '../../../../core/widgets/bento_card.dart';
+import '../../../../core/widgets/sensitive_data_warning_dialog.dart';
 import '../../../../l10n/app_localizations.dart';
 
 /// An expandable panel that displays OCR text extracted from a document.
@@ -235,7 +235,11 @@ class _OcrTextPanelState extends ConsumerState<OcrTextPanel> {
         widget.ocrText,
         onSensitiveDataDetected: (detection) async {
           if (!context.mounted) return false;
-          return _showSensitiveDataWarning(context, detection);
+          return showSensitiveDataWarningDialog(
+            context: context,
+            ref: ref,
+            detection: detection,
+          );
         },
       );
 
@@ -282,7 +286,11 @@ class _OcrTextPanelState extends ConsumerState<OcrTextPanel> {
         selectedText,
         onSensitiveDataDetected: (detection) async {
           if (!context.mounted) return false;
-          return _showSensitiveDataWarning(context, detection);
+          return showSensitiveDataWarningDialog(
+            context: context,
+            ref: ref,
+            detection: detection,
+          );
         },
       );
 
@@ -316,83 +324,5 @@ class _OcrTextPanelState extends ConsumerState<OcrTextPanel> {
         );
       }
     }
-  }
-
-  /// Shows a warning dialog when sensitive data is detected.
-  ///
-  /// Returns `true` if the user chooses to copy anyway, `false` if cancelled.
-  Future<bool> _showSensitiveDataWarning(
-    BuildContext context,
-    SensitiveDataDetectionResult detection,
-  ) async {
-    final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final detector = ref.read(sensitiveDataDetectorProvider);
-
-    // Get human-readable description of detected types
-    final detectedDescription = detector.getSensitiveDataDescription(detection);
-
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        icon: Icon(
-          Icons.warning_amber_rounded,
-          color: theme.colorScheme.error,
-          size: 48,
-        ),
-        title: const Text('Sensitive Data Detected'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'The text you are copying may contain sensitive information that could be accessed by other apps.',
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.errorContainer.withAlpha(77),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: theme.colorScheme.error.withAlpha(77),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Detected:',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onErrorContainer,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    detectedDescription,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onErrorContainer,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l10n?.cancel ?? 'Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Copy Anyway'),
-          ),
-        ],
-      ),
-    );
-
-    return result ?? false;
   }
 }

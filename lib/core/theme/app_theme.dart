@@ -927,6 +927,7 @@ abstract final class AppTheme {
           vertical: 14,
         ),
         hintStyle: TextStyle(
+          fontFamily: 'Outfit',
           color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
         ),
         prefixIconColor: colorScheme.onSurfaceVariant,
@@ -940,6 +941,7 @@ abstract final class AppTheme {
         disabledColor:
             colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         labelStyle: TextStyle(
+          fontFamily: 'Outfit',
           color: colorScheme.onSurfaceVariant,
           fontSize: 13,
           fontWeight: FontWeight.w500,
@@ -960,11 +962,13 @@ abstract final class AppTheme {
           borderRadius: AppBorderRadius.card,
         ),
         titleTextStyle: TextStyle(
+          fontFamily: 'Outfit',
           color: colorScheme.onSurface,
           fontSize: 16,
           fontWeight: FontWeight.w500,
         ),
         subtitleTextStyle: TextStyle(
+          fontFamily: 'Outfit',
           color: colorScheme.onSurfaceVariant,
           fontSize: 14,
         ),
@@ -987,11 +991,13 @@ abstract final class AppTheme {
           borderRadius: AppBorderRadius.dialog,
         ),
         titleTextStyle: TextStyle(
+          fontFamily: 'Outfit',
           color: colorScheme.onSurface,
           fontSize: 20,
           fontWeight: FontWeight.w600,
         ),
         contentTextStyle: TextStyle(
+          fontFamily: 'Outfit',
           color: colorScheme.onSurfaceVariant,
           fontSize: 14,
         ),
@@ -1015,6 +1021,7 @@ abstract final class AppTheme {
         behavior: SnackBarBehavior.floating,
         backgroundColor: colorScheme.inverseSurface,
         contentTextStyle: TextStyle(
+          fontFamily: 'Outfit',
           color: colorScheme.onInverseSurface,
           fontSize: 14,
         ),
@@ -1039,6 +1046,7 @@ abstract final class AppTheme {
         overlayColor: colorScheme.primary.withValues(alpha: 0.12),
         valueIndicatorColor: colorScheme.primaryContainer,
         valueIndicatorTextStyle: TextStyle(
+          fontFamily: 'Outfit',
           color: colorScheme.onPrimaryContainer,
           fontSize: 12,
           fontWeight: FontWeight.w500,
@@ -1093,6 +1101,7 @@ abstract final class AppTheme {
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final isSelected = states.contains(WidgetState.selected);
           return TextStyle(
+            fontFamily: 'Outfit',
             fontSize: 12,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
             color: isSelected
@@ -1120,6 +1129,7 @@ abstract final class AppTheme {
           borderRadius: AppBorderRadius.card,
         ),
         textStyle: TextStyle(
+          fontFamily: 'Outfit',
           color: colorScheme.onSurface,
           fontSize: 14,
         ),
@@ -1133,6 +1143,7 @@ abstract final class AppTheme {
           borderRadius: AppBorderRadius.chip,
         ),
         textStyle: TextStyle(
+          fontFamily: 'Outfit',
           color: colorScheme.onInverseSurface,
           fontSize: 12,
         ),
@@ -1143,6 +1154,7 @@ abstract final class AppTheme {
         backgroundColor: colorScheme.error,
         textColor: colorScheme.onError,
         textStyle: const TextStyle(
+          fontFamily: 'Outfit',
           fontSize: 10,
           fontWeight: FontWeight.w600,
         ),

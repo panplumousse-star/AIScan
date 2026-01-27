@@ -87,6 +87,12 @@ class DocumentsScreenState with _$DocumentsScreenState {
 
     /// Map of document IDs to decrypted thumbnail bytes.
     @Default({}) Map<String, Uint8List> decryptedThumbnails,
+
+    /// Cached filtered documents to avoid recomputing on every access.
+    List<Document>? cachedFilteredDocuments,
+
+    /// Cached filtered folders to avoid recomputing on every access.
+    List<Folder>? cachedFilteredFolders,
     // ignore: redirect_to_invalid_return_type
   }) = _DocumentsScreenState;
 
@@ -113,6 +119,12 @@ class DocumentsScreenState with _$DocumentsScreenState {
 
   /// Documents filtered by search query.
   List<Document> get filteredDocuments {
+    // Return cached value if available
+    if (cachedFilteredDocuments != null) {
+      return cachedFilteredDocuments!;
+    }
+
+    // Compute filtered documents on-demand
     if (searchQuery.isEmpty) return documents;
     final query = searchQuery.toLowerCase();
     return documents.where((doc) {
@@ -126,6 +138,12 @@ class DocumentsScreenState with _$DocumentsScreenState {
 
   /// Folders filtered by favorites and search query.
   List<Folder> get filteredFolders {
+    // Return cached value if available
+    if (cachedFilteredFolders != null) {
+      return cachedFilteredFolders!;
+    }
+
+    // Compute filtered folders on-demand
     var result = folders;
 
     // Apply favorites filter
@@ -199,6 +217,49 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
       pageSize: 20, // Load 20 documents per page
       loadPage: _loadDocumentPage,
       // preloadThreshold defaults to 0.8 (loads when scrolled 80% through current items)
+    );
+  }
+
+  /// Computes and caches filtered documents and folders.
+  ///
+  /// This method pre-computes the filtered lists to avoid repeated O(n)
+  /// iterations on every getter access during widget builds.
+  DocumentsScreenState _withComputedCache(DocumentsScreenState state) {
+    // Compute filtered documents
+    List<Document> cachedDocs;
+    if (state.searchQuery.isEmpty) {
+      cachedDocs = state.documents;
+    } else {
+      final query = state.searchQuery.toLowerCase();
+      cachedDocs = state.documents.where((doc) {
+        // Search in title
+        if (doc.title.toLowerCase().contains(query)) return true;
+        // Search in OCR text
+        if (doc.ocrText?.toLowerCase().contains(query) ?? false) return true;
+        return false;
+      }).toList();
+    }
+
+    // Compute filtered folders
+    List<Folder> cachedFolders = state.folders;
+
+    // Apply favorites filter
+    if (state.filter.favoritesOnly) {
+      cachedFolders = cachedFolders.where((folder) => folder.isFavorite).toList();
+    }
+
+    // Apply search filter
+    if (state.searchQuery.isNotEmpty) {
+      final query = state.searchQuery.toLowerCase();
+      cachedFolders = cachedFolders
+          .where((folder) => folder.name.toLowerCase().contains(query))
+          .toList();
+    }
+
+    // Return state with cached values
+    return state.copyWith(
+      cachedFilteredDocuments: cachedDocs,
+      cachedFilteredFolders: cachedFolders,
     );
   }
 
@@ -348,11 +409,11 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
       _lazyLoader.clear();
       final documents = await _lazyLoader.loadMore();
 
-      state = state.copyWith(
+      state = _withComputedCache(state.copyWith(
         documents: documents,
         folders: folders,
         isLoading: false,
-      );
+      ));
 
       // Load thumbnails in background
       unawaited(_loadThumbnails(documents));
@@ -386,9 +447,9 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
       }
 
       // Update state with all loaded documents from lazy loader
-      state = state.copyWith(
+      state = _withComputedCache(state.copyWith(
         documents: _lazyLoader.items,
-      );
+      ));
 
       // Load thumbnails for new documents
       unawaited(_loadThumbnails(newDocuments));
@@ -624,12 +685,12 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
 
   /// Sets the search query.
   void setSearchQuery(String query) {
-    state = state.copyWith(searchQuery: query);
+    state = _withComputedCache(state.copyWith(searchQuery: query));
   }
 
   /// Clears the search query.
   void clearSearch() {
-    state = state.copyWith(searchQuery: '');
+    state = _withComputedCache(state.copyWith(searchQuery: ''));
   }
 
   /// Clears all filters.

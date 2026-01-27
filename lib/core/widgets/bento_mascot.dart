@@ -67,11 +67,9 @@ class _BentoMascotState extends ConsumerState<BentoMascot>
     switch (widget.variant) {
       case BentoMascotVariant.settings:
         duration = const Duration(milliseconds: 1000);
-        break;
       case BentoMascotVariant.documents:
         // 7 segments ping-pong, ~85ms per frame = 600ms
         duration = const Duration(milliseconds: 1000);
-        break;
       case BentoMascotVariant.waving:
       case BentoMascotVariant.lock:
       case BentoMascotVariant.unlock:
@@ -79,7 +77,6 @@ class _BentoMascotState extends ConsumerState<BentoMascot>
       case BentoMascotVariant.photo:
         // 5 frames ping-pong, ~80ms per frame = 400ms
         duration = const Duration(milliseconds: 400);
-        break;
     }
 
     _controller = AnimationController(
@@ -244,7 +241,6 @@ class _BentoMascotState extends ConsumerState<BentoMascot>
             } else {
               assetPath = _getWavingFrame();
             }
-            break;
 
           case BentoMascotVariant.settings:
             // 2-frame animation
@@ -253,15 +249,12 @@ class _BentoMascotState extends ConsumerState<BentoMascot>
             } else {
               assetPath = 'assets/images/scanai_settings_02.png';
             }
-            break;
 
           case BentoMascotVariant.lock:
             assetPath = 'assets/images/scanai_lock.png';
-            break;
 
           case BentoMascotVariant.unlock:
             assetPath = 'assets/images/scanai_unlock.png';
-            break;
 
           case BentoMascotVariant.documents:
             if (!_isStarted || _isPaused) {
@@ -270,15 +263,12 @@ class _BentoMascotState extends ConsumerState<BentoMascot>
             } else {
               assetPath = _getDocumentsFrame();
             }
-            break;
 
           case BentoMascotVariant.folderEdit:
             assetPath = 'assets/images/scanai_folder_edit.png';
-            break;
 
           case BentoMascotVariant.photo:
             assetPath = 'assets/images/scanai_photo.png';
-            break;
         }
 
         return Image.asset(

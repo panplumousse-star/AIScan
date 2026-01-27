@@ -529,16 +529,12 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
     switch (action) {
       case 'share':
         unawaited(_handleShare(context, state));
-        break;
       case 'info':
         _showDocumentInfo(context, state, Theme.of(context));
-        break;
       case 'move':
         unawaited(_showMoveToFolderDialog(context, state));
-        break;
       case 'delete':
         unawaited(_showDeleteConfirmation(context, notifier));
-        break;
     }
   }
 

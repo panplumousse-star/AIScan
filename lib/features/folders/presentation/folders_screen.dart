@@ -1066,13 +1066,10 @@ class _FolderListItem extends StatelessWidget {
                     switch (value) {
                       case 'rename':
                         onRename();
-                        break;
                       case 'color':
                         onChangeColor();
-                        break;
                       case 'delete':
                         onDelete();
-                        break;
                     }
                   },
                   itemBuilder: (context) => [

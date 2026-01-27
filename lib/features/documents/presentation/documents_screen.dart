@@ -1131,29 +1131,25 @@ class _DocumentsScreenWidgetState extends ConsumerState<DocumentsScreen>
         // Keep 50% for quick resume, but free up memory for system
         final targetSize = (thumbnailCache.currentSizeBytes * 0.5).round();
         thumbnailCache.trimToSize(targetSize);
-        break;
 
       case AppLifecycleState.inactive:
         // App is transitioning or partially visible - light trim
         final targetSize = (thumbnailCache.currentSizeBytes * 0.75).round();
         thumbnailCache.trimToSize(targetSize);
-        break;
 
       case AppLifecycleState.resumed:
         // App is back in foreground - no action needed
         // Cache remains for fast thumbnail display
-        break;
+        break; // Keep break for empty case
 
       case AppLifecycleState.detached:
         // App is about to terminate - clear all cache
         thumbnailCache.clearCache();
-        break;
 
       case AppLifecycleState.hidden:
         // App is hidden but still running - treat like inactive
         final targetSize = (thumbnailCache.currentSizeBytes * 0.75).round();
         thumbnailCache.trimToSize(targetSize);
-        break;
     }
   }
 

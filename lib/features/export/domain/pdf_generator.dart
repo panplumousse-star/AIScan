@@ -845,16 +845,12 @@ pw.Widget _buildPageContent({
   switch (options.imageFit) {
     case PDFImageFit.fill:
       boxFit = pw.BoxFit.fill;
-      break;
     case PDFImageFit.contain:
       boxFit = pw.BoxFit.contain;
-      break;
     case PDFImageFit.cover:
       boxFit = pw.BoxFit.cover;
-      break;
     case PDFImageFit.original:
       boxFit = pw.BoxFit.scaleDown;
-      break;
   }
 
   return pw.Center(

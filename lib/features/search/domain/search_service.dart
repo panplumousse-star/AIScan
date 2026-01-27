@@ -838,22 +838,19 @@ class SearchService {
         // Add prefix operator to each word
         final words = escapedQuery.split(RegExp(r'\s+'));
         escapedQuery = words.map((w) => w.isEmpty ? w : '$w*').join(' ');
-        break;
 
       case SearchMatchMode.phrase:
         // Wrap in quotes for phrase matching
         escapedQuery = '"$escapedQuery"';
-        break;
 
       case SearchMatchMode.allWords:
         // Default FTS5 behavior is AND
-        break;
+        break; // Keep break for empty case
 
       case SearchMatchMode.anyWord:
         // Join words with OR
         final words = escapedQuery.split(RegExp(r'\s+'));
         escapedQuery = words.where((w) => w.isNotEmpty).join(' OR ');
-        break;
     }
 
     // Apply field filter if not searching all fields
@@ -1224,19 +1221,14 @@ class SearchService {
         case SearchSortBy.relevance:
           // Lower score is better in FTS5 (more negative = better match)
           comparison = a.score.compareTo(b.score);
-          break;
         case SearchSortBy.title:
           comparison = a.document.title.compareTo(b.document.title);
-          break;
         case SearchSortBy.createdAt:
           comparison = a.document.createdAt.compareTo(b.document.createdAt);
-          break;
         case SearchSortBy.updatedAt:
           comparison = a.document.updatedAt.compareTo(b.document.updatedAt);
-          break;
         case SearchSortBy.fileSize:
           comparison = a.document.fileSize.compareTo(b.document.fileSize);
-          break;
       }
       return options.sortDescending ? -comparison : comparison;
     });

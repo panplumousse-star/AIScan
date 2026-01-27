@@ -729,10 +729,8 @@ class DatabaseHelper {
     switch (_ftsVersion) {
       case 5:
         results = await _searchWithFts5(db, query);
-        break;
       case 4:
         results = await _searchWithFts4(db, query);
-        break;
       default:
         // FTS disabled (version 0) - use LIKE-based search
         results = await _searchWithLike(db, query);

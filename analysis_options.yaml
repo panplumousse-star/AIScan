@@ -19,8 +19,8 @@ linter:
     unnecessary_lambdas: false
     avoid_equals_and_hash_code_on_mutable_classes: false
 
-    # Code quality rules
-    avoid_print: true
+    # Code quality rules (avoid_print disabled - acceptable in tests/benchmarks)
+    avoid_print: false
     avoid_empty_else: true
     avoid_returning_null_for_void: true
     avoid_types_as_parameter_names: true
@@ -37,7 +37,6 @@ linter:
 analyzer:
   errors:
     # Treat these as errors
-    avoid_print: error
     missing_required_param: error
     missing_return: error
 

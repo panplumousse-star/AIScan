@@ -619,10 +619,8 @@ class _OcrResultsScreenWidgetState extends ConsumerState<OcrResultsScreen> {
     switch (action) {
       case 'rerun':
         unawaited(notifier.runOcr());
-        break;
       case 'options':
         _showOptionsSheet(context, state, notifier);
-        break;
       case 'save':
         if (state.ocrResult != null) {
           widget.onSaveRequested?.call(state.ocrResult!.trimmedText);
@@ -631,7 +629,6 @@ class _OcrResultsScreenWidgetState extends ConsumerState<OcrResultsScreen> {
                 content: Text(l10n?.ocrSaved ?? 'OCR text saved to document')),
           );
         }
-        break;
     }
   }
 

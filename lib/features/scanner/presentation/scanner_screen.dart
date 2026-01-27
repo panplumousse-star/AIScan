@@ -96,7 +96,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
       _permissionHandler = ScannerPermissionHandler(ref, context);
       _actionHandler = ScannerActionHandler(ref, context);
       _autoScanStarted = true;
-      _permissionHandler.autoStartScan();
+      unawaited(_permissionHandler.autoStartScan());
     });
   }
 

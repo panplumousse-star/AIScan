@@ -800,8 +800,8 @@ class _ShimmerLoadingState extends State<ShimmerLoading>
   void initState() {
     super.initState();
 
-    _controller = AnimationController(duration: widget.duration, vsync: this)
-      ..repeat();
+    _controller = AnimationController(duration: widget.duration, vsync: this);
+    unawaited(_controller.repeat());
   }
 
   @override
@@ -909,8 +909,8 @@ class _PulsingWidgetState extends State<PulsingWidget>
   void initState() {
     super.initState();
 
-    _controller = AnimationController(duration: widget.duration, vsync: this)
-      ..repeat(reverse: true);
+    _controller = AnimationController(duration: widget.duration, vsync: this);
+    unawaited(_controller.repeat(reverse: true));
 
     _animation = Tween<double>(
       begin: widget.minScale,

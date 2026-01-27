@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/exceptions/base_exception.dart';
 import '../../../core/storage/database_helper.dart';
 import 'folder_model.dart';
 
@@ -17,23 +18,9 @@ final folderServiceProvider = Provider<FolderService>((ref) {
 /// Exception thrown when folder operations fail.
 ///
 /// Contains the original error message and optional underlying exception.
-class FolderServiceException implements Exception {
+class FolderServiceException extends BaseException {
   /// Creates a [FolderServiceException] with the given [message].
-  const FolderServiceException(this.message, {this.cause});
-
-  /// Human-readable error message.
-  final String message;
-
-  /// The underlying exception that caused this error, if any.
-  final Object? cause;
-
-  @override
-  String toString() {
-    if (cause != null) {
-      return 'FolderServiceException: $message (caused by: $cause)';
-    }
-    return 'FolderServiceException: $message';
-  }
+  const FolderServiceException(super.message, {super.cause});
 }
 
 /// Statistics about a folder.

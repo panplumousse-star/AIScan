@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import '../../../core/exceptions/base_exception.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image/image.dart' as img;
@@ -17,23 +18,9 @@ final pdfGeneratorProvider = Provider<PDFGenerator>((ref) {
 /// Exception thrown when PDF generation operations fail.
 ///
 /// Contains the original error message and optional underlying exception.
-class PDFGeneratorException implements Exception {
+class PDFGeneratorException extends BaseException {
   /// Creates a [PDFGeneratorException] with the given [message].
-  const PDFGeneratorException(this.message, {this.cause});
-
-  /// Human-readable error message.
-  final String message;
-
-  /// The underlying exception that caused this error, if any.
-  final Object? cause;
-
-  @override
-  String toString() {
-    if (cause != null) {
-      return 'PDFGeneratorException: $message (caused by: $cause)';
-    }
-    return 'PDFGeneratorException: $message';
-  }
+  const PDFGeneratorException(super.message, {super.cause});
 }
 
 /// Result of a PDF generation operation.

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as path;
 import 'package:share_plus/share_plus.dart';
 
+import '../../../core/exceptions/base_exception.dart';
 import '../../../core/permissions/storage_permission_service.dart';
 import '../../../core/security/secure_file_deletion_service.dart';
 import '../../../core/storage/document_repository.dart';
@@ -70,23 +71,9 @@ enum SharePermissionResult {
 /// Exception thrown when document share operations fail.
 ///
 /// Contains the original error message and optional underlying exception.
-class DocumentShareException implements Exception {
+class DocumentShareException extends BaseException {
   /// Creates a [DocumentShareException] with the given [message].
-  const DocumentShareException(this.message, {this.cause});
-
-  /// Human-readable error message.
-  final String message;
-
-  /// The underlying exception that caused this error, if any.
-  final Object? cause;
-
-  @override
-  String toString() {
-    if (cause != null) {
-      return 'DocumentShareException: $message (caused by: $cause)';
-    }
-    return 'DocumentShareException: $message';
-  }
+  const DocumentShareException(super.message, {super.cause});
 }
 
 /// Result of a document share operation.

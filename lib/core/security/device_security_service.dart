@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jailbreak_root_detection/jailbreak_root_detection.dart';
 
+import '../exceptions/base_exception.dart';
+
 /// Riverpod provider for [DeviceSecurityService].
 ///
 /// Provides a singleton instance of the device security service for
@@ -117,23 +119,9 @@ class DeviceSecurityResult {
 /// Exception thrown when device security check operations fail.
 ///
 /// Contains the original error message and optional underlying exception.
-class DeviceSecurityException implements Exception {
+class DeviceSecurityException extends BaseException {
   /// Creates a [DeviceSecurityException] with the given [message].
-  const DeviceSecurityException(this.message, {this.cause});
-
-  /// Human-readable error message.
-  final String message;
-
-  /// The underlying exception that caused this error, if any.
-  final Object? cause;
-
-  @override
-  String toString() {
-    if (cause != null) {
-      return 'DeviceSecurityException: $message (caused by: $cause)';
-    }
-    return 'DeviceSecurityException: $message';
-  }
+  const DeviceSecurityException(super.message, {super.cause});
 }
 
 /// Service for detecting device security compromises.

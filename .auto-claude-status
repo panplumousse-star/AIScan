@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "077-batch-document-loading-in-searchservice-buildsearc",
+  "spec": "078-consolidate-duplicate-exception-classes-into-share",
   "state": "building",
   "subtasks": {
-    "completed": 2,
-    "total": 3,
+    "completed": 9,
+    "total": 12,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Verify Performance",
+    "current": "Verification and Cleanup",
     "id": null,
-    "total": 2
+    "total": 3
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 4,
-    "started_at": "2026-01-27T15:10:55.423608"
+    "number": 11,
+    "started_at": "2026-01-27T14:59:25.126079"
   },
-  "last_update": "2026-01-27T15:28:23.963668"
+  "last_update": "2026-01-27T15:18:01.472433"
 }

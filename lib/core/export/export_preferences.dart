@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../exceptions/base_exception.dart';
+
 /// Riverpod provider for [ExportPreferences].
 ///
 /// Provides a singleton instance of the export preferences service for
@@ -15,23 +17,9 @@ final exportPreferencesProvider = Provider<ExportPreferences>((ref) {
 /// Exception thrown when export preferences operations fail.
 ///
 /// Contains the original error message and optional underlying exception.
-class ExportPreferencesException implements Exception {
+class ExportPreferencesException extends BaseException {
   /// Creates an [ExportPreferencesException] with the given [message].
-  const ExportPreferencesException(this.message, {this.cause});
-
-  /// Human-readable error message.
-  final String message;
-
-  /// The underlying exception that caused this error, if any.
-  final Object? cause;
-
-  @override
-  String toString() {
-    if (cause != null) {
-      return 'ExportPreferencesException: $message (caused by: $cause)';
-    }
-    return 'ExportPreferencesException: $message';
-  }
+  const ExportPreferencesException(super.message, {super.cause});
 }
 
 /// Service for managing export preferences using SharedPreferences.

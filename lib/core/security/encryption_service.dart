@@ -7,6 +7,7 @@ import 'package:encrypt/encrypt.dart' as enc;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../exceptions/base_exception.dart';
 import 'secure_storage_service.dart';
 
 /// Riverpod provider for [EncryptionService].
@@ -22,46 +23,18 @@ final encryptionServiceProvider = Provider<EncryptionService>((ref) {
 /// Exception thrown when encryption/decryption operations fail.
 ///
 /// Contains the original error message and optional underlying exception.
-class EncryptionException implements Exception {
+class EncryptionException extends BaseException {
   /// Creates an [EncryptionException] with the given [message].
-  const EncryptionException(this.message, {this.cause});
-
-  /// Human-readable error message.
-  final String message;
-
-  /// The underlying exception that caused this error, if any.
-  final Object? cause;
-
-  @override
-  String toString() {
-    if (cause != null) {
-      return 'EncryptionException: $message (caused by: $cause)';
-    }
-    return 'EncryptionException: $message';
-  }
+  const EncryptionException(super.message, {super.cause});
 }
 
 /// Exception thrown when HMAC integrity verification fails.
 ///
 /// Indicates that encrypted data has been tampered with or is corrupted.
 /// Contains the original error message and optional underlying exception.
-class IntegrityException implements Exception {
+class IntegrityException extends BaseException {
   /// Creates an [IntegrityException] with the given [message].
-  const IntegrityException(this.message, {this.cause});
-
-  /// Human-readable error message.
-  final String message;
-
-  /// The underlying exception that caused this error, if any.
-  final Object? cause;
-
-  @override
-  String toString() {
-    if (cause != null) {
-      return 'IntegrityException: $message (caused by: $cause)';
-    }
-    return 'IntegrityException: $message';
-  }
+  const IntegrityException(super.message, {super.cause});
 }
 
 /// Performs constant-time comparison of two byte arrays.

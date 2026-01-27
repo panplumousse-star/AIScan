@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 
 import '../../features/documents/domain/document_model.dart';
 import '../../features/export/domain/pdf_generator.dart';
+import '../exceptions/base_exception.dart';
 import '../storage/document_repository.dart';
 import 'export_preferences.dart';
 
@@ -31,23 +32,9 @@ final documentExportServiceProvider = Provider<DocumentExportService>((ref) {
 /// Exception thrown when document export operations fail.
 ///
 /// Contains the original error message and optional underlying exception.
-class DocumentExportException implements Exception {
+class DocumentExportException extends BaseException {
   /// Creates a [DocumentExportException] with the given [message].
-  const DocumentExportException(this.message, {this.cause});
-
-  /// Human-readable error message.
-  final String message;
-
-  /// The underlying exception that caused this error, if any.
-  final Object? cause;
-
-  @override
-  String toString() {
-    if (cause != null) {
-      return 'DocumentExportException: $message (caused by: $cause)';
-    }
-    return 'DocumentExportException: $message';
-  }
+  const DocumentExportException(super.message, {super.cause});
 }
 
 /// Status of an export operation.

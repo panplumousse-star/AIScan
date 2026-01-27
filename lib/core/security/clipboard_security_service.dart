@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../exceptions/base_exception.dart';
 import 'secure_storage_service.dart';
 import 'sensitive_data_detector.dart';
 
@@ -25,23 +26,9 @@ final clipboardSecurityServiceProvider =
 /// Exception thrown when clipboard security operations fail.
 ///
 /// Contains the original error message and optional underlying exception.
-class ClipboardSecurityException implements Exception {
+class ClipboardSecurityException extends BaseException {
   /// Creates a [ClipboardSecurityException] with the given [message].
-  const ClipboardSecurityException(this.message, {this.cause});
-
-  /// Human-readable error message.
-  final String message;
-
-  /// The underlying exception that caused this error, if any.
-  final Object? cause;
-
-  @override
-  String toString() {
-    if (cause != null) {
-      return 'ClipboardSecurityException: $message (caused by: $cause)';
-    }
-    return 'ClipboardSecurityException: $message';
-  }
+  const ClipboardSecurityException(super.message, {super.cause});
 }
 
 /// Callback function for handling sensitive data warnings.

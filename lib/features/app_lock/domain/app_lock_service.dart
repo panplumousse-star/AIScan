@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/exceptions/base_exception.dart';
 import '../../../core/security/biometric_auth_service.dart';
 import '../../../core/security/secure_storage_service.dart';
 
@@ -36,23 +37,9 @@ final shouldShowLockScreenProvider =
 /// Exception thrown when app lock operations fail.
 ///
 /// Contains the original error message and optional underlying exception.
-class AppLockException implements Exception {
+class AppLockException extends BaseException {
   /// Creates an [AppLockException] with the given [message].
-  const AppLockException(this.message, {this.cause});
-
-  /// Human-readable error message.
-  final String message;
-
-  /// The underlying exception that caused this error, if any.
-  final Object? cause;
-
-  @override
-  String toString() {
-    if (cause != null) {
-      return 'AppLockException: $message (caused by: $cause)';
-    }
-    return 'AppLockException: $message';
-  }
+  const AppLockException(super.message, {super.cause});
 }
 
 /// Represents the timeout duration before re-authentication is required.

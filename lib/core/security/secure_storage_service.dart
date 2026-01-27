@@ -6,6 +6,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../exceptions/base_exception.dart';
+
 /// Riverpod provider for [SecureStorageService].
 ///
 /// Provides a singleton instance of the secure storage service for
@@ -17,23 +19,9 @@ final secureStorageServiceProvider = Provider<SecureStorageService>((ref) {
 /// Exception thrown when secure storage operations fail.
 ///
 /// Contains the original error message and optional underlying exception.
-class SecureStorageException implements Exception {
+class SecureStorageException extends BaseException {
   /// Creates a [SecureStorageException] with the given [message].
-  const SecureStorageException(this.message, {this.cause});
-
-  /// Human-readable error message.
-  final String message;
-
-  /// The underlying exception that caused this error, if any.
-  final Object? cause;
-
-  @override
-  String toString() {
-    if (cause != null) {
-      return 'SecureStorageException: $message (caused by: $cause)';
-    }
-    return 'SecureStorageException: $message';
-  }
+  const SecureStorageException(super.message, {super.cause});
 }
 
 /// Service for secure storage operations using platform keystore.

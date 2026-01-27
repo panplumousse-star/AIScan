@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math' as math;
 
+import '../../../core/exceptions/base_exception.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image/image.dart' as img;
@@ -17,23 +18,9 @@ final imageExporterProvider = Provider<ImageExporter>((ref) {
 /// Exception thrown when image export operations fail.
 ///
 /// Contains the original error message and optional underlying exception.
-class ImageExporterException implements Exception {
+class ImageExporterException extends BaseException {
   /// Creates an [ImageExporterException] with the given [message].
-  const ImageExporterException(this.message, {this.cause});
-
-  /// Human-readable error message.
-  final String message;
-
-  /// The underlying exception that caused this error, if any.
-  final Object? cause;
-
-  @override
-  String toString() {
-    if (cause != null) {
-      return 'ImageExporterException: $message (caused by: $cause)';
-    }
-    return 'ImageExporterException: $message';
-  }
+  const ImageExporterException(super.message, {super.cause});
 }
 
 /// Result of an image export operation.

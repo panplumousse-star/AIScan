@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:local_auth/local_auth.dart';
 
+import '../exceptions/base_exception.dart';
+
 /// Riverpod provider for [BiometricAuthService].
 ///
 /// Provides a singleton instance of the biometric authentication service for
@@ -79,23 +81,9 @@ enum BiometricAuthType {
 /// Exception thrown when biometric authentication operations fail.
 ///
 /// Contains the original error message and optional underlying exception.
-class BiometricAuthException implements Exception {
+class BiometricAuthException extends BaseException {
   /// Creates a [BiometricAuthException] with the given [message].
-  const BiometricAuthException(this.message, {this.cause});
-
-  /// Human-readable error message.
-  final String message;
-
-  /// The underlying exception that caused this error, if any.
-  final Object? cause;
-
-  @override
-  String toString() {
-    if (cause != null) {
-      return 'BiometricAuthException: $message (caused by: $cause)';
-    }
-    return 'BiometricAuthException: $message';
-  }
+  const BiometricAuthException(super.message, {super.cause});
 }
 
 /// Service for managing biometric authentication operations.

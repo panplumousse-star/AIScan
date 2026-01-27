@@ -6,6 +6,8 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 
+import '../../../core/exceptions/base_exception.dart';
+
 /// Riverpod provider for [OcrService].
 ///
 /// Provides a singleton instance of the OCR service for
@@ -17,23 +19,9 @@ final ocrServiceProvider = Provider<OcrService>((ref) {
 /// Exception thrown when OCR operations fail.
 ///
 /// Contains the original error message and optional underlying exception.
-class OcrException implements Exception {
+class OcrException extends BaseException {
   /// Creates an [OcrException] with the given [message].
-  const OcrException(this.message, {this.cause});
-
-  /// Human-readable error message.
-  final String message;
-
-  /// The underlying exception that caused this error, if any.
-  final Object? cause;
-
-  @override
-  String toString() {
-    if (cause != null) {
-      return 'OcrException: $message (caused by: $cause)';
-    }
-    return 'OcrException: $message';
-  }
+  const OcrException(super.message, {super.cause});
 }
 
 /// Result of an OCR text extraction operation.

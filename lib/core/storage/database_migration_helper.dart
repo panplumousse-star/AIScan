@@ -6,6 +6,7 @@ import 'package:sqflite/sqflite.dart' as sqflite;
 import 'package:sqflite_sqlcipher/sqflite.dart';
 import 'package:path/path.dart';
 
+import '../exceptions/base_exception.dart';
 import '../security/secure_storage_service.dart';
 import 'database_helper.dart';
 
@@ -23,23 +24,9 @@ final databaseMigrationHelperProvider =
 /// Exception thrown when database migration operations fail.
 ///
 /// Contains the original error message and optional underlying exception.
-class MigrationException implements Exception {
+class MigrationException extends BaseException {
   /// Creates a [MigrationException] with the given [message].
-  const MigrationException(this.message, {this.cause});
-
-  /// Human-readable error message.
-  final String message;
-
-  /// The underlying exception that caused this error, if any.
-  final Object? cause;
-
-  @override
-  String toString() {
-    if (cause != null) {
-      return 'MigrationException: $message (caused by: $cause)';
-    }
-    return 'MigrationException: $message';
-  }
+  const MigrationException(super.message, {super.cause});
 }
 
 /// Result of migration operation containing status and statistics.

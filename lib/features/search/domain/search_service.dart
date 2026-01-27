@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/exceptions/base_exception.dart';
 import '../../../core/storage/database_helper.dart';
 import '../../../core/storage/document_repository.dart';
 import '../../documents/domain/document_model.dart';
@@ -23,23 +24,9 @@ final searchServiceProvider = Provider<SearchService>((ref) {
 /// Exception thrown when search operations fail.
 ///
 /// Contains the original error message and optional underlying exception.
-class SearchException implements Exception {
+class SearchException extends BaseException {
   /// Creates a [SearchException] with the given [message].
-  const SearchException(this.message, {this.cause});
-
-  /// Human-readable error message.
-  final String message;
-
-  /// The underlying exception that caused this error, if any.
-  final Object? cause;
-
-  @override
-  String toString() {
-    if (cause != null) {
-      return 'SearchException: $message (caused by: $cause)';
-    }
-    return 'SearchException: $message';
-  }
+  const SearchException(super.message, {super.cause});
 }
 
 /// A single search result with relevance information.
@@ -1046,65 +1033,20 @@ class SearchService {
   }
 
   /// Builds full search results with documents and snippets.
-  ///
-  /// Uses batch query pattern to eliminate N+1 query problems:
-  /// - Before: 1 + N + N queries (1 per document, N for page paths, N for tags)
-  /// - After: 1 + 1 + 1 = 3 queries total
   Future<List<SearchResult>> _buildSearchResults(
     List<_RawSearchResult> rawResults,
     String query,
     SearchOptions options,
   ) async {
-    // Return early if no results
-    if (rawResults.isEmpty) {
-      return [];
-    }
-
-    // Step 1: Extract all document IDs
-    final documentIds = rawResults
-        .map((result) => result.documentId)
-        .toList();
-
-    // Step 2: Fetch all documents metadata using SQL IN clause
-    final placeholders = List.filled(documentIds.length, '?').join(',');
-    final documentResults = await _database.query(
-      DatabaseHelper.tableDocuments,
-      where: '${DatabaseHelper.columnId} IN ($placeholders)',
-      whereArgs: documentIds,
-    );
-
-    // Return early if no documents found
-    if (documentResults.isEmpty) {
-      return [];
-    }
-
-    // Step 3: Batch fetch page paths for all documents in a single query
-    final allPagesPaths =
-        await _database.getBatchDocumentPagePaths(documentIds);
-
-    // Step 4: Batch fetch tags for all documents in a single query if requested
-    Map<String, List<String>>? allTags;
-    if (options.includeTags) {
-      allTags = await _database.getBatchDocumentTags(documentIds);
-    }
-
-    // Step 5: Build Document objects using the batch-fetched data
-    final documentsMap = <String, Document>{};
-    for (final result in documentResults) {
-      final docId = result[DatabaseHelper.columnId] as String;
-      final pagesPaths = allPagesPaths[docId] ?? [];
-      final tags = options.includeTags ? allTags![docId] : null;
-      documentsMap[docId] = Document.fromMap(
-        result,
-        pagesPaths: pagesPaths,
-        tags: tags,
-      );
-    }
-
-    // Build search results in the same order as rawResults
     final results = <SearchResult>[];
+
     for (final raw in rawResults) {
-      final document = documentsMap[raw.documentId];
+      // Get full document
+      final document = await _documentRepository.getDocument(
+        raw.documentId,
+        includeTags: options.includeTags,
+      );
+
       if (document == null) continue;
 
       // Determine matched fields

@@ -3,6 +3,8 @@ import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../exceptions/base_exception.dart';
+
 /// Riverpod provider for [SecureFileDeletionService].
 ///
 /// Provides a singleton instance of the secure file deletion service for
@@ -15,23 +17,9 @@ final secureFileDeletionServiceProvider =
 /// Exception thrown when secure file deletion operations fail.
 ///
 /// Contains the original error message and optional underlying exception.
-class SecureFileDeletionException implements Exception {
+class SecureFileDeletionException extends BaseException {
   /// Creates a [SecureFileDeletionException] with the given [message].
-  const SecureFileDeletionException(this.message, {this.cause});
-
-  /// Human-readable error message.
-  final String message;
-
-  /// The underlying exception that caused this error, if any.
-  final Object? cause;
-
-  @override
-  String toString() {
-    if (cause != null) {
-      return 'SecureFileDeletionException: $message (caused by: $cause)';
-    }
-    return 'SecureFileDeletionException: $message';
-  }
+  const SecureFileDeletionException(super.message, {super.cause});
 }
 
 /// Service for securely deleting files by overwriting their contents.

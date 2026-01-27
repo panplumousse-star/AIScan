@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../features/documents/domain/document_model.dart';
+import '../exceptions/base_exception.dart';
 import '../performance/cache/thumbnail_cache_service.dart';
 import '../security/encryption_service.dart';
 import '../security/secure_file_deletion_service.dart';
@@ -36,23 +37,9 @@ final documentRepositoryProvider = Provider<DocumentRepository>((ref) {
 /// Exception thrown when document repository operations fail.
 ///
 /// Contains the original error message and optional underlying exception.
-class DocumentRepositoryException implements Exception {
+class DocumentRepositoryException extends BaseException {
   /// Creates a [DocumentRepositoryException] with the given [message].
-  const DocumentRepositoryException(this.message, {this.cause});
-
-  /// Human-readable error message.
-  final String message;
-
-  /// The underlying exception that caused this error, if any.
-  final Object? cause;
-
-  @override
-  String toString() {
-    if (cause != null) {
-      return 'DocumentRepositoryException: $message (caused by: $cause)';
-    }
-    return 'DocumentRepositoryException: $message';
-  }
+  const DocumentRepositoryException(super.message, {super.cause});
 }
 
 /// Repository for managing documents with encrypted storage.

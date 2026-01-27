@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image/image.dart' as img;
 
+import '../../../core/exceptions/base_exception.dart';
+
 /// Riverpod provider for [ImageProcessor].
 ///
 /// Provides a singleton instance of the image processor for
@@ -16,23 +18,9 @@ final imageProcessorProvider = Provider<ImageProcessor>((ref) {
 /// Exception thrown when image processing operations fail.
 ///
 /// Contains the original error message and optional underlying exception.
-class ImageProcessorException implements Exception {
+class ImageProcessorException extends BaseException {
   /// Creates an [ImageProcessorException] with the given [message].
-  const ImageProcessorException(this.message, {this.cause});
-
-  /// Human-readable error message.
-  final String message;
-
-  /// The underlying exception that caused this error, if any.
-  final Object? cause;
-
-  @override
-  String toString() {
-    if (cause != null) {
-      return 'ImageProcessorException: $message (caused by: $cause)';
-    }
-    return 'ImageProcessorException: $message';
-  }
+  const ImageProcessorException(super.message, {super.cause});
 }
 
 /// Result of an image processing operation.

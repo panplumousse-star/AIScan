@@ -7,6 +7,7 @@ import 'package:image/image.dart' as img;
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as path;
 
+import '../../../core/exceptions/base_exception.dart';
 import '../../../core/storage/document_repository.dart';
 import '../../documents/domain/document_model.dart';
 
@@ -32,23 +33,9 @@ final scannerStorageServiceProvider = Provider<ScannerStorageService>((ref) {
 /// Exception thrown when scanning operations fail.
 ///
 /// Contains the original error message and optional underlying exception.
-class ScannerException implements Exception {
+class ScannerException extends BaseException {
   /// Creates a [ScannerException] with the given [message].
-  const ScannerException(this.message, {this.cause});
-
-  /// Human-readable error message.
-  final String message;
-
-  /// The underlying exception that caused this error, if any.
-  final Object? cause;
-
-  @override
-  String toString() {
-    if (cause != null) {
-      return 'ScannerException: $message (caused by: $cause)';
-    }
-    return 'ScannerException: $message';
-  }
+  const ScannerException(super.message, {super.cause});
 }
 
 /// Result of a document scanning operation.

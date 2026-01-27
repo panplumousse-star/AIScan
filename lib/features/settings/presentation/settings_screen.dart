@@ -487,7 +487,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                // Apparence (Theme) - Large Card
+                                // 1. Apparence (Theme) - Large Card (2x1)
                                 BentoAnimatedEntry(
                                   delay: const Duration(milliseconds: 100),
                                   child: _buildThemeCard(state.themeMode,
@@ -496,9 +496,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                                 const SizedBox(height: 16),
 
-                                // Language Settings Row
+                                // 2. App Language (1x1) & Security (1x1) Row
                                 SizedBox(
-                                  height: 180,
+                                  height: 196,
                                   child: Row(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.stretch,
@@ -512,28 +512,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                         ),
                                       ),
                                       const SizedBox(width: 16),
-                                      // OCR Language Card
-                                      Expanded(
-                                        child: BentoAnimatedEntry(
-                                          delay:
-                                              const Duration(milliseconds: 200),
-                                          child: _buildOcrLanguageCard(isDark),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-
-                                const SizedBox(height: 16),
-
-                                // Security & Info Row
-                                SizedBox(
-                                  height:
-                                      196, // Increased from 180 to prevent overflow
-                                  child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    children: [
                                       // Security Card
                                       Expanded(
                                         child: BentoAnimatedEntry(
@@ -550,24 +528,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                           ),
                                         ),
                                       ),
-                                      const SizedBox(width: 16),
-                                      // About Card
-                                      Expanded(
-                                        child: BentoAnimatedEntry(
-                                          delay:
-                                              const Duration(milliseconds: 300),
-                                          child: _buildAboutCard(isDark),
-                                        ),
-                                      ),
                                     ],
                                   ),
                                 ),
 
                                 const SizedBox(height: 16),
 
-                                // Clipboard Security Card
+                                // 3. Clipboard Security - Large Card (2x1)
                                 BentoAnimatedEntry(
-                                  delay: const Duration(milliseconds: 400),
+                                  delay: const Duration(milliseconds: 250),
                                   child: _buildClipboardSecurityCard(
                                     clipboardSecurityEnabled:
                                         state.clipboardSecurityEnabled,
@@ -587,9 +556,39 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                                 const SizedBox(height: 16),
 
-                                // Storage Statistics Card
+                                // 4. OCR Language (1x1) & About (1x1) Row
+                                SizedBox(
+                                  height: 196,
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      // OCR Language Card
+                                      Expanded(
+                                        child: BentoAnimatedEntry(
+                                          delay:
+                                              const Duration(milliseconds: 300),
+                                          child: _buildOcrLanguageCard(isDark),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      // About Card
+                                      Expanded(
+                                        child: BentoAnimatedEntry(
+                                          delay:
+                                              const Duration(milliseconds: 350),
+                                          child: _buildAboutCard(isDark),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                const SizedBox(height: 16),
+
+                                // 5. Storage Statistics - Large Card (2x1)
                                 BentoAnimatedEntry(
-                                  delay: const Duration(milliseconds: 500),
+                                  delay: const Duration(milliseconds: 400),
                                   child: StorageStatsCard(
                                     stats: state.storageStats,
                                     isDark: isDark,

@@ -297,7 +297,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                   Expanded(
                     child: ShaderMask(
                       shaderCallback: (rect) {
-                        return LinearGradient(
+                        return const LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
@@ -305,7 +305,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                             Colors.white,
                             Colors.transparent
                           ],
-                          stops: const [0.0, 0.9, 1.0],
+                          stops: [0.0, 0.9, 1.0],
                         ).createShader(rect);
                       },
                       blendMode: BlendMode.dstIn,
@@ -698,9 +698,9 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                   ),
                 )
               else if (_showUnlockMascot)
-                BouncingWidget(
+                const BouncingWidget(
                   child: BentoMascot(
-                    key: const ValueKey('unlock_mascot'),
+                    key: ValueKey('unlock_mascot'),
                     height: 180,
                     variant: BentoMascotVariant.unlock,
                   ),
@@ -773,7 +773,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                   children: [
                     Text(
                       l10n?.scanDocument ?? 'Scanner un\ndocument',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontFamily: 'Outfit',
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -808,7 +808,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                             ),
                             child: Text(
                               l10n?.scan ?? 'Scanner',
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontFamily: 'Outfit',
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
@@ -1008,7 +1008,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                       ),
                       child: Text(
                         '$count',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontFamily: 'Outfit',
                           fontSize: 10,
                           fontWeight: FontWeight.w800,

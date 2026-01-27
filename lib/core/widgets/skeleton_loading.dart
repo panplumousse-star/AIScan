@@ -525,7 +525,7 @@ class BentoHomeScreenSkeleton extends StatelessWidget {
                 ),
 
                 // Footer placeholder
-                ShimmerEffect(child: const SkeletonFooter()),
+                const ShimmerEffect(child: SkeletonFooter()),
               ],
             ),
           ),

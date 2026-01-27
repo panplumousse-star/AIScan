@@ -199,7 +199,7 @@ class _LockScreenWidgetState extends ConsumerState<LockScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     // Mascot / Logo Section
-                    Hero(
+                    const Hero(
                       tag: 'app_mascot',
                       child: BentoMascot(
                         height: 160,
@@ -294,7 +294,7 @@ class _LockScreenWidgetState extends ConsumerState<LockScreen> {
                       Text(
                         state.error!,
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontFamily: 'Outfit',
                           fontSize: 12,
                           color: Colors.redAccent,
@@ -382,7 +382,7 @@ class _UnlockButtonState extends State<_UnlockButton>
               const SizedBox(width: 8),
               Text(
                 AppLocalizations.of(context)?.unlock ?? 'Unlock',
-                style: TextStyle(
+                style: const TextStyle(
                   fontFamily: 'Outfit',
                   color: Colors.white,
                   fontWeight: FontWeight.bold,

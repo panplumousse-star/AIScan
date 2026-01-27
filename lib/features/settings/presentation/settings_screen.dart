@@ -690,7 +690,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
           ],
         ),
-        child: Center(
+        child: const Center(
           child: BentoMascot(
             height: 110,
             variant: BentoMascotVariant.settings,
@@ -844,12 +844,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         builder: (context) => AlertDialog.adaptive(
           title: Text(
             l10n?.enableLockTitle ?? 'Activer le verrouillage ?',
-            style: TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.w700),
+            style: const TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.w700),
           ),
           content: Text(
             l10n?.enableLockMessage ??
                 'Souhaitez-vous securiser l\'acces a vos documents avec votre empreinte digitale ?',
-            style: TextStyle(
+            style: const TextStyle(
               fontFamily: 'Outfit',
             ),
           ),
@@ -858,16 +858,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               onPressed: () => Navigator.pop(context, false),
               child: Text(
                 l10n?.cancel ?? 'Annuler',
-                style: TextStyle(fontFamily: 'Outfit', color: Colors.grey),
+                style: const TextStyle(fontFamily: 'Outfit', color: Colors.grey),
               ),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
               child: Text(
                 l10n?.enable ?? 'Activer',
-                style: TextStyle(
+                style: const TextStyle(
                   fontFamily: 'Outfit',
-                  color: const Color(0xFF6366F1),
+                  color: Color(0xFF6366F1),
                   fontWeight: FontWeight.w700,
                 ),
               ),

@@ -564,7 +564,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
 
         // If no OCR text, run OCR first
         if (textToShare == null || textToShare.isEmpty) {
-          if (!mounted) return;
+          if (!context.mounted) return;
 
           // Show loading indicator
           ScaffoldMessenger.of(context).showSnackBar(
@@ -590,7 +590,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
           final imageBytes = await notifier.loadImageBytes();
 
           if (imageBytes == null) {
-            if (mounted) {
+            if (context.mounted) {
               ScaffoldMessenger.of(context).hideCurrentSnackBar();
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -605,13 +605,13 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
           final ocrResult = await ocrService.extractTextFromBytes(imageBytes);
           textToShare = ocrResult.text;
 
-          if (mounted) {
+          if (context.mounted) {
             ScaffoldMessenger.of(context).hideCurrentSnackBar();
           }
 
           // Check if OCR found any text
           if (textToShare.isEmpty) {
-            if (mounted) {
+            if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                     content: Text(
@@ -631,7 +631,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
 
         // Final check before sharing (textToShare is guaranteed non-null here)
         if (textToShare.isEmpty) {
-          if (mounted) {
+          if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                   content: Text(AppLocalizations.of(context)?.noTextToShare ??
@@ -658,11 +658,11 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
       // Clean up temp files
       await shareService.cleanupTempFiles(result.tempFilePaths);
     } on Object catch (e) {
-      if (mounted) {
+      if (context.mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Erreur de partage: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur de partage: $e')),
+        );
       }
     }
   }
@@ -856,7 +856,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
 
     if (confirmed == true) {
       final success = await notifier.deleteDocument();
-      if (success && mounted) {
+      if (success && context.mounted) {
         widget.onDelete?.call();
         Navigator.of(context).pop();
       }
@@ -873,7 +873,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
     final repository = ref.read(documentRepositoryProvider);
     final folders = await folderService.getAllFolders();
 
-    if (!mounted) return;
+    if (!context.mounted) return;
 
     final selectedFolderId = await showMoveToFolderDialog(
       context,
@@ -905,7 +905,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
 
     try {
       await repository.moveToFolder(state.document!.id, selectedFolderId);
-      if (mounted) {
+      if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -921,7 +921,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
             .loadDocument(state.document!.id));
       }
     } on Object catch (e) {
-      if (mounted) {
+      if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to move document: $e')),
         );

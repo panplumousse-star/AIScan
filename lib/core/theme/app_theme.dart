@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'app_text_styles.dart';
+
 // ============================================================================
 // Theme Mode Provider
 // ============================================================================
@@ -323,13 +325,7 @@ abstract final class AppTheme {
           systemNavigationBarColor: colorScheme.surface,
           systemNavigationBarIconBrightness: Brightness.dark,
         ),
-        titleTextStyle: TextStyle(
-          fontFamily: 'Outfit',
-          color: colorScheme.onSurface,
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          letterSpacing: -0.5,
-        ),
+        titleTextStyle: AppTextStyles.appBarTitle(colorScheme),
         iconTheme: IconThemeData(
           color: colorScheme.onSurfaceVariant,
           size: 24,
@@ -361,12 +357,7 @@ abstract final class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: AppBorderRadius.button,
           ),
-          textStyle: const TextStyle(
-            fontFamily: 'Outfit',
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.5,
-          ),
+          textStyle: AppTextStyles.buttonPrimary,
         ),
       ),
 
@@ -380,12 +371,7 @@ abstract final class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: AppBorderRadius.button,
           ),
-          textStyle: const TextStyle(
-            fontFamily: 'Outfit',
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.5,
-          ),
+          textStyle: AppTextStyles.buttonPrimary,
         ),
       ),
 
@@ -400,11 +386,7 @@ abstract final class AppTheme {
             borderRadius: AppBorderRadius.button,
           ),
           side: BorderSide(color: colorScheme.outline),
-          textStyle: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            letterSpacing: 0.1,
-          ),
+          textStyle: AppTextStyles.buttonSecondary,
         ),
       ),
 
@@ -418,11 +400,7 @@ abstract final class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: AppBorderRadius.button,
           ),
-          textStyle: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            letterSpacing: 0.1,
-          ),
+          textStyle: AppTextStyles.buttonSecondary,
         ),
       ),
 
@@ -476,10 +454,7 @@ abstract final class AppTheme {
           horizontal: AppSpacing.md,
           vertical: 14,
         ),
-        hintStyle: TextStyle(
-          fontFamily: 'Outfit',
-          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-        ),
+        hintStyle: AppTextStyles.hintStyle(colorScheme),
         prefixIconColor: colorScheme.onSurfaceVariant,
         suffixIconColor: colorScheme.onSurfaceVariant,
       ),
@@ -490,12 +465,7 @@ abstract final class AppTheme {
         selectedColor: colorScheme.secondaryContainer,
         disabledColor:
             colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-        labelStyle: TextStyle(
-          fontFamily: 'Outfit',
-          color: colorScheme.onSurfaceVariant,
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-        ),
+        labelStyle: AppTextStyles.chipLabel(colorScheme),
         shape: RoundedRectangleBorder(
           borderRadius: AppBorderRadius.chip,
         ),
@@ -511,17 +481,8 @@ abstract final class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: AppBorderRadius.card,
         ),
-        titleTextStyle: TextStyle(
-          fontFamily: 'Outfit',
-          color: colorScheme.onSurface,
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
-        subtitleTextStyle: TextStyle(
-          fontFamily: 'Outfit',
-          color: colorScheme.onSurfaceVariant,
-          fontSize: 14,
-        ),
+        titleTextStyle: AppTextStyles.listTileTitle(colorScheme),
+        subtitleTextStyle: AppTextStyles.listTileSubtitle(colorScheme),
         iconColor: colorScheme.onSurfaceVariant,
       ),
 
@@ -540,18 +501,8 @@ abstract final class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: AppBorderRadius.dialog,
         ),
-        titleTextStyle: TextStyle(
-          fontFamily: 'Outfit',
-          color: colorScheme.onSurface,
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          letterSpacing: -0.5,
-        ),
-        contentTextStyle: TextStyle(
-          fontFamily: 'Outfit',
-          color: colorScheme.onSurfaceVariant,
-          fontSize: 14,
-        ),
+        titleTextStyle: AppTextStyles.dialogTitle(colorScheme),
+        contentTextStyle: AppTextStyles.dialogContent(colorScheme),
       ),
 
       // Bottom Sheet Theme
@@ -571,11 +522,7 @@ abstract final class AppTheme {
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: colorScheme.inverseSurface,
-        contentTextStyle: TextStyle(
-          fontFamily: 'Outfit',
-          color: colorScheme.onInverseSurface,
-          fontSize: 14,
-        ),
+        contentTextStyle: AppTextStyles.snackBarContent(colorScheme),
         actionTextColor: colorScheme.inversePrimary,
         shape: RoundedRectangleBorder(
           borderRadius: AppBorderRadius.card,
@@ -596,12 +543,7 @@ abstract final class AppTheme {
         thumbColor: colorScheme.primary,
         overlayColor: colorScheme.primary.withValues(alpha: 0.12),
         valueIndicatorColor: colorScheme.primaryContainer,
-        valueIndicatorTextStyle: TextStyle(
-          fontFamily: 'Outfit',
-          color: colorScheme.onPrimaryContainer,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
+        valueIndicatorTextStyle: AppTextStyles.sliderValueIndicator(colorScheme),
       ),
 
       // Switch Theme
@@ -651,13 +593,9 @@ abstract final class AppTheme {
         indicatorColor: colorScheme.secondaryContainer,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final isSelected = states.contains(WidgetState.selected);
-          return TextStyle(
-            fontFamily: 'Outfit',
-            fontSize: 12,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            color: isSelected
-                ? colorScheme.onSecondaryContainer
-                : colorScheme.onSurfaceVariant,
+          return AppTextStyles.navigationBarLabel(
+            colorScheme,
+            isSelected: isSelected,
           );
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
@@ -679,11 +617,7 @@ abstract final class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: AppBorderRadius.card,
         ),
-        textStyle: TextStyle(
-          fontFamily: 'Outfit',
-          color: colorScheme.onSurface,
-          fontSize: 14,
-        ),
+        textStyle: AppTextStyles.popupMenuItem(colorScheme),
       ),
 
       // Tooltip Theme
@@ -693,22 +627,14 @@ abstract final class AppTheme {
           color: colorScheme.inverseSurface,
           borderRadius: AppBorderRadius.chip,
         ),
-        textStyle: TextStyle(
-          fontFamily: 'Outfit',
-          color: colorScheme.onInverseSurface,
-          fontSize: 12,
-        ),
+        textStyle: AppTextStyles.tooltip(colorScheme),
       ),
 
       // Badge Theme
       badgeTheme: BadgeThemeData(
         backgroundColor: colorScheme.error,
         textColor: colorScheme.onError,
-        textStyle: const TextStyle(
-          fontFamily: 'Outfit',
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-        ),
+        textStyle: AppTextStyles.badge,
       ),
 
       // Segmented Button Theme
@@ -773,13 +699,7 @@ abstract final class AppTheme {
           systemNavigationBarColor: colorScheme.surface,
           systemNavigationBarIconBrightness: Brightness.light,
         ),
-        titleTextStyle: TextStyle(
-          fontFamily: 'Outfit',
-          color: colorScheme.onSurface,
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          letterSpacing: -0.5,
-        ),
+        titleTextStyle: AppTextStyles.appBarTitle(colorScheme),
         iconTheme: IconThemeData(
           color: colorScheme.onSurfaceVariant,
           size: 24,
@@ -811,12 +731,7 @@ abstract final class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: AppBorderRadius.button,
           ),
-          textStyle: const TextStyle(
-            fontFamily: 'Outfit',
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.5,
-          ),
+          textStyle: AppTextStyles.buttonPrimary,
         ),
       ),
 
@@ -830,12 +745,7 @@ abstract final class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: AppBorderRadius.button,
           ),
-          textStyle: const TextStyle(
-            fontFamily: 'Outfit',
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.5,
-          ),
+          textStyle: AppTextStyles.buttonPrimary,
         ),
       ),
 
@@ -850,11 +760,7 @@ abstract final class AppTheme {
             borderRadius: AppBorderRadius.button,
           ),
           side: BorderSide(color: colorScheme.outline),
-          textStyle: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            letterSpacing: 0.1,
-          ),
+          textStyle: AppTextStyles.buttonSecondary,
         ),
       ),
 
@@ -868,11 +774,7 @@ abstract final class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: AppBorderRadius.button,
           ),
-          textStyle: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            letterSpacing: 0.1,
-          ),
+          textStyle: AppTextStyles.buttonSecondary,
         ),
       ),
 
@@ -926,10 +828,7 @@ abstract final class AppTheme {
           horizontal: AppSpacing.md,
           vertical: 14,
         ),
-        hintStyle: TextStyle(
-          fontFamily: 'Outfit',
-          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-        ),
+        hintStyle: AppTextStyles.hintStyle(colorScheme),
         prefixIconColor: colorScheme.onSurfaceVariant,
         suffixIconColor: colorScheme.onSurfaceVariant,
       ),
@@ -940,12 +839,7 @@ abstract final class AppTheme {
         selectedColor: colorScheme.secondaryContainer,
         disabledColor:
             colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-        labelStyle: TextStyle(
-          fontFamily: 'Outfit',
-          color: colorScheme.onSurfaceVariant,
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-        ),
+        labelStyle: AppTextStyles.chipLabel(colorScheme),
         shape: RoundedRectangleBorder(
           borderRadius: AppBorderRadius.chip,
         ),
@@ -961,17 +855,8 @@ abstract final class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: AppBorderRadius.card,
         ),
-        titleTextStyle: TextStyle(
-          fontFamily: 'Outfit',
-          color: colorScheme.onSurface,
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-        ),
-        subtitleTextStyle: TextStyle(
-          fontFamily: 'Outfit',
-          color: colorScheme.onSurfaceVariant,
-          fontSize: 14,
-        ),
+        titleTextStyle: AppTextStyles.listTileTitle(colorScheme),
+        subtitleTextStyle: AppTextStyles.listTileSubtitle(colorScheme),
         iconColor: colorScheme.onSurfaceVariant,
       ),
 
@@ -990,17 +875,8 @@ abstract final class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: AppBorderRadius.dialog,
         ),
-        titleTextStyle: TextStyle(
-          fontFamily: 'Outfit',
-          color: colorScheme.onSurface,
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-        ),
-        contentTextStyle: TextStyle(
-          fontFamily: 'Outfit',
-          color: colorScheme.onSurfaceVariant,
-          fontSize: 14,
-        ),
+        titleTextStyle: AppTextStyles.dialogTitle(colorScheme),
+        contentTextStyle: AppTextStyles.dialogContent(colorScheme),
       ),
 
       // Bottom Sheet Theme
@@ -1020,11 +896,7 @@ abstract final class AppTheme {
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: colorScheme.inverseSurface,
-        contentTextStyle: TextStyle(
-          fontFamily: 'Outfit',
-          color: colorScheme.onInverseSurface,
-          fontSize: 14,
-        ),
+        contentTextStyle: AppTextStyles.snackBarContent(colorScheme),
         actionTextColor: colorScheme.inversePrimary,
         shape: RoundedRectangleBorder(
           borderRadius: AppBorderRadius.card,
@@ -1045,12 +917,7 @@ abstract final class AppTheme {
         thumbColor: colorScheme.primary,
         overlayColor: colorScheme.primary.withValues(alpha: 0.12),
         valueIndicatorColor: colorScheme.primaryContainer,
-        valueIndicatorTextStyle: TextStyle(
-          fontFamily: 'Outfit',
-          color: colorScheme.onPrimaryContainer,
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-        ),
+        valueIndicatorTextStyle: AppTextStyles.sliderValueIndicator(colorScheme),
       ),
 
       // Switch Theme
@@ -1100,13 +967,9 @@ abstract final class AppTheme {
         indicatorColor: colorScheme.secondaryContainer,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final isSelected = states.contains(WidgetState.selected);
-          return TextStyle(
-            fontFamily: 'Outfit',
-            fontSize: 12,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            color: isSelected
-                ? colorScheme.onSecondaryContainer
-                : colorScheme.onSurfaceVariant,
+          return AppTextStyles.navigationBarLabel(
+            colorScheme,
+            isSelected: isSelected,
           );
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
@@ -1128,11 +991,7 @@ abstract final class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: AppBorderRadius.card,
         ),
-        textStyle: TextStyle(
-          fontFamily: 'Outfit',
-          color: colorScheme.onSurface,
-          fontSize: 14,
-        ),
+        textStyle: AppTextStyles.popupMenuItem(colorScheme),
       ),
 
       // Tooltip Theme
@@ -1142,22 +1001,14 @@ abstract final class AppTheme {
           color: colorScheme.inverseSurface,
           borderRadius: AppBorderRadius.chip,
         ),
-        textStyle: TextStyle(
-          fontFamily: 'Outfit',
-          color: colorScheme.onInverseSurface,
-          fontSize: 12,
-        ),
+        textStyle: AppTextStyles.tooltip(colorScheme),
       ),
 
       // Badge Theme
       badgeTheme: BadgeThemeData(
         backgroundColor: colorScheme.error,
         textColor: colorScheme.onError,
-        textStyle: const TextStyle(
-          fontFamily: 'Outfit',
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-        ),
+        textStyle: AppTextStyles.badge,
       ),
 
       // Segmented Button Theme

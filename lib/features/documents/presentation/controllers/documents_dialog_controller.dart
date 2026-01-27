@@ -135,13 +135,13 @@ class DocumentsDialogController {
     DocumentsScreenState state,
     DocumentsScreenNotifier notifier,
   ) {
-    filter_sheet.showFilterSheet(
+    unawaited(filter_sheet.showFilterSheet(
       context: context,
       currentSortBy: state.sortBy,
       currentFilter: state.filter,
       onSortByChanged: notifier.setSortBy,
       onFilterChanged: notifier.setFilter,
-    );
+    ));
   }
 
   /// Shows dialog to move selected documents to a folder.

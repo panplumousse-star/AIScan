@@ -220,7 +220,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
 
   void _navigateToDocuments(BuildContext context) {
     // Replace scanner screen with documents screen
-    Navigator.of(context).pushReplacement(
+    unawaited(Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (navContext) => DocumentsScreen(
           onScanPressed: () {
@@ -233,7 +233,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
           },
         ),
       ),
-    );
+    ));
   }
 
   Future<bool?> _showDiscardDialog(BuildContext context) {

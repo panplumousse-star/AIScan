@@ -619,7 +619,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
   void setFilter(DocumentsFilter filter) {
     if (filter == state.filter) return;
     state = state.copyWith(filter: filter);
-    loadDocuments();
+    unawaited(loadDocuments());
   }
 
   /// Sets the search query.

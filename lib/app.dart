@@ -235,12 +235,12 @@ class _LockScreenWrapperState extends ConsumerState<_LockScreenWrapper> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           // Push lock screen on top of main app
-          Navigator.of(context).push(
+          unawaited(Navigator.of(context).push(
             MaterialPageRoute(
               builder: (_) => const LockScreen(),
               fullscreenDialog: true,
             ),
-          );
+          ));
         }
       });
     }

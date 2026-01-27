@@ -476,7 +476,7 @@ class _FoldersScreenWidgetState extends ConsumerState<FoldersScreen> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(foldersScreenProvider.notifier).initialize();
+      unawaited(ref.read(foldersScreenProvider.notifier).initialize());
     });
   }
 

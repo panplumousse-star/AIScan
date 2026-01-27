@@ -535,14 +535,14 @@ class _SearchScreenWidgetState extends ConsumerState<SearchScreen> {
     SearchScreenState state,
     SearchScreenNotifier notifier,
   ) {
-    showModalBottomSheet<void>(
+    unawaited(showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       builder: (context) => _FiltersSheet(
         options: state.options,
         onOptionsChanged: notifier.setOptions,
       ),
-    );
+    ));
   }
 }
 

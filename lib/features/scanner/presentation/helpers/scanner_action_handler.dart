@@ -228,7 +228,7 @@ class ScannerActionHandler {
   /// Navigate to documents screen (helper method).
   void _navigateToDocuments(BuildContext context) {
     // Replace scanner screen with documents screen
-    Navigator.of(context).pushReplacement(
+    unawaited(Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (navContext) => DocumentsScreen(
           onScanPressed: () {
@@ -241,6 +241,6 @@ class ScannerActionHandler {
           },
         ),
       ),
-    );
+    ));
   }
 }

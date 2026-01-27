@@ -1,4 +1,5 @@
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -993,9 +994,9 @@ class AccessiblePageRoute<T> extends MaterialPageRoute<T> {
   TickerFuture didPush() {
     final result = super.didPush();
     if (announceOnPush && routeAnnouncement != null) {
-      result.then((_) {
+      unawaited(result.then((_) {
         SemanticsService.announce(routeAnnouncement!, TextDirection.ltr);
-      });
+      }));
     }
     return result;
   }

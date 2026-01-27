@@ -10,6 +10,15 @@ linter:
     prefer_relative_imports: true
     avoid_redundant_argument_values: true
 
+    # Disabled strict style rules (controversial, not in official Dart style guide)
+    always_specify_types: false
+    prefer_final_parameters: false
+    diagnostic_describe_all_properties: false
+    sort_constructors_first: false
+    sort_unnamed_constructors_first: false
+    unnecessary_lambdas: false
+    avoid_equals_and_hash_code_on_mutable_classes: false
+
     # Code quality rules
     avoid_print: true
     avoid_empty_else: true

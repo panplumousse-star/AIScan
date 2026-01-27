@@ -356,7 +356,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(settingsScreenProvider.notifier).initialize();
+      unawaited(ref.read(settingsScreenProvider.notifier).initialize());
     });
   }
 

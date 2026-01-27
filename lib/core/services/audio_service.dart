@@ -38,6 +38,6 @@ class AudioService {
   }
 
   void dispose() {
-    _player.dispose();
+    unawaited(_player.dispose());
   }
 }

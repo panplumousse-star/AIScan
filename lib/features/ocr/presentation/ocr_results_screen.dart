@@ -795,7 +795,7 @@ class _OcrResultsScreenWidgetState extends ConsumerState<OcrResultsScreen> {
     ThemeData theme,
   ) {
     final l10n = AppLocalizations.of(context);
-    showModalBottomSheet<void>(
+    unawaited(showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       builder: (context) => Padding(
@@ -847,7 +847,7 @@ class _OcrResultsScreenWidgetState extends ConsumerState<OcrResultsScreen> {
           ],
         ),
       ),
-    );
+    ));
   }
 
   int _countOccurrences(String text, String pattern) {
@@ -938,7 +938,7 @@ class _OcrResultsScreenWidgetState extends ConsumerState<OcrResultsScreen> {
     OcrResultsScreenState state,
     OcrResultsScreenNotifier notifier,
   ) {
-    showOcrOptionsSheet(
+    unawaited(showOcrOptionsSheet(
       context,
       currentOptions: state.options,
       onOptionsChanged: (options) {
@@ -949,6 +949,6 @@ class _OcrResultsScreenWidgetState extends ConsumerState<OcrResultsScreen> {
         Navigator.pop(context);
         notifier.runOcr();
       },
-    );
+    ));
   }
 }

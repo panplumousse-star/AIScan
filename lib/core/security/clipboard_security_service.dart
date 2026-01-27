@@ -228,7 +228,7 @@ class ClipboardSecurityService {
         // Schedule auto-clear
         autoClearDuration = await getAutoClearTimeout();
         _autoClearTimer = Timer(autoClearDuration, () {
-          _clearClipboard();
+          unawaited(_clearClipboard());
         });
         willAutoClear = true;
       }

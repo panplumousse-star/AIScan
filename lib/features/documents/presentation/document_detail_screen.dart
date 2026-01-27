@@ -937,7 +937,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
     final document = state.document;
     if (document == null) return;
 
-    showModalBottomSheet(
+    unawaited(showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (context) => DraggableScrollableSheet(
@@ -951,6 +951,6 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
           theme: theme,
         ),
       ),
-    );
+    ));
   }
 }

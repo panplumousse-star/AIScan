@@ -1,4 +1,4 @@
-
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -157,11 +157,11 @@ class _DeviceSecurityWrapperState
   /// and explains the security implications in a calm, educational tone.
   /// Users can dismiss the dialog and continue using the app.
   void _showSecurityWarningDialog() {
-    showDialog<void>(
+    unawaited(showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (context) => const _SecurityWarningDialog(),
-    );
+    ));
   }
 
   @override

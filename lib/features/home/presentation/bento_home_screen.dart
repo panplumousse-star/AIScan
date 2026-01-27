@@ -868,11 +868,14 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                     MaterialPageRoute(builder: (_) => const DocumentsScreen()),
                   ).then((_) {
                     // Refresh document counts when returning from documents
-                    // This ensures deletions are reflected on home screen
-                    if (mounted) {
-                      ref.invalidate(totalDocumentCountProvider);
-                      ref.invalidate(monthlyScanCountProvider);
-                    }
+                    // Use postFrameCallback to ensure widget tree is stable
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) {
+                        ref.invalidate(totalDocumentCountProvider);
+                        ref.invalidate(monthlyScanCountProvider);
+                        setState(() {}); // Force rebuild
+                      }
+                    });
                   });
                 },
           child: Container(

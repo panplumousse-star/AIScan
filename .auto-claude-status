@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "033-add-integrity-verification-hmac-for-encrypted-file",
+  "spec": "070-extract-shared-interactive-widgets-to-core",
   "state": "building",
   "subtasks": {
-    "completed": 17,
-    "total": 19,
+    "completed": 5,
+    "total": 6,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Integration and Verification",
+    "current": "Verify Extraction Complete",
     "id": null,
-    "total": 3
+    "total": 6
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 19,
-    "started_at": "2026-01-26T17:25:53.947125"
+    "number": 1,
+    "started_at": "2026-01-27T14:12:36.365137"
   },
-  "last_update": "2026-01-26T18:07:35.776791"
+  "last_update": "2026-01-27T14:12:36.419670"
 }

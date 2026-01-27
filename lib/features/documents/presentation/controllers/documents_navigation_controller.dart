@@ -7,6 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/storage/document_repository.dart';
 import '../../../../core/services/audio_service.dart';
 import '../../../../core/export/document_export_service.dart';
+import '../../../home/presentation/bento_home_screen.dart'
+    show totalDocumentCountProvider, monthlyScanCountProvider;
 import '../../../scanner/presentation/scanner_screen.dart';
 import '../../../ocr/presentation/ocr_results_screen.dart';
 import '../../../enhancement/presentation/enhancement_screen.dart';
@@ -65,6 +67,9 @@ class DocumentsNavigationController {
             // Refresh the documents list
             unawaited(
                 ref.read(documentsScreenProvider.notifier).loadDocuments());
+            // Refresh home screen document count
+            ref.invalidate(totalDocumentCountProvider);
+            ref.invalidate(monthlyScanCountProvider);
           },
           onExport: (doc, imageBytes) async {
             final exportService = ref.read(documentExportServiceProvider);

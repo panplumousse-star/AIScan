@@ -28,9 +28,9 @@ final appLockServiceProvider = Provider<AppLockService>((ref) {
 /// the user needs to authenticate before accessing the app.
 /// Uses autoDispose to re-check when the app comes to foreground.
 final shouldShowLockScreenProvider =
-    FutureProvider.autoDispose<bool>((ref) async {
+    FutureProvider.autoDispose<bool>((ref) {
   final appLockService = ref.read(appLockServiceProvider);
-  return await appLockService.shouldShowLockScreen();
+  return appLockService.shouldShowLockScreen();
 });
 
 /// Exception thrown when app lock operations fail.
@@ -383,16 +383,16 @@ class AppLockService {
   /// Use this to determine whether to show the app lock enable toggle
   /// in settings, or to show a message explaining why the feature is
   /// not available.
-  Future<bool> isBiometricAvailable() async {
-    return await _biometricAuth.isBiometricAvailable();
+  Future<bool> isBiometricAvailable() {
+    return _biometricAuth.isBiometricAvailable();
   }
 
   /// Returns the biometric capability status of the device.
   ///
   /// This provides detailed information about why biometrics might
   /// not be available (no hardware, not enrolled, etc.).
-  Future<BiometricCapability> getBiometricCapability() async {
-    return await _biometricAuth.checkBiometricCapability();
+  Future<BiometricCapability> getBiometricCapability() {
+    return _biometricAuth.checkBiometricCapability();
   }
 
   /// Authenticates the user using biometric authentication.
@@ -405,8 +405,8 @@ class AppLockService {
   ///
   /// Throws [BiometricAuthException] if authentication cannot be performed
   /// due to system errors.
-  Future<bool> authenticateUser() async {
-    return await _biometricAuth.authenticate(
+  Future<bool> authenticateUser() {
+    return _biometricAuth.authenticate(
       reason: 'Verify your identity to access Scanaï',
     );
   }

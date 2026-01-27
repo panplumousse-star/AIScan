@@ -1497,8 +1497,8 @@ class DocumentRepository {
   /// Checks if the encryption service is ready.
   ///
   /// Returns true if the encryption key is initialized.
-  Future<bool> isReady() async {
-    return await _encryption.isReady();
+  Future<bool> isReady() {
+    return _encryption.isReady();
   }
 
   /// Initializes the repository.

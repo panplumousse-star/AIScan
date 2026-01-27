@@ -139,8 +139,8 @@ class ScannedPage {
   }
 
   /// Checks if the scanned image file exists.
-  Future<bool> exists() async {
-    return await File(imagePath).exists();
+  Future<bool> exists() {
+    return File(imagePath).exists();
   }
 
   /// Gets the file size in bytes.

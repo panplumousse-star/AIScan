@@ -645,7 +645,7 @@ class _OcrResultsScreenWidgetState extends ConsumerState<OcrResultsScreen> {
         state.ocrResult!.trimmedText,
         onSensitiveDataDetected: (detection) async {
           if (!context.mounted) return false;
-          return await _showSensitiveDataWarning(context, detection);
+          return _showSensitiveDataWarning(context, detection);
         },
       );
 
@@ -702,7 +702,7 @@ class _OcrResultsScreenWidgetState extends ConsumerState<OcrResultsScreen> {
         state.selectedText!,
         onSensitiveDataDetected: (detection) async {
           if (!context.mounted) return false;
-          return await _showSensitiveDataWarning(context, detection);
+          return _showSensitiveDataWarning(context, detection);
         },
       );
 

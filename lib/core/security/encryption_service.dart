@@ -453,8 +453,8 @@ class EncryptionService {
   /// Checks if the encryption service is ready for use.
   ///
   /// Returns `true` if the encryption key is available.
-  Future<bool> isReady() async {
-    return await _secureStorage.hasEncryptionKey();
+  Future<bool> isReady() {
+    return _secureStorage.hasEncryptionKey();
   }
 
   /// Clears the cached encryption key.

@@ -129,7 +129,7 @@ class DatabaseHelper {
     final encryptionKey = await _secureStorage.getOrCreateEncryptionKey();
     debugPrint(
         'DatabaseHelper: Opening database with key length: ${encryptionKey.length}');
-    return await openDatabase(
+    return openDatabase(
       path,
       version: _databaseVersion,
       onCreate: _onCreate,
@@ -784,7 +784,7 @@ class DatabaseHelper {
   /// Inserts a row into the specified table.
   Future<int> insert(String table, Map<String, dynamic> values) async {
     final db = await database;
-    return await db.insert(table, values);
+    return db.insert(table, values);
   }
 
   /// Queries rows from the specified table.
@@ -801,7 +801,7 @@ class DatabaseHelper {
     int? offset,
   }) async {
     final db = await database;
-    return await db.query(
+    return db.query(
       table,
       distinct: distinct,
       columns: columns,
@@ -823,7 +823,7 @@ class DatabaseHelper {
     List<dynamic>? whereArgs,
   }) async {
     final db = await database;
-    return await db.update(table, values, where: where, whereArgs: whereArgs);
+    return db.update(table, values, where: where, whereArgs: whereArgs);
   }
 
   /// Deletes rows from the specified table.
@@ -833,7 +833,7 @@ class DatabaseHelper {
     List<dynamic>? whereArgs,
   }) async {
     final db = await database;
-    return await db.delete(table, where: where, whereArgs: whereArgs);
+    return db.delete(table, where: where, whereArgs: whereArgs);
   }
 
   /// Gets a single row by ID from the specified table.
@@ -865,13 +865,13 @@ class DatabaseHelper {
     List<dynamic>? arguments,
   ]) async {
     final db = await database;
-    return await db.rawQuery(sql, arguments);
+    return db.rawQuery(sql, arguments);
   }
 
   /// Executes operations within a transaction.
   Future<T> transaction<T>(Future<T> Function(Transaction txn) action) async {
     final db = await database;
-    return await db.transaction(action);
+    return db.transaction(action);
   }
 
   /// Initializes the database (call this at app startup).
@@ -901,7 +901,7 @@ class DatabaseHelper {
   /// Gets all tags from the database.
   Future<List<Map<String, dynamic>>> getAllTags({String? orderBy}) async {
     final db = await database;
-    return await db.query(
+    return db.query(
       tableTags,
       orderBy: orderBy ?? '$columnName ASC',
     );
@@ -910,7 +910,7 @@ class DatabaseHelper {
   /// Gets all folders from the database.
   Future<List<Map<String, dynamic>>> getAllFolders({String? orderBy}) async {
     final db = await database;
-    return await db.query(
+    return db.query(
       tableFolders,
       orderBy: orderBy ?? '$columnName ASC',
     );
@@ -923,7 +923,7 @@ class DatabaseHelper {
   /// Gets all pages for a document, ordered by page number.
   Future<List<Map<String, dynamic>>> getDocumentPages(String documentId) async {
     final db = await database;
-    return await db.query(
+    return db.query(
       tableDocumentPages,
       where: '$columnDocumentId = ?',
       whereArgs: [documentId],
@@ -1017,7 +1017,7 @@ class DatabaseHelper {
     required String filePath,
   }) async {
     final db = await database;
-    return await db.insert(tableDocumentPages, {
+    return db.insert(tableDocumentPages, {
       columnDocumentId: documentId,
       columnPageNumber: pageNumber,
       columnFilePath: filePath,
@@ -1044,7 +1044,7 @@ class DatabaseHelper {
   /// Deletes all pages for a document.
   Future<int> deleteDocumentPages(String documentId) async {
     final db = await database;
-    return await db.delete(
+    return db.delete(
       tableDocumentPages,
       where: '$columnDocumentId = ?',
       whereArgs: [documentId],
@@ -1058,7 +1058,7 @@ class DatabaseHelper {
     required String newFilePath,
   }) async {
     final db = await database;
-    return await db.update(
+    return db.update(
       tableDocumentPages,
       {columnFilePath: newFilePath},
       where: '$columnDocumentId = ? AND $columnPageNumber = ?',
@@ -1149,7 +1149,7 @@ class DatabaseHelper {
     required int resultCount,
   }) async {
     final db = await database;
-    return await db.insert(tableSearchHistory, {
+    return db.insert(tableSearchHistory, {
       columnQuery: query,
       columnTimestamp: timestamp,
       columnResultCount: resultCount,
@@ -1162,7 +1162,7 @@ class DatabaseHelper {
     String? orderBy,
   }) async {
     final db = await database;
-    return await db.query(
+    return db.query(
       tableSearchHistory,
       orderBy: orderBy ?? '$columnTimestamp DESC',
       limit: limit,
@@ -1172,7 +1172,7 @@ class DatabaseHelper {
   /// Deletes a specific search history entry by ID.
   Future<int> deleteSearchHistory(int id) async {
     final db = await database;
-    return await db.delete(
+    return db.delete(
       tableSearchHistory,
       where: '$columnId = ?',
       whereArgs: [id],
@@ -1182,6 +1182,6 @@ class DatabaseHelper {
   /// Deletes all search history entries.
   Future<int> clearSearchHistory() async {
     final db = await database;
-    return await db.delete(tableSearchHistory);
+    return db.delete(tableSearchHistory);
   }
 }

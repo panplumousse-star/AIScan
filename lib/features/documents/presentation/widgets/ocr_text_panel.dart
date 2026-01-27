@@ -235,7 +235,7 @@ class _OcrTextPanelState extends ConsumerState<OcrTextPanel> {
         widget.ocrText,
         onSensitiveDataDetected: (detection) async {
           if (!context.mounted) return false;
-          return await _showSensitiveDataWarning(context, detection);
+          return _showSensitiveDataWarning(context, detection);
         },
       );
 
@@ -282,7 +282,7 @@ class _OcrTextPanelState extends ConsumerState<OcrTextPanel> {
         selectedText,
         onSensitiveDataDetected: (detection) async {
           if (!context.mounted) return false;
-          return await _showSensitiveDataWarning(context, detection);
+          return _showSensitiveDataWarning(context, detection);
         },
       );
 

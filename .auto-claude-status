@@ -1,15 +1,15 @@
 {
   "active": true,
-  "spec": "076-memoize-filtered-documents-folders-getters-in-docu",
+  "spec": "077-batch-document-loading-in-searchservice-buildsearc",
   "state": "building",
   "subtasks": {
-    "completed": 5,
-    "total": 6,
+    "completed": 2,
+    "total": 3,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Test and Verify",
+    "current": "Verify Performance",
     "id": null,
     "total": 2
   },
@@ -18,8 +18,8 @@
     "max": 1
   },
   "session": {
-    "number": 7,
-    "started_at": "2026-01-27T14:45:33.117228"
+    "number": 4,
+    "started_at": "2026-01-27T15:10:55.423608"
   },
-  "last_update": "2026-01-27T14:59:56.003548"
+  "last_update": "2026-01-27T15:28:23.963668"
 }

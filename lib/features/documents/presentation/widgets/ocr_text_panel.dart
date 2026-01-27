@@ -65,8 +65,8 @@ class _OcrTextPanelState extends ConsumerState<OcrTextPanel> {
   String? _currentSelectedText;
 
   /// Handles selection changes, triggering haptic feedback only when selection starts.
-  void _onSelectionChanged(dynamic selectedContent) {
-    final selectedText = selectedContent?.plainText as String?;
+  void _onSelectionChanged(Object? selectedContent) {
+    final selectedText = (selectedContent as dynamic)?.plainText as String?;
     final hasSelection = selectedText != null && selectedText.isNotEmpty;
 
     // Store selected text for later use

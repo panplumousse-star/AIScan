@@ -97,13 +97,6 @@ void main() async {
   );
 }
 
-/// Provider that holds the device security check result from app initialization.
-///
-/// This result is computed once during app startup and cached for the session.
-/// The app shows a warning dialog if the device is compromised.
-final deviceSecurityResultProvider =
-    Provider<DeviceSecurityResult?>((ref) => null);
-
 /// Wrapper widget that shows security warning dialog if device is compromised.
 ///
 /// This widget wraps the main app and shows an informative (not alarming)

@@ -92,7 +92,7 @@ class LockScreenNotifier extends StateNotifier<LockScreenState> {
       // Handle unexpected errors
       state = state.copyWith(
         isAuthenticating: false,
-        error: 'An unexpected error occurred: ${e.toString()}',
+        error: 'An unexpected error occurred: $e',
       );
       return false;
     }

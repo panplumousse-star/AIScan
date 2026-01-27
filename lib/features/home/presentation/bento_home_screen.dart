@@ -16,7 +16,6 @@ import '../../../core/widgets/bento_card.dart';
 import '../../../core/widgets/bento_background.dart';
 import '../../../core/widgets/bento_interactive_wrapper.dart';
 import '../../../core/widgets/bouncing_widget.dart';
-import '../../../core/widgets/scanai_loader.dart';
 import '../../documents/presentation/documents_screen.dart';
 import '../../scanner/presentation/scanner_screen.dart';
 import '../../settings/presentation/settings_screen.dart';
@@ -362,9 +361,8 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                                         .when(
                                           data: (count) => _buildDocumentsCard(
                                               context, count),
-                                          loading: () => _buildDocumentsCard(
-                                              context, 0,
-                                              isLoading: true),
+                                          loading: () =>
+                                              _buildDocumentsCard(context, 0),
                                           error: (_, __) =>
                                               _buildDocumentsCard(context, 0),
                                         ),
@@ -829,20 +827,16 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
     );
   }
 
-  Widget _buildDocumentsCard(BuildContext context, int count,
-      {bool isLoading = false}) {
+  Widget _buildDocumentsCard(BuildContext context, int count) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isEmpty = count == 0 && !isLoading;
+    final isEmpty = count == 0;
     final l10n = AppLocalizations.of(context);
 
     // Generate semantic label based on state
     String semanticLabel;
     String? semanticHint;
 
-    if (isLoading) {
-      semanticLabel = A11yLabels.loadingDocuments;
-      semanticHint = null;
-    } else if (isEmpty) {
+    if (isEmpty) {
       semanticLabel = 'Documents, no documents available';
       semanticHint = 'Scan a document to get started';
     } else {
@@ -978,21 +972,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                   ),
                 ),
 
-                if (isLoading)
-                  Positioned.fill(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? Colors.black45
-                            : AppColors.bentoOrangePastel
-                                .withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(32),
-                      ),
-                      child: const ScanaiLoader(size: 32),
-                    ),
-                  ),
-
-                if (count > 0 && !isLoading)
+                if (count > 0)
                   Positioned(
                     top: 8,
                     right: 8,

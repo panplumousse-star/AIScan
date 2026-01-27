@@ -617,14 +617,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         unawaited(HapticFeedback.lightImpact());
       },
       child: SizedBox(
-        height: 140, // Match mascot card height
+        height: 100,
         child: Align(
           alignment: Alignment.bottomCenter,
           child: SizedBox(
-            height: 85,
+            height: 65,
             child: BentoSpeechBubble(
               tailDirection: BubbleTailDirection.right,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -633,7 +633,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     l10n?.settingsSpeechBubbleLine1 ?? 'On peaufine',
                     style: TextStyle(
                       fontFamily: 'Outfit',
-                      fontSize: 18,
+                      fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: isDark
                           ? const Color(0xFFF1F5F9)
@@ -646,7 +646,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     l10n?.settingsSpeechBubbleLine2 ?? 'notre application',
                     style: TextStyle(
                       fontFamily: 'Outfit',
-                      fontSize: 14,
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: isDark
                           ? const Color(0xFFF1F5F9)
@@ -670,7 +670,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         unawaited(HapticFeedback.mediumImpact());
       },
       child: Container(
-        height: 140,
+        height: 100,
         decoration: BoxDecoration(
           color: isDark
               ? const Color(0xFF000000).withValues(alpha: 0.6)
@@ -692,7 +692,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
         child: const Center(
           child: BentoMascot(
-            height: 110,
+            height: 80,
             variant: BentoMascotVariant.settings,
           ),
         ),

@@ -8,12 +8,12 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:image/image.dart' as img;
 
+import 'package:aiscan/core/performance/cache/thumbnail_cache_service.dart';
 import 'package:aiscan/core/security/encryption_service.dart';
 import 'package:aiscan/core/security/secure_file_deletion_service.dart';
 import 'package:aiscan/core/security/secure_storage_service.dart';
 import 'package:aiscan/core/storage/database_helper.dart';
 import 'package:aiscan/core/storage/document_repository.dart';
-import 'package:aiscan/core/utils/performance_utils.dart';
 import 'package:aiscan/features/documents/domain/document_model.dart';
 
 import 'encryption_verification_test.mocks.dart';

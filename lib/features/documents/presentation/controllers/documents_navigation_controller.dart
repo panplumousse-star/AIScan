@@ -63,7 +63,8 @@ class DocumentsNavigationController {
         builder: (navContext) => DocumentDetailScreen(
           document: document,
           onDelete: () {
-            Navigator.of(navContext).pop();
+            // Note: Navigator.pop() is called by document_detail_screen.dart
+            // after this callback, so we don't pop here
             // Refresh the documents list
             unawaited(
                 ref.read(documentsScreenProvider.notifier).loadDocuments());

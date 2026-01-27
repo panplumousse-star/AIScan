@@ -6,6 +6,7 @@ import 'package:path/path.dart' as path;
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/permissions/storage_permission_service.dart';
+import '../../../core/security/secure_file_deletion_service.dart';
 import '../../../core/storage/document_repository.dart';
 import '../../documents/domain/document_model.dart';
 import '../../export/domain/pdf_generator.dart';
@@ -15,16 +16,19 @@ import '../../export/domain/pdf_generator.dart';
 /// Provides a singleton instance of the document share service for
 /// dependency injection throughout the application.
 /// Depends on [StoragePermissionService] for permission checks,
-/// [DocumentRepository] for document decryption, and
-/// [PDFGenerator] for PDF generation on-demand.
+/// [DocumentRepository] for document decryption,
+/// [PDFGenerator] for PDF generation on-demand, and
+/// [SecureFileDeletionService] for secure cleanup of temporary files.
 final documentShareServiceProvider = Provider<DocumentShareService>((ref) {
   final permissionService = ref.read(storagePermissionServiceProvider);
   final documentRepository = ref.read(documentRepositoryProvider);
   final pdfGenerator = ref.read(pdfGeneratorProvider);
+  final secureFileDeletion = ref.read(secureFileDeletionServiceProvider);
   return DocumentShareService(
     permissionService: permissionService,
     documentRepository: documentRepository,
     pdfGenerator: pdfGenerator,
+    secureFileDeletion: secureFileDeletion,
   );
 });
 
@@ -112,13 +116,13 @@ class ShareResult {
 /// - Storage permission checking and handling
 /// - Document decryption for sharing
 /// - Native share sheet integration via share_plus
-/// - Cleanup of temporary decrypted files
+/// - Secure cleanup of temporary decrypted files
 ///
 /// ## Security Architecture
 /// Documents are stored encrypted on disk. This service:
 /// 1. Checks storage permission before any share operation
 /// 2. Decrypts documents to temporary files for sharing
-/// 3. Cleans up temporary files after sharing completes
+/// 3. Securely cleans up temporary files after sharing completes
 ///
 /// ## Usage
 /// ```dart
@@ -149,9 +153,11 @@ class DocumentShareService {
     required StoragePermissionService permissionService,
     required DocumentRepository documentRepository,
     required PDFGenerator pdfGenerator,
+    required SecureFileDeletionService secureFileDeletion,
   })  : _permissionService = permissionService,
         _documentRepository = documentRepository,
-        _pdfGenerator = pdfGenerator;
+        _pdfGenerator = pdfGenerator,
+        _secureFileDeletion = secureFileDeletion;
 
   /// The storage permission service for permission checks.
   final StoragePermissionService _permissionService;
@@ -161,6 +167,9 @@ class DocumentShareService {
 
   /// The PDF generator for creating PDFs on-demand.
   final PDFGenerator _pdfGenerator;
+
+  /// The secure file deletion service for cleaning up temporary files.
+  final SecureFileDeletionService _secureFileDeletion;
 
   /// MIME type for PDF documents.
   static const String _pdfMimeType = 'application/pdf';
@@ -424,7 +433,7 @@ class DocumentShareService {
         sharedCount: documents.length,
         tempFilePaths: tempFilePaths,
       );
-    } on Object catch (e) {
+    } catch (e) {
       // Clean up any temp files created before the error
       await cleanupTempFiles(tempFilePaths);
 
@@ -482,7 +491,7 @@ class DocumentShareService {
           subject: subject ?? fileName,
         ),
       );
-    } on Object catch (e) {
+    } catch (e) {
       if (e is DocumentShareException) {
         rethrow;
       }
@@ -522,7 +531,7 @@ class DocumentShareService {
           subject: subject,
         ),
       );
-    } on Object catch (e) {
+    } catch (e) {
       throw DocumentShareException(
         'Failed to share text',
         cause: e,
@@ -537,7 +546,10 @@ class DocumentShareService {
   /// Cleans up temporary decrypted files after sharing.
   ///
   /// This method should always be called after a successful share operation
-  /// to remove any unencrypted temporary files from disk.
+  /// to securely remove any unencrypted temporary files from disk.
+  ///
+  /// Files are overwritten with zeros before deletion to prevent forensic
+  /// recovery of sensitive document data.
   ///
   /// Parameters:
   /// - [filePaths]: List of temporary file paths to delete
@@ -556,11 +568,8 @@ class DocumentShareService {
   Future<void> cleanupTempFiles(List<String> filePaths) async {
     for (final filePath in filePaths) {
       try {
-        final file = File(filePath);
-        if (await file.exists()) {
-          await file.delete();
-        }
-      } on Object catch (_) {
+        await _secureFileDeletion.secureDeleteFile(filePath);
+      } catch (_) {
         // Ignore cleanup errors - not critical
       }
     }
@@ -573,7 +582,7 @@ class DocumentShareService {
   Future<void> cleanupAllTempFiles() async {
     try {
       await _documentRepository.cleanupTempFiles();
-    } on Object catch (_) {
+    } catch (_) {
       // Ignore cleanup errors
     }
   }
@@ -635,7 +644,7 @@ class DocumentShareService {
       await pdfFile.writeAsBytes(pdfResult.bytes);
 
       return pdfPath;
-    } on Object catch (e) {
+    } catch (e) {
       throw DocumentShareException(
         'Failed to generate PDF: ${document.title}',
         cause: e,

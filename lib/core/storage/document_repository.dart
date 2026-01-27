@@ -9,6 +9,7 @@ import 'package:uuid/uuid.dart';
 import '../../features/documents/domain/document_model.dart';
 import '../performance/cache/thumbnail_cache_service.dart';
 import '../security/encryption_service.dart';
+import '../security/secure_file_deletion_service.dart';
 import 'database_helper.dart';
 
 /// Riverpod provider for [DocumentRepository].
@@ -16,16 +17,19 @@ import 'database_helper.dart';
 /// Provides a singleton instance of the document repository for
 /// dependency injection throughout the application.
 /// Depends on [EncryptionService] for file encryption,
-/// [DatabaseHelper] for metadata storage, and [ThumbnailCacheService]
-/// for in-memory thumbnail caching.
+/// [DatabaseHelper] for metadata storage, [ThumbnailCacheService]
+/// for in-memory thumbnail caching, and [SecureFileDeletionService]
+/// for secure deletion of temporary decrypted files.
 final documentRepositoryProvider = Provider<DocumentRepository>((ref) {
   final encryption = ref.read(encryptionServiceProvider);
   final database = ref.read(databaseHelperProvider);
   final thumbnailCache = ref.read(thumbnailCacheProvider);
+  final secureFileDeletion = ref.read(secureFileDeletionServiceProvider);
   return DocumentRepository(
     encryptionService: encryption,
     databaseHelper: database,
     thumbnailCacheService: thumbnailCache,
+    secureFileDeletionService: secureFileDeletion,
   );
 });
 
@@ -128,10 +132,12 @@ class DocumentRepository {
     required EncryptionService encryptionService,
     required DatabaseHelper databaseHelper,
     required ThumbnailCacheService thumbnailCacheService,
+    required SecureFileDeletionService secureFileDeletionService,
     Uuid? uuid,
   })  : _encryption = encryptionService,
         _database = databaseHelper,
         _thumbnailCache = thumbnailCacheService,
+        _secureFileDeletion = secureFileDeletionService,
         _uuid = uuid ?? const Uuid();
 
   /// The encryption service for file operations.
@@ -142,6 +148,9 @@ class DocumentRepository {
 
   /// The thumbnail cache service for in-memory caching.
   final ThumbnailCacheService _thumbnailCache;
+
+  /// The secure file deletion service for temporary file cleanup.
+  final SecureFileDeletionService _secureFileDeletion;
 
   /// UUID generator for document IDs.
   final Uuid _uuid;
@@ -301,6 +310,7 @@ class DocumentRepository {
         originalFileName: originalFileName,
         fileSize: totalFileSize,
         mimeType: 'image/png',
+        ocrStatus: OcrStatus.pending,
         createdAt: now,
         updatedAt: now,
         folderId: folderId,
@@ -317,7 +327,7 @@ class DocumentRepository {
       await _database.insertDocumentPages(id, encryptedPagePaths);
 
       return document;
-    } on Object catch (e) {
+    } catch (e) {
       // Clean up any partially created files on failure
       await _cleanupPartialCreate(id);
 
@@ -358,7 +368,7 @@ class DocumentRepository {
           await entity.delete();
         }
       }
-    } on Object catch (_) {
+    } catch (_) {
       // Ignore cleanup errors
     }
   }
@@ -397,7 +407,7 @@ class DocumentRepository {
       }
 
       return Document.fromMap(result, pagesPaths: pagesPaths, tags: tags);
-    } on Object catch (e) {
+    } catch (e) {
       if (e is DocumentRepositoryException) {
         rethrow;
       }
@@ -469,7 +479,7 @@ class DocumentRepository {
       }
 
       return documents;
-    } on Object catch (e) {
+    } catch (e) {
       throw DocumentRepositoryException(
         'Failed to get all documents',
         cause: e,
@@ -536,7 +546,7 @@ class DocumentRepository {
       }
 
       return documents;
-    } on Object catch (e) {
+    } catch (e) {
       throw DocumentRepositoryException(
         'Failed to get documents in folder: $folderId',
         cause: e,
@@ -594,7 +604,7 @@ class DocumentRepository {
       }
 
       return documents;
-    } on Object catch (e) {
+    } catch (e) {
       throw DocumentRepositoryException(
         'Failed to get favorite documents',
         cause: e,
@@ -608,7 +618,7 @@ class DocumentRepository {
   Future<int> getDocumentCount() async {
     try {
       return await _database.count(DatabaseHelper.tableDocuments);
-    } on Object catch (e) {
+    } catch (e) {
       throw DocumentRepositoryException(
         'Failed to get document count',
         cause: e,
@@ -653,7 +663,7 @@ class DocumentRepository {
       await _encryption.decryptFile(encryptedPath, decryptedPath);
 
       return decryptedPath;
-    } on Object catch (e) {
+    } catch (e) {
       if (e is DocumentRepositoryException) {
         rethrow;
       }
@@ -678,8 +688,7 @@ class DocumentRepository {
       final timestamp = DateTime.now().millisecondsSinceEpoch;
 
       // Decrypt pages in parallel for performance
-      final decryptionTasks =
-          List.generate(document.pagesPaths.length, (i) async {
+      final decryptionTasks = List.generate(document.pagesPaths.length, (i) async {
         final encryptedPath = document.pagesPaths[i];
         final encryptedFile = File(encryptedPath);
         if (!await encryptedFile.exists()) {
@@ -699,7 +708,7 @@ class DocumentRepository {
       final decryptedPaths = await Future.wait(decryptionTasks);
 
       return decryptedPaths;
-    } on Object catch (e) {
+    } catch (e) {
       if (e is DocumentRepositoryException) {
         rethrow;
       }
@@ -750,15 +759,15 @@ class DocumentRepository {
       final decryptedFile = File(decryptedPath);
       final bytes = await decryptedFile.readAsBytes();
 
-      // Clean up temp file immediately
+      // Clean up temp file immediately with secure deletion
       try {
-        await decryptedFile.delete();
-      } on Object catch (_) {
+        await _secureFileDeletion.secureDeleteFile(decryptedPath);
+      } catch (_) {
         // Ignore cleanup errors
       }
 
       return bytes.toList();
-    } on Object catch (e) {
+    } catch (e) {
       if (e is DocumentRepositoryException) {
         rethrow;
       }
@@ -812,10 +821,10 @@ class DocumentRepository {
       final decryptedFile = File(decryptedPath);
       final bytes = await decryptedFile.readAsBytes();
 
-      // Clean up temp file immediately
+      // Clean up temp file immediately with secure deletion
       try {
-        await decryptedFile.delete();
-      } on Object catch (_) {
+        await _secureFileDeletion.secureDeleteFile(decryptedPath);
+      } catch (_) {
         // Ignore cleanup errors
       }
 
@@ -823,7 +832,7 @@ class DocumentRepository {
       _thumbnailCache.cacheThumbnail(document.id, bytes);
 
       return bytes;
-    } on Object catch (e) {
+    } catch (e) {
       throw DocumentRepositoryException(
         'Failed to decrypt thumbnail bytes: ${document.id}',
         cause: e,
@@ -884,7 +893,7 @@ class DocumentRepository {
         try {
           final bytes = await getDecryptedThumbnailBytes(document);
           return MapEntry(document.id, bytes);
-        } on Object catch (_) {
+        } catch (_) {
           // Ignore individual failures - return null for this document
           return MapEntry<String, Uint8List?>(document.id, null);
         }
@@ -902,7 +911,7 @@ class DocumentRepository {
       }
 
       return resultMap;
-    } on Object catch (e) {
+    } catch (e) {
       throw DocumentRepositoryException(
         'Failed to decrypt thumbnails in batch',
         cause: e,
@@ -945,7 +954,7 @@ class DocumentRepository {
       await decryptedFile.writeAsBytes(bytes);
 
       return decryptedPath;
-    } on Object catch (e) {
+    } catch (e) {
       if (e is DocumentRepositoryException) {
         rethrow;
       }
@@ -988,7 +997,7 @@ class DocumentRepository {
       }
 
       return updatedDocument;
-    } on Object catch (e) {
+    } catch (e) {
       if (e is DocumentRepositoryException) {
         rethrow;
       }
@@ -1050,7 +1059,7 @@ class DocumentRepository {
       );
 
       return updatedDocument;
-    } on Object catch (e) {
+    } catch (e) {
       if (e is DocumentRepositoryException) {
         rethrow;
       }
@@ -1099,7 +1108,7 @@ class DocumentRepository {
       );
 
       return updatedDocument;
-    } on Object catch (e) {
+    } catch (e) {
       if (e is DocumentRepositoryException) {
         rethrow;
       }
@@ -1127,7 +1136,7 @@ class DocumentRepository {
       return await updateDocument(
         document.copyWith(isFavorite: !document.isFavorite),
       );
-    } on Object catch (e) {
+    } catch (e) {
       if (e is DocumentRepositoryException) {
         rethrow;
       }
@@ -1162,7 +1171,7 @@ class DocumentRepository {
           clearFolderId: folderId == null,
         ),
       );
-    } on Object catch (e) {
+    } catch (e) {
       if (e is DocumentRepositoryException) {
         rethrow;
       }
@@ -1226,7 +1235,7 @@ class DocumentRepository {
         where: '${DatabaseHelper.columnId} = ?',
         whereArgs: [documentId],
       );
-    } on Object catch (e) {
+    } catch (e) {
       if (e is DocumentRepositoryException) {
         rethrow;
       }
@@ -1247,12 +1256,11 @@ class DocumentRepository {
 
     try {
       // Create parallel deletion tasks for all documents
-      final deletionTasks =
-          documentIds.map((id) => deleteDocument(id)).toList();
+      final deletionTasks = documentIds.map((id) => deleteDocument(id)).toList();
 
       // Execute all deletion tasks in parallel
       await Future.wait(deletionTasks);
-    } on Object catch (e) {
+    } catch (e) {
       if (e is DocumentRepositoryException) {
         rethrow;
       }
@@ -1284,7 +1292,7 @@ class DocumentRepository {
       return results
           .map((row) => row[DatabaseHelper.columnTagId] as String)
           .toList();
-    } on Object catch (e) {
+    } catch (e) {
       throw DocumentRepositoryException(
         'Failed to get document tags: $documentId',
         cause: e,
@@ -1305,7 +1313,7 @@ class DocumentRepository {
           DatabaseHelper.columnCreatedAt: DateTime.now().toIso8601String(),
         },
       );
-    } on Object catch (e) {
+    } catch (e) {
       throw DocumentRepositoryException(
         'Failed to add tag to document: $documentId',
         cause: e,
@@ -1324,7 +1332,7 @@ class DocumentRepository {
             '${DatabaseHelper.columnDocumentId} = ? AND ${DatabaseHelper.columnTagId} = ?',
         whereArgs: [documentId, tagId],
       );
-    } on Object catch (e) {
+    } catch (e) {
       throw DocumentRepositoryException(
         'Failed to remove tag from document: $documentId',
         cause: e,
@@ -1388,7 +1396,7 @@ class DocumentRepository {
       }
 
       return documents;
-    } on Object catch (e) {
+    } catch (e) {
       throw DocumentRepositoryException(
         'Failed to get documents by tag: $tagId',
         cause: e,
@@ -1461,7 +1469,7 @@ class DocumentRepository {
       }
 
       return documents;
-    } on Object catch (e) {
+    } catch (e) {
       throw DocumentRepositoryException(
         'Failed to search documents: $query',
         cause: e,
@@ -1476,20 +1484,29 @@ class DocumentRepository {
   /// Cleans up temporary decrypted files from the temp directory.
   ///
   /// Call this periodically to free up disk space from temporary files.
+  /// Uses secure deletion to prevent forensic recovery of sensitive data.
   Future<void> cleanupTempFiles() async {
     try {
       final tempDir = await _getTempDirectory();
       final tempFiles = await tempDir.list().toList();
+      final filePaths = <String>[];
+
+      // Collect all file paths
       for (final entity in tempFiles) {
         if (entity is File) {
-          try {
-            await entity.delete();
-          } on Object catch (_) {
-            // Ignore individual file deletion errors
-          }
+          filePaths.add(entity.path);
         }
       }
-    } on Object catch (_) {
+
+      // Securely delete all files in batch
+      if (filePaths.isNotEmpty) {
+        try {
+          await _secureFileDeletion.secureDeleteFiles(filePaths);
+        } catch (_) {
+          // Ignore batch deletion errors
+        }
+      }
+    } catch (_) {
       // Ignore cleanup errors
     }
   }
@@ -1497,8 +1514,8 @@ class DocumentRepository {
   /// Checks if the encryption service is ready.
   ///
   /// Returns true if the encryption key is initialized.
-  Future<bool> isReady() {
-    return _encryption.isReady();
+  Future<bool> isReady() async {
+    return await _encryption.isReady();
   }
 
   /// Initializes the repository.
@@ -1523,7 +1540,7 @@ class DocumentRepository {
       await _getTempDirectory();
 
       return true;
-    } on Object catch (e) {
+    } catch (e) {
       throw DocumentRepositoryException(
         'Failed to initialize document repository',
         cause: e,
@@ -1576,7 +1593,7 @@ class DocumentRepository {
         'tempSize': tempSize,
         'totalSize': documentsSize + thumbnailsSize,
       };
-    } on Object catch (e) {
+    } catch (e) {
       throw DocumentRepositoryException(
         'Failed to get storage info',
         cause: e,

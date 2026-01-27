@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import 'package:aiscan/core/permissions/storage_permission_service.dart';
+import 'package:aiscan/core/security/secure_file_deletion_service.dart';
 import 'package:aiscan/core/storage/document_repository.dart';
 import 'package:aiscan/features/documents/domain/document_model.dart';
 import 'package:aiscan/features/export/domain/pdf_generator.dart';
@@ -462,6 +464,63 @@ class FakePDFGenerator implements PDFGenerator {
   }
 }
 
+/// A fake secure file deletion service for testing.
+///
+/// Provides controllable secure deletion behavior.
+class FakeSecureFileDeletionService implements SecureFileDeletionService {
+  FakeSecureFileDeletionService();
+
+  /// Track secure deletion calls for verification.
+  final List<String> deletedFilePaths = [];
+
+  /// Whether to throw an error on deletion.
+  bool throwOnDelete = false;
+
+  /// Error message for deletion errors.
+  String deleteErrorMessage = 'Secure deletion failed';
+
+  /// Reset tracking state.
+  void reset() {
+    deletedFilePaths.clear();
+    throwOnDelete = false;
+    deleteErrorMessage = 'Secure deletion failed';
+  }
+
+  @override
+  Future<bool> secureDeleteFile(String filePath) async {
+    if (throwOnDelete) {
+      throw SecureFileDeletionException(deleteErrorMessage);
+    }
+
+    // Track the deletion attempt
+    deletedFilePaths.add(filePath);
+
+    // Check if file exists to return appropriate value
+    final file = File(filePath);
+    final exists = await file.exists();
+
+    // If the file exists, actually delete it for the test
+    if (exists) {
+      await file.delete();
+      return true;
+    }
+
+    return false;
+  }
+
+  @override
+  Future<Map<String, bool>> secureDeleteFiles(List<String> filePaths) async {
+    final results = <String, bool>{};
+
+    for (final filePath in filePaths) {
+      final deleted = await secureDeleteFile(filePath);
+      results[filePath] = deleted;
+    }
+
+    return results;
+  }
+}
+
 /// Creates a test Document with minimal required fields.
 Document createTestDocument({
   String id = 'test-doc-id',
@@ -599,6 +658,7 @@ void main() {
     late StoragePermissionService permissionService;
     late FakeDocumentRepository fakeRepository;
     late FakePDFGenerator fakePdfGenerator;
+    late FakeSecureFileDeletionService fakeSecureFileDeletion;
     late DocumentShareService shareService;
     late Directory testTempDir;
 
@@ -611,10 +671,12 @@ void main() {
       permissionService.clearCache();
       fakeRepository = FakeDocumentRepository();
       fakePdfGenerator = FakePDFGenerator();
+      fakeSecureFileDeletion = FakeSecureFileDeletionService();
       shareService = DocumentShareService(
         permissionService: permissionService,
         documentRepository: fakeRepository,
         pdfGenerator: fakePdfGenerator,
+        secureFileDeletion: fakeSecureFileDeletion,
       );
 
       // Create a temporary directory for test files
@@ -868,7 +930,7 @@ void main() {
     });
 
     group('cleanupTempFiles', () {
-      test('should delete existing temp files', () async {
+      test('should use secure deletion for existing temp files', () async {
         // Arrange
         final tempFile1 = File('${testTempDir.path}/temp1.pdf');
         final tempFile2 = File('${testTempDir.path}/temp2.pdf');
@@ -877,6 +939,7 @@ void main() {
 
         expect(await tempFile1.exists(), isTrue);
         expect(await tempFile2.exists(), isTrue);
+        expect(fakeSecureFileDeletion.deletedFilePaths, isEmpty);
 
         // Act
         await shareService.cleanupTempFiles([
@@ -887,6 +950,9 @@ void main() {
         // Assert
         expect(await tempFile1.exists(), isFalse);
         expect(await tempFile2.exists(), isFalse);
+        expect(fakeSecureFileDeletion.deletedFilePaths, hasLength(2));
+        expect(fakeSecureFileDeletion.deletedFilePaths, contains(tempFile1.path));
+        expect(fakeSecureFileDeletion.deletedFilePaths, contains(tempFile2.path));
       });
 
       test('should handle non-existent files gracefully', () async {
@@ -901,6 +967,9 @@ void main() {
           shareService.cleanupTempFiles(paths),
           completes,
         );
+
+        // Verify secure deletion was still called
+        expect(fakeSecureFileDeletion.deletedFilePaths, hasLength(2));
       });
 
       test('should handle empty list', () async {
@@ -909,6 +978,9 @@ void main() {
           shareService.cleanupTempFiles([]),
           completes,
         );
+
+        // Verify no deletion calls were made
+        expect(fakeSecureFileDeletion.deletedFilePaths, isEmpty);
       });
 
       test('should handle mix of existing and non-existing files', () async {
@@ -926,6 +998,74 @@ void main() {
 
         // Assert
         expect(await existingFile.exists(), isFalse);
+        expect(fakeSecureFileDeletion.deletedFilePaths, hasLength(2));
+        expect(fakeSecureFileDeletion.deletedFilePaths, contains(existingFile.path));
+      });
+
+      test('should handle secure deletion errors gracefully', () async {
+        // Arrange
+        final tempFile = File('${testTempDir.path}/error.pdf');
+        await tempFile.writeAsString('test content');
+
+        fakeSecureFileDeletion.throwOnDelete = true;
+        fakeSecureFileDeletion.deleteErrorMessage = 'Permission denied';
+
+        // Act & Assert - should not throw, errors are silently handled
+        await expectLater(
+          shareService.cleanupTempFiles([tempFile.path]),
+          completes,
+        );
+
+        // Verify deletion was attempted
+        expect(fakeSecureFileDeletion.deletedFilePaths, isEmpty);
+      });
+
+      test('should continue cleanup after individual file errors', () async {
+        // Arrange
+        final tempFile1 = File('${testTempDir.path}/file1.pdf');
+        final tempFile2 = File('${testTempDir.path}/file2.pdf');
+        await tempFile1.writeAsString('test content 1');
+        await tempFile2.writeAsString('test content 2');
+
+        // First file will succeed, then we'll trigger error for second
+        var callCount = 0;
+        final originalThrow = fakeSecureFileDeletion.throwOnDelete;
+
+        // Reset and use a custom fake that throws on second call
+        fakeSecureFileDeletion.reset();
+        final customFake = FakeSecureFileDeletionService();
+        shareService = DocumentShareService(
+          permissionService: permissionService,
+          documentRepository: fakeRepository,
+          pdfGenerator: fakePdfGenerator,
+          secureFileDeletion: FakeSecureFileDeletionService()
+            ..throwOnDelete = false,
+        );
+
+        // Create a new fake that throws only on second call
+        final testFake = FakeSecureFileDeletionService();
+        shareService = DocumentShareService(
+          permissionService: permissionService,
+          documentRepository: fakeRepository,
+          pdfGenerator: fakePdfGenerator,
+          secureFileDeletion: testFake,
+        );
+
+        // Delete first file successfully
+        await shareService.cleanupTempFiles([tempFile1.path]);
+        expect(testFake.deletedFilePaths, hasLength(1));
+
+        // Make second deletion fail
+        testFake.throwOnDelete = true;
+
+        // Act & Assert - should not throw
+        await expectLater(
+          shareService.cleanupTempFiles([tempFile2.path]),
+          completes,
+        );
+
+        // Only first file should be in deleted list
+        expect(testFake.deletedFilePaths, hasLength(1));
       });
     });
 
@@ -988,6 +1128,7 @@ void main() {
     late StoragePermissionService permissionService;
     late FakeDocumentRepository fakeRepository;
     late FakePDFGenerator fakePdfGenerator;
+    late FakeSecureFileDeletionService fakeSecureFileDeletion;
     late DocumentShareService shareService;
 
     setUp(() {
@@ -999,10 +1140,12 @@ void main() {
       permissionService.clearCache();
       fakeRepository = FakeDocumentRepository();
       fakePdfGenerator = FakePDFGenerator();
+      fakeSecureFileDeletion = FakeSecureFileDeletionService();
       shareService = DocumentShareService(
         permissionService: permissionService,
         documentRepository: fakeRepository,
         pdfGenerator: fakePdfGenerator,
+        secureFileDeletion: fakeSecureFileDeletion,
       );
     });
 
@@ -1124,6 +1267,7 @@ void main() {
   group('Error handling', () {
     late FakeDocumentRepository fakeRepository;
     late FakePDFGenerator fakePdfGenerator;
+    late FakeSecureFileDeletionService fakeSecureFileDeletion;
     late DocumentShareService shareService;
 
     setUp(() {
@@ -1135,10 +1279,12 @@ void main() {
       permissionService.clearCache();
       fakeRepository = FakeDocumentRepository();
       fakePdfGenerator = FakePDFGenerator();
+      fakeSecureFileDeletion = FakeSecureFileDeletionService();
       shareService = DocumentShareService(
         permissionService: permissionService,
         documentRepository: fakeRepository,
         pdfGenerator: fakePdfGenerator,
+        secureFileDeletion: fakeSecureFileDeletion,
       );
     });
 

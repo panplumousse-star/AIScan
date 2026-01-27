@@ -7,6 +7,7 @@ import 'dart:async' as _i3;
 import 'dart:typed_data' as _i5;
 
 import 'package:aiscan/core/security/encryption_service.dart' as _i4;
+import 'package:aiscan/core/security/secure_file_deletion_service.dart' as _i8;
 import 'package:aiscan/core/storage/database_helper.dart' as _i7;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i6;
@@ -724,4 +725,32 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
         returnValue: _i3.Future<int>.value(0),
         returnValueForMissingStub: _i3.Future<int>.value(0),
       ) as _i3.Future<int>);
+}
+
+/// A class which mocks [SecureFileDeletionService].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockSecureFileDeletionService extends _i1.Mock
+    implements _i8.SecureFileDeletionService {
+  @override
+  _i3.Future<bool> secureDeleteFile(String? filePath) => (super.noSuchMethod(
+        Invocation.method(
+          #secureDeleteFile,
+          [filePath],
+        ),
+        returnValue: _i3.Future<bool>.value(false),
+        returnValueForMissingStub: _i3.Future<bool>.value(false),
+      ) as _i3.Future<bool>);
+
+  @override
+  _i3.Future<Map<String, bool>> secureDeleteFiles(List<String>? filePaths) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #secureDeleteFiles,
+          [filePaths],
+        ),
+        returnValue: _i3.Future<Map<String, bool>>.value(<String, bool>{}),
+        returnValueForMissingStub:
+            _i3.Future<Map<String, bool>>.value(<String, bool>{}),
+      ) as _i3.Future<Map<String, bool>>);
 }

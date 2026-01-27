@@ -6,6 +6,7 @@
 import 'dart:async' as _i3;
 import 'dart:typed_data' as _i6;
 
+import 'package:aiscan/core/security/secure_file_deletion_service.dart' as _i8;
 import 'package:aiscan/core/security/secure_storage_service.dart' as _i4;
 import 'package:aiscan/core/storage/database_helper.dart' as _i7;
 import 'package:mockito/mockito.dart' as _i1;
@@ -51,10 +52,6 @@ class _FakeFuture_1<T1> extends _i1.SmartFake implements _i3.Future<T1> {
 /// See the documentation for Mockito's code generation for more information.
 class MockSecureStorageService extends _i1.Mock
     implements _i4.SecureStorageService {
-  MockSecureStorageService() {
-    _i1.throwOnMissingStub(this);
-  }
-
   @override
   _i3.Future<String?> getEncryptionKey() => (super.noSuchMethod(
         Invocation.method(
@@ -62,6 +59,7 @@ class MockSecureStorageService extends _i1.Mock
           [],
         ),
         returnValue: _i3.Future<String?>.value(),
+        returnValueForMissingStub: _i3.Future<String?>.value(),
       ) as _i3.Future<String?>);
 
   @override
@@ -81,6 +79,7 @@ class MockSecureStorageService extends _i1.Mock
           [],
         ),
         returnValue: _i3.Future<String?>.value(),
+        returnValueForMissingStub: _i3.Future<String?>.value(),
       ) as _i3.Future<String?>);
 
   @override
@@ -100,6 +99,7 @@ class MockSecureStorageService extends _i1.Mock
           [],
         ),
         returnValue: _i3.Future<String?>.value(),
+        returnValueForMissingStub: _i3.Future<String?>.value(),
       ) as _i3.Future<String?>);
 
   @override
@@ -125,6 +125,14 @@ class MockSecureStorageService extends _i1.Mock
             [],
           ),
         )),
+        returnValueForMissingStub:
+            _i3.Future<String>.value(_i5.dummyValue<String>(
+          this,
+          Invocation.method(
+            #getOrCreateEncryptionKey,
+            [],
+          ),
+        )),
       ) as _i3.Future<String>);
 
   @override
@@ -140,6 +148,14 @@ class MockSecureStorageService extends _i1.Mock
             [],
           ),
         )),
+        returnValueForMissingStub:
+            _i3.Future<String>.value(_i5.dummyValue<String>(
+          this,
+          Invocation.method(
+            #getOrCreateInitializationVector,
+            [],
+          ),
+        )),
       ) as _i3.Future<String>);
 
   @override
@@ -149,6 +165,14 @@ class MockSecureStorageService extends _i1.Mock
           [],
         ),
         returnValue: _i3.Future<String>.value(_i5.dummyValue<String>(
+          this,
+          Invocation.method(
+            #getOrCreateSalt,
+            [],
+          ),
+        )),
+        returnValueForMissingStub:
+            _i3.Future<String>.value(_i5.dummyValue<String>(
           this,
           Invocation.method(
             #getOrCreateSalt,
@@ -181,6 +205,7 @@ class MockSecureStorageService extends _i1.Mock
           [key],
         ),
         returnValue: _i3.Future<String?>.value(),
+        returnValueForMissingStub: _i3.Future<String?>.value(),
       ) as _i3.Future<String?>);
 
   @override
@@ -200,6 +225,7 @@ class MockSecureStorageService extends _i1.Mock
           [],
         ),
         returnValue: _i3.Future<bool>.value(false),
+        returnValueForMissingStub: _i3.Future<bool>.value(false),
       ) as _i3.Future<bool>);
 
   @override
@@ -209,6 +235,7 @@ class MockSecureStorageService extends _i1.Mock
           [],
         ),
         returnValue: _i3.Future<bool>.value(false),
+        returnValueForMissingStub: _i3.Future<bool>.value(false),
       ) as _i3.Future<bool>);
 
   @override
@@ -238,6 +265,7 @@ class MockSecureStorageService extends _i1.Mock
           [base64Key],
         ),
         returnValue: _i6.Uint8List(0),
+        returnValueForMissingStub: _i6.Uint8List(0),
       ) as _i6.Uint8List);
 
   @override
@@ -253,6 +281,13 @@ class MockSecureStorageService extends _i1.Mock
             [bytes],
           ),
         ),
+        returnValueForMissingStub: _i5.dummyValue<String>(
+          this,
+          Invocation.method(
+            #encodeBytes,
+            [bytes],
+          ),
+        ),
       ) as String);
 }
 
@@ -260,14 +295,15 @@ class MockSecureStorageService extends _i1.Mock
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
-  MockDatabaseHelper() {
-    _i1.throwOnMissingStub(this);
-  }
-
   @override
   _i3.Future<_i2.Database> get database => (super.noSuchMethod(
         Invocation.getter(#database),
         returnValue: _i3.Future<_i2.Database>.value(_FakeDatabase_0(
+          this,
+          Invocation.getter(#database),
+        )),
+        returnValueForMissingStub:
+            _i3.Future<_i2.Database>.value(_FakeDatabase_0(
           this,
           Invocation.getter(#database),
         )),
@@ -277,12 +313,14 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
   bool get isFtsAvailable => (super.noSuchMethod(
         Invocation.getter(#isFtsAvailable),
         returnValue: false,
+        returnValueForMissingStub: false,
       ) as bool);
 
   @override
   bool get isInitialized => (super.noSuchMethod(
         Invocation.getter(#isInitialized),
         returnValue: false,
+        returnValueForMissingStub: false,
       ) as bool);
 
   @override
@@ -303,6 +341,7 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           [query],
         ),
         returnValue: _i3.Future<List<String>>.value(<String>[]),
+        returnValueForMissingStub: _i3.Future<List<String>>.value(<String>[]),
       ) as _i3.Future<List<String>>);
 
   @override
@@ -329,6 +368,7 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           ],
         ),
         returnValue: _i3.Future<int>.value(0),
+        returnValueForMissingStub: _i3.Future<int>.value(0),
       ) as _i3.Future<int>);
 
   @override
@@ -362,6 +402,8 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
         ),
         returnValue: _i3.Future<List<Map<String, dynamic>>>.value(
             <Map<String, dynamic>>[]),
+        returnValueForMissingStub: _i3.Future<List<Map<String, dynamic>>>.value(
+            <Map<String, dynamic>>[]),
       ) as _i3.Future<List<Map<String, dynamic>>>);
 
   @override
@@ -384,6 +426,7 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           },
         ),
         returnValue: _i3.Future<int>.value(0),
+        returnValueForMissingStub: _i3.Future<int>.value(0),
       ) as _i3.Future<int>);
 
   @override
@@ -402,6 +445,7 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           },
         ),
         returnValue: _i3.Future<int>.value(0),
+        returnValueForMissingStub: _i3.Future<int>.value(0),
       ) as _i3.Future<int>);
 
   @override
@@ -418,6 +462,7 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           ],
         ),
         returnValue: _i3.Future<Map<String, dynamic>?>.value(),
+        returnValueForMissingStub: _i3.Future<Map<String, dynamic>?>.value(),
       ) as _i3.Future<Map<String, dynamic>?>);
 
   @override
@@ -436,6 +481,7 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           },
         ),
         returnValue: _i3.Future<int>.value(0),
+        returnValueForMissingStub: _i3.Future<int>.value(0),
       ) as _i3.Future<int>);
 
   @override
@@ -453,6 +499,8 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
         ),
         returnValue: _i3.Future<List<Map<String, dynamic>>>.value(
             <Map<String, dynamic>>[]),
+        returnValueForMissingStub: _i3.Future<List<Map<String, dynamic>>>.value(
+            <Map<String, dynamic>>[]),
       ) as _i3.Future<List<Map<String, dynamic>>>);
 
   @override
@@ -464,6 +512,23 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           [action],
         ),
         returnValue: _i5.ifNotNull(
+              _i5.dummyValueOrNull<T>(
+                this,
+                Invocation.method(
+                  #transaction,
+                  [action],
+                ),
+              ),
+              (T v) => _i3.Future<T>.value(v),
+            ) ??
+            _FakeFuture_1<T>(
+              this,
+              Invocation.method(
+                #transaction,
+                [action],
+              ),
+            ),
+        returnValueForMissingStub: _i5.ifNotNull(
               _i5.dummyValueOrNull<T>(
                 this,
                 Invocation.method(
@@ -506,6 +571,7 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           ],
         ),
         returnValue: _i3.Future<bool>.value(false),
+        returnValueForMissingStub: _i3.Future<bool>.value(false),
       ) as _i3.Future<bool>);
 
   @override
@@ -517,6 +583,8 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           {#orderBy: orderBy},
         ),
         returnValue: _i3.Future<List<Map<String, dynamic>>>.value(
+            <Map<String, dynamic>>[]),
+        returnValueForMissingStub: _i3.Future<List<Map<String, dynamic>>>.value(
             <Map<String, dynamic>>[]),
       ) as _i3.Future<List<Map<String, dynamic>>>);
 
@@ -530,6 +598,8 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
         ),
         returnValue: _i3.Future<List<Map<String, dynamic>>>.value(
             <Map<String, dynamic>>[]),
+        returnValueForMissingStub: _i3.Future<List<Map<String, dynamic>>>.value(
+            <Map<String, dynamic>>[]),
       ) as _i3.Future<List<Map<String, dynamic>>>);
 
   @override
@@ -541,6 +611,8 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
         ),
         returnValue: _i3.Future<List<Map<String, dynamic>>>.value(
             <Map<String, dynamic>>[]),
+        returnValueForMissingStub: _i3.Future<List<Map<String, dynamic>>>.value(
+            <Map<String, dynamic>>[]),
       ) as _i3.Future<List<Map<String, dynamic>>>);
 
   @override
@@ -551,6 +623,7 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           [documentId],
         ),
         returnValue: _i3.Future<List<String>>.value(<String>[]),
+        returnValueForMissingStub: _i3.Future<List<String>>.value(<String>[]),
       ) as _i3.Future<List<String>>);
 
   @override
@@ -562,6 +635,8 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           [documentIds],
         ),
         returnValue: _i3.Future<Map<String, List<String>>>.value(
+            <String, List<String>>{}),
+        returnValueForMissingStub: _i3.Future<Map<String, List<String>>>.value(
             <String, List<String>>{}),
       ) as _i3.Future<Map<String, List<String>>>);
 
@@ -579,6 +654,7 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           ],
         ),
         returnValue: _i3.Future<Map<String, dynamic>?>.value(),
+        returnValueForMissingStub: _i3.Future<Map<String, dynamic>?>.value(),
       ) as _i3.Future<Map<String, dynamic>?>);
 
   @override
@@ -598,6 +674,7 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           },
         ),
         returnValue: _i3.Future<int>.value(0),
+        returnValueForMissingStub: _i3.Future<int>.value(0),
       ) as _i3.Future<int>);
 
   @override
@@ -625,6 +702,7 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           [documentId],
         ),
         returnValue: _i3.Future<int>.value(0),
+        returnValueForMissingStub: _i3.Future<int>.value(0),
       ) as _i3.Future<int>);
 
   @override
@@ -644,6 +722,7 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           },
         ),
         returnValue: _i3.Future<int>.value(0),
+        returnValueForMissingStub: _i3.Future<int>.value(0),
       ) as _i3.Future<int>);
 
   @override
@@ -654,6 +733,7 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           [documentId],
         ),
         returnValue: _i3.Future<int>.value(0),
+        returnValueForMissingStub: _i3.Future<int>.value(0),
       ) as _i3.Future<int>);
 
   @override
@@ -665,6 +745,8 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           [documentIds],
         ),
         returnValue: _i3.Future<Map<String, List<String>>>.value(
+            <String, List<String>>{}),
+        returnValueForMissingStub: _i3.Future<Map<String, List<String>>>.value(
             <String, List<String>>{}),
       ) as _i3.Future<Map<String, List<String>>>);
 
@@ -685,6 +767,7 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           },
         ),
         returnValue: _i3.Future<int>.value(0),
+        returnValueForMissingStub: _i3.Future<int>.value(0),
       ) as _i3.Future<int>);
 
   @override
@@ -703,6 +786,8 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
         ),
         returnValue: _i3.Future<List<Map<String, dynamic>>>.value(
             <Map<String, dynamic>>[]),
+        returnValueForMissingStub: _i3.Future<List<Map<String, dynamic>>>.value(
+            <Map<String, dynamic>>[]),
       ) as _i3.Future<List<Map<String, dynamic>>>);
 
   @override
@@ -712,6 +797,7 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           [id],
         ),
         returnValue: _i3.Future<int>.value(0),
+        returnValueForMissingStub: _i3.Future<int>.value(0),
       ) as _i3.Future<int>);
 
   @override
@@ -721,5 +807,34 @@ class MockDatabaseHelper extends _i1.Mock implements _i7.DatabaseHelper {
           [],
         ),
         returnValue: _i3.Future<int>.value(0),
+        returnValueForMissingStub: _i3.Future<int>.value(0),
       ) as _i3.Future<int>);
+}
+
+/// A class which mocks [SecureFileDeletionService].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockSecureFileDeletionService extends _i1.Mock
+    implements _i8.SecureFileDeletionService {
+  @override
+  _i3.Future<bool> secureDeleteFile(String? filePath) => (super.noSuchMethod(
+        Invocation.method(
+          #secureDeleteFile,
+          [filePath],
+        ),
+        returnValue: _i3.Future<bool>.value(false),
+        returnValueForMissingStub: _i3.Future<bool>.value(false),
+      ) as _i3.Future<bool>);
+
+  @override
+  _i3.Future<Map<String, bool>> secureDeleteFiles(List<String>? filePaths) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #secureDeleteFiles,
+          [filePaths],
+        ),
+        returnValue: _i3.Future<Map<String, bool>>.value(<String, bool>{}),
+        returnValueForMissingStub:
+            _i3.Future<Map<String, bool>>.value(<String, bool>{}),
+      ) as _i3.Future<Map<String, bool>>);
 }

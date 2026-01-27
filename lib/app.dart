@@ -1,10 +1,9 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/providers/locale_provider.dart';
+import 'core/storage/document_repository.dart';
 import 'core/theme/app_theme.dart';
 import 'core/widgets/skeleton_loading.dart';
 import 'features/app_lock/domain/app_lock_service.dart';
@@ -28,7 +27,7 @@ class ScanaiApp extends ConsumerWidget {
     final locale = ref.watch(flutterLocaleProvider);
 
     // Configure page transitions for smooth navigation
-    const pageTransitionsTheme = PageTransitionsTheme(
+    final pageTransitionsTheme = const PageTransitionsTheme(
       builders: <TargetPlatform, PageTransitionsBuilder>{
         // Use zoom transition for Android (Material 3 style)
         TargetPlatform.android: ZoomPageTransitionsBuilder(
@@ -114,6 +113,14 @@ class _AppHomeState extends ConsumerState<_AppHome>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
+    // Cleanup temporary decrypted files from any previous crashed sessions
+    // This ensures leftover sensitive data is securely deleted on app startup
+    final repository = ref.read(documentRepositoryProvider);
+    repository.cleanupTempFiles().catchError((error) {
+      // Silently ignore cleanup errors to prevent app startup issues
+      // Logging would happen inside cleanupTempFiles if needed
+    });
+
     // Setup fade animation for smooth transition
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 400),
@@ -142,7 +149,7 @@ class _AppHomeState extends ConsumerState<_AppHome>
 
   void _checkAndTransition() {
     if (_isInitialized && _minDurationPassed && !_fadeController.isAnimating) {
-      unawaited(_fadeController.forward());
+      _fadeController.forward();
     }
   }
 
@@ -154,6 +161,17 @@ class _AppHomeState extends ConsumerState<_AppHome>
     if (state == AppLifecycleState.resumed) {
       // Invalidate the provider to force a fresh check
       ref.invalidate(shouldShowLockScreenProvider);
+    }
+
+    // Cleanup temporary decrypted files when app goes to background or terminates
+    // This ensures sensitive data is securely deleted when not in use
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.detached) {
+      // Run cleanup asynchronously without blocking lifecycle transition
+      final repository = ref.read(documentRepositoryProvider);
+      repository.cleanupTempFiles().catchError((error) {
+        // Silently ignore cleanup errors to prevent app lifecycle issues
+        // Logging would happen inside cleanupTempFiles if needed
+      });
     }
   }
 
@@ -235,12 +253,12 @@ class _LockScreenWrapperState extends ConsumerState<_LockScreenWrapper> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           // Push lock screen on top of main app
-          unawaited(Navigator.of(context).push(
+          Navigator.of(context).push(
             MaterialPageRoute(
               builder: (_) => const LockScreen(),
               fullscreenDialog: true,
             ),
-          ));
+          );
         }
       });
     }

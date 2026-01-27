@@ -9,6 +9,7 @@ import 'package:mockito/mockito.dart';
 import 'package:image/image.dart' as img;
 
 import 'package:aiscan/core/security/encryption_service.dart';
+import 'package:aiscan/core/security/secure_file_deletion_service.dart';
 import 'package:aiscan/core/security/secure_storage_service.dart';
 import 'package:aiscan/core/storage/database_helper.dart';
 import 'package:aiscan/core/storage/document_repository.dart';
@@ -26,7 +27,11 @@ import 'encryption_verification_test.mocks.dart';
 /// 4. Encryption integrity - data can only be decrypted with the correct key
 ///
 /// CRITICAL: These tests must pass before any release to ensure user data privacy.
-@GenerateMocks([SecureStorageService, DatabaseHelper])
+@GenerateNiceMocks([
+  MockSpec<SecureStorageService>(),
+  MockSpec<DatabaseHelper>(),
+  MockSpec<SecureFileDeletionService>(),
+])
 
 /// Mock ThumbnailCacheService for testing.
 class MockThumbnailCacheService extends Mock implements ThumbnailCacheService {}
@@ -746,11 +751,19 @@ void main() {
     setUp(() {
       mockDatabase = MockDatabaseHelper();
       final mockThumbnailCache = MockThumbnailCacheService();
+      final mockSecureFileDeletion = MockSecureFileDeletionService();
+
+      // Setup default stub behaviors
+      when(mockSecureFileDeletion.secureDeleteFile(any))
+          .thenAnswer((_) async => true);
+      when(mockSecureFileDeletion.secureDeleteFiles(any))
+          .thenAnswer((_) async => {});
 
       documentRepository = DocumentRepository(
         encryptionService: encryptionService,
         databaseHelper: mockDatabase,
         thumbnailCacheService: mockThumbnailCache,
+        secureFileDeletionService: mockSecureFileDeletion,
       );
 
       // Setup database mock

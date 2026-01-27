@@ -249,6 +249,7 @@ class _OcrTextPanelState extends ConsumerState<OcrTextPanel> {
             ? 'Text copied to clipboard. Clipboard will clear in ${result.autoClearDuration?.inSeconds ?? 0}s'
             : 'Text copied to clipboard';
 
+        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(message),
@@ -258,6 +259,7 @@ class _OcrTextPanelState extends ConsumerState<OcrTextPanel> {
       }
     } on ClipboardSecurityException catch (e) {
       if (context.mounted) {
+        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to copy text: ${e.message}'),
@@ -294,6 +296,7 @@ class _OcrTextPanelState extends ConsumerState<OcrTextPanel> {
             ? 'Text copied to clipboard. Clipboard will clear in ${result.autoClearDuration?.inSeconds ?? 0}s'
             : 'Text copied to clipboard';
 
+        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(message),
@@ -303,6 +306,7 @@ class _OcrTextPanelState extends ConsumerState<OcrTextPanel> {
       }
     } on ClipboardSecurityException catch (e) {
       if (context.mounted) {
+        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to copy text: ${e.message}'),

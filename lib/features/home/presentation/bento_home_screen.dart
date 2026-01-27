@@ -863,10 +863,17 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
               : () {
                   unawaited(HapticFeedback.mediumImpact());
                   unawaited(ref.read(audioServiceProvider).playSwoosh());
-                  unawaited(Navigator.push(
+                  Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => const DocumentsScreen()),
-                  ));
+                  ).then((_) {
+                    // Refresh document counts when returning from documents
+                    // This ensures deletions are reflected on home screen
+                    if (mounted) {
+                      ref.invalidate(totalDocumentCountProvider);
+                      ref.invalidate(monthlyScanCountProvider);
+                    }
+                  });
                 },
           child: Container(
             height: 140,

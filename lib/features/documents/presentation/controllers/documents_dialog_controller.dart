@@ -8,6 +8,8 @@ import '../../../../core/widgets/bento_rename_document_dialog.dart';
 import '../../../folders/domain/folder_model.dart';
 import '../../../folders/domain/folder_service.dart';
 import '../../../folders/presentation/widgets/bento_folder_dialog.dart';
+import '../../../home/presentation/bento_home_screen.dart'
+    show totalDocumentCountProvider, monthlyScanCountProvider;
 import '../documents_screen.dart'
     show DocumentsScreenState, DocumentsScreenNotifier;
 import '../widgets/dialog_widgets.dart';
@@ -83,9 +85,15 @@ class DocumentsDialogController {
       if (result == 'delete_all') {
         // Delete folders and their documents
         await notifier.deleteAllSelectedWithDocuments();
+        // Refresh home screen counts
+        ref.invalidate(totalDocumentCountProvider);
+        ref.invalidate(monthlyScanCountProvider);
       } else if (result == 'keep') {
         // Delete folders only, documents become root-level
         await notifier.deleteAllSelected();
+        // Refresh home screen counts
+        ref.invalidate(totalDocumentCountProvider);
+        ref.invalidate(monthlyScanCountProvider);
       }
       return;
     }
@@ -126,6 +134,9 @@ class DocumentsDialogController {
 
     if (confirmed ?? false) {
       await notifier.deleteAllSelected();
+      // Refresh home screen counts
+      ref.invalidate(totalDocumentCountProvider);
+      ref.invalidate(monthlyScanCountProvider);
     }
   }
 

@@ -267,7 +267,7 @@ class OcrResultsScreenNotifier extends StateNotifier<OcrResultsScreenState> {
   void setOptions(OcrOptions options, {bool rerunOcr = false}) {
     state = state.copyWith(options: options);
     if (rerunOcr) {
-      runOcr();
+      unawaited(runOcr());
     }
   }
 
@@ -412,7 +412,7 @@ class _OcrResultsScreenWidgetState extends ConsumerState<OcrResultsScreen> {
 
     // Initialize after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initializeScreen();
+      unawaited(_initializeScreen());
     });
   }
 
@@ -618,7 +618,7 @@ class _OcrResultsScreenWidgetState extends ConsumerState<OcrResultsScreen> {
   ) {
     switch (action) {
       case 'rerun':
-        notifier.runOcr();
+        unawaited(notifier.runOcr());
         break;
       case 'options':
         _showOptionsSheet(context, state, notifier);
@@ -947,7 +947,7 @@ class _OcrResultsScreenWidgetState extends ConsumerState<OcrResultsScreen> {
       },
       onRunOcr: () {
         Navigator.pop(context);
-        notifier.runOcr();
+        unawaited(notifier.runOcr());
       },
     ));
   }

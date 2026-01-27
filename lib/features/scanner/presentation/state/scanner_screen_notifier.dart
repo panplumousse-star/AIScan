@@ -192,7 +192,7 @@ class ScannerScreenNotifier extends StateNotifier<ScannerScreenState> {
   @override
   void dispose() {
     if (state.scanResult != null) {
-      _scannerService.cleanupScanResult(state.scanResult!);
+      unawaited(_scannerService.cleanupScanResult(state.scanResult!));
     }
     super.dispose();
   }

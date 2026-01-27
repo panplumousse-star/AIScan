@@ -1,3 +1,4 @@
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 
@@ -62,7 +63,8 @@ class _BouncingWidgetState extends State<BouncingWidget>
     _controller = AnimationController(
       duration: const Duration(seconds: 2), // Faster, more lively pulse
       vsync: this,
-    )..repeat(reverse: true);
+    );
+    unawaited(_controller.repeat(reverse: true));
 
     _animation = Tween<double>(begin: 0.92, end: 1.08).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),

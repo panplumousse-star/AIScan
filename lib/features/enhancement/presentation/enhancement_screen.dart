@@ -551,9 +551,9 @@ class _EnhancementScreenWidgetState extends ConsumerState<EnhancementScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final notifier = ref.read(enhancementScreenProvider.notifier);
       if (widget.imagePath != null) {
-        notifier.loadImage(widget.imagePath!);
+        unawaited(notifier.loadImage(widget.imagePath!));
       } else if (widget.imageBytes != null) {
-        notifier.loadImageBytes(widget.imageBytes!);
+        unawaited(notifier.loadImageBytes(widget.imageBytes!));
       }
     });
   }

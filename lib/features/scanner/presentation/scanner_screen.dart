@@ -124,7 +124,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
 
       // Show first-time local storage warning when scan result appears
       if (next.hasResult && previous?.hasResult != true) {
-        _showLocalStorageWarningIfNeeded();
+        unawaited(_showLocalStorageWarningIfNeeded());
       }
 
       // Show error snackbar
@@ -136,7 +136,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
               label: 'Retry',
               onPressed: () {
                 notifier.clearError();
-                notifier.multiPageScan();
+                unawaited(notifier.multiPageScan());
               },
             ),
           ),
@@ -225,11 +225,11 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
         builder: (navContext) => DocumentsScreen(
           onScanPressed: () {
             // Navigate to scanner when scan button is pressed
-            Navigator.of(navContext).push(
+            unawaited(Navigator.of(navContext).push(
               MaterialPageRoute(
                 builder: (_) => const ScannerScreen(),
               ),
-            );
+            ));
           },
         ),
       ),

@@ -1,3 +1,4 @@
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 
@@ -62,7 +63,7 @@ class DocumentsAppBar extends StatelessWidget {
                 color: isDark ? Colors.white : const Color(0xFF1E1B4B),
                 onPressed: () {
                   if (isInFolder) {
-                    notifier.exitFolder();
+                    unawaited(notifier.exitFolder());
                   } else {
                     Navigator.pop(context);
                   }

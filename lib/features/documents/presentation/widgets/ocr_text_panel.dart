@@ -166,7 +166,7 @@ class _OcrTextPanelState extends ConsumerState<OcrTextPanel> {
 
                           // Copy with security using tracked selected text
                           if (_currentSelectedText != null) {
-                            _copySelectedText(_currentSelectedText!);
+                            unawaited(_copySelectedText(_currentSelectedText!));
                           }
                         },
                       ),

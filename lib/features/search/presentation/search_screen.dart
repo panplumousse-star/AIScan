@@ -134,12 +134,12 @@ class SearchScreenNotifier extends StateNotifier<SearchScreenState> {
 
     // Fetch suggestions quickly
     _debounceTimer = Timer(_suggestionsDebounce, () {
-      _fetchSuggestions(trimmedQuery);
+      unawaited(_fetchSuggestions(trimmedQuery));
     });
 
     // Perform full search with longer debounce
     _debounceTimer = Timer(_searchDebounce, () {
-      performSearch();
+      unawaited(performSearch());
     });
   }
 
@@ -225,7 +225,7 @@ class SearchScreenNotifier extends StateNotifier<SearchScreenState> {
       query: suggestion,
       suggestions: const [],
     );
-    performSearch();
+    unawaited(performSearch());
   }
 
   /// Selects a recent search and performs search.
@@ -234,7 +234,7 @@ class SearchScreenNotifier extends StateNotifier<SearchScreenState> {
       query: recent.query,
       suggestions: const [],
     );
-    performSearch();
+    unawaited(performSearch());
   }
 
   /// Clears a recent search from history.
@@ -259,7 +259,7 @@ class SearchScreenNotifier extends StateNotifier<SearchScreenState> {
   void setOptions(SearchOptions options) {
     state = state.copyWith(options: options);
     if (state.query.isNotEmpty) {
-      performSearch();
+      unawaited(performSearch());
     }
   }
 
@@ -368,7 +368,7 @@ class _SearchScreenWidgetState extends ConsumerState<SearchScreen> {
 
     // Initialize after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initializeScreen();
+      unawaited(_initializeScreen());
     });
   }
 
@@ -402,7 +402,7 @@ class _SearchScreenWidgetState extends ConsumerState<SearchScreen> {
       // Check if we're near the bottom
       if (_scrollController.position.pixels >=
           _scrollController.position.maxScrollExtent - 200) {
-        ref.read(searchScreenProvider.notifier).performSearch(loadMore: true);
+        unawaited(ref.read(searchScreenProvider.notifier).performSearch(loadMore: true));
       }
     }
   }

@@ -549,7 +549,7 @@ class _FoldersScreenWidgetState extends ConsumerState<FoldersScreen> {
                 if (widget.selectionMode) {
                   Navigator.of(context).pop();
                 } else if (!state.isAtRoot) {
-                  notifier.navigateBack();
+                  unawaited(notifier.navigateBack());
                 }
               },
               tooltip: 'Back',
@@ -708,7 +708,7 @@ class _FoldersScreenWidgetState extends ConsumerState<FoldersScreen> {
     } else if (widget.selectionMode) {
       Navigator.of(context).pop(folder);
     } else {
-      notifier.navigateToFolder(folder);
+      unawaited(notifier.navigateToFolder(folder));
     }
   }
 

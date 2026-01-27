@@ -222,13 +222,13 @@ class _AnimatedFadeInState extends State<AnimatedFadeIn>
     _animation = CurvedAnimation(parent: _controller, curve: widget.curve);
 
     // Start animation after delay
-    Future.delayed(widget.delay, () {
+    unawaited(Future.delayed(widget.delay, () {
       if (mounted) {
-        _controller.forward().then((_) {
+        unawaited(_controller.forward().then((_) {
           widget.onComplete?.call();
-        });
+        }));
       }
-    });
+    }));
   }
 
   @override
@@ -329,13 +329,13 @@ class _AnimatedSlideInState extends State<AnimatedSlideIn>
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(curve);
 
     // Start animation after delay
-    Future.delayed(widget.delay, () {
+    unawaited(Future.delayed(widget.delay, () {
       if (mounted) {
-        _controller.forward().then((_) {
+        unawaited(_controller.forward().then((_) {
           widget.onComplete?.call();
-        });
+        }));
       }
-    });
+    }));
   }
 
   @override
@@ -415,13 +415,13 @@ class _AnimatedScaleInState extends State<AnimatedScaleIn>
     ).animate(CurvedAnimation(parent: _controller, curve: widget.curve));
 
     // Start animation after delay
-    Future.delayed(widget.delay, () {
+    unawaited(Future.delayed(widget.delay, () {
       if (mounted) {
-        _controller.forward().then((_) {
+        unawaited(_controller.forward().then((_) {
           widget.onComplete?.call();
-        });
+        }));
       }
-    });
+    }));
   }
 
   @override

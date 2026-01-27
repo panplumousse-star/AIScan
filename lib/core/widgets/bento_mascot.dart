@@ -332,7 +332,8 @@ class _BentoBouncingWidgetState extends State<BentoBouncingWidget>
     _controller = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
-    )..repeat(reverse: true);
+    );
+    unawaited(_controller.repeat(reverse: true));
 
     _animation = Tween<double>(begin: 0.92, end: 1.08).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
@@ -373,7 +374,8 @@ class _BentoLevitationWidgetState extends State<BentoLevitationWidget>
     _controller = AnimationController(
       duration: const Duration(seconds: 3),
       vsync: this,
-    )..repeat(reverse: true);
+    );
+    unawaited(_controller.repeat(reverse: true));
 
     _animation = Tween<Offset>(
       begin: Offset.zero,

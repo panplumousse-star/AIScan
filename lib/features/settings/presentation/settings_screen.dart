@@ -998,7 +998,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                   onChanged: (newValue) {
                     if (newValue != null) {
-                      ref.read(localeProvider.notifier).setLocale(newValue);
+                      unawaited(ref.read(localeProvider.notifier).setLocale(newValue));
                     }
                   },
                   items: AppLocale.values.map((locale) {
@@ -1099,7 +1099,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                   onChanged: (newValue) {
                     if (newValue != null) {
-                      ref.read(ocrLanguageProvider.notifier).setOcrLanguage(newValue);
+                      unawaited(ref.read(ocrLanguageProvider.notifier).setOcrLanguage(newValue));
                     }
                   },
                   items: OcrLanguageOption.values.map((lang) {

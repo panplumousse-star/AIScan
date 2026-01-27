@@ -1094,7 +1094,7 @@ class _DocumentsScreenWidgetState extends ConsumerState<DocumentsScreen>
 
     // Initialize after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initializeScreen();
+      unawaited(_initializeScreen());
     });
   }
 
@@ -1460,7 +1460,7 @@ class _DocumentsScreenWidgetState extends ConsumerState<DocumentsScreen>
     if (state.isSelectionMode) {
       notifier.toggleFolderSelection(folder.id);
     } else {
-      notifier.enterFolder(folder);
+      unawaited(notifier.enterFolder(folder));
     }
   }
 

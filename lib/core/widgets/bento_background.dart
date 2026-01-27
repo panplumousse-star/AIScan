@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui';
 
@@ -115,7 +116,8 @@ class _LiquidBlobState extends State<_LiquidBlob>
     _controller = AnimationController(
       duration: widget.duration,
       vsync: this,
-    )..repeat();
+    );
+    unawaited(_controller.repeat());
   }
 
   @override

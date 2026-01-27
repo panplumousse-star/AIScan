@@ -168,7 +168,7 @@ class _LockScreenWidgetState extends ConsumerState<LockScreen> {
       };
 
       // Auto-trigger authentication
-      _triggerAuth();
+      unawaited(_triggerAuth());
     });
   }
 

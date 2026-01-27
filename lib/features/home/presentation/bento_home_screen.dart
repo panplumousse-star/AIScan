@@ -818,10 +818,10 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
               : () {
                   unawaited(HapticFeedback.mediumImpact());
                   unawaited(ref.read(audioServiceProvider).playSwoosh());
-                  Navigator.push(
+                  unawaited(Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => const DocumentsScreen()),
-                  );
+                  ));
                 },
           child: Container(
         height: 140,
@@ -969,10 +969,10 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen> with WidgetsB
       child: BentoInteractiveWrapper(
         onTap: () {
           unawaited(HapticFeedback.selectionClick());
-          Navigator.push(
+          unawaited(Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const SettingsScreen()),
-          );
+          ));
         },
         child: Container(
         height: 140,
@@ -1073,7 +1073,8 @@ class _FloatingAssetState extends State<_FloatingAsset>
     _controller = AnimationController(
       duration: const Duration(seconds: 4),
       vsync: this,
-    )..repeat(reverse: true);
+    );
+    unawaited(_controller.repeat(reverse: true));
 
     _animation = Tween<Offset>(
       begin: Offset.zero,
@@ -1139,8 +1140,9 @@ class _PulsingGlowState extends State<_PulsingGlow>
     _controller = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
-    )..repeat(reverse: true);
-    
+    );
+    unawaited(_controller.repeat(reverse: true));
+
     _glowAnimation = Tween<double>(begin: 2.0, end: 12.0).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
@@ -1276,7 +1278,8 @@ class _RotatingWidgetState extends State<_RotatingWidget>
     _controller = AnimationController(
         duration: const Duration(seconds: 20), // Slower, more majestic rotation
         vsync: this,
-    )..repeat();
+    );
+    unawaited(_controller.repeat());
   }
 
   @override

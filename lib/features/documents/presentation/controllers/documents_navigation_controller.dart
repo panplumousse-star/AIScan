@@ -26,7 +26,7 @@ class DocumentsNavigationController {
     unawaited(HapticFeedback.lightImpact());
     unawaited(ref.read(audioServiceProvider).playScanLaunch());
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    Navigator.of(context).push(
+    unawaited(Navigator.of(context).push(
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 200),
         reverseTransitionDuration: const Duration(milliseconds: 200),
@@ -44,7 +44,7 @@ class DocumentsNavigationController {
           );
         },
       ),
-    );
+    ));
   }
 
   /// Navigates to the document detail screen.
@@ -56,7 +56,7 @@ class DocumentsNavigationController {
     Document document,
     WidgetRef ref,
   ) {
-    Navigator.of(context)
+    unawaited(Navigator.of(context)
         .push(
       MaterialPageRoute(
         builder: (navContext) => DocumentDetailScreen(
@@ -64,7 +64,7 @@ class DocumentsNavigationController {
           onDelete: () {
             Navigator.of(navContext).pop();
             // Refresh the documents list
-            ref.read(documentsScreenProvider.notifier).loadDocuments();
+            unawaited(ref.read(documentsScreenProvider.notifier).loadDocuments());
           },
           onExport: (doc, imageBytes) async {
             final exportService = ref.read(documentExportServiceProvider);
@@ -99,8 +99,8 @@ class DocumentsNavigationController {
     )
         .then((_) {
       // Refresh documents when returning from detail screen
-      ref.read(documentsScreenProvider.notifier).loadDocuments();
-    });
+      unawaited(ref.read(documentsScreenProvider.notifier).loadDocuments());
+    }));
   }
 
   /// Navigates to the OCR results screen.
@@ -112,7 +112,7 @@ class DocumentsNavigationController {
     Uint8List imageBytes,
     WidgetRef ref,
   ) {
-    Navigator.of(context).push(
+    unawaited(Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => OcrResultsScreen(
           document: document,
@@ -136,7 +136,7 @@ class DocumentsNavigationController {
           },
         ),
       ),
-    );
+    ));
   }
 
   /// Navigates to the image enhancement screen.
@@ -147,13 +147,13 @@ class DocumentsNavigationController {
     Document document,
     Uint8List imageBytes,
   ) {
-    Navigator.of(context).push(
+    unawaited(Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => EnhancementScreen(
           imageBytes: imageBytes,
           title: document.title,
         ),
       ),
-    );
+    ));
   }
 }

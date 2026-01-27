@@ -828,12 +828,12 @@ abstract final class A11yAnnounce {
   ///
   /// Use for important status updates that should be spoken.
   static void announce(BuildContext context, String message) {
-    SemanticsService.announce(message, TextDirection.ltr);
+    unawaited(SemanticsService.announce(message, TextDirection.ltr));
   }
 
   /// Announces with assertive priority (interrupts current speech).
   static void announceAssertive(BuildContext context, String message) {
-    SemanticsService.announce(message, TextDirection.ltr);
+    unawaited(SemanticsService.announce(message, TextDirection.ltr));
   }
 
   /// Common announcement messages.
@@ -995,7 +995,7 @@ class AccessiblePageRoute<T> extends MaterialPageRoute<T> {
     final result = super.didPush();
     if (announceOnPush && routeAnnouncement != null) {
       unawaited(result.then((_) {
-        SemanticsService.announce(routeAnnouncement!, TextDirection.ltr);
+        unawaited(SemanticsService.announce(routeAnnouncement!, TextDirection.ltr));
       }));
     }
     return result;

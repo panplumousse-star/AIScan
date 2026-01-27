@@ -405,7 +405,7 @@ class DocumentDetailScreenNotifier
 
   @override
   void dispose() {
-    cleanup();
+    unawaited(cleanup());
     super.dispose();
   }
 }

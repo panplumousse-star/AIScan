@@ -108,7 +108,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
 
     // Load document after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initializeDocument();
+      unawaited(_initializeDocument());
     });
   }
 
@@ -528,16 +528,16 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
   ) {
     switch (action) {
       case 'share':
-        _handleShare(context, state);
+        unawaited(_handleShare(context, state));
         break;
       case 'info':
         _showDocumentInfo(context, state, Theme.of(context));
         break;
       case 'move':
-        _showMoveToFolderDialog(context, state);
+        unawaited(_showMoveToFolderDialog(context, state));
         break;
       case 'delete':
-        _showDeleteConfirmation(context, notifier);
+        unawaited(_showDeleteConfirmation(context, notifier));
         break;
     }
   }

@@ -233,11 +233,11 @@ class ScannerActionHandler {
         builder: (navContext) => DocumentsScreen(
           onScanPressed: () {
             // Navigate to scanner when scan button is pressed
-            Navigator.of(navContext).push(
+            unawaited(Navigator.of(navContext).push(
               MaterialPageRoute(
                 builder: (_) => const ScannerScreen(),
               ),
-            );
+            ));
           },
         ),
       ),

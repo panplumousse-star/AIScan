@@ -1281,7 +1281,7 @@ class SearchService {
     }
 
     // Persist to database (fire and forget)
-    _persistRecentSearchesToDatabase();
+    unawaited(_persistRecentSearchesToDatabase());
   }
 
   /// Persists the current in-memory recent searches list to the database.

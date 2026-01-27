@@ -50,7 +50,7 @@ class DocumentInfoSheet extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final l10n = AppLocalizations.of(context);
 
-    return Container(
+    return DecoratedBox(
       decoration: BoxDecoration(
         color: isDark ? Colors.black : Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),

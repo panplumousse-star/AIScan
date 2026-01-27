@@ -656,7 +656,7 @@ class DocumentCard extends StatelessWidget {
                 // Selected overlay
                 if (isSelected)
                   Positioned.fill(
-                    child: Container(
+                    child: DecoratedBox(
                       decoration: BoxDecoration(
                         color: colorScheme.primary.withValues(alpha: 0.2),
                         borderRadius: const BorderRadius.vertical(

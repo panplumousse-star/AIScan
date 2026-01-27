@@ -398,15 +398,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     child: Row(
                       children: [
                         BouncingWidget(
-                          child: Container(
+                          child: DecoratedBox(
                             decoration: BoxDecoration(
-                              color: isDark 
-                                  ? Colors.white.withValues(alpha: 0.1) 
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.1)
                                   : Colors.white.withValues(alpha: 0.5),
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: isDark 
-                                    ? Colors.white.withValues(alpha: 0.1) 
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.1)
                                     : Colors.white.withValues(alpha: 0.2),
                               ),
                             ),

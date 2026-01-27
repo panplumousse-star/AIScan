@@ -34,7 +34,7 @@ class DocumentThumbnail extends StatelessWidget {
   }
 
   Widget _buildPlaceholder() {
-    return Container(
+    return ColoredBox(
       color: theme.colorScheme.surfaceContainerHighest,
       child: Center(
         child: Icon(

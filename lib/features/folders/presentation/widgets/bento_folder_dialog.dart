@@ -186,7 +186,7 @@ class _BentoFolderDialogState extends State<BentoFolderDialog> {
                     const SizedBox(height: 20),
 
                     // Name input field
-                    Container(
+                    DecoratedBox(
                       decoration: BoxDecoration(
                         color: isDark
                             ? const Color(0xFF1E293B)

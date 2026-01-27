@@ -34,7 +34,7 @@ class DocumentPreview extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
+    return ColoredBox(
       color: theme.colorScheme.surfaceContainerLowest,
       child: InteractiveViewer(
         transformationController: transformationController,

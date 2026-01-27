@@ -46,7 +46,7 @@ class DocumentsAppBar extends StatelessWidget {
         children: [
           // Bouton retour
           BentoBouncingWidget(
-            child: Container(
+            child: DecoratedBox(
               decoration: BoxDecoration(
                 color: isDark
                     ? Colors.white.withValues(alpha: 0.1)

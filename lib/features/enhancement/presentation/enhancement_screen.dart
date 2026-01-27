@@ -713,7 +713,7 @@ class _PreviewArea extends StatelessWidget {
           // Processing indicator overlay
           if (state.isProcessing)
             Positioned.fill(
-              child: Container(
+              child: ColoredBox(
                 color: theme.brightness == Brightness.dark
                     ? Colors.black.withValues(alpha: 0.5)
                     : theme.colorScheme.surface.withValues(alpha: 0.5),
@@ -730,7 +730,7 @@ class _PreviewArea extends StatelessWidget {
   Widget _buildLoadingPlaceholder(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
+    return ColoredBox(
       color: theme.brightness == Brightness.dark
           ? Colors.black.withValues(alpha: 0.2)
           : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.1),
@@ -758,7 +758,7 @@ class _PreviewArea extends StatelessWidget {
   Widget _buildErrorPlaceholder(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
+    return ColoredBox(
       color: theme.colorScheme.errorContainer,
       child: Center(
         child: Column(
@@ -797,7 +797,7 @@ class _ControlsPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return DecoratedBox(
       decoration: BoxDecoration(
         color: theme.brightness == Brightness.dark
             ? const Color(0xFF0F172A).withValues(alpha: 0.95)

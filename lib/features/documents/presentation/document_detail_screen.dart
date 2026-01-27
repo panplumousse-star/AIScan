@@ -208,7 +208,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
             Row(
               children: [
                 // Back button with white background
-                Container(
+                DecoratedBox(
                   decoration: BoxDecoration(
                     color: isDark
                         ? Colors.white.withValues(alpha: 0.15)

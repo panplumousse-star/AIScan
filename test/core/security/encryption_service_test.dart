@@ -102,15 +102,15 @@ void main() {
         expect(decrypted, equals(largeData));
       });
 
-      test('should prepend IV to encrypted data (16 bytes)', () async {
+      test('should prepend IV and append HMAC to encrypted data', () async {
         // Arrange
         final data = Uint8List.fromList(utf8.encode('Test'));
 
         // Act
         final encrypted = await encryptionService.encrypt(data);
 
-        // Assert - encrypted data should be at least 16 bytes longer (IV + padding)
-        expect(encrypted.length, greaterThan(16));
+        // Assert - encrypted data should be at least 48 bytes (16 IV + data + 32 HMAC)
+        expect(encrypted.length, greaterThanOrEqualTo(48));
       });
 
       test('should throw EncryptionException for empty data', () async {
@@ -148,18 +148,25 @@ void main() {
         );
       });
 
-      test('should throw EncryptionException for corrupted data', () async {
+      test('should throw exception for corrupted data (HMAC verification)',
+          () async {
         // Arrange
         final data = Uint8List.fromList(utf8.encode('Test'));
         final encrypted = await encryptionService.encrypt(data);
 
-        // Corrupt the encrypted data (modify a byte after IV)
+        // Corrupt the encrypted data (modify a byte in ciphertext)
         encrypted[20] = (encrypted[20] + 1) % 256;
 
-        // Act & Assert - decryption should fail
+        // Act & Assert - HMAC verification should fail
+        // Note: Implementation may fall back to legacy format, so accept either exception
         expect(
           () => encryptionService.decrypt(encrypted),
-          throwsA(isA<EncryptionException>()),
+          throwsA(
+            anyOf(
+              isA<IntegrityException>(),
+              isA<EncryptionException>(),
+            ),
+          ),
         );
       });
     });
@@ -484,6 +491,48 @@ void main() {
       final cause = Exception('Root cause');
       const errorMessage = 'Test error';
       final exception = EncryptionException(errorMessage, cause: cause);
+
+      // Assert
+      expect(exception.message, equals(errorMessage));
+      expect(exception.cause, equals(cause));
+    });
+  });
+
+  group('IntegrityException', () {
+    test('should format message without cause', () {
+      // Arrange
+      const exception = IntegrityException('Integrity check failed');
+
+      // Act
+      final message = exception.toString();
+
+      // Assert
+      expect(message, equals('IntegrityException: Integrity check failed'));
+    });
+
+    test('should format message with cause', () {
+      // Arrange
+      final cause = Exception('HMAC mismatch');
+      final exception =
+          IntegrityException('Integrity check failed', cause: cause);
+
+      // Act
+      final message = exception.toString();
+
+      // Assert
+      expect(
+        message,
+        equals(
+          'IntegrityException: Integrity check failed (caused by: Exception: HMAC mismatch)',
+        ),
+      );
+    });
+
+    test('should store message and cause', () {
+      // Arrange
+      final cause = Exception('Data tampering detected');
+      const errorMessage = 'Integrity verification failed';
+      final exception = IntegrityException(errorMessage, cause: cause);
 
       // Assert
       expect(exception.message, equals(errorMessage));

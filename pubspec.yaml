@@ -44,6 +44,7 @@ dependencies:
   aes_encrypt_file: ^0.0.4
   local_auth: ^3.0.0
   jailbreak_root_detection: ^1.0.1
+  crypto: ^3.0.3
 
   # State Management
   flutter_riverpod: ^2.6.0
@@ -75,10 +76,6 @@ dev_dependencies:
   freezed: ^2.4.6
   json_serializable: ^6.7.1
 
-  permission_handler_platform_interface: any
-  local_auth_android: any
-  local_auth_darwin: any
-  local_auth_windows: any
 flutter:
   generate: true
   uses-material-design: true

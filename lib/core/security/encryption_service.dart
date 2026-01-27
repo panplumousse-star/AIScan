@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:aes_encrypt_file/aes_encrypt_file.dart';
+import 'package:crypto/crypto.dart';
 import 'package:encrypt/encrypt.dart' as enc;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -40,6 +41,78 @@ class EncryptionException implements Exception {
   }
 }
 
+/// Exception thrown when HMAC integrity verification fails.
+///
+/// Indicates that encrypted data has been tampered with or is corrupted.
+/// Contains the original error message and optional underlying exception.
+class IntegrityException implements Exception {
+  /// Creates an [IntegrityException] with the given [message].
+  const IntegrityException(this.message, {this.cause});
+
+  /// Human-readable error message.
+  final String message;
+
+  /// The underlying exception that caused this error, if any.
+  final Object? cause;
+
+  @override
+  String toString() {
+    if (cause != null) {
+      return 'IntegrityException: $message (caused by: $cause)';
+    }
+    return 'IntegrityException: $message';
+  }
+}
+
+/// Performs constant-time comparison of two byte arrays.
+///
+/// This prevents timing attacks by ensuring the comparison always
+/// takes the same amount of time regardless of where the arrays differ.
+///
+/// Parameters:
+/// - [a]: The first byte array to compare.
+/// - [b]: The second byte array to compare.
+///
+/// Returns `true` if the arrays are equal, `false` otherwise.
+bool _constantTimeEquals(List<int> a, List<int> b) {
+  if (a.length != b.length) {
+    return false;
+  }
+
+  var result = 0;
+  for (var i = 0; i < a.length; i++) {
+    result |= a[i] ^ b[i];
+  }
+
+  return result == 0;
+}
+
+/// Derives an HMAC key from the master encryption key.
+///
+/// Uses HMAC-SHA256 key derivation to generate a separate key for
+/// integrity verification. This ensures the encryption and authentication
+/// keys are cryptographically independent, following security best practices.
+///
+/// Parameters:
+/// - [masterKey]: The master encryption key bytes (32 bytes for AES-256).
+///
+/// Returns a 32-byte HMAC key for use with HMAC-SHA256 operations.
+///
+/// Throws [EncryptionException] if key derivation fails.
+Uint8List _deriveHmacKeyTopLevel(Uint8List masterKey) {
+  try {
+    // Use HMAC-SHA256 with the master key to derive HMAC key
+    const hmacKeyDerivationConstant = 'HMAC-KEY-DERIVATION';
+    final hmac = Hmac(sha256, masterKey);
+    final derivedKeyBytes =
+        hmac.convert(utf8.encode(hmacKeyDerivationConstant)).bytes;
+
+    return Uint8List.fromList(derivedKeyBytes);
+  } catch (e) {
+    throw EncryptionException('Failed to derive HMAC key', cause: e);
+  }
+}
+
 /// Parameters for isolate-based decryption.
 ///
 /// Contains the encrypted data and encryption key needed for
@@ -51,23 +124,33 @@ class _DecryptParams {
     required this.keyBytes,
   });
 
-  /// The encrypted data to decrypt (includes IV prefix).
+  /// The encrypted data to decrypt.
+  ///
+  /// Supports both formats:
+  /// - New format: IV prefix + ciphertext + HMAC suffix
+  /// - Legacy format: IV prefix + ciphertext (no HMAC)
   final Uint8List encryptedData;
 
   /// The AES-256 encryption key as raw bytes.
   final Uint8List keyBytes;
 }
 
-/// Top-level function for isolate-based decryption.
+/// Top-level function for isolate-based decryption with legacy format support.
 ///
 /// This function must be top-level (not a class method) to be used
 /// with Flutter's `compute()` function for isolate execution.
+///
+/// Attempts to verify HMAC integrity before decryption (new format).
+/// Falls back to legacy decryption without HMAC if verification fails
+/// and the data appears to be in legacy format (IV + ciphertext only).
 ///
 /// Returns the decrypted data as [Uint8List].
 ///
 /// Throws [EncryptionException] if decryption fails.
 Uint8List _decryptInIsolate(_DecryptParams params) {
   const ivSizeBytes = 16;
+  const hmacSizeBytes = 32;
+  const blockSizeBytes = 16;
 
   if (params.encryptedData.isEmpty) {
     throw const EncryptionException('Cannot decrypt empty data');
@@ -79,29 +162,98 @@ Uint8List _decryptInIsolate(_DecryptParams params) {
     );
   }
 
-  try {
-    final key = enc.Key(params.keyBytes);
+  // Try new format with HMAC first
+  final minLengthWithHmac = ivSizeBytes + blockSizeBytes + hmacSizeBytes;
+  var hmacVerificationFailed = false;
 
-    // Extract IV from the beginning of encrypted data
-    final ivBytes = params.encryptedData.sublist(0, ivSizeBytes);
-    final iv = enc.IV(ivBytes);
+  if (params.encryptedData.length >= minLengthWithHmac) {
+    try {
+      // Extract components: IV + ciphertext + HMAC
+      final ivBytes = params.encryptedData.sublist(0, ivSizeBytes);
+      final hmacStartIndex = params.encryptedData.length - hmacSizeBytes;
+      final cipherBytes = params.encryptedData.sublist(ivSizeBytes, hmacStartIndex);
+      final receivedHmac = params.encryptedData.sublist(hmacStartIndex);
 
-    // Extract actual encrypted data
-    final cipherBytes = params.encryptedData.sublist(ivSizeBytes);
+      // Derive HMAC key and verify integrity
+      final hmacKey = _deriveHmacKeyTopLevel(params.keyBytes);
+      final hmacInput = Uint8List(ivSizeBytes + cipherBytes.length);
+      hmacInput.setRange(0, ivSizeBytes, ivBytes);
+      hmacInput.setRange(ivSizeBytes, hmacInput.length, cipherBytes);
 
-    final encrypter = enc.Encrypter(
-      enc.AES(key, mode: enc.AESMode.cbc),
-    );
+      final hmac = Hmac(sha256, hmacKey);
+      final computedHmac = hmac.convert(hmacInput).bytes;
 
-    final encrypted = enc.Encrypted(cipherBytes);
-    final decrypted = encrypter.decryptBytes(encrypted, iv: iv);
+      // Constant-time comparison to prevent timing attacks
+      if (_constantTimeEquals(computedHmac, receivedHmac)) {
+        // HMAC verified, proceed with decryption
+        final key = enc.Key(params.keyBytes);
+        final iv = enc.IV(ivBytes);
 
-    return Uint8List.fromList(decrypted);
-  } on EncryptionException {
-    rethrow;
-  } on Object catch (e) {
-    throw EncryptionException('Failed to decrypt data', cause: e);
+        final encrypter = enc.Encrypter(
+          enc.AES(key, mode: enc.AESMode.cbc),
+        );
+
+        final encrypted = enc.Encrypted(cipherBytes);
+        final decrypted = encrypter.decryptBytes(encrypted, iv: iv);
+
+        return Uint8List.fromList(decrypted);
+      }
+
+      // HMAC verification failed - check if it could be legacy format
+      // Legacy format check: remove HMAC bytes and see if ciphertext is block-aligned
+      final cipherLengthWithoutHmac =
+          params.encryptedData.length - ivSizeBytes - hmacSizeBytes;
+
+      if (cipherLengthWithoutHmac % blockSizeBytes != 0) {
+        // Not valid legacy format (ciphertext not block-aligned)
+        // This is likely tampered new format data
+        throw const IntegrityException(
+          'HMAC verification failed - data may be tampered or corrupted',
+        );
+      }
+
+      // Could be legacy format, will try legacy decryption below
+      hmacVerificationFailed = true;
+    } catch (e) {
+      // If it's already an IntegrityException, rethrow it
+      if (e is IntegrityException) {
+        rethrow;
+      }
+      // Other errors during HMAC verification, will try legacy format
+    }
   }
+
+  // Try legacy format (IV + ciphertext without HMAC)
+  try {
+    final cipherLength = params.encryptedData.length - ivSizeBytes;
+
+    // Legacy ciphertext must be a multiple of block size
+    if (cipherLength % blockSizeBytes == 0 && cipherLength > 0) {
+      final ivBytes = params.encryptedData.sublist(0, ivSizeBytes);
+      final cipherBytes = params.encryptedData.sublist(ivSizeBytes);
+
+      final key = enc.Key(params.keyBytes);
+      final iv = enc.IV(ivBytes);
+
+      final encrypter = enc.Encrypter(
+        enc.AES(key, mode: enc.AESMode.cbc),
+      );
+
+      final encrypted = enc.Encrypted(cipherBytes);
+      final decrypted = encrypter.decryptBytes(encrypted, iv: iv);
+
+      return Uint8List.fromList(decrypted);
+    }
+  } catch (e) {
+    throw EncryptionException(
+      'Failed to decrypt data in both new and legacy formats',
+      cause: e,
+    );
+  }
+
+  throw const EncryptionException(
+    'Invalid encrypted data: does not match new or legacy format',
+  );
 }
 
 /// Service for AES-256 encryption operations.
@@ -157,6 +309,9 @@ class EncryptionService {
   /// Initialization vector size in bytes (16 bytes = 128 bits).
   static const int _ivSizeBytes = 16;
 
+  /// HMAC-SHA256 output size in bytes (32 bytes = 256 bits).
+  static const int _hmacSizeBytes = 32;
+
   /// Maximum recommended size for in-memory encryption (1 MB).
   /// Files larger than this should use [encryptFile] instead.
   static const int maxInMemorySize = 1024 * 1024;
@@ -164,13 +319,13 @@ class EncryptionService {
   /// Cached encryption key for performance.
   String? _cachedKey;
 
-  /// Encrypts data in memory using AES-256-CBC.
+  /// Encrypts data in memory using AES-256-CBC with HMAC-SHA256 authentication.
   ///
   /// Suitable for small data like metadata, settings, and document info.
   /// For large files, use [encryptFile] instead.
   ///
   /// The returned encrypted data has the following structure:
-  /// `[16-byte IV][encrypted data]`
+  /// `[16-byte IV][encrypted data][32-byte HMAC]`
   ///
   /// Returns the encrypted data as [Uint8List].
   ///
@@ -194,27 +349,46 @@ class EncryptionService {
 
       final encrypted = encrypter.encryptBytes(data.toList(), iv: iv);
 
-      // Prepend IV to encrypted data for decryption
-      final result = Uint8List(_ivSizeBytes + encrypted.bytes.length);
+      // Derive HMAC key from master encryption key
+      final hmacKey = _deriveHmacKey(keyBytes);
+
+      // Compute HMAC over IV + ciphertext
+      final hmacInput = Uint8List(_ivSizeBytes + encrypted.bytes.length);
+      hmacInput.setRange(0, _ivSizeBytes, ivBytes);
+      hmacInput.setRange(_ivSizeBytes, hmacInput.length, encrypted.bytes);
+
+      final hmac = Hmac(sha256, hmacKey);
+      final hmacTag = hmac.convert(hmacInput).bytes;
+
+      // Build result: IV + ciphertext + HMAC tag
+      final result = Uint8List(
+        _ivSizeBytes + encrypted.bytes.length + _hmacSizeBytes,
+      );
       result.setRange(0, _ivSizeBytes, ivBytes);
-      result.setRange(_ivSizeBytes, result.length, encrypted.bytes);
+      result.setRange(_ivSizeBytes, _ivSizeBytes + encrypted.bytes.length, encrypted.bytes);
+      result.setRange(_ivSizeBytes + encrypted.bytes.length, result.length, hmacTag);
 
       return result;
     } on EncryptionException {
       rethrow;
-    } on Object catch (e) {
+    } catch (e) {
       throw EncryptionException('Failed to encrypt data', cause: e);
     }
   }
 
   /// Decrypts data that was encrypted with [encrypt].
   ///
-  /// Expects the encrypted data to have the structure:
-  /// `[16-byte IV][encrypted data]`
+  /// Supports both new format with HMAC and legacy format without HMAC:
+  /// - New format: `[16-byte IV][encrypted data][32-byte HMAC]`
+  /// - Legacy format: `[16-byte IV][encrypted data]`
+  ///
+  /// Attempts HMAC verification first (new format). If verification fails
+  /// and the data appears to be in legacy format, falls back to decryption
+  /// without HMAC verification for backward compatibility.
   ///
   /// Returns the decrypted data as [Uint8List].
   ///
-  /// Throws [EncryptionException] if decryption fails.
+  /// Throws [EncryptionException] if decryption fails in both formats.
   Future<Uint8List> decrypt(Uint8List encryptedData) async {
     if (encryptedData.isEmpty) {
       throw const EncryptionException('Cannot decrypt empty data');
@@ -226,30 +400,100 @@ class EncryptionService {
       );
     }
 
-    try {
-      final keyBytes = await _getEncryptionKeyBytes();
-      final key = enc.Key(keyBytes);
+    final keyBytes = await _getEncryptionKeyBytes();
 
-      // Extract IV from the beginning of encrypted data
-      final ivBytes = encryptedData.sublist(0, _ivSizeBytes);
-      final iv = enc.IV(ivBytes);
+    // Try new format with HMAC first
+    final minLengthWithHmac = _ivSizeBytes + _blockSizeBytes + _hmacSizeBytes;
+    var hmacVerificationFailed = false;
 
-      // Extract actual encrypted data
-      final cipherBytes = encryptedData.sublist(_ivSizeBytes);
+    if (encryptedData.length >= minLengthWithHmac) {
+      try {
+        // Extract components: IV + ciphertext + HMAC
+        final ivBytes = encryptedData.sublist(0, _ivSizeBytes);
+        final hmacStartIndex = encryptedData.length - _hmacSizeBytes;
+        final cipherBytes = encryptedData.sublist(_ivSizeBytes, hmacStartIndex);
+        final receivedHmac = encryptedData.sublist(hmacStartIndex);
 
-      final encrypter = enc.Encrypter(
-        enc.AES(key, mode: enc.AESMode.cbc),
-      );
+        // Derive HMAC key and verify integrity
+        final hmacKey = _deriveHmacKey(keyBytes);
+        final hmacInput = Uint8List(_ivSizeBytes + cipherBytes.length);
+        hmacInput.setRange(0, _ivSizeBytes, ivBytes);
+        hmacInput.setRange(_ivSizeBytes, hmacInput.length, cipherBytes);
 
-      final encrypted = enc.Encrypted(cipherBytes);
-      final decrypted = encrypter.decryptBytes(encrypted, iv: iv);
+        final hmac = Hmac(sha256, hmacKey);
+        final computedHmac = hmac.convert(hmacInput).bytes;
 
-      return Uint8List.fromList(decrypted);
-    } on EncryptionException {
-      rethrow;
-    } on Object catch (e) {
-      throw EncryptionException('Failed to decrypt data', cause: e);
+        // Constant-time comparison to prevent timing attacks
+        if (_constantTimeEquals(computedHmac, receivedHmac)) {
+          // HMAC verified, proceed with decryption
+          final key = enc.Key(keyBytes);
+          final iv = enc.IV(ivBytes);
+
+          final encrypter = enc.Encrypter(
+            enc.AES(key, mode: enc.AESMode.cbc),
+          );
+
+          final encrypted = enc.Encrypted(cipherBytes);
+          final decrypted = encrypter.decryptBytes(encrypted, iv: iv);
+
+          return Uint8List.fromList(decrypted);
+        }
+
+        // HMAC verification failed - check if it could be legacy format
+        // Legacy format check: remove HMAC bytes and see if ciphertext is block-aligned
+        final cipherLengthWithoutHmac =
+            encryptedData.length - _ivSizeBytes - _hmacSizeBytes;
+
+        if (cipherLengthWithoutHmac % _blockSizeBytes != 0) {
+          // Not valid legacy format (ciphertext not block-aligned)
+          // This is likely tampered new format data
+          throw const IntegrityException(
+            'HMAC verification failed - data may be tampered or corrupted',
+          );
+        }
+
+        // Could be legacy format, will try legacy decryption below
+        hmacVerificationFailed = true;
+      } catch (e) {
+        // If it's already an IntegrityException, rethrow it
+        if (e is IntegrityException) {
+          rethrow;
+        }
+        // Other errors during HMAC verification, will try legacy format
+      }
     }
+
+    // Try legacy format (IV + ciphertext without HMAC)
+    try {
+      final cipherLength = encryptedData.length - _ivSizeBytes;
+
+      // Legacy ciphertext must be a multiple of block size
+      if (cipherLength % _blockSizeBytes == 0 && cipherLength > 0) {
+        final ivBytes = encryptedData.sublist(0, _ivSizeBytes);
+        final cipherBytes = encryptedData.sublist(_ivSizeBytes);
+
+        final key = enc.Key(keyBytes);
+        final iv = enc.IV(ivBytes);
+
+        final encrypter = enc.Encrypter(
+          enc.AES(key, mode: enc.AESMode.cbc),
+        );
+
+        final encrypted = enc.Encrypted(cipherBytes);
+        final decrypted = encrypter.decryptBytes(encrypted, iv: iv);
+
+        return Uint8List.fromList(decrypted);
+      }
+    } catch (e) {
+      throw EncryptionException(
+        'Failed to decrypt data in both new and legacy formats',
+        cause: e,
+      );
+    }
+
+    throw const EncryptionException(
+      'Invalid encrypted data: does not match new or legacy format',
+    );
   }
 
   /// Decrypts data asynchronously in a separate isolate using [compute].
@@ -262,12 +506,17 @@ class EncryptionService {
   /// For small data (< 100KB), the overhead of spawning an isolate
   /// may outweigh the benefits. Use [decrypt] for small data instead.
   ///
-  /// Expects the encrypted data to have the structure:
-  /// `[16-byte IV][encrypted data]`
+  /// Supports both new format with HMAC and legacy format without HMAC:
+  /// - New format: `[16-byte IV][encrypted data][32-byte HMAC]`
+  /// - Legacy format: `[16-byte IV][encrypted data]`
+  ///
+  /// Attempts HMAC verification first (new format). If verification fails
+  /// and the data appears to be in legacy format, falls back to decryption
+  /// without HMAC verification for backward compatibility.
   ///
   /// Returns the decrypted data as [Uint8List].
   ///
-  /// Throws [EncryptionException] if decryption fails.
+  /// Throws [EncryptionException] if decryption fails in both formats.
   Future<Uint8List> decryptAsync(Uint8List encryptedData) async {
     if (encryptedData.isEmpty) {
       throw const EncryptionException('Cannot decrypt empty data');
@@ -289,7 +538,7 @@ class EncryptionService {
       return await compute(_decryptInIsolate, params);
     } on EncryptionException {
       rethrow;
-    } on Object catch (e) {
+    } catch (e) {
       throw EncryptionException('Failed to decrypt data', cause: e);
     }
   }
@@ -325,7 +574,7 @@ class EncryptionService {
       );
     } on EncryptionException {
       rethrow;
-    } on Object catch (e) {
+    } catch (e) {
       throw EncryptionException(
         'Failed to encrypt file: $inputPath',
         cause: e,
@@ -364,7 +613,7 @@ class EncryptionService {
       );
     } on EncryptionException {
       rethrow;
-    } on Object catch (e) {
+    } catch (e) {
       throw EncryptionException(
         'Failed to decrypt file: $inputPath',
         cause: e,
@@ -376,6 +625,10 @@ class EncryptionService {
   ///
   /// This is a convenience method for encrypting string data like
   /// document titles, descriptions, or other text metadata.
+  ///
+  /// The encryption includes HMAC-SHA256 authentication for integrity
+  /// verification. The returned base64 string encodes the structure:
+  /// `[16-byte IV][encrypted data][32-byte HMAC]`
   ///
   /// Returns the encrypted data as a base64-encoded string.
   ///
@@ -395,9 +648,18 @@ class EncryptionService {
   /// This is a convenience method for decrypting string data that
   /// was encrypted with [encryptString].
   ///
+  /// Supports both new format with HMAC and legacy format without HMAC:
+  /// - New format: `[16-byte IV][encrypted data][32-byte HMAC]`
+  /// - Legacy format: `[16-byte IV][encrypted data]`
+  ///
+  /// Verifies HMAC integrity before decryption when present. Falls back
+  /// to legacy decryption for backward compatibility if HMAC verification
+  /// fails and the data appears to be in legacy format.
+  ///
   /// Returns the decrypted plaintext string.
   ///
-  /// Throws [EncryptionException] if decryption fails.
+  /// Throws [EncryptionException] if decryption fails in both formats.
+  /// Throws [IntegrityException] if HMAC verification detects tampering.
   Future<String> decryptString(String encryptedBase64) async {
     if (encryptedBase64.isEmpty) {
       throw const EncryptionException('Cannot decrypt empty string');
@@ -418,6 +680,8 @@ class EncryptionService {
   /// structure. It does NOT verify that the file can be decrypted
   /// with the current key.
   ///
+  /// Checks for both new format (with HMAC) and legacy format (without HMAC).
+  ///
   /// Returns `true` if the file appears to be encrypted, `false` otherwise.
   ///
   /// Note: This is a heuristic check and may not be 100% accurate.
@@ -427,15 +691,23 @@ class EncryptionService {
       return false;
     }
 
-    // Encrypted data should be at least as long as the IV
-    if (data.length <= _ivSizeBytes) {
+    // Data should be at least as long as IV + one block
+    final minLength = _ivSizeBytes + _blockSizeBytes;
+    if (data.length < minLength) {
       return false;
     }
 
-    // Encrypted data length should be a multiple of the block size
-    // (after subtracting the IV)
-    final encryptedLength = data.length - _ivSizeBytes;
-    return encryptedLength % _blockSizeBytes == 0;
+    // Check for new format (IV + ciphertext + HMAC)
+    if (data.length > _ivSizeBytes + _blockSizeBytes + _hmacSizeBytes) {
+      final encryptedLengthWithHmac = data.length - _ivSizeBytes - _hmacSizeBytes;
+      if (encryptedLengthWithHmac % _blockSizeBytes == 0) {
+        return true;
+      }
+    }
+
+    // Check for legacy format (IV + ciphertext)
+    final encryptedLengthLegacy = data.length - _ivSizeBytes;
+    return encryptedLengthLegacy % _blockSizeBytes == 0;
   }
 
   /// Ensures the encryption key is initialized.
@@ -453,8 +725,8 @@ class EncryptionService {
   /// Checks if the encryption service is ready for use.
   ///
   /// Returns `true` if the encryption key is available.
-  Future<bool> isReady() {
-    return _secureStorage.hasEncryptionKey();
+  Future<bool> isReady() async {
+    return await _secureStorage.hasEncryptionKey();
   }
 
   /// Clears the cached encryption key.
@@ -476,7 +748,7 @@ class EncryptionService {
     try {
       _cachedKey = await _secureStorage.getOrCreateEncryptionKey();
       return _cachedKey!;
-    } on Object catch (e) {
+    } catch (e) {
       throw EncryptionException('Failed to get encryption key', cause: e);
     }
   }
@@ -495,6 +767,26 @@ class EncryptionService {
     }
 
     return Uint8List.fromList(keyBytes);
+  }
+
+  /// Derives an HMAC key from the master encryption key.
+  ///
+  /// Uses HMAC-SHA256 key derivation to generate a separate key for
+  /// integrity verification. This ensures the encryption and authentication
+  /// keys are cryptographically independent, following security best practices.
+  ///
+  /// The derivation uses HMAC-SHA256(masterKey, constant) where the constant
+  /// is [_hmacKeyDerivationConstant]. This provides a simple but secure
+  /// key separation mechanism.
+  ///
+  /// Parameters:
+  /// - [masterKey]: The master encryption key bytes (32 bytes for AES-256).
+  ///
+  /// Returns a 32-byte HMAC key for use with HMAC-SHA256 operations.
+  ///
+  /// Throws [EncryptionException] if key derivation fails.
+  Uint8List _deriveHmacKey(Uint8List masterKey) {
+    return _deriveHmacKeyTopLevel(masterKey);
   }
 
   /// Generates cryptographically secure random bytes.

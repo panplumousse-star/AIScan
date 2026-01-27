@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "032-implement-secure-file-deletion-for-temporary-decry",
+  "spec": "033-add-integrity-verification-hmac-for-encrypted-file",
   "state": "building",
   "subtasks": {
-    "completed": 9,
-    "total": 10,
+    "completed": 17,
+    "total": 19,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Security Verification and Testing",
+    "current": "Integration and Verification",
     "id": null,
-    "total": 2
+    "total": 3
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 11,
-    "started_at": "2026-01-26T17:25:57.074863"
+    "number": 19,
+    "started_at": "2026-01-26T17:25:53.947125"
   },
-  "last_update": "2026-01-26T17:54:57.770114"
+  "last_update": "2026-01-26T18:07:35.776791"
 }

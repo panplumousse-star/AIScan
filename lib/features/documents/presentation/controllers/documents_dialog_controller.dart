@@ -124,7 +124,7 @@ class DocumentsDialogController {
       ),
     );
 
-    if (confirmed == true) {
+    if (confirmed ?? false) {
       await notifier.deleteAllSelected();
     }
   }

@@ -371,7 +371,7 @@ class SearchOptions {
       includeSnippets: includeSnippets ?? this.includeSnippets,
       snippetLength: snippetLength ?? this.snippetLength,
       includeTags: includeTags ?? this.includeTags,
-      folderId: clearFolderId == true ? null : (folderId ?? this.folderId),
+      folderId: (clearFolderId ?? false) ? null : (folderId ?? this.folderId),
       favoritesOnly: favoritesOnly ?? this.favoritesOnly,
       hasOcrOnly: hasOcrOnly ?? this.hasOcrOnly,
       sortBy: sortBy ?? this.sortBy,

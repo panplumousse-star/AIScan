@@ -378,7 +378,7 @@ abstract final class ImageOptimization {
   }) {
     // Adjust pixel ratio for low-end devices
     double effectiveRatio = devicePixelRatio;
-    if (devicePerformance?.isLowEndDevice == true) {
+    if (devicePerformance?.isLowEndDevice ?? false) {
       effectiveRatio = devicePixelRatio.clamp(1.0, 2.0);
     }
 
@@ -431,7 +431,7 @@ abstract final class ImageOptimization {
 
     // Apply device pixel ratio
     double effectiveRatio = devicePixelRatio;
-    if (devicePerformance?.isLowEndDevice == true) {
+    if (devicePerformance?.isLowEndDevice ?? false) {
       effectiveRatio = effectiveRatio.clamp(1.0, 1.5);
     }
 

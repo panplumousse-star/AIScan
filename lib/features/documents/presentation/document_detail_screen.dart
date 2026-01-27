@@ -855,7 +855,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
       ),
     );
 
-    if (confirmed == true) {
+    if (confirmed ?? false) {
       final success = await notifier.deleteDocument();
       if (success && context.mounted) {
         widget.onDelete?.call();

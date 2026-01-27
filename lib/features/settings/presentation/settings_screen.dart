@@ -876,7 +876,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
       );
 
-      if (confirmed == true) {
+      if (confirmed ?? false) {
         await ref
             .read(settingsScreenProvider.notifier)
             .setBiometricLockEnabled(true);

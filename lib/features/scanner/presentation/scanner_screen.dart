@@ -118,7 +118,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
           _scanWasActive &&
           !next.isScanning &&
           !next.hasResult &&
-          previous?.isScanning == true) {
+          (previous?.isScanning ?? false)) {
         Navigator.of(context).pop();
         return;
       }
@@ -186,7 +186,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
         ),
         onDelete: () async {
           final shouldDiscard = await _showDiscardDialog(context);
-          if (shouldDiscard == true) {
+          if (shouldDiscard ?? false) {
             await notifier.discardScan();
             if (context.mounted) {
               Navigator.of(context).pop();

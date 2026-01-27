@@ -88,7 +88,7 @@ class ScannerPermissionHandler {
       if (!context.mounted) return false;
 
       final shouldOpenSettings = await showCameraSettingsDialog(context);
-      if (shouldOpenSettings == true) {
+      if (shouldOpenSettings ?? false) {
         await permissionService.openSettings();
       }
       return false;

@@ -638,7 +638,7 @@ class _EnhancementScreenWidgetState extends ConsumerState<EnhancementScreen> {
         isDestructive: true,
       );
 
-      if (shouldDiscard == true && mounted) {
+      if ((shouldDiscard ?? false) && mounted) {
         // ignore: use_build_context_synchronously
         Navigator.of(context).pop();
       }

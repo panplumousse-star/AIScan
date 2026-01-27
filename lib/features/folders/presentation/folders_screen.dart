@@ -764,7 +764,7 @@ class _FoldersScreenWidgetState extends ConsumerState<FoldersScreen> {
       speechBubbleText: 'Are you sure?',
     );
 
-    if (confirmed == true) {
+    if (confirmed ?? false) {
       await notifier.deleteSelected();
     }
   }
@@ -785,7 +785,7 @@ class _FoldersScreenWidgetState extends ConsumerState<FoldersScreen> {
       speechBubbleText: 'Are you sure?',
     );
 
-    if (confirmed == true) {
+    if (confirmed ?? false) {
       await notifier.deleteFolder(folder.id);
     }
   }

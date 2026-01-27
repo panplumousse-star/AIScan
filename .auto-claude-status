@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "070-extract-shared-interactive-widgets-to-core",
+  "spec": "075-parallelize-startup-service-initialization-in-main",
   "state": "building",
   "subtasks": {
-    "completed": 5,
+    "completed": 4,
     "total": 6,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Verify Extraction Complete",
+    "current": "Testing and Verification",
     "id": null,
-    "total": 6
+    "total": 3
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 1,
-    "started_at": "2026-01-27T14:12:36.365137"
+    "number": 6,
+    "started_at": "2026-01-27T14:29:17.203552"
   },
-  "last_update": "2026-01-27T14:12:36.419670"
+  "last_update": "2026-01-27T14:41:12.510574"
 }

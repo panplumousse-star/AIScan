@@ -246,8 +246,6 @@ class SecureStorageService {
   Future<String> getOrCreateEncryptionKey() async {
     // Return cached key if available (prevents race conditions)
     if (_cachedEncryptionKey != null) {
-      debugPrint(
-          'SecureStorage: Using CACHED key (first 8 chars: ${_cachedEncryptionKey!.substring(0, 8)})');
       return _cachedEncryptionKey!;
     }
 
@@ -263,8 +261,6 @@ class SecureStorageService {
     try {
       final existingKey = await getEncryptionKey();
       if (existingKey != null) {
-        debugPrint(
-            'SecureStorage: Using EXISTING key (first 8 chars: ${existingKey.substring(0, 8)})');
         _cachedEncryptionKey = existingKey;
         _keyGenerationCompleter!.complete(existingKey);
         return existingKey;
@@ -274,8 +270,6 @@ class SecureStorageService {
       final newKey = _generateSecureRandomBytes(_keyLengthBytes);
       final encodedKey = base64Encode(newKey);
       await storeEncryptionKey(encodedKey);
-      debugPrint(
-          'SecureStorage: NEW key stored (first 8 chars: ${encodedKey.substring(0, 8)})');
       _cachedEncryptionKey = encodedKey;
       _keyGenerationCompleter!.complete(encodedKey);
       return encodedKey;

@@ -1046,20 +1046,65 @@ class SearchService {
   }
 
   /// Builds full search results with documents and snippets.
+  ///
+  /// Uses batch query pattern to eliminate N+1 query problems:
+  /// - Before: 1 + N + N queries (1 per document, N for page paths, N for tags)
+  /// - After: 1 + 1 + 1 = 3 queries total
   Future<List<SearchResult>> _buildSearchResults(
     List<_RawSearchResult> rawResults,
     String query,
     SearchOptions options,
   ) async {
-    final results = <SearchResult>[];
+    // Return early if no results
+    if (rawResults.isEmpty) {
+      return [];
+    }
 
-    for (final raw in rawResults) {
-      // Get full document
-      final document = await _documentRepository.getDocument(
-        raw.documentId,
-        includeTags: options.includeTags,
+    // Step 1: Extract all document IDs
+    final documentIds = rawResults
+        .map((result) => result.documentId)
+        .toList();
+
+    // Step 2: Fetch all documents metadata using SQL IN clause
+    final placeholders = List.filled(documentIds.length, '?').join(',');
+    final documentResults = await _database.query(
+      DatabaseHelper.tableDocuments,
+      where: '${DatabaseHelper.columnId} IN ($placeholders)',
+      whereArgs: documentIds,
+    );
+
+    // Return early if no documents found
+    if (documentResults.isEmpty) {
+      return [];
+    }
+
+    // Step 3: Batch fetch page paths for all documents in a single query
+    final allPagesPaths =
+        await _database.getBatchDocumentPagePaths(documentIds);
+
+    // Step 4: Batch fetch tags for all documents in a single query if requested
+    Map<String, List<String>>? allTags;
+    if (options.includeTags) {
+      allTags = await _database.getBatchDocumentTags(documentIds);
+    }
+
+    // Step 5: Build Document objects using the batch-fetched data
+    final documentsMap = <String, Document>{};
+    for (final result in documentResults) {
+      final docId = result[DatabaseHelper.columnId] as String;
+      final pagesPaths = allPagesPaths[docId] ?? [];
+      final tags = options.includeTags ? allTags![docId] : null;
+      documentsMap[docId] = Document.fromMap(
+        result,
+        pagesPaths: pagesPaths,
+        tags: tags,
       );
+    }
 
+    // Build search results in the same order as rawResults
+    final results = <SearchResult>[];
+    for (final raw in rawResults) {
+      final document = documentsMap[raw.documentId];
       if (document == null) continue;
 
       // Determine matched fields

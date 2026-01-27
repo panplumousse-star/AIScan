@@ -1,4 +1,3 @@
-import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -930,7 +929,6 @@ void main() {
         success: true,
         hasSensitiveData: true,
         detectionResult: detectionResult,
-        errorMessage: null,
         willAutoClear: true,
         autoClearDuration: const Duration(seconds: 30),
       );

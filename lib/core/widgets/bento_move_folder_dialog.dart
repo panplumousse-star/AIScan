@@ -138,7 +138,8 @@ class _BentoMoveToFolderDialogState extends State<BentoMoveToFolderDialog> {
                             children: [
                               Text(
                                 widget.title ?? _getDefaultTitle(l10n),
-                                style: TextStyle(fontFamily: 'Outfit', 
+                                style: TextStyle(
+                                  fontFamily: 'Outfit',
                                   fontSize: 20,
                                   fontWeight: FontWeight.w700,
                                   color: theme.colorScheme.onSurface,
@@ -149,7 +150,8 @@ class _BentoMoveToFolderDialogState extends State<BentoMoveToFolderDialog> {
                                 widget.subtitle ??
                                     (l10n?.chooseDestinationFolder ??
                                         'Choose a destination folder'),
-                                style: TextStyle(fontFamily: 'Outfit', 
+                                style: TextStyle(
+                                  fontFamily: 'Outfit',
                                   fontSize: 12,
                                   color: theme.colorScheme.onSurface
                                       .withValues(alpha: 0.5),
@@ -250,7 +252,8 @@ class _BentoMoveToFolderDialogState extends State<BentoMoveToFolderDialog> {
                             ),
                             child: Text(
                               l10n?.cancel ?? 'Cancel',
-                              style: TextStyle(fontFamily: 'Outfit', 
+                              style: TextStyle(
+                                fontFamily: 'Outfit',
                                 fontWeight: FontWeight.w600,
                                 color: theme.colorScheme.onSurface
                                     .withValues(alpha: 0.6),
@@ -273,7 +276,8 @@ class _BentoMoveToFolderDialogState extends State<BentoMoveToFolderDialog> {
                               widget.selectedCount == 1
                                   ? (l10n?.save ?? 'Save')
                                   : (l10n?.move ?? 'Move'),
-                              style: TextStyle(fontFamily: 'Outfit', 
+                              style: TextStyle(
+                                fontFamily: 'Outfit',
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -350,7 +354,8 @@ class _FolderOption extends StatelessWidget {
                   children: [
                     Text(
                       name,
-                      style: TextStyle(fontFamily: 'Outfit', 
+                      style: TextStyle(
+                        fontFamily: 'Outfit',
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
                         color: isDark ? Colors.white : Colors.black87,
@@ -359,7 +364,8 @@ class _FolderOption extends StatelessWidget {
                     if (subtitle != null)
                       Text(
                         subtitle!,
-                        style: TextStyle(fontFamily: 'Outfit', 
+                        style: TextStyle(
+                          fontFamily: 'Outfit',
                           fontSize: 11,
                           color: isDark
                               ? Colors.white.withValues(alpha: 0.5)

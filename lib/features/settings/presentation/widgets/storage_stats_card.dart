@@ -27,7 +27,9 @@ class StorageStatsCard extends StatelessWidget {
     return BentoCard(
       borderRadius: 32,
       padding: const EdgeInsets.all(24),
-      backgroundColor: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : Colors.white,
+      backgroundColor: isDark
+          ? const Color(0xFF000000).withValues(alpha: 0.6)
+          : Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -36,12 +38,16 @@ class StorageStatsCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEEF2FF),
+                  color: isDark
+                      ? const Color(0xFF1E293B)
+                      : const Color(0xFFEEF2FF),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   Icons.storage_rounded,
-                  color: isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1),
+                  color: isDark
+                      ? const Color(0xFF818CF8)
+                      : const Color(0xFF6366F1),
                   size: 20,
                 ),
               ),
@@ -52,7 +58,9 @@ class StorageStatsCard extends StatelessWidget {
                   fontFamily: 'Outfit',
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
+                  color: isDark
+                      ? const Color(0xFFF1F5F9)
+                      : const Color(0xFF1E1B4B),
                 ),
               ),
             ],
@@ -90,7 +98,9 @@ class StorageStatsCard extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Divider(
-              color: isDark ? const Color(0xFF334155).withValues(alpha: 0.5) : const Color(0xFFE2E8F0),
+              color: isDark
+                  ? const Color(0xFF334155).withValues(alpha: 0.5)
+                  : const Color(0xFFE2E8F0),
               height: 1,
             ),
             const SizedBox(height: 16),
@@ -139,7 +149,8 @@ class StorageStatsCard extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
-            color: (isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1)).withValues(alpha: 0.1),
+            color: (isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1))
+                .withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(

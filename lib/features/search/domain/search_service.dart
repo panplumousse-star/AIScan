@@ -281,9 +281,9 @@ class SearchOptions {
     bool includeSnippets = false,
   })  : field = SearchField.title,
         matchMode = SearchMatchMode.prefix,
-        this.limit = limit,
+        limit = limit,
         offset = 0,
-        this.includeSnippets = includeSnippets,
+        includeSnippets = includeSnippets,
         snippetLength = 100,
         includeTags = false,
         folderId = null,
@@ -298,10 +298,10 @@ class SearchOptions {
     int snippetLength = 200,
   })  : field = SearchField.ocrText,
         matchMode = SearchMatchMode.phrase,
-        this.limit = limit,
+        limit = limit,
         offset = 0,
         includeSnippets = true,
-        this.snippetLength = snippetLength,
+        snippetLength = snippetLength,
         includeTags = false,
         folderId = null,
         favoritesOnly = false,
@@ -477,11 +477,11 @@ class SearchResults {
   const SearchResults.empty({
     String query = '',
     SearchOptions options = const SearchOptions.defaults(),
-  })  : this.query = query,
+  })  : query = query,
         results = const [],
         totalCount = 0,
         searchTimeMs = 0,
-        this.options = options;
+        options = options;
 
   /// The original search query.
   final String query;

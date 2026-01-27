@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -91,7 +90,6 @@ void main() {
     originalFileName: 'scan.jpg',
     fileSize: 1024,
     mimeType: 'image/jpeg',
-    ocrStatus: OcrStatus.pending,
     createdAt: DateTime.parse('2026-01-11T10:00:00.000Z'),
     updatedAt: DateTime.parse('2026-01-11T10:00:00.000Z'),
   );
@@ -413,7 +411,7 @@ void main() {
       // Arrange
       const options1 = ScannerOptions(pageLimit: 50);
       const options2 = ScannerOptions(pageLimit: 50);
-      const options3 = ScannerOptions(pageLimit: 100);
+      const options3 = ScannerOptions();
 
       // Assert
       expect(options1, equals(options2));
@@ -460,7 +458,7 @@ void main() {
 
     test('should map to correct ML Kit ScannerMode', () {
       // Full mode
-      const fullOptions = ScannerOptions(scannerMode: ScanMode.full);
+      const fullOptions = ScannerOptions();
       expect(fullOptions.toMlKitOptions().mode, equals(ScannerMode.full));
 
       // Filter mode

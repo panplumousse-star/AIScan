@@ -40,7 +40,6 @@ void main() {
     pageCount: 1,
     fileSize: 2048,
     mimeType: 'image/jpeg',
-    ocrStatus: OcrStatus.pending,
     createdAt: DateTime.parse('2026-01-11T10:00:00.000Z'),
     updatedAt: DateTime.parse('2026-01-11T10:00:00.000Z'),
   );
@@ -69,7 +68,6 @@ void main() {
     pageCount: 3,
     fileSize: 8192,
     mimeType: 'application/pdf',
-    ocrStatus: OcrStatus.pending,
     createdAt: DateTime.parse('2026-01-11T11:00:00.000Z'),
     updatedAt: DateTime.parse('2026-01-11T11:00:00.000Z'),
   );
@@ -205,7 +203,6 @@ void main() {
           // Act - Step 3: Extract text from document
           final result = await mockOcrService.extractTextFromFile(
             decryptedPath,
-            options: const OcrOptions.document(),
           );
 
           // Assert - OCR succeeded
@@ -217,7 +214,6 @@ void main() {
           final updatedDoc = await mockDocumentRepository.updateDocumentOcr(
             testDocument.id,
             result.text,
-            status: OcrStatus.completed,
           );
 
           // Assert - Document updated
@@ -238,7 +234,6 @@ void main() {
             mockDocumentRepository.updateDocumentOcr(
               testDocument.id,
               result.text,
-              status: OcrStatus.completed,
             ),
           ).called(1);
         },
@@ -296,8 +291,6 @@ void main() {
         // Act - Extract text from all pages
         final result = await mockOcrService.extractTextFromMultipleFiles(
           imagePaths,
-          options: const OcrOptions.document(),
-          separator: '\n\n',
         );
 
         // Assert
@@ -319,7 +312,7 @@ void main() {
           final imagePaths = await createTestImageFiles(testDir, 3);
 
           final progressUpdates = <Map<String, dynamic>>[];
-          final progressCallback = (
+          void progressCallback(
             int current,
             int total,
             OcrResult partial,
@@ -329,7 +322,7 @@ void main() {
               'total': total,
               'hasText': partial.hasText,
             });
-          };
+          }
 
           final finalResult = const OcrResult(
             text: 'Combined text from all pages',
@@ -366,7 +359,6 @@ void main() {
           // Act
           final result = await mockOcrService.extractTextWithProgress(
             imagePaths,
-            options: const OcrOptions.document(),
             onProgress: progressCallback,
           );
 
@@ -464,14 +456,12 @@ void main() {
         when(
           mockOcrService.extractTextFromFile(
             testImagePath,
-            options: options,
           ),
         ).thenAnswer((_) async => result);
 
         // Act
         final extracted = await mockOcrService.extractTextFromFile(
           testImagePath,
-          options: options,
         );
 
         // Assert
@@ -634,14 +624,12 @@ void main() {
           when(mockDocumentRepository.updateDocumentOcr(
             testDocument.id,
             ocrText,
-            status: OcrStatus.completed,
           )).thenAnswer((_) async => testDocumentWithOcr);
 
           // Act - Step 1: Update document with OCR text
           final updatedDoc = await mockDocumentRepository.updateDocumentOcr(
             testDocument.id,
             ocrText,
-            status: OcrStatus.completed,
           );
           expect(updatedDoc.hasOcrText, isTrue);
 
@@ -747,7 +735,6 @@ void main() {
         expect(
           () => mockOcrService.extractTextFromFile(
             testImagePath,
-            options: const OcrOptions.document(),
           ),
           throwsA(
             isA<OcrException>().having(
@@ -778,7 +765,6 @@ void main() {
         expect(
           () => mockOcrService.extractTextFromFile(
             invalidPath,
-            options: const OcrOptions.document(),
           ),
           throwsA(
             isA<OcrException>().having(
@@ -848,7 +834,6 @@ void main() {
         expect(
           () => mockOcrService.extractTextFromFile(
             corruptedPath,
-            options: const OcrOptions.document(),
           ),
           throwsA(isA<OcrException>()),
         );
@@ -870,7 +855,6 @@ void main() {
         expect(
           () => mockOcrService.extractTextFromBytes(
             Uint8List(0),
-            options: const OcrOptions.document(),
           ),
           throwsA(
             isA<OcrException>().having(
@@ -914,7 +898,6 @@ void main() {
         try {
           await mockOcrService.extractTextFromFile(
             testImagePath,
-            options: const OcrOptions.document(),
           );
         } on OcrException catch (e) {
           caughtException = e;
@@ -1047,7 +1030,6 @@ void main() {
         const options = OcrOptions(
           pageSegmentationMode: OcrPageSegmentationMode.singleBlock,
           engineMode: OcrEngineMode.combined,
-          preserveInterwordSpaces: true,
           characterWhitelist: 'ABC123',
         );
 
@@ -1283,7 +1265,6 @@ void main() {
           mockDocumentRepository.updateDocumentOcr(
             testDocument.id,
             ocrResult.text,
-            status: OcrStatus.completed,
           ),
         ).thenAnswer((_) async => documentWithOcr);
 
@@ -1308,7 +1289,6 @@ void main() {
         // Act - Step 3: Perform OCR
         final ocr = await mockOcrService.extractTextFromFile(
           decryptedPath,
-          options: const OcrOptions.document(),
         );
         expect(ocr.hasText, isTrue);
         expect(ocr.confidence, greaterThan(0.9));
@@ -1317,7 +1297,6 @@ void main() {
         final updatedDoc = await mockDocumentRepository.updateDocumentOcr(
           testDocument.id,
           ocr.text,
-          status: OcrStatus.completed,
         );
         expect(updatedDoc.ocrStatus, equals(OcrStatus.completed));
 
@@ -1376,7 +1355,6 @@ void main() {
             mockDocumentRepository.updateDocumentOcr(
               documents[i].id,
               'Document ${i + 1} content',
-              status: OcrStatus.completed,
             ),
           ).thenAnswer((_) async => documents[i].copyWith(
                 ocrStatus: OcrStatus.completed,
@@ -1392,14 +1370,12 @@ void main() {
           );
           final ocr = await mockOcrService.extractTextFromFile(
             path,
-            options: const OcrOptions.document(),
           );
           results.add(ocr);
 
           await mockDocumentRepository.updateDocumentOcr(
             documents[i].id,
             ocr.text,
-            status: OcrStatus.completed,
           );
         }
 
@@ -1415,7 +1391,6 @@ void main() {
             mockDocumentRepository.updateDocumentOcr(
               documents[i].id,
               'Document ${i + 1} content',
-              status: OcrStatus.completed,
             ),
           ).called(1);
         }

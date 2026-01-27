@@ -77,7 +77,6 @@ void showStoragePermissionDeniedSnackbar(
               onPressed: onOpenSettings,
             )
           : null,
-      duration: const Duration(seconds: 4),
     ),
   );
 }
@@ -109,7 +108,6 @@ void showShareErrorSnackbar(
               onPressed: onRetry,
             )
           : null,
-      duration: const Duration(seconds: 4),
     ),
   );
 }
@@ -129,7 +127,6 @@ void showDocumentNotFoundSnackbar(BuildContext context) {
   ScaffoldMessenger.of(context).showSnackBar(
     const SnackBar(
       content: Text('Document file not found. It may have been deleted.'),
-      duration: Duration(seconds: 4),
     ),
   );
 }
@@ -161,7 +158,6 @@ void showDecryptionFailedSnackbar(
               onPressed: onRetry,
             )
           : null,
-      duration: const Duration(seconds: 4),
     ),
   );
 }

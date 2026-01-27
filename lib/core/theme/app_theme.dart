@@ -295,7 +295,6 @@ abstract final class AppTheme {
   static ThemeData _buildLightTheme() {
     final colorScheme = ColorScheme.fromSeed(
       seedColor: AppColors.primaryLight,
-      brightness: Brightness.light,
       secondary: AppColors.secondaryLight,
       tertiary: AppColors.tertiaryLight,
       error: AppColors.errorLight,

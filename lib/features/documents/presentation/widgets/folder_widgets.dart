@@ -65,7 +65,8 @@ class _FoldersSectionState extends State<FoldersSection> {
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
           child: Text(
             'Dossiers',
-            style: TextStyle(fontFamily: 'Outfit', 
+            style: TextStyle(
+              fontFamily: 'Outfit',
               fontSize: 18,
               fontWeight: FontWeight.w700,
               color: widget.theme.colorScheme.onSurface,
@@ -139,7 +140,8 @@ class _FoldersSectionState extends State<FoldersSection> {
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
           child: Text(
             'Documents',
-            style: TextStyle(fontFamily: 'Outfit', 
+            style: TextStyle(
+              fontFamily: 'Outfit',
               fontSize: 18,
               fontWeight: FontWeight.w700,
               color: widget.theme.colorScheme.onSurface,
@@ -203,7 +205,8 @@ class AddFolderButton extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 l10n?.newFolder ?? 'New',
-                style: TextStyle(fontFamily: 'Outfit', 
+                style: TextStyle(
+                  fontFamily: 'Outfit',
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: colorScheme.primary,

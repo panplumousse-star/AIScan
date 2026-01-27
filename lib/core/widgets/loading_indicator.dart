@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 import '../accessibility/accessibility_config.dart';
@@ -355,7 +353,8 @@ class _LoadingDotsState extends State<_LoadingDots>
             final scale = _calculateScale(animValue);
 
             return Padding(
-              padding: EdgeInsets.symmetric(horizontal: _LoadingDots._spacing / 2),
+              padding:
+                  EdgeInsets.symmetric(horizontal: _LoadingDots._spacing / 2),
               child: Transform.scale(
                 scale: scale,
                 child: Container(
@@ -706,8 +705,6 @@ class _SkeletonLoaderState extends State<SkeletonLoader>
             shape: isCircle ? BoxShape.circle : BoxShape.rectangle,
             borderRadius: isCircle ? null : borderRadius,
             gradient: LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
               colors: [baseColor, highlightColor, baseColor],
               stops: [0.0, 0.5, 1.0],
               transform: _GradientTransform(_animation.value),

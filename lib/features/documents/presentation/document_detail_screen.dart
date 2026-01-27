@@ -283,7 +283,8 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                       child: Text(
                         state.document?.title ??
                             (l10n?.loading ?? 'Loading...'),
-                        style: TextStyle(fontFamily: 'Outfit', 
+                        style: TextStyle(
+                          fontFamily: 'Outfit',
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
                           color:
@@ -347,7 +348,6 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: BentoCard(
               padding: EdgeInsets.zero,
-              borderRadius: 24,
               backgroundColor: theme.brightness == Brightness.dark
                   ? Colors.white.withValues(alpha: 0.05)
                   : Colors.white.withValues(alpha: 0.8),
@@ -421,7 +421,8 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                           horizontal: 12, vertical: 8),
                       child: Text(
                         l10n?.needHelp ?? 'Need help?',
-                        style: TextStyle(fontFamily: 'Outfit', 
+                        style: TextStyle(
+                          fontFamily: 'Outfit',
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color:
@@ -434,7 +435,6 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                   BentoLevitationWidget(
                     child: BentoMascot(
                       height: 50,
-                      variant: BentoMascotVariant.waving,
                     ),
                   ),
                 ],
@@ -788,7 +788,8 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                     Text(
                       AppLocalizations.of(context)?.deleteConfirmTitle ??
                           'Delete document?',
-                      style: TextStyle(fontFamily: 'Outfit', 
+                      style: TextStyle(
+                        fontFamily: 'Outfit',
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
                         color: theme.colorScheme.onSurface,
@@ -799,7 +800,8 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                       AppLocalizations.of(context)?.deleteConfirmMessage ??
                           'This action cannot be undone. The document will be permanently deleted.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontFamily: 'Outfit', 
+                      style: TextStyle(
+                        fontFamily: 'Outfit',
                         color:
                             theme.colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
@@ -813,7 +815,9 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                             child: Text(
                                 AppLocalizations.of(context)?.cancel ??
                                     'Cancel',
-                                style: TextStyle(fontFamily: 'Outfit', )),
+                                style: TextStyle(
+                                  fontFamily: 'Outfit',
+                                )),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -834,7 +838,8 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                                 child: Text(
                                   AppLocalizations.of(context)?.delete ??
                                       'Delete',
-                                  style: TextStyle(fontFamily: 'Outfit', 
+                                  style: TextStyle(
+                                    fontFamily: 'Outfit',
                                     fontWeight: FontWeight.w700,
                                     color: Colors.redAccent,
                                   ),
@@ -941,7 +946,6 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
       context: context,
       isScrollControlled: true,
       builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.5,
         maxChildSize: 0.9,
         minChildSize: 0.3,
         expand: false,

@@ -346,7 +346,7 @@ void main() {
       // Arrange
       const state1 = LockScreenState(isAuthenticating: true, error: 'Error');
       const state2 = LockScreenState(isAuthenticating: true, error: 'Error');
-      const state3 = LockScreenState(isAuthenticating: false, error: 'Error');
+      const state3 = LockScreenState(error: 'Error');
 
       // Assert
       expect(state1, equals(state2));

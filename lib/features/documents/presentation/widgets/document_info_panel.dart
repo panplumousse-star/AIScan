@@ -98,7 +98,7 @@ class DocumentInfoPanel extends StatelessWidget {
                   : Text(
                       '${currentPage + 1} / ${document.pageCount}',
                       style: TextStyle(
-                      fontFamily: 'Outfit',
+                        fontFamily: 'Outfit',
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: theme.colorScheme.primary,
@@ -124,7 +124,7 @@ class DocumentInfoPanel extends StatelessWidget {
                 Text(
                   document.fileSizeFormatted,
                   style: TextStyle(
-                      fontFamily: 'Outfit',
+                    fontFamily: 'Outfit',
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
@@ -133,7 +133,7 @@ class DocumentInfoPanel extends StatelessWidget {
                 Text(
                   _formatDate(document.createdAt),
                   style: TextStyle(
-                      fontFamily: 'Outfit',
+                    fontFamily: 'Outfit',
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
@@ -155,7 +155,7 @@ class DocumentInfoPanel extends StatelessWidget {
               child: Text(
                 'OCR',
                 style: TextStyle(
-                      fontFamily: 'Outfit',
+                  fontFamily: 'Outfit',
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
                   color: const Color(0xFF10B981),

@@ -150,7 +150,8 @@ class DatabaseMigrationHelper {
 
       // Check if old database exists
       if (!await oldDbFile.exists()) {
-        debugPrint('DatabaseMigration: No database file found, no migration needed');
+        debugPrint(
+            'DatabaseMigration: No database file found, no migration needed');
         return false;
       }
 
@@ -167,18 +168,21 @@ class DatabaseMigrationHelper {
           await testDb.rawQuery('SELECT name FROM sqlite_master LIMIT 1');
           // If we get here, database is readable without encryption = needs migration
           await testDb.close();
-          debugPrint('DatabaseMigration: Database is unencrypted, migration needed');
+          debugPrint(
+              'DatabaseMigration: Database is unencrypted, migration needed');
           return true;
         } on Object catch (queryError) {
           // Query failed = database is encrypted, no migration needed
           await testDb.close();
-          debugPrint('DatabaseMigration: Database is already encrypted: $queryError');
+          debugPrint(
+              'DatabaseMigration: Database is already encrypted: $queryError');
           return false;
         }
       } on Object catch (e) {
         // Couldn't open database at all = might be encrypted or corrupted
         // Either way, no migration needed (will be handled by DatabaseHelper)
-        debugPrint('DatabaseMigration: Cannot open database, assuming encrypted: $e');
+        debugPrint(
+            'DatabaseMigration: Cannot open database, assuming encrypted: $e');
         return false;
       }
     } on Object catch (e) {
@@ -278,7 +282,8 @@ class DatabaseMigrationHelper {
 
       // Verify restoration was successful
       if (!await oldDbFile.exists()) {
-        throw MigrationException('Database restoration failed: file not created');
+        throw MigrationException(
+            'Database restoration failed: file not created');
       }
 
       final restoredSize = await oldDbFile.length();
@@ -644,18 +649,21 @@ class DatabaseMigrationHelper {
     // Check if table exists in old database
     final tableExists = await _tableExists(oldDb, tableName);
     if (!tableExists) {
-      debugPrint('Table $tableName does not exist in old database, skipping verification');
+      debugPrint(
+          'Table $tableName does not exist in old database, skipping verification');
       return;
     }
 
     // Get row counts from both databases
     final oldCount = Sqflite.firstIntValue(
-      await oldDb.rawQuery('SELECT COUNT(*) FROM $tableName'),
-    ) ?? 0;
+          await oldDb.rawQuery('SELECT COUNT(*) FROM $tableName'),
+        ) ??
+        0;
 
     final newCount = Sqflite.firstIntValue(
-      await newDb.rawQuery('SELECT COUNT(*) FROM $tableName'),
-    ) ?? 0;
+          await newDb.rawQuery('SELECT COUNT(*) FROM $tableName'),
+        ) ??
+        0;
 
     // Verify row counts match
     if (oldCount != newCount) {

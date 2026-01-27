@@ -98,8 +98,7 @@ class OcrResultsScreenState with _$OcrResultsScreenState {
 /// Manages OCR processing, text extraction, and user actions.
 class OcrResultsScreenNotifier extends StateNotifier<OcrResultsScreenState> {
   /// Creates an [OcrResultsScreenNotifier] with the given OCR service.
-  OcrResultsScreenNotifier(this._ocrService)
-      : super(OcrResultsScreenState());
+  OcrResultsScreenNotifier(this._ocrService) : super(OcrResultsScreenState());
 
   final OcrService _ocrService;
 
@@ -399,7 +398,8 @@ class OcrResultsScreen extends ConsumerStatefulWidget {
   final void Function(String text)? onSaveRequested;
 
   @override
-  ConsumerState<OcrResultsScreen> createState() => _OcrResultsScreenWidgetState();
+  ConsumerState<OcrResultsScreen> createState() =>
+      _OcrResultsScreenWidgetState();
 }
 
 class _OcrResultsScreenWidgetState extends ConsumerState<OcrResultsScreen> {

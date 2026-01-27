@@ -389,7 +389,8 @@ class _ActionWizardState extends State<ActionWizard>
                             controller: _folderSearchController,
                             onChanged: (value) =>
                                 setState(() => _folderSearchQuery = value),
-                            style: const TextStyle(fontFamily: 'Outfit', fontSize: 13),
+                            style: const TextStyle(
+                                fontFamily: 'Outfit', fontSize: 13),
                             decoration: InputDecoration(
                               hintText:
                                   l10n?.searchFolder ?? 'Search folder...',

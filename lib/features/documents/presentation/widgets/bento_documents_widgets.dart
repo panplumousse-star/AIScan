@@ -51,7 +51,6 @@ class BentoStatsHeader extends StatelessWidget {
       backgroundColor: isDark
           ? const Color(0xFF000000).withValues(alpha: 0.4)
           : Colors.white.withValues(alpha: 0.4),
-      padding: const EdgeInsets.all(20),
       child: Row(
         children: [
           Expanded(
@@ -323,14 +322,14 @@ class _BentoSearchBarState extends State<BentoSearchBar>
               focusNode: _focusNode,
               onChanged: widget.onChanged,
               style: TextStyle(
-              fontFamily: 'Outfit',
+                fontFamily: 'Outfit',
                 color: isDark ? Colors.white : Colors.black87,
                 fontSize: 15,
               ),
               decoration: InputDecoration(
                 hintText: l10n?.search ?? 'Search...',
                 hintStyle: TextStyle(
-              fontFamily: 'Outfit',
+                  fontFamily: 'Outfit',
                   color: isDark ? Colors.white38 : Colors.grey[500],
                   fontSize: 15,
                 ),
@@ -435,7 +434,7 @@ class _BentoSearchBarState extends State<BentoSearchBar>
             child: Text(
               '${widget.selectedCount}',
               style: TextStyle(
-              fontFamily: 'Outfit',
+                fontFamily: 'Outfit',
                 fontWeight: FontWeight.w700,
                 color: theme.colorScheme.primary,
                 fontSize: 14,
@@ -447,7 +446,7 @@ class _BentoSearchBarState extends State<BentoSearchBar>
             child: Text(
               _buildSelectionText(l10n),
               style: TextStyle(
-              fontFamily: 'Outfit',
+                fontFamily: 'Outfit',
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
                 color: isDark
@@ -552,7 +551,6 @@ class BentoFolderCard extends StatefulWidget {
 }
 
 class _BentoFolderCardState extends State<BentoFolderCard> {
-
   Color _getPastelColor() {
     // Convert folder color to pastel version
     final hsl = HSLColor.fromColor(widget.color);
@@ -599,7 +597,7 @@ class _BentoFolderCardState extends State<BentoFolderCard> {
                   Text(
                     widget.name,
                     style: TextStyle(
-              fontFamily: 'Outfit',
+                      fontFamily: 'Outfit',
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: isDark ? Colors.white : Colors.grey[800],
@@ -613,7 +611,7 @@ class _BentoFolderCardState extends State<BentoFolderCard> {
                     l10n?.nDocs(widget.documentCount) ??
                         '${widget.documentCount} docs',
                     style: TextStyle(
-              fontFamily: 'Outfit',
+                      fontFamily: 'Outfit',
                       fontSize: 12,
                       color: isDark ? Colors.white38 : Colors.grey[500],
                     ),
@@ -739,7 +737,7 @@ class _BentoDocumentCardState extends State<BentoDocumentCard> {
                     Text(
                       widget.title,
                       style: TextStyle(
-              fontFamily: 'Outfit',
+                        fontFamily: 'Outfit',
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                         color: isDark ? Colors.white : Colors.grey[800],
@@ -751,7 +749,7 @@ class _BentoDocumentCardState extends State<BentoDocumentCard> {
                     Text(
                       widget.subtitle,
                       style: TextStyle(
-              fontFamily: 'Outfit',
+                        fontFamily: 'Outfit',
                         fontSize: 13,
                         color: isDark ? Colors.white38 : Colors.grey[500],
                       ),
@@ -777,7 +775,7 @@ class _BentoDocumentCardState extends State<BentoDocumentCard> {
                                 l10n?.pageCount(widget.pageCount) ??
                                     '${widget.pageCount} page${widget.pageCount > 1 ? 's' : ''}',
                                 style: TextStyle(
-              fontFamily: 'Outfit',
+                                  fontFamily: 'Outfit',
                                   fontSize: 11,
                                   fontWeight: FontWeight.w500,
                                   color: isDark
@@ -919,14 +917,16 @@ class _BentoScanFabState extends State<BentoScanFab>
               boxShadow: [
                 // Primary gradient glow
                 BoxShadow(
-                  color: const Color(0xFF8B5CF6).withValues(alpha: _glowAnimation.value),
+                  color: const Color(0xFF8B5CF6)
+                      .withValues(alpha: _glowAnimation.value),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                   spreadRadius: -2,
                 ),
                 // Secondary blue glow
                 BoxShadow(
-                  color: const Color(0xFF3B82F6).withValues(alpha: _glowAnimation.value * 0.6),
+                  color: const Color(0xFF3B82F6)
+                      .withValues(alpha: _glowAnimation.value * 0.6),
                   blurRadius: 16,
                   offset: const Offset(0, 4),
                 ),
@@ -944,12 +944,14 @@ class _BentoScanFabState extends State<BentoScanFab>
                     gradient: AppGradients.scanner,
                     borderRadius: BorderRadius.circular(28),
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: isDark ? 0.2 : 0.25),
+                      color:
+                          Colors.white.withValues(alpha: isDark ? 0.2 : 0.25),
                       width: 1.5,
                     ),
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 16),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [

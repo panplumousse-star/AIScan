@@ -69,7 +69,8 @@ void main() async {
     final result = await migrationHelper.migrateToEncrypted();
 
     if (result.success) {
-      debugPrint('Database migration completed successfully: ${result.rowsMigrated} rows migrated');
+      debugPrint(
+          'Database migration completed successfully: ${result.rowsMigrated} rows migrated');
       // Delete backup after successful migration
       await migrationHelper.deleteBackup();
     } else {
@@ -127,13 +128,16 @@ class _DeviceSecurityWrapperState
 
     // Show security warning dialog after first frame if device is compromised
     // and user has not disabled security warnings
-    if (!_dialogShown && !_preferenceLoaded && widget.securityResult.isCompromised) {
+    if (!_dialogShown &&
+        !_preferenceLoaded &&
+        widget.securityResult.isCompromised) {
       _preferenceLoaded = true;
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         if (mounted) {
           // Load security warnings preference
           final persistenceService = ref.read(themePersistenceServiceProvider);
-          final showWarnings = await persistenceService.loadShowSecurityWarnings();
+          final showWarnings =
+              await persistenceService.loadShowSecurityWarnings();
 
           if (mounted && showWarnings && !_dialogShown) {
             _dialogShown = true;
@@ -254,7 +258,8 @@ class _SecurityWarningDialog extends StatelessWidget {
                         fontFamily: 'Outfit',
                         fontSize: 14,
                         height: 1.5,
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                     ),
                     const SizedBox(height: 24),

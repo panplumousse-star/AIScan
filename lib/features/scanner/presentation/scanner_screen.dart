@@ -85,7 +85,8 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
   late final ScannerPermissionHandler _permissionHandler;
   late final ScannerActionHandler _actionHandler;
 
-  static const String _localStorageWarningKey = 'scanai_local_storage_warning_shown';
+  static const String _localStorageWarningKey =
+      'scanai_local_storage_warning_shown';
 
   @override
   void initState() {
@@ -279,17 +280,13 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
         icon: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDark
-                ? const Color(0xFF312E81)
-                : const Color(0xFFEEF2FF),
+            color: isDark ? const Color(0xFF312E81) : const Color(0xFFEEF2FF),
             shape: BoxShape.circle,
           ),
           child: Icon(
             Icons.smartphone_rounded,
             size: 32,
-            color: isDark
-                ? const Color(0xFF818CF8)
-                : const Color(0xFF6366F1),
+            color: isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1),
           ),
         ),
         title: Text(
@@ -315,9 +312,8 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
             child: FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
               style: FilledButton.styleFrom(
-                backgroundColor: isDark
-                    ? const Color(0xFF818CF8)
-                    : const Color(0xFF6366F1),
+                backgroundColor:
+                    isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1),
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),

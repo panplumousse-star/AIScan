@@ -79,8 +79,7 @@ class SearchScreenState with _$SearchScreenState {
 /// Manages search operations, suggestions, and history.
 class SearchScreenNotifier extends StateNotifier<SearchScreenState> {
   /// Creates a [SearchScreenNotifier] with the given search service.
-  SearchScreenNotifier(this._searchService)
-      : super(const SearchScreenState());
+  SearchScreenNotifier(this._searchService) : super(const SearchScreenState());
 
   final SearchService _searchService;
   Timer? _debounceTimer;
@@ -98,7 +97,7 @@ class SearchScreenNotifier extends StateNotifier<SearchScreenState> {
     try {
       await _searchService.initialize();
 
-      final recent = await _searchService.getRecentSearches(limit: 10);
+      final recent = await _searchService.getRecentSearches();
 
       state = state.copyWith(
         isInitialized: true,
@@ -190,7 +189,7 @@ class SearchScreenNotifier extends StateNotifier<SearchScreenState> {
       }
 
       // Update recent searches
-      final recent = await _searchService.getRecentSearches(limit: 10);
+      final recent = await _searchService.getRecentSearches();
       state = state.copyWith(recentSearches: recent);
     } on SearchException catch (e) {
       state = state.copyWith(
@@ -240,7 +239,7 @@ class SearchScreenNotifier extends StateNotifier<SearchScreenState> {
   /// Clears a recent search from history.
   Future<void> clearRecentSearch(String query) async {
     await _searchService.removeRecentSearch(query);
-    final recent = await _searchService.getRecentSearches(limit: 10);
+    final recent = await _searchService.getRecentSearches();
     state = state.copyWith(recentSearches: recent);
   }
 
@@ -402,7 +401,9 @@ class _SearchScreenWidgetState extends ConsumerState<SearchScreen> {
       // Check if we're near the bottom
       if (_scrollController.position.pixels >=
           _scrollController.position.maxScrollExtent - 200) {
-        unawaited(ref.read(searchScreenProvider.notifier).performSearch(loadMore: true));
+        unawaited(ref
+            .read(searchScreenProvider.notifier)
+            .performSearch(loadMore: true));
       }
     }
   }

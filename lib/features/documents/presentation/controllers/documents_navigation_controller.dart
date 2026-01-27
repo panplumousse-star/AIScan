@@ -30,7 +30,6 @@ class DocumentsNavigationController {
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 200),
         reverseTransitionDuration: const Duration(milliseconds: 200),
-        opaque: true,
         barrierColor: isDark ? Colors.black : Colors.white,
         pageBuilder: (context, animation, secondaryAnimation) =>
             const ScannerScreen(),
@@ -64,7 +63,8 @@ class DocumentsNavigationController {
           onDelete: () {
             Navigator.of(navContext).pop();
             // Refresh the documents list
-            unawaited(ref.read(documentsScreenProvider.notifier).loadDocuments());
+            unawaited(
+                ref.read(documentsScreenProvider.notifier).loadDocuments());
           },
           onExport: (doc, imageBytes) async {
             final exportService = ref.read(documentExportServiceProvider);
@@ -128,7 +128,8 @@ class DocumentsNavigationController {
                   result.text,
                 );
                 // Refresh the documents list
-                unawaited(ref.read(documentsScreenProvider.notifier).loadDocuments());
+                unawaited(
+                    ref.read(documentsScreenProvider.notifier).loadDocuments());
               } on Object catch (_) {
                 // Error saving OCR text - silently fail
               }

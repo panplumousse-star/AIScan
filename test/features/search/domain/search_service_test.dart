@@ -87,7 +87,7 @@ void main() {
         ];
       });
 
-      when(mockDocumentRepository.getDocument('doc-fav-1', includeTags: false))
+      when(mockDocumentRepository.getDocument('doc-fav-1'))
           .thenAnswer((_) async => createTestDocument(
                 id: 'doc-fav-1',
                 title: 'Favorite Document',
@@ -105,8 +105,7 @@ void main() {
 
       // Verify that getDocument was only called once to build the result,
       // not for filtering (which would indicate N+1 queries)
-      verify(mockDocumentRepository.getDocument('doc-fav-1',
-              includeTags: false))
+      verify(mockDocumentRepository.getDocument('doc-fav-1'))
           .called(1);
     });
 
@@ -135,7 +134,7 @@ void main() {
         ];
       });
 
-      when(mockDocumentRepository.getDocument('doc-ocr-1', includeTags: false))
+      when(mockDocumentRepository.getDocument('doc-ocr-1'))
           .thenAnswer((_) async => createTestDocument(
                 id: 'doc-ocr-1',
                 title: 'Document with OCR',
@@ -151,8 +150,7 @@ void main() {
       expect(results.results.first.document.hasOcrText, isTrue);
 
       // Verify no N+1 query pattern
-      verify(mockDocumentRepository.getDocument('doc-ocr-1',
-              includeTags: false))
+      verify(mockDocumentRepository.getDocument('doc-ocr-1'))
           .called(1);
     });
 
@@ -191,8 +189,7 @@ void main() {
         ];
       });
 
-      when(mockDocumentRepository.getDocument('doc-folder-1',
-              includeTags: false))
+      when(mockDocumentRepository.getDocument('doc-folder-1'))
           .thenAnswer((_) async => createTestDocument(
                 id: 'doc-folder-1',
                 title: 'Document in folder',
@@ -208,8 +205,7 @@ void main() {
       expect(results.results.first.document.folderId, testFolderId);
 
       // Verify no N+1 query pattern
-      verify(mockDocumentRepository.getDocument('doc-folder-1',
-              includeTags: false))
+      verify(mockDocumentRepository.getDocument('doc-folder-1'))
           .called(1);
     });
 
@@ -243,7 +239,7 @@ void main() {
         ];
       });
 
-      when(mockDocumentRepository.getDocument('doc-both-1', includeTags: false))
+      when(mockDocumentRepository.getDocument('doc-both-1'))
           .thenAnswer((_) async => createTestDocument(
                 id: 'doc-both-1',
                 title: 'Favorite with OCR',
@@ -264,8 +260,7 @@ void main() {
       expect(results.results.first.document.hasOcrText, isTrue);
 
       // Verify single getDocument call per result
-      verify(mockDocumentRepository.getDocument('doc-both-1',
-              includeTags: false))
+      verify(mockDocumentRepository.getDocument('doc-both-1'))
           .called(1);
     });
 
@@ -307,8 +302,7 @@ void main() {
         ];
       });
 
-      when(mockDocumentRepository.getDocument('doc-combo-1',
-              includeTags: false))
+      when(mockDocumentRepository.getDocument('doc-combo-1'))
           .thenAnswer((_) async => createTestDocument(
                 id: 'doc-combo-1',
                 title: 'Favorite in folder',
@@ -329,8 +323,7 @@ void main() {
       expect(results.results.first.document.folderId, testFolderId);
 
       // Verify no N+1 queries
-      verify(mockDocumentRepository.getDocument('doc-combo-1',
-              includeTags: false))
+      verify(mockDocumentRepository.getDocument('doc-combo-1'))
           .called(1);
     });
 
@@ -378,7 +371,7 @@ void main() {
         ];
       });
 
-      when(mockDocumentRepository.getDocument('doc-all-1', includeTags: false))
+      when(mockDocumentRepository.getDocument('doc-all-1'))
           .thenAnswer((_) async => createTestDocument(
                 id: 'doc-all-1',
                 title: 'All filters match',
@@ -403,8 +396,7 @@ void main() {
       expect(results.results.first.document.folderId, testFolderId);
 
       // Verify only one getDocument call per result (no N+1 pattern)
-      verify(mockDocumentRepository.getDocument('doc-all-1',
-              includeTags: false))
+      verify(mockDocumentRepository.getDocument('doc-all-1'))
           .called(1);
     });
 
@@ -444,8 +436,7 @@ void main() {
         ];
       });
 
-      when(mockDocumentRepository.getDocument('doc-no-filter-1',
-              includeTags: false))
+      when(mockDocumentRepository.getDocument('doc-no-filter-1'))
           .thenAnswer((_) async => createTestDocument(
                 id: 'doc-no-filter-1',
                 title: 'Any document',
@@ -453,18 +444,12 @@ void main() {
 
       final results = await searchService.search(
         'test',
-        options: const SearchOptions(
-          favoritesOnly: false,
-          hasOcrOnly: false,
-          folderId: null,
-        ),
       );
 
       expect(results.hasResults, isTrue);
 
       // Verify single getDocument call
-      verify(mockDocumentRepository.getDocument('doc-no-filter-1',
-              includeTags: false))
+      verify(mockDocumentRepository.getDocument('doc-no-filter-1'))
           .called(1);
     });
 
@@ -497,13 +482,13 @@ void main() {
           ]);
 
       // Mock document repository for building full results
-      when(mockDocumentRepository.getDocument('doc-1', includeTags: false))
+      when(mockDocumentRepository.getDocument('doc-1'))
           .thenAnswer(
-              (_) async => createTestDocument(id: 'doc-1', ocrText: 'OCR 1'));
-      when(mockDocumentRepository.getDocument('doc-2', includeTags: false))
+              (_) async => createTestDocument(ocrText: 'OCR 1'));
+      when(mockDocumentRepository.getDocument('doc-2'))
           .thenAnswer(
               (_) async => createTestDocument(id: 'doc-2', ocrText: 'OCR 2'));
-      when(mockDocumentRepository.getDocument('doc-3', includeTags: false))
+      when(mockDocumentRepository.getDocument('doc-3'))
           .thenAnswer(
               (_) async => createTestDocument(id: 'doc-3', ocrText: 'OCR 3'));
 
@@ -522,11 +507,11 @@ void main() {
 
       // Verify getDocument was called exactly 3 times (once per result to build full data)
       // NOT called for filtering - that's done in SQL
-      verify(mockDocumentRepository.getDocument('doc-1', includeTags: false))
+      verify(mockDocumentRepository.getDocument('doc-1'))
           .called(1);
-      verify(mockDocumentRepository.getDocument('doc-2', includeTags: false))
+      verify(mockDocumentRepository.getDocument('doc-2'))
           .called(1);
-      verify(mockDocumentRepository.getDocument('doc-3', includeTags: false))
+      verify(mockDocumentRepository.getDocument('doc-3'))
           .called(1);
 
       // Verify no additional calls were made beyond building the results
@@ -571,8 +556,7 @@ void main() {
         ];
       });
 
-      when(mockDocumentRepository.getDocument('doc-fallback-1',
-              includeTags: false))
+      when(mockDocumentRepository.getDocument('doc-fallback-1'))
           .thenAnswer((_) async => createTestDocument(
                 id: 'doc-fallback-1',
                 title: 'Fallback result',
@@ -596,8 +580,7 @@ void main() {
       verify(mockDatabaseHelper.rawQuery(any, any)).called(2);
 
       // Verify no N+1 pattern in fallback
-      verify(mockDocumentRepository.getDocument('doc-fallback-1',
-              includeTags: false))
+      verify(mockDocumentRepository.getDocument('doc-fallback-1'))
           .called(1);
     });
   });

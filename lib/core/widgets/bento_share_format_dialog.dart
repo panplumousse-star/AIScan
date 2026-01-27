@@ -89,7 +89,8 @@ class BentoShareFormatDialog extends StatelessWidget {
                                 horizontal: 20, vertical: 12),
                             child: Text(
                               l10n?.share ?? 'Share',
-                              style: TextStyle(fontFamily: 'Outfit', 
+                              style: TextStyle(
+                                fontFamily: 'Outfit',
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
                                 color: isDark
@@ -106,7 +107,8 @@ class BentoShareFormatDialog extends StatelessWidget {
                   const SizedBox(height: 16),
                   Text(
                     l10n?.shareAs ?? 'Share as',
-                    style: TextStyle(fontFamily: 'Outfit', 
+                    style: TextStyle(
+                      fontFamily: 'Outfit',
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
                       color: theme.colorScheme.onSurface,
@@ -149,7 +151,8 @@ class BentoShareFormatDialog extends StatelessWidget {
                     onPressed: () => Navigator.pop(context),
                     child: Text(
                       l10n?.cancel ?? 'Cancel',
-                      style: TextStyle(fontFamily: 'Outfit', 
+                      style: TextStyle(
+                        fontFamily: 'Outfit',
                         color:
                             theme.colorScheme.onSurface.withValues(alpha: 0.5),
                       ),
@@ -207,7 +210,8 @@ class _ShareOptionTile extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: TextStyle(fontFamily: 'Outfit', 
+                    style: TextStyle(
+                      fontFamily: 'Outfit',
                       fontWeight: FontWeight.w700,
                       fontSize: 16,
                       color: theme.colorScheme.onSurface,
@@ -215,7 +219,8 @@ class _ShareOptionTile extends StatelessWidget {
                   ),
                   Text(
                     subtitle,
-                    style: TextStyle(fontFamily: 'Outfit', 
+                    style: TextStyle(
+                      fontFamily: 'Outfit',
                       fontSize: 12,
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),

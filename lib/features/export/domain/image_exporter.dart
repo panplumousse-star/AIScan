@@ -248,14 +248,11 @@ class ImageExportOptions {
 
   /// Default options for high-quality JPEG export.
   static const ImageExportOptions highQuality = ImageExportOptions(
-    format: ExportImageFormat.jpeg,
     quality: 95,
-    resizeMode: ExportResizeMode.original,
   );
 
   /// Options for web sharing (smaller file size).
   static const ImageExportOptions webOptimized = ImageExportOptions(
-    format: ExportImageFormat.jpeg,
     quality: 80,
     resizeMode: ExportResizeMode.fitWithin,
     maxWidth: 2000,
@@ -264,7 +261,6 @@ class ImageExportOptions {
 
   /// Options for thumbnail generation.
   static const ImageExportOptions thumbnail = ImageExportOptions(
-    format: ExportImageFormat.jpeg,
     quality: 75,
     resizeMode: ExportResizeMode.fitWithin,
     maxWidth: 300,
@@ -273,7 +269,6 @@ class ImageExportOptions {
 
   /// Options for preview generation.
   static const ImageExportOptions preview = ImageExportOptions(
-    format: ExportImageFormat.jpeg,
     quality: 85,
     resizeMode: ExportResizeMode.fitWithin,
     maxWidth: 800,
@@ -283,7 +278,6 @@ class ImageExportOptions {
   /// Options for PNG export (lossless).
   static const ImageExportOptions lossless = ImageExportOptions(
     format: ExportImageFormat.png,
-    resizeMode: ExportResizeMode.original,
   );
 
   /// Output format for the exported image.
@@ -762,7 +756,6 @@ class ImageExporter {
     return exportFromBytes(
       bytes,
       options: ImageExportOptions(
-        format: ExportImageFormat.jpeg,
         quality: 75,
         resizeMode: ExportResizeMode.fitWithin,
         maxWidth: maxWidth,
@@ -784,7 +777,6 @@ class ImageExporter {
     return exportFromBytes(
       bytes,
       options: ImageExportOptions(
-        format: ExportImageFormat.jpeg,
         quality: 85,
         resizeMode: ExportResizeMode.fitWithin,
         maxWidth: maxWidth,

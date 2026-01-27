@@ -160,7 +160,8 @@ class _BentoMascotState extends ConsumerState<BentoMascot>
       unawaited(precacheImage(
           const AssetImage('assets/images/scanai_settings_02.png'), context));
     } else if (widget.variant == BentoMascotVariant.lock) {
-      unawaited(precacheImage(const AssetImage('assets/images/scanai_lock.png'), context));
+      unawaited(precacheImage(
+          const AssetImage('assets/images/scanai_lock.png'), context));
     } else if (widget.variant == BentoMascotVariant.documents) {
       unawaited(precacheImage(
           const AssetImage('assets/images/scanai_documents_01.png'), context));
@@ -284,7 +285,6 @@ class _BentoMascotState extends ConsumerState<BentoMascot>
           assetPath,
           height: widget.height,
           fit: BoxFit.contain,
-          alignment: Alignment.center,
           gaplessPlayback: true,
         );
       },
@@ -308,7 +308,6 @@ class WavingMascot extends StatelessWidget {
     return BentoMascot(
       height: height,
       animateOnce: animateOnce,
-      variant: BentoMascotVariant.waving,
     );
   }
 }

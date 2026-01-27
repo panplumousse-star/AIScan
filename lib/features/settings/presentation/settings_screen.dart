@@ -92,7 +92,8 @@ class ThemePersistenceService {
   /// Saves the security warnings preference to storage.
   Future<void> saveShowSecurityWarnings(bool show) async {
     try {
-      await _storage.write(key: _showSecurityWarningsKey, value: show.toString());
+      await _storage.write(
+          key: _showSecurityWarningsKey, value: show.toString());
     } on Object catch (_) {
       // Silently ignore storage errors
     }
@@ -100,7 +101,8 @@ class ThemePersistenceService {
 }
 
 /// Riverpod provider for the theme persistence service.
-final themePersistenceServiceProvider = Provider<ThemePersistenceService>((ref) {
+final themePersistenceServiceProvider =
+    Provider<ThemePersistenceService>((ref) {
   const storage = FlutterSecureStorage(
     aOptions: AndroidOptions(
       encryptedSharedPreferences: true,
@@ -153,9 +155,12 @@ class SettingsScreenNotifier extends StateNotifier<SettingsScreenState> {
       final isBiometricAvailable = await _appLockService.isBiometricAvailable();
 
       // Load clipboard security settings
-      final clipboardEnabled = await _clipboardSecurityService.isSecurityEnabled();
-      final clipboardTimeout = await _clipboardSecurityService.getAutoClearTimeout();
-      final sensitiveDetectionEnabled = await _clipboardSecurityService.isSensitiveDetectionEnabled();
+      final clipboardEnabled =
+          await _clipboardSecurityService.isSecurityEnabled();
+      final clipboardTimeout =
+          await _clipboardSecurityService.getAutoClearTimeout();
+      final sensitiveDetectionEnabled =
+          await _clipboardSecurityService.isSensitiveDetectionEnabled();
 
       // Load storage statistics
       final storageInfoMap = await _documentRepository.getStorageInfo();
@@ -259,7 +264,8 @@ class SettingsScreenNotifier extends StateNotifier<SettingsScreenState> {
       // Revert on error
       state = state.copyWith(
         clipboardSecurityEnabled: !enabled,
-        error: 'Failed to ${enabled ? 'enable' : 'disable'} clipboard security: $e',
+        error:
+            'Failed to ${enabled ? 'enable' : 'disable'} clipboard security: $e',
       );
     }
   }
@@ -275,7 +281,8 @@ class SettingsScreenNotifier extends StateNotifier<SettingsScreenState> {
     );
 
     try {
-      await _clipboardSecurityService.setAutoClearTimeout(Duration(seconds: seconds));
+      await _clipboardSecurityService
+          .setAutoClearTimeout(Duration(seconds: seconds));
     } on Object catch (_) {
       state = state.copyWith(
         error: 'Failed to update clipboard timeout',
@@ -299,20 +306,22 @@ class SettingsScreenNotifier extends StateNotifier<SettingsScreenState> {
       // Revert on error
       state = state.copyWith(
         sensitiveDataDetectionEnabled: !enabled,
-        error: 'Failed to ${enabled ? 'enable' : 'disable'} sensitive data detection: $e',
+        error:
+            'Failed to ${enabled ? 'enable' : 'disable'} sensitive data detection: $e',
       );
     }
   }
 }
 
 /// Riverpod provider for the settings screen state.
-final settingsScreenProvider =
-    StateNotifierProvider.autoDispose<SettingsScreenNotifier, SettingsScreenState>(
+final settingsScreenProvider = StateNotifierProvider.autoDispose<
+    SettingsScreenNotifier, SettingsScreenState>(
   (ref) {
     final persistenceService = ref.watch(themePersistenceServiceProvider);
     final themeModeNotifier = ref.watch(themeModeProvider.notifier);
     final appLockService = ref.watch(appLockServiceProvider);
-    final clipboardSecurityService = ref.watch(clipboardSecurityServiceProvider);
+    final clipboardSecurityService =
+        ref.watch(clipboardSecurityServiceProvider);
     final documentRepository = ref.watch(documentRepositoryProvider);
     return SettingsScreenNotifier(
       persistenceService,
@@ -412,7 +421,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             ),
                             child: IconButton(
                               icon: const Icon(Icons.arrow_back_rounded),
-                              color: isDark ? Colors.white : const Color(0xFF1E1B4B),
+                              color: isDark
+                                  ? Colors.white
+                                  : const Color(0xFF1E1B4B),
                               onPressed: () => Navigator.pop(context),
                             ),
                           ),
@@ -420,10 +431,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         const Spacer(),
                         Text(
                           AppLocalizations.of(context)?.settings ?? 'Reglages',
-                          style: TextStyle(fontFamily: 'Outfit', 
+                          style: TextStyle(
+                            fontFamily: 'Outfit',
                             fontSize: 20,
                             fontWeight: FontWeight.w700,
-                            color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
+                            color: isDark
+                                ? const Color(0xFFF1F5F9)
+                                : const Color(0xFF1E1B4B),
                           ),
                         ),
                         const Spacer(),
@@ -460,22 +474,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
 
                   // 4. Bento Grid Scrollable
                   Expanded(
                     child: state.isLoading && !state.isInitialized
-                        ? const Center(child: ScanaiLoader(size: 40))
+                        ? const Center(child: ScanaiLoader())
                         : SingleChildScrollView(
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 8),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 // Apparence (Theme) - Large Card
                                 BentoAnimatedEntry(
                                   delay: const Duration(milliseconds: 100),
-                                  child: _buildThemeCard(state.themeMode, notifier.setThemeMode, isDark),
+                                  child: _buildThemeCard(state.themeMode,
+                                      notifier.setThemeMode, isDark),
                                 ),
 
                                 const SizedBox(height: 16),
@@ -484,12 +500,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 SizedBox(
                                   height: 180,
                                   child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
                                     children: [
                                       // App Language Card
                                       Expanded(
                                         child: BentoAnimatedEntry(
-                                          delay: const Duration(milliseconds: 150),
+                                          delay:
+                                              const Duration(milliseconds: 150),
                                           child: _buildAppLanguageCard(isDark),
                                         ),
                                       ),
@@ -497,7 +515,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                       // OCR Language Card
                                       Expanded(
                                         child: BentoAnimatedEntry(
-                                          delay: const Duration(milliseconds: 200),
+                                          delay:
+                                              const Duration(milliseconds: 200),
                                           child: _buildOcrLanguageCard(isDark),
                                         ),
                                       ),
@@ -509,19 +528,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                                 // Security & Info Row
                                 SizedBox(
-                                  height: 196, // Increased from 180 to prevent overflow
+                                  height:
+                                      196, // Increased from 180 to prevent overflow
                                   child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
                                     children: [
                                       // Security Card
                                       Expanded(
                                         child: BentoAnimatedEntry(
-                                          delay: const Duration(milliseconds: 200),
+                                          delay:
+                                              const Duration(milliseconds: 200),
                                           child: _buildSecurityCard(
                                             enabled: state.biometricLockEnabled,
-                                            available: state.isBiometricAvailable,
+                                            available:
+                                                state.isBiometricAvailable,
                                             timeout: state.biometricLockTimeout,
-                                            onTimeoutChanged: notifier.setBiometricLockTimeout,
+                                            onTimeoutChanged: notifier
+                                                .setBiometricLockTimeout,
                                             isDark: isDark,
                                           ),
                                         ),
@@ -530,7 +554,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                       // About Card
                                       Expanded(
                                         child: BentoAnimatedEntry(
-                                          delay: const Duration(milliseconds: 300),
+                                          delay:
+                                              const Duration(milliseconds: 300),
                                           child: _buildAboutCard(isDark),
                                         ),
                                       ),
@@ -544,12 +569,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 BentoAnimatedEntry(
                                   delay: const Duration(milliseconds: 400),
                                   child: _buildClipboardSecurityCard(
-                                    clipboardSecurityEnabled: state.clipboardSecurityEnabled,
-                                    clipboardClearTimeout: state.clipboardClearTimeout,
-                                    sensitiveDataDetectionEnabled: state.sensitiveDataDetectionEnabled,
-                                    onClipboardSecurityChanged: notifier.setClipboardSecurityEnabled,
-                                    onTimeoutChanged: notifier.setClipboardClearTimeout,
-                                    onSensitiveDetectionChanged: notifier.setSensitiveDataDetectionEnabled,
+                                    clipboardSecurityEnabled:
+                                        state.clipboardSecurityEnabled,
+                                    clipboardClearTimeout:
+                                        state.clipboardClearTimeout,
+                                    sensitiveDataDetectionEnabled:
+                                        state.sensitiveDataDetectionEnabled,
+                                    onClipboardSecurityChanged:
+                                        notifier.setClipboardSecurityEnabled,
+                                    onTimeoutChanged:
+                                        notifier.setClipboardClearTimeout,
+                                    onSensitiveDetectionChanged: notifier
+                                        .setSensitiveDataDetectionEnabled,
                                     isDark: isDark,
                                   ),
                                 ),
@@ -600,20 +631,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 children: [
                   Text(
                     l10n?.settingsSpeechBubbleLine1 ?? 'On peaufine',
-                    style: TextStyle(fontFamily: 'Outfit', 
+                    style: TextStyle(
+                      fontFamily: 'Outfit',
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E293B),
+                      color: isDark
+                          ? const Color(0xFFF1F5F9)
+                          : const Color(0xFF1E293B),
                       letterSpacing: -0.5,
                       height: 1.1,
                     ),
                   ),
                   Text(
                     l10n?.settingsSpeechBubbleLine2 ?? 'notre application',
-                    style: TextStyle(fontFamily: 'Outfit', 
+                    style: TextStyle(
+                      fontFamily: 'Outfit',
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E293B),
+                      color: isDark
+                          ? const Color(0xFFF1F5F9)
+                          : const Color(0xFF1E293B),
                       letterSpacing: -0.5,
                       height: 1.1,
                     ),
@@ -635,11 +672,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       child: Container(
         height: 140,
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : const Color(0xFFF1F5F9),
+          color: isDark
+              ? const Color(0xFF000000).withValues(alpha: 0.6)
+              : const Color(0xFFF1F5F9),
           borderRadius: BorderRadius.circular(32),
           border: Border.all(
-            color: isDark 
-                ? const Color(0xFFFFFFFF).withValues(alpha: 0.1) 
+            color: isDark
+                ? const Color(0xFFFFFFFF).withValues(alpha: 0.1)
                 : const Color(0xFFE2E8F0),
             width: 1.5,
           ),
@@ -661,70 +700,80 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Widget _buildThemeCard(ThemeMode selectedMode, ValueChanged<ThemeMode> onModeChanged, bool isDark) {
+  Widget _buildThemeCard(ThemeMode selectedMode,
+      ValueChanged<ThemeMode> onModeChanged, bool isDark) {
     final l10n = AppLocalizations.of(context);
     return BentoCard(
       borderRadius: 32,
       padding: const EdgeInsets.all(24),
-      backgroundColor: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : Colors.white,
+      backgroundColor: isDark
+          ? const Color(0xFF000000).withValues(alpha: 0.6)
+          : Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-           Row(
-             children: [
-               Container(
-                 padding: const EdgeInsets.all(10),
-                 decoration: BoxDecoration(
-                   color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEEF2FF),
-                   borderRadius: BorderRadius.circular(12),
-                 ),
-                 child: Icon(
-                   Icons.palette_rounded,
-                   color: isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1),
-                   size: 20,
-                 ),
-               ),
-               const SizedBox(width: 12),
-               Text(
-                 l10n?.appearance ?? 'Apparence',
-                 style: TextStyle(fontFamily: 'Outfit', 
-                   fontSize: 18,
-                   fontWeight: FontWeight.w700,
-                   color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
-                 ),
-               ),
-             ],
-           ),
-           const SizedBox(height: 24),
-           Row(
-             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-             children: [
-               _buildThemeOption(
-                 mode: ThemeMode.light,
-                 icon: Icons.light_mode_rounded,
-                 label: l10n?.themeLight ?? 'Clair',
-                 isSelected: selectedMode == ThemeMode.light,
-                 onTap: () => onModeChanged(ThemeMode.light),
-                 isDark: isDark,
-               ),
-               _buildThemeOption(
-                 mode: ThemeMode.dark,
-                 icon: Icons.dark_mode_rounded,
-                 label: l10n?.themeDark ?? 'Sombre',
-                 isSelected: selectedMode == ThemeMode.dark,
-                 onTap: () => onModeChanged(ThemeMode.dark),
-                 isDark: isDark,
-               ),
-               _buildThemeOption(
-                 mode: ThemeMode.system,
-                 icon: Icons.settings_brightness_rounded,
-                 label: l10n?.themeAuto ?? 'Auto',
-                 isSelected: selectedMode == ThemeMode.system,
-                 onTap: () => onModeChanged(ThemeMode.system),
-                 isDark: isDark,
-               ),
-             ],
-           ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF1E293B)
+                      : const Color(0xFFEEF2FF),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.palette_rounded,
+                  color: isDark
+                      ? const Color(0xFF818CF8)
+                      : const Color(0xFF6366F1),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                l10n?.appearance ?? 'Apparence',
+                style: TextStyle(
+                  fontFamily: 'Outfit',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: isDark
+                      ? const Color(0xFFF1F5F9)
+                      : const Color(0xFF1E1B4B),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildThemeOption(
+                mode: ThemeMode.light,
+                icon: Icons.light_mode_rounded,
+                label: l10n?.themeLight ?? 'Clair',
+                isSelected: selectedMode == ThemeMode.light,
+                onTap: () => onModeChanged(ThemeMode.light),
+                isDark: isDark,
+              ),
+              _buildThemeOption(
+                mode: ThemeMode.dark,
+                icon: Icons.dark_mode_rounded,
+                label: l10n?.themeDark ?? 'Sombre',
+                isSelected: selectedMode == ThemeMode.dark,
+                onTap: () => onModeChanged(ThemeMode.dark),
+                isDark: isDark,
+              ),
+              _buildThemeOption(
+                mode: ThemeMode.system,
+                icon: Icons.settings_brightness_rounded,
+                label: l10n?.themeAuto ?? 'Auto',
+                isSelected: selectedMode == ThemeMode.system,
+                onTap: () => onModeChanged(ThemeMode.system),
+                isDark: isDark,
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -738,9 +787,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     required VoidCallback onTap,
     required bool isDark,
   }) {
-    final selectedColor = isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1);
-    final unselectedBg = isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC);
-    
+    final selectedColor =
+        isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1);
+    final unselectedBg =
+        isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC);
+
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
@@ -750,7 +801,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: isSelected ? selectedColor.withValues(alpha: 0.15) : unselectedBg,
+                color: isSelected
+                    ? selectedColor.withValues(alpha: 0.15)
+                    : unselectedBg,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: isSelected ? selectedColor : Colors.transparent,
@@ -759,16 +812,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               child: Icon(
                 icon,
-                color: isSelected ? selectedColor : (isDark ? Colors.grey : Colors.grey[600]),
+                color: isSelected
+                    ? selectedColor
+                    : (isDark ? Colors.grey : Colors.grey[600]),
               ),
             ),
             const SizedBox(height: 8),
             Text(
               label,
-              style: TextStyle(fontFamily: 'Outfit', 
+              style: TextStyle(
+                fontFamily: 'Outfit',
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected ? selectedColor : (isDark ? Colors.grey : Colors.grey[600]),
+                color: isSelected
+                    ? selectedColor
+                    : (isDark ? Colors.grey : Colors.grey[600]),
               ),
             ),
           ],
@@ -789,8 +847,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             style: TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.w700),
           ),
           content: Text(
-            l10n?.enableLockMessage ?? 'Souhaitez-vous securiser l\'acces a vos documents avec votre empreinte digitale ?',
-            style: TextStyle(fontFamily: 'Outfit',),
+            l10n?.enableLockMessage ??
+                'Souhaitez-vous securiser l\'acces a vos documents avec votre empreinte digitale ?',
+            style: TextStyle(
+              fontFamily: 'Outfit',
+            ),
           ),
           actions: [
             TextButton(
@@ -804,7 +865,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               onPressed: () => Navigator.pop(context, true),
               child: Text(
                 l10n?.enable ?? 'Activer',
-                style: TextStyle(fontFamily: 'Outfit', 
+                style: TextStyle(
+                  fontFamily: 'Outfit',
                   color: const Color(0xFF6366F1),
                   fontWeight: FontWeight.w700,
                 ),
@@ -815,13 +877,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       );
 
       if (confirmed == true) {
-        await ref.read(settingsScreenProvider.notifier).setBiometricLockEnabled(true);
+        await ref
+            .read(settingsScreenProvider.notifier)
+            .setBiometricLockEnabled(true);
       }
     } else {
       // Deactivating - Request biometric scan
-      final authenticated = await ref.read(appLockServiceProvider).authenticateUser();
+      final authenticated =
+          await ref.read(appLockServiceProvider).authenticateUser();
       if (authenticated) {
-        await ref.read(settingsScreenProvider.notifier).setBiometricLockEnabled(false);
+        await ref
+            .read(settingsScreenProvider.notifier)
+            .setBiometricLockEnabled(false);
       }
     }
   }
@@ -845,8 +912,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return BentoCard(
       borderRadius: 32,
       onTap: available ? () => _handleSecurityToggle(enabled) : null,
-      padding: const EdgeInsets.all(20),
-      backgroundColor: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : Colors.white,
+      backgroundColor: isDark
+          ? const Color(0xFF000000).withValues(alpha: 0.6)
+          : Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -876,7 +944,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 12),
           Text(
             l10n?.security ?? 'Verrouillage',
-            style: TextStyle(fontFamily: 'Outfit', 
+            style: TextStyle(
+              fontFamily: 'Outfit',
               fontSize: 16,
               fontWeight: FontWeight.w700,
               color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
@@ -884,8 +953,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const SizedBox(height: 2),
           Text(
-            enabled ? (l10n?.enabled ?? 'Active') : (l10n?.disabled ?? 'Desactive'),
-             style: TextStyle(fontFamily: 'Outfit', 
+            enabled
+                ? (l10n?.enabled ?? 'Active')
+                : (l10n?.disabled ?? 'Desactive'),
+            style: TextStyle(
+              fontFamily: 'Outfit',
               fontSize: 12,
               color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
             ),
@@ -897,28 +969,39 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 height: 32,
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.withValues(alpha: 0.1),
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.grey.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<AppLockTimeout>(
                     value: timeout,
                     isDense: true,
-                    icon: Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: isDark ? Colors.grey : Colors.black54),
-                    dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-                    style: TextStyle(fontFamily: 'Outfit', 
+                    icon: Icon(Icons.keyboard_arrow_down_rounded,
+                        size: 16, color: isDark ? Colors.grey : Colors.black54),
+                    dropdownColor:
+                        isDark ? const Color(0xFF1E293B) : Colors.white,
+                    style: TextStyle(
+                      fontFamily: 'Outfit',
                       fontSize: 12,
-                      color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
+                      color: isDark
+                          ? const Color(0xFFF1F5F9)
+                          : const Color(0xFF1E1B4B),
                     ),
                     onChanged: (newValue) {
                       if (newValue != null) onTimeoutChanged(newValue);
                     },
                     items: AppLockTimeout.values.map((val) {
-                      final label = switch(val) {
-                        AppLockTimeout.immediate => l10n?.lockTimeoutImmediate ?? 'Immediat',
-                        AppLockTimeout.oneMinute => l10n?.lockTimeout1Min ?? '1 min',
-                        AppLockTimeout.fiveMinutes => l10n?.lockTimeout5Min ?? '5 min',
-                        AppLockTimeout.thirtyMinutes => l10n?.lockTimeout30Min ?? '30 min',
+                      final label = switch (val) {
+                        AppLockTimeout.immediate =>
+                          l10n?.lockTimeoutImmediate ?? 'Immediat',
+                        AppLockTimeout.oneMinute =>
+                          l10n?.lockTimeout1Min ?? '1 min',
+                        AppLockTimeout.fiveMinutes =>
+                          l10n?.lockTimeout5Min ?? '5 min',
+                        AppLockTimeout.thirtyMinutes =>
+                          l10n?.lockTimeout30Min ?? '30 min',
                       };
                       return DropdownMenuItem(
                         value: val,
@@ -941,8 +1024,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     return BentoCard(
       borderRadius: 32,
-      padding: const EdgeInsets.all(20),
-      backgroundColor: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : Colors.white,
+      backgroundColor: isDark
+          ? const Color(0xFF000000).withValues(alpha: 0.6)
+          : Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -951,12 +1035,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF312E81) : const Color(0xFFEEF2FF),
+                  color: isDark
+                      ? const Color(0xFF312E81)
+                      : const Color(0xFFEEF2FF),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   Icons.language_rounded,
-                  color: isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1),
+                  color: isDark
+                      ? const Color(0xFF818CF8)
+                      : const Color(0xFF6366F1),
                   size: 20,
                 ),
               ),
@@ -964,10 +1052,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               Expanded(
                 child: Text(
                   l10n?.appLanguage ?? 'Langue',
-                  style: TextStyle(fontFamily: 'Outfit', 
+                  style: TextStyle(
+                    fontFamily: 'Outfit',
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
+                    color: isDark
+                        ? const Color(0xFFF1F5F9)
+                        : const Color(0xFF1E1B4B),
                   ),
                 ),
               ),
@@ -979,7 +1070,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               height: 40,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.withValues(alpha: 0.1),
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : Colors.grey.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: DropdownButtonHideUnderline(
@@ -991,14 +1084,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     size: 20,
                     color: isDark ? Colors.grey : Colors.black54,
                   ),
-                  dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-                  style: TextStyle(fontFamily: 'Outfit', 
+                  dropdownColor:
+                      isDark ? const Color(0xFF1E293B) : Colors.white,
+                  style: TextStyle(
+                    fontFamily: 'Outfit',
                     fontSize: 14,
-                    color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
+                    color: isDark
+                        ? const Color(0xFFF1F5F9)
+                        : const Color(0xFF1E1B4B),
                   ),
                   onChanged: (newValue) {
                     if (newValue != null) {
-                      unawaited(ref.read(localeProvider.notifier).setLocale(newValue));
+                      unawaited(ref
+                          .read(localeProvider.notifier)
+                          .setLocale(newValue));
                     }
                   },
                   items: AppLocale.values.map((locale) {
@@ -1023,7 +1122,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               Expanded(
                 child: Text(
                   'Interface',
-                  style: TextStyle(fontFamily: 'Outfit', 
+                  style: TextStyle(
+                    fontFamily: 'Outfit',
                     fontSize: 10,
                     color: isDark ? Colors.white38 : Colors.black26,
                   ),
@@ -1042,8 +1142,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     return BentoCard(
       borderRadius: 32,
-      padding: const EdgeInsets.all(20),
-      backgroundColor: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : Colors.white,
+      backgroundColor: isDark
+          ? const Color(0xFF000000).withValues(alpha: 0.6)
+          : Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1052,12 +1153,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E3A5F) : const Color(0xFFE0F2FE),
+                  color: isDark
+                      ? const Color(0xFF1E3A5F)
+                      : const Color(0xFFE0F2FE),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   Icons.text_fields_rounded,
-                  color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0284C7),
+                  color: isDark
+                      ? const Color(0xFF38BDF8)
+                      : const Color(0xFF0284C7),
                   size: 20,
                 ),
               ),
@@ -1065,10 +1170,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               Expanded(
                 child: Text(
                   l10n?.ocrLanguage ?? 'OCR',
-                  style: TextStyle(fontFamily: 'Outfit', 
+                  style: TextStyle(
+                    fontFamily: 'Outfit',
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
+                    color: isDark
+                        ? const Color(0xFFF1F5F9)
+                        : const Color(0xFF1E1B4B),
                   ),
                 ),
               ),
@@ -1080,7 +1188,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               height: 40,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.withValues(alpha: 0.1),
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : Colors.grey.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: DropdownButtonHideUnderline(
@@ -1092,14 +1202,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     size: 20,
                     color: isDark ? Colors.grey : Colors.black54,
                   ),
-                  dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-                  style: TextStyle(fontFamily: 'Outfit', 
+                  dropdownColor:
+                      isDark ? const Color(0xFF1E293B) : Colors.white,
+                  style: TextStyle(
+                    fontFamily: 'Outfit',
                     fontSize: 14,
-                    color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
+                    color: isDark
+                        ? const Color(0xFFF1F5F9)
+                        : const Color(0xFF1E1B4B),
                   ),
                   onChanged: (newValue) {
                     if (newValue != null) {
-                      unawaited(ref.read(ocrLanguageProvider.notifier).setOcrLanguage(newValue));
+                      unawaited(ref
+                          .read(ocrLanguageProvider.notifier)
+                          .setOcrLanguage(newValue));
                     }
                   },
                   items: OcrLanguageOption.values.map((lang) {
@@ -1127,7 +1243,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               Expanded(
                 child: Text(
                   'Reconnaissance texte',
-                  style: TextStyle(fontFamily: 'Outfit', 
+                  style: TextStyle(
+                    fontFamily: 'Outfit',
                     fontSize: 10,
                     color: isDark ? Colors.white38 : Colors.black26,
                   ),
@@ -1153,21 +1270,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF312E81) : const Color(0xFFEEF2FF),
+                  color: isDark
+                      ? const Color(0xFF312E81)
+                      : const Color(0xFFEEF2FF),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   Icons.info_outline_rounded,
-                  color: isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1),
+                  color: isDark
+                      ? const Color(0xFF818CF8)
+                      : const Color(0xFF6366F1),
                   size: 20,
                 ),
               ),
               Text(
                 'v1.0.0',
-                style: TextStyle(fontFamily: 'Outfit', 
+                style: TextStyle(
+                  fontFamily: 'Outfit',
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  color: isDark
+                      ? const Color(0xFF94A3B8)
+                      : const Color(0xFF64748B),
                 ),
               ),
             ],
@@ -1175,7 +1299,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 16),
           Text(
             l10n?.appTitle ?? 'Scanai',
-            style: TextStyle(fontFamily: 'Outfit', 
+            style: TextStyle(
+              fontFamily: 'Outfit',
               fontSize: 22,
               fontWeight: FontWeight.w700,
               color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
@@ -1186,9 +1311,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             children: [
               Text(
                 l10n?.developedWith ?? 'Developpee avec le',
-                style: TextStyle(fontFamily: 'Outfit', 
+                style: TextStyle(
+                  fontFamily: 'Outfit',
                   fontSize: 12,
-                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  color: isDark
+                      ? const Color(0xFF94A3B8)
+                      : const Color(0xFF64748B),
                 ),
               ),
               Icon(
@@ -1210,7 +1338,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               Expanded(
                 child: Text(
                   l10n?.securityDetails ?? 'Details securite',
-                  style: TextStyle(fontFamily: 'Outfit', 
+                  style: TextStyle(
+                    fontFamily: 'Outfit',
                     fontSize: 10,
                     color: isDark ? Colors.white38 : Colors.black26,
                   ),
@@ -1226,7 +1355,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         children: [
           Text(
             l10n?.securityTitle ?? 'Securite',
-            style: TextStyle(fontFamily: 'Outfit', 
+            style: TextStyle(
+              fontFamily: 'Outfit',
               fontSize: 15,
               fontWeight: FontWeight.w700,
               color: isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1),
@@ -1258,13 +1388,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Widget _buildAboutInfoItem(IconData icon, String title, String subtitle, bool isDark) {
+  Widget _buildAboutInfoItem(
+      IconData icon, String title, String subtitle, bool isDark) {
     return Row(
       children: [
         Container(
           padding: const EdgeInsets.all(5),
           decoration: BoxDecoration(
-            color: (isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1)).withValues(alpha: 0.1),
+            color: (isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1))
+                .withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(6),
           ),
           child: Icon(
@@ -1281,17 +1413,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             children: [
               Text(
                 title,
-                style: TextStyle(fontFamily: 'Outfit', 
+                style: TextStyle(
+                  fontFamily: 'Outfit',
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
+                  color: isDark
+                      ? const Color(0xFFF1F5F9)
+                      : const Color(0xFF1E1B4B),
                 ),
               ),
               Text(
                 subtitle,
-                style: TextStyle(fontFamily: 'Outfit', 
+                style: TextStyle(
+                  fontFamily: 'Outfit',
                   fontSize: 9,
-                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  color: isDark
+                      ? const Color(0xFF94A3B8)
+                      : const Color(0xFF64748B),
                 ),
               ),
             ],
@@ -1313,7 +1451,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return BentoCard(
       borderRadius: 32,
       padding: const EdgeInsets.all(24),
-      backgroundColor: isDark ? const Color(0xFF000000).withValues(alpha: 0.6) : Colors.white,
+      backgroundColor: isDark
+          ? const Color(0xFF000000).withValues(alpha: 0.6)
+          : Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1322,22 +1462,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF065F46) : const Color(0xFFD1FAE5),
+                  color: isDark
+                      ? const Color(0xFF065F46)
+                      : const Color(0xFFD1FAE5),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   Icons.content_paste_rounded,
-                  color: isDark ? const Color(0xFF10B981) : const Color(0xFF059669),
+                  color: isDark
+                      ? const Color(0xFF10B981)
+                      : const Color(0xFF059669),
                   size: 20,
                 ),
               ),
               const SizedBox(width: 12),
               Text(
                 'Securite Presse-papiers',
-                style: TextStyle(fontFamily: 'Outfit', 
+                style: TextStyle(
+                  fontFamily: 'Outfit',
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
+                  color: isDark
+                      ? const Color(0xFFF1F5F9)
+                      : const Color(0xFF1E1B4B),
                 ),
               ),
             ],
@@ -1394,18 +1541,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             children: [
               Text(
                 label,
-                style: TextStyle(fontFamily: 'Outfit', 
+                style: TextStyle(
+                  fontFamily: 'Outfit',
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
+                  color: isDark
+                      ? const Color(0xFFF1F5F9)
+                      : const Color(0xFF1E1B4B),
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 subtitle,
-                style: TextStyle(fontFamily: 'Outfit', 
+                style: TextStyle(
+                  fontFamily: 'Outfit',
                   fontSize: 12,
-                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  color: isDark
+                      ? const Color(0xFF94A3B8)
+                      : const Color(0xFF64748B),
                 ),
               ),
             ],
@@ -1415,7 +1568,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           child: Switch.adaptive(
             value: value,
             onChanged: onChanged,
-            activeTrackColor: isDark ? const Color(0xFF10B981) : const Color(0xFF059669),
+            activeTrackColor:
+                isDark ? const Color(0xFF10B981) : const Color(0xFF059669),
           ),
         ),
       ],
@@ -1431,7 +1585,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     // Common timeout values: 15s, 30s, 60s, 120s, 180s
     final timeoutOptions = [15, 30, 60, 120, 180];
     final currentIndex = timeoutOptions.indexOf(value);
-    final sliderValue = currentIndex >= 0 ? currentIndex.toDouble() : 1.0; // Default to 30s
+    final sliderValue =
+        currentIndex >= 0 ? currentIndex.toDouble() : 1.0; // Default to 30s
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1441,18 +1596,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           children: [
             Text(
               label,
-              style: TextStyle(fontFamily: 'Outfit', 
+              style: TextStyle(
+                fontFamily: 'Outfit',
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                color:
+                    isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
               ),
             ),
             Text(
               _formatTimeout(value),
-              style: TextStyle(fontFamily: 'Outfit', 
+              style: TextStyle(
+                fontFamily: 'Outfit',
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: isDark ? const Color(0xFF10B981) : const Color(0xFF059669),
+                color:
+                    isDark ? const Color(0xFF10B981) : const Color(0xFF059669),
               ),
             ),
           ],
@@ -1460,18 +1619,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         const SizedBox(height: 8),
         SliderTheme(
           data: SliderThemeData(
-            activeTrackColor: isDark ? const Color(0xFF10B981) : const Color(0xFF059669),
+            activeTrackColor:
+                isDark ? const Color(0xFF10B981) : const Color(0xFF059669),
             inactiveTrackColor: isDark
                 ? Colors.white.withValues(alpha: 0.1)
                 : Colors.grey.withValues(alpha: 0.2),
-            thumbColor: isDark ? const Color(0xFF10B981) : const Color(0xFF059669),
-            overlayColor: (isDark ? const Color(0xFF10B981) : const Color(0xFF059669))
-                .withValues(alpha: 0.2),
+            thumbColor:
+                isDark ? const Color(0xFF10B981) : const Color(0xFF059669),
+            overlayColor:
+                (isDark ? const Color(0xFF10B981) : const Color(0xFF059669))
+                    .withValues(alpha: 0.2),
             trackHeight: 4,
           ),
           child: Slider(
             value: sliderValue,
-            min: 0,
             max: (timeoutOptions.length - 1).toDouble(),
             divisions: timeoutOptions.length - 1,
             onChanged: (newValue) {
@@ -1494,7 +1655,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       return '$minutes min';
     }
   }
-
 }
 
 // ============================================================================
@@ -1601,8 +1761,8 @@ class _BentoFlipCardState extends State<_BentoFlipCard>
             padding: const EdgeInsets.all(16), // Reduced padding to 16
             onTap: _toggleCard,
             animateOnTap: false,
-            backgroundColor: widget.isDark 
-                ? const Color(0xFF000000).withValues(alpha: 0.6) 
+            backgroundColor: widget.isDark
+                ? const Color(0xFF000000).withValues(alpha: 0.6)
                 : Colors.white,
             child: Transform(
               alignment: Alignment.center,

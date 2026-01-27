@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_sqlcipher/sqflite.dart';
-import 'package:path/path.dart' as path;
 import 'package:aiscan/core/storage/database_helper.dart';
 import 'package:aiscan/core/security/secure_storage_service.dart';
 import 'package:mockito/annotations.dart';

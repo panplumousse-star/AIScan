@@ -219,7 +219,7 @@ class ShareFormatOption extends StatelessWidget {
                     Text(
                       title,
                       style: TextStyle(
-                      fontFamily: 'Outfit',
+                        fontFamily: 'Outfit',
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                         color: isDark ? Colors.white : const Color(0xFF1E1B4B),
@@ -228,7 +228,7 @@ class ShareFormatOption extends StatelessWidget {
                     Text(
                       subtitle,
                       style: TextStyle(
-                      fontFamily: 'Outfit',
+                        fontFamily: 'Outfit',
                         fontSize: 12,
                         color: isDark
                             ? Colors.white.withValues(alpha: 0.6)

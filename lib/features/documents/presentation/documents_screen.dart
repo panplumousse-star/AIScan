@@ -703,10 +703,10 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
     try {
       await _repository.deleteDocuments(state.selectedDocumentIds.toList());
       state = state.copyWith(
-      selectedDocumentIds: const {},
-      selectedFolderIds: const {},
-      isSelectionMode: false,
-    );
+        selectedDocumentIds: const {},
+        selectedFolderIds: const {},
+        isSelectionMode: false,
+      );
       await loadDocuments();
     } on DocumentRepositoryException catch (e) {
       state = state.copyWith(
@@ -736,10 +736,10 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
         movedCount++;
       }
       state = state.copyWith(
-      selectedDocumentIds: const {},
-      selectedFolderIds: const {},
-      isSelectionMode: false,
-    );
+        selectedDocumentIds: const {},
+        selectedFolderIds: const {},
+        isSelectionMode: false,
+      );
       await loadDocuments();
       return movedCount;
     } on DocumentRepositoryException catch (e) {
@@ -803,10 +803,10 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
         await _folderService.toggleFavorite(id);
       }
       state = state.copyWith(
-      selectedDocumentIds: const {},
-      selectedFolderIds: const {},
-      isSelectionMode: false,
-    );
+        selectedDocumentIds: const {},
+        selectedFolderIds: const {},
+        isSelectionMode: false,
+      );
       await loadDocuments();
     } on Object catch (e) {
       state = state.copyWith(
@@ -920,10 +920,10 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
         await _repository.deleteDocuments(state.selectedDocumentIds.toList());
       }
       state = state.copyWith(
-      selectedDocumentIds: const {},
-      selectedFolderIds: const {},
-      isSelectionMode: false,
-    );
+        selectedDocumentIds: const {},
+        selectedFolderIds: const {},
+        isSelectionMode: false,
+      );
       await loadDocuments();
     } on Object catch (e) {
       state = state.copyWith(
@@ -962,10 +962,10 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
       }
 
       state = state.copyWith(
-      selectedDocumentIds: const {},
-      selectedFolderIds: const {},
-      isSelectionMode: false,
-    );
+        selectedDocumentIds: const {},
+        selectedFolderIds: const {},
+        isSelectionMode: false,
+      );
       await loadDocuments();
     } on Object catch (e) {
       state = state.copyWith(

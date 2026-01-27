@@ -156,7 +156,8 @@ class DocumentListItem extends StatelessWidget {
                 children: [
                   Text(
                     document.title,
-                    style: TextStyle(fontFamily: 'Outfit', 
+                    style: TextStyle(
+                      fontFamily: 'Outfit',
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: colorScheme.onSurface,
@@ -169,7 +170,8 @@ class DocumentListItem extends StatelessWidget {
                     children: [
                       Text(
                         document.fileSizeFormatted,
-                        style: TextStyle(fontFamily: 'Outfit', 
+                        style: TextStyle(
+                          fontFamily: 'Outfit',
                           fontSize: 13,
                           color: colorScheme.onSurfaceVariant
                               .withValues(alpha: 0.7),
@@ -185,7 +187,8 @@ class DocumentListItem extends StatelessWidget {
                         const SizedBox(width: 2),
                         Text(
                           '${document.pageCount} pages',
-                          style: TextStyle(fontFamily: 'Outfit', 
+                          style: TextStyle(
+                            fontFamily: 'Outfit',
                             fontSize: 13,
                             color: colorScheme.onSurfaceVariant,
                           ),
@@ -198,7 +201,8 @@ class DocumentListItem extends StatelessWidget {
                     children: [
                       Text(
                         _formatDate(document.createdAt),
-                        style: TextStyle(fontFamily: 'Outfit', 
+                        style: TextStyle(
+                          fontFamily: 'Outfit',
                           fontSize: 12,
                           color: colorScheme.onSurfaceVariant
                               .withValues(alpha: 0.5),
@@ -216,7 +220,8 @@ class DocumentListItem extends StatelessWidget {
                           ),
                           child: Text(
                             'OCR',
-                            style: TextStyle(fontFamily: 'Outfit', 
+                            style: TextStyle(
+                              fontFamily: 'Outfit',
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
                               color: colorScheme.onSecondaryContainer,

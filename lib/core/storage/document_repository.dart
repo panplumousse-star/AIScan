@@ -301,7 +301,6 @@ class DocumentRepository {
         originalFileName: originalFileName,
         fileSize: totalFileSize,
         mimeType: 'image/png',
-        ocrStatus: OcrStatus.pending,
         createdAt: now,
         updatedAt: now,
         folderId: folderId,
@@ -679,7 +678,8 @@ class DocumentRepository {
       final timestamp = DateTime.now().millisecondsSinceEpoch;
 
       // Decrypt pages in parallel for performance
-      final decryptionTasks = List.generate(document.pagesPaths.length, (i) async {
+      final decryptionTasks =
+          List.generate(document.pagesPaths.length, (i) async {
         final encryptedPath = document.pagesPaths[i];
         final encryptedFile = File(encryptedPath);
         if (!await encryptedFile.exists()) {
@@ -1247,7 +1247,8 @@ class DocumentRepository {
 
     try {
       // Create parallel deletion tasks for all documents
-      final deletionTasks = documentIds.map((id) => deleteDocument(id)).toList();
+      final deletionTasks =
+          documentIds.map((id) => deleteDocument(id)).toList();
 
       // Execute all deletion tasks in parallel
       await Future.wait(deletionTasks);

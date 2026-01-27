@@ -47,13 +47,12 @@ void main() {
 
   group('Performance Benchmark - Optimized Implementation', () {
     test('benchmark brightness adjustment on large image', () async {
-      final testImage = createLargeTestImage(width: 1000, height: 1000);
+      final testImage = createLargeTestImage();
       final stopwatch = Stopwatch()..start();
 
       final result = await processor.enhanceFromBytes(
         testImage,
         options: const EnhancementOptions(brightness: 30),
-        outputFormat: ImageOutputFormat.jpeg,
       );
 
       stopwatch.stop();
@@ -68,13 +67,12 @@ void main() {
     });
 
     test('benchmark contrast adjustment on large image', () async {
-      final testImage = createLargeTestImage(width: 1000, height: 1000);
+      final testImage = createLargeTestImage();
       final stopwatch = Stopwatch()..start();
 
       final result = await processor.enhanceFromBytes(
         testImage,
         options: const EnhancementOptions(contrast: 40),
-        outputFormat: ImageOutputFormat.jpeg,
       );
 
       stopwatch.stop();
@@ -90,7 +88,7 @@ void main() {
 
     test('benchmark combined brightness+contrast (single-pass optimization)',
         () async {
-      final testImage = createLargeTestImage(width: 1000, height: 1000);
+      final testImage = createLargeTestImage();
       final stopwatch = Stopwatch()..start();
 
       final result = await processor.enhanceFromBytes(
@@ -99,7 +97,6 @@ void main() {
           brightness: 30,
           contrast: 40,
         ),
-        outputFormat: ImageOutputFormat.jpeg,
       );
 
       stopwatch.stop();
@@ -117,13 +114,12 @@ void main() {
     });
 
     test('benchmark sharpening with optimized unsharp mask', () async {
-      final testImage = createLargeTestImage(width: 1000, height: 1000);
+      final testImage = createLargeTestImage();
       final stopwatch = Stopwatch()..start();
 
       final result = await processor.enhanceFromBytes(
         testImage,
         options: const EnhancementOptions(sharpness: 50),
-        outputFormat: ImageOutputFormat.jpeg,
       );
 
       stopwatch.stop();
@@ -140,7 +136,7 @@ void main() {
     });
 
     test('benchmark full enhancement pipeline', () async {
-      final testImage = createLargeTestImage(width: 1000, height: 1000);
+      final testImage = createLargeTestImage();
       final stopwatch = Stopwatch()..start();
 
       final result = await processor.enhanceFromBytes(
@@ -151,7 +147,6 @@ void main() {
           sharpness: 40,
           autoEnhance: true,
         ),
-        outputFormat: ImageOutputFormat.jpeg,
       );
 
       stopwatch.stop();
@@ -178,7 +173,6 @@ void main() {
           contrast: 30,
           sharpness: 30,
         ),
-        outputFormat: ImageOutputFormat.jpeg,
       );
 
       stopwatch.stop();

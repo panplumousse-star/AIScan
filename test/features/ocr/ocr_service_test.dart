@@ -649,7 +649,6 @@ void main() {
       test('should include PSM and OEM values', () {
         const options = OcrOptions(
           pageSegmentationMode: OcrPageSegmentationMode.singleLine,
-          engineMode: OcrEngineMode.lstmOnly,
         );
 
         final args = options.toTesseractArgs();
@@ -659,7 +658,7 @@ void main() {
       });
 
       test('should include preserve_interword_spaces when true', () {
-        const options = OcrOptions(preserveInterwordSpaces: true);
+        const options = OcrOptions();
 
         final args = options.toTesseractArgs();
 
@@ -683,7 +682,7 @@ void main() {
       });
 
       test('should not include whitelist when null', () {
-        const options = OcrOptions(characterWhitelist: null);
+        const options = OcrOptions();
 
         final args = options.toTesseractArgs();
 
@@ -707,7 +706,7 @@ void main() {
       });
 
       test('should not include blacklist when null', () {
-        const options = OcrOptions(characterBlacklist: null);
+        const options = OcrOptions();
 
         final args = options.toTesseractArgs();
 
@@ -736,19 +735,11 @@ void main() {
       test('should be equal with same values', () {
         const options1 = OcrOptions(
           language: OcrLanguage.english,
-          pageSegmentationMode: OcrPageSegmentationMode.auto,
-          engineMode: OcrEngineMode.lstmOnly,
-          preserveInterwordSpaces: true,
-          enableDeskew: false,
           characterWhitelist: 'ABC',
           characterBlacklist: 'XYZ',
         );
         const options2 = OcrOptions(
           language: OcrLanguage.english,
-          pageSegmentationMode: OcrPageSegmentationMode.auto,
-          engineMode: OcrEngineMode.lstmOnly,
-          preserveInterwordSpaces: true,
-          enableDeskew: false,
           characterWhitelist: 'ABC',
           characterBlacklist: 'XYZ',
         );
@@ -765,7 +756,7 @@ void main() {
 
       test('should not be equal with different PSM', () {
         const options1 = OcrOptions(
-          pageSegmentationMode: OcrPageSegmentationMode.auto,
+          
         );
         const options2 = OcrOptions(
           pageSegmentationMode: OcrPageSegmentationMode.singleLine,
@@ -813,7 +804,7 @@ void main() {
       });
 
       test('should contain OEM value', () {
-        const options = OcrOptions(engineMode: OcrEngineMode.lstmOnly);
+        const options = OcrOptions();
 
         expect(options.toString(), contains('oem: 1'));
       });

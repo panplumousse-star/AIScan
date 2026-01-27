@@ -1,11 +1,8 @@
-import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:sqflite/sqflite.dart';
 
 import 'package:aiscan/core/performance/cache/thumbnail_cache_service.dart';
 import 'package:aiscan/core/security/encryption_service.dart';
@@ -266,7 +263,6 @@ void main() {
         when(mockDatabase.query(
           DatabaseHelper.tableDocuments,
           where: '${DatabaseHelper.columnFolderId} IS NULL',
-          whereArgs: null,
           orderBy: anyNamed('orderBy'),
         )).thenAnswer((_) async => [testDocumentMap]);
 
@@ -1056,8 +1052,6 @@ void main() {
         id: 'test-id',
         title: 'Test',
         pagesPaths: ['/path/file.enc'],
-        ocrText: null,
-        ocrStatus: OcrStatus.pending,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -1157,8 +1151,6 @@ void main() {
         id: 'doc-2',
         title: 'Alpha Document',
         pagesPaths: ['/path/2.enc'],
-        isFavorite: false,
-        ocrStatus: OcrStatus.pending,
         folderId: 'folder-b',
         fileSize: 2000,
         tags: ['tag-y'],

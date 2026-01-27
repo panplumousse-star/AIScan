@@ -76,7 +76,7 @@ class DocumentsAppBar extends StatelessWidget {
           Text(
             l10n?.myDocuments ?? 'My Documents',
             style: TextStyle(
-                    fontFamily: 'Outfit',
+              fontFamily: 'Outfit',
               fontSize: 20,
               fontWeight: FontWeight.w700,
               color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E1B4B),
@@ -142,7 +142,7 @@ class DocumentsBentoHeader extends StatelessWidget {
                   child: Text(
                     l10n?.whatAreYouLookingFor ?? 'What are you looking for?',
                     style: TextStyle(
-                    fontFamily: 'Outfit',
+                      fontFamily: 'Outfit',
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       color: theme.colorScheme.onSurface,

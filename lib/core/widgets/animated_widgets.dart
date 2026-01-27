@@ -826,11 +826,8 @@ class _ShimmerLoadingState extends State<ShimmerLoading>
           blendMode: BlendMode.srcATop,
           shaderCallback: (bounds) {
             return LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
               colors: [baseColor, highlightColor, baseColor],
               stops: [0.0, _controller.value, 1.0],
-              tileMode: TileMode.clamp,
               transform: _SlidingGradientTransform(
                 slidePercent: _controller.value,
               ),

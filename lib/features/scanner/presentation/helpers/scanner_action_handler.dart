@@ -72,11 +72,13 @@ class ScannerActionHandler {
           try {
             // Get decrypted page paths
             final documentRepo = ref.read(documentRepositoryProvider);
-            final pagePaths = await documentRepo.getDecryptedAllPages(state.savedDocument!);
+            final pagePaths =
+                await documentRepo.getDecryptedAllPages(state.savedDocument!);
 
             // Run OCR on pages
             final ocrService = ref.read(ocrServiceProvider);
-            final ocrResult = await ocrService.extractTextFromMultipleFiles(pagePaths);
+            final ocrResult =
+                await ocrService.extractTextFromMultipleFiles(pagePaths);
 
             // Cleanup temp files
             await documentRepo.cleanupTempFiles();
@@ -93,7 +95,8 @@ class ScannerActionHandler {
                 final l10n = AppLocalizations.of(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(l10n?.noTextFound ?? 'No text found in document'),
+                    content:
+                        Text(l10n?.noTextFound ?? 'No text found in document'),
                     backgroundColor: Theme.of(context).colorScheme.error,
                   ),
                 );

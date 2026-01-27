@@ -45,17 +45,17 @@ void main() {
       oldDbPath = join(databasesPath, 'aiscan.db');
 
       // Clean up any existing test databases
-      await _cleanupTestDatabases();
+      await cleanupTestDatabases();
     });
 
     tearDown(() async {
       // Clean up all test databases
-      await _cleanupTestDatabases();
+      await cleanupTestDatabases();
       DatabaseHelper.resetFtsVersion();
     });
 
     /// Cleans up all test database files
-    Future<void> _cleanupTestDatabases() async {
+    Future<void> cleanupTestDatabases() async {
       final databasesPath = await getDatabasesPath();
       final files = [
         join(databasesPath, 'aiscan.db'),
@@ -72,13 +72,13 @@ void main() {
     }
 
     /// Creates an old unencrypted database with test data
-    Future<sqflite.Database> _createOldDatabase() async {
+    Future<sqflite.Database> createOldDatabase() async {
       final db = await sqflite.openDatabase(
         oldDbPath,
         version: 3,
         onCreate: (db, version) async {
           // Create schema matching DatabaseHelper
-          await _createOldDatabaseSchema(db);
+          await createOldDatabaseSchema(db);
         },
       );
 
@@ -86,7 +86,7 @@ void main() {
     }
 
     /// Creates the database schema in old database
-    Future<void> _createOldDatabaseSchema(sqflite.Database db) async {
+    Future<void> createOldDatabaseSchema(sqflite.Database db) async {
       // Create folders table
       await db.execute('''
         CREATE TABLE ${DatabaseHelper.tableFolders} (
@@ -175,7 +175,7 @@ void main() {
     }
 
     /// Populates old database with test data
-    Future<Map<String, int>> _populateOldDatabase(sqflite.Database db) async {
+    Future<Map<String, int>> populateOldDatabase(sqflite.Database db) async {
       final timestamp = DateTime.now().toIso8601String();
       final rowCounts = <String, int>{};
 
@@ -402,8 +402,8 @@ void main() {
     group('Row Count Verification', () {
       test('should migrate all rows from all tables', () async {
         // Create and populate old database
-        final oldDb = await _createOldDatabase();
-        final expectedCounts = await _populateOldDatabase(oldDb);
+        final oldDb = await createOldDatabase();
+        final expectedCounts = await populateOldDatabase(oldDb);
         await oldDb.close();
 
         // Run migration
@@ -445,7 +445,7 @@ void main() {
 
       test('should handle empty tables gracefully', () async {
         // Create old database with no data
-        final oldDb = await _createOldDatabase();
+        final oldDb = await createOldDatabase();
         await oldDb.close();
 
         // Run migration
@@ -463,8 +463,8 @@ void main() {
     group('Folder Structure Preservation', () {
       test('should preserve folder hierarchy and relationships', () async {
         // Create and populate old database
-        final oldDb = await _createOldDatabase();
-        await _populateOldDatabase(oldDb);
+        final oldDb = await createOldDatabase();
+        await populateOldDatabase(oldDb);
         await oldDb.close();
 
         // Run migration
@@ -510,8 +510,8 @@ void main() {
 
       test('should preserve documents-to-folder relationships', () async {
         // Create and populate old database
-        final oldDb = await _createOldDatabase();
-        await _populateOldDatabase(oldDb);
+        final oldDb = await createOldDatabase();
+        await populateOldDatabase(oldDb);
         await oldDb.close();
 
         // Run migration
@@ -558,8 +558,8 @@ void main() {
     group('Document Data Preservation', () {
       test('should preserve all document metadata', () async {
         // Create and populate old database
-        final oldDb = await _createOldDatabase();
-        await _populateOldDatabase(oldDb);
+        final oldDb = await createOldDatabase();
+        await populateOldDatabase(oldDb);
         await oldDb.close();
 
         // Run migration
@@ -595,8 +595,8 @@ void main() {
 
       test('should preserve OCR text content', () async {
         // Create and populate old database
-        final oldDb = await _createOldDatabase();
-        await _populateOldDatabase(oldDb);
+        final oldDb = await createOldDatabase();
+        await populateOldDatabase(oldDb);
         await oldDb.close();
 
         // Run migration
@@ -656,8 +656,8 @@ void main() {
 
       test('should preserve multi-page document structure', () async {
         // Create and populate old database
-        final oldDb = await _createOldDatabase();
-        await _populateOldDatabase(oldDb);
+        final oldDb = await createOldDatabase();
+        await populateOldDatabase(oldDb);
         await oldDb.close();
 
         // Run migration
@@ -703,8 +703,8 @@ void main() {
     group('Tag Association Preservation', () {
       test('should preserve all tag definitions', () async {
         // Create and populate old database
-        final oldDb = await _createOldDatabase();
-        await _populateOldDatabase(oldDb);
+        final oldDb = await createOldDatabase();
+        await populateOldDatabase(oldDb);
         await oldDb.close();
 
         // Run migration
@@ -737,8 +737,8 @@ void main() {
 
       test('should preserve document-tag associations', () async {
         // Create and populate old database
-        final oldDb = await _createOldDatabase();
-        await _populateOldDatabase(oldDb);
+        final oldDb = await createOldDatabase();
+        await populateOldDatabase(oldDb);
         await oldDb.close();
 
         // Run migration
@@ -791,8 +791,8 @@ void main() {
 
       test('should handle documents with multiple tags', () async {
         // Create and populate old database
-        final oldDb = await _createOldDatabase();
-        await _populateOldDatabase(oldDb);
+        final oldDb = await createOldDatabase();
+        await populateOldDatabase(oldDb);
         await oldDb.close();
 
         // Run migration
@@ -822,8 +822,8 @@ void main() {
     group('Foreign Key Relationship Preservation', () {
       test('should preserve cascade delete relationships', () async {
         // Create and populate old database
-        final oldDb = await _createOldDatabase();
-        await _populateOldDatabase(oldDb);
+        final oldDb = await createOldDatabase();
+        await populateOldDatabase(oldDb);
         await oldDb.close();
 
         // Run migration
@@ -865,8 +865,8 @@ void main() {
 
       test('should preserve SET NULL relationships', () async {
         // Create and populate old database
-        final oldDb = await _createOldDatabase();
-        await _populateOldDatabase(oldDb);
+        final oldDb = await createOldDatabase();
+        await populateOldDatabase(oldDb);
         await oldDb.close();
 
         // Run migration
@@ -903,8 +903,8 @@ void main() {
     group('Complex Scenario Testing', () {
       test('should handle complete real-world scenario', () async {
         // Create and populate old database
-        final oldDb = await _createOldDatabase();
-        final expectedCounts = await _populateOldDatabase(oldDb);
+        final oldDb = await createOldDatabase();
+        final expectedCounts = await populateOldDatabase(oldDb);
         await oldDb.close();
 
         // Run migration
@@ -973,8 +973,8 @@ void main() {
 
       test('should verify encrypted database is functional', () async {
         // Create and populate old database
-        final oldDb = await _createOldDatabase();
-        await _populateOldDatabase(oldDb);
+        final oldDb = await createOldDatabase();
+        await populateOldDatabase(oldDb);
         await oldDb.close();
 
         // Run migration
@@ -1038,8 +1038,8 @@ void main() {
     group('Backup and Rollback Verification', () {
       test('should create backup before migration', () async {
         // Create old database
-        final oldDb = await _createOldDatabase();
-        await _populateOldDatabase(oldDb);
+        final oldDb = await createOldDatabase();
+        await populateOldDatabase(oldDb);
         await oldDb.close();
 
         // Run migration
@@ -1060,8 +1060,8 @@ void main() {
 
       test('should delete backup after successful migration', () async {
         // Create old database
-        final oldDb = await _createOldDatabase();
-        await _populateOldDatabase(oldDb);
+        final oldDb = await createOldDatabase();
+        await populateOldDatabase(oldDb);
         await oldDb.close();
 
         // Run migration
@@ -1083,8 +1083,8 @@ void main() {
     group('Performance Verification', () {
       test('should complete migration in reasonable time', () async {
         // Create old database with moderate data
-        final oldDb = await _createOldDatabase();
-        await _populateOldDatabase(oldDb);
+        final oldDb = await createOldDatabase();
+        await populateOldDatabase(oldDb);
         await oldDb.close();
 
         // Measure migration time

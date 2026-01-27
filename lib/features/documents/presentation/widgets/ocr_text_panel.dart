@@ -179,7 +179,8 @@ class _OcrTextPanelState extends ConsumerState<OcrTextPanel> {
                           });
 
                           // Share the selected text
-                          if (_currentSelectedText != null && _currentSelectedText!.isNotEmpty) {
+                          if (_currentSelectedText != null &&
+                              _currentSelectedText!.isNotEmpty) {
                             unawaited(SharePlus.instance.share(
                               ShareParams(text: _currentSelectedText!),
                             ));

@@ -122,7 +122,7 @@ void main() {
         author: 'Author',
         subject: 'Subject',
         keywords: ['key1'],
-        creationDate: DateTime(2024, 1, 1),
+        creationDate: DateTime(2024),
       );
 
       final modified = original.copyWith(
@@ -314,7 +314,6 @@ void main() {
       const original = PDFGeneratorOptions(
         title: 'Original',
         author: 'Author',
-        pageSize: PDFPageSize.a4,
       );
 
       final modified = original.copyWith(
@@ -350,12 +349,10 @@ void main() {
     test('should have correct equality', () {
       const options1 = PDFGeneratorOptions(
         title: 'Test',
-        pageSize: PDFPageSize.a4,
       );
 
       const options2 = PDFGeneratorOptions(
         title: 'Test',
-        pageSize: PDFPageSize.a4,
       );
 
       const options3 = PDFGeneratorOptions(
@@ -370,12 +367,10 @@ void main() {
     test('should have correct hashCode', () {
       const options1 = PDFGeneratorOptions(
         title: 'Test',
-        pageSize: PDFPageSize.a4,
       );
 
       const options2 = PDFGeneratorOptions(
         title: 'Test',
-        pageSize: PDFPageSize.a4,
       );
 
       expect(options1.hashCode, equals(options2.hashCode));
@@ -453,7 +448,6 @@ void main() {
 
         const options3 = PDFGeneratorOptions(
           title: 'Test',
-          maxWidth: 2000, // Different maxWidth
         );
 
         expect(options1, equals(options2));
@@ -490,7 +484,6 @@ void main() {
           pageSize: PDFPageSize.letter,
           orientation: PDFOrientation.landscape,
           imageQuality: 90,
-          compressImages: true,
           maxWidth: 1800,
         );
 
@@ -829,7 +822,7 @@ void main() {
         }
       }
 
-      return Uint8List.fromList(img.encodeJpg(image, quality: 100));
+      return Uint8List.fromList(img.encodeJpg(image));
     }
 
     // Helper to create a larger image for compression testing
@@ -849,23 +842,18 @@ void main() {
         }
       }
 
-      return Uint8List.fromList(img.encodeJpg(image, quality: 100));
+      return Uint8List.fromList(img.encodeJpg(image));
     }
 
     group('compressImages flag', () {
       test('should compress images when compressImages is true (default)',
           () async {
         final generator = PDFGenerator();
-        final largeImage = createLargeTestImage(width: 3000, height: 2000);
+        final largeImage = createLargeTestImage();
 
         // Generate with compression enabled (default)
         final compressedResult = await generator.generateFromBytes(
           imageBytesList: [largeImage],
-          options: const PDFGeneratorOptions(
-            compressImages: true,
-            imageQuality: 85,
-            maxWidth: 2000,
-          ),
         );
 
         // Generate with compression disabled
@@ -921,9 +909,7 @@ void main() {
         final highQualityResult = await generator.generateFromBytes(
           imageBytesList: [largeImage],
           options: const PDFGeneratorOptions(
-            compressImages: true,
             imageQuality: 95,
-            maxWidth: 2000,
           ),
         );
 
@@ -931,9 +917,7 @@ void main() {
         final lowQualityResult = await generator.generateFromBytes(
           imageBytesList: [largeImage],
           options: const PDFGeneratorOptions(
-            compressImages: true,
             imageQuality: 50,
-            maxWidth: 2000,
           ),
         );
 
@@ -957,7 +941,7 @@ void main() {
       });
 
       test('should update imageQuality with copyWith', () {
-        const original = PDFGeneratorOptions(imageQuality: 85);
+        const original = PDFGeneratorOptions();
         final modified = original.copyWith(imageQuality: 50);
 
         expect(modified.imageQuality, 50);
@@ -968,14 +952,12 @@ void main() {
       test('should resize images wider than maxWidth', () async {
         final generator = PDFGenerator();
         // Create image wider than default maxWidth of 2000
-        final wideImage = createLargeTestImage(width: 4000, height: 2000);
+        final wideImage = createLargeTestImage(width: 4000);
 
         // Generate with small maxWidth
         final smallMaxWidthResult = await generator.generateFromBytes(
           imageBytesList: [wideImage],
           options: const PDFGeneratorOptions(
-            compressImages: true,
-            imageQuality: 85,
             maxWidth: 1000,
           ),
         );
@@ -984,8 +966,6 @@ void main() {
         final largeMaxWidthResult = await generator.generateFromBytes(
           imageBytesList: [wideImage],
           options: const PDFGeneratorOptions(
-            compressImages: true,
-            imageQuality: 85,
             maxWidth: 3000,
           ),
         );
@@ -1005,11 +985,6 @@ void main() {
         // Generate with large maxWidth
         final result = await generator.generateFromBytes(
           imageBytesList: [smallImage],
-          options: const PDFGeneratorOptions(
-            compressImages: true,
-            imageQuality: 85,
-            maxWidth: 2000,
-          ),
         );
 
         // Should still generate successfully
@@ -1038,9 +1013,6 @@ void main() {
         try {
           await generator.generateFromBytes(
             imageBytesList: [invalidBytes],
-            options: const PDFGeneratorOptions(
-              compressImages: true,
-            ),
           );
           // If it gets here, the PDF library handled the invalid bytes somehow
         } catch (e) {
@@ -1060,10 +1032,6 @@ void main() {
         // Should work with compression
         final result = await generator.generateFromBytes(
           imageBytesList: [testImage],
-          options: const PDFGeneratorOptions(
-            compressImages: true,
-            imageQuality: 85,
-          ),
         );
 
         expect(result.bytes, isNotEmpty);
@@ -1079,7 +1047,6 @@ void main() {
         final result = await generator.generateFromBytes(
           imageBytesList: [testImage],
           options: const PDFGeneratorOptions(
-            compressImages: true,
             imageQuality: 1,
           ),
         );
@@ -1095,7 +1062,6 @@ void main() {
         final result = await generator.generateFromBytes(
           imageBytesList: [testImage],
           options: const PDFGeneratorOptions(
-            compressImages: true,
             imageQuality: 100,
           ),
         );
@@ -1115,7 +1081,6 @@ void main() {
         final compressedResult = await generator.generateFromBytes(
           imageBytesList: [image1, image2],
           options: const PDFGeneratorOptions(
-            compressImages: true,
             imageQuality: 70,
             maxWidth: 1500,
           ),
@@ -1155,10 +1120,6 @@ void main() {
         // Should compress PNG and convert to JPEG
         final result = await generator.generateFromBytes(
           imageBytesList: [pngBytes],
-          options: const PDFGeneratorOptions(
-            compressImages: true,
-            imageQuality: 85,
-          ),
         );
 
         expect(result.bytes, isNotEmpty);
@@ -1213,7 +1174,6 @@ void main() {
         final result = await generator.generateFromBytes(
           imageBytesList: [testImage],
           options: const PDFGeneratorOptions(
-            compressImages: true,
             imageQuality: 80,
             maxWidth: 1500,
             marginLeft: 20,

@@ -149,7 +149,7 @@ class DocumentActionButton extends StatelessWidget {
                 Text(
                   label,
                   style: TextStyle(
-                  fontFamily: 'Outfit',
+                    fontFamily: 'Outfit',
                     fontSize: 11,
                     fontWeight: isPrimary ? FontWeight.w700 : FontWeight.w600,
                     color: isPrimary

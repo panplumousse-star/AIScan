@@ -75,6 +75,10 @@ dev_dependencies:
   freezed: ^2.4.6
   json_serializable: ^6.7.1
 
+  permission_handler_platform_interface: any
+  local_auth_android: any
+  local_auth_darwin: any
+  local_auth_windows: any
 flutter:
   generate: true
   uses-material-design: true

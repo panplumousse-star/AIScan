@@ -64,7 +64,8 @@ class BentoInteractiveWrapper extends StatefulWidget {
   final String? semanticHint;
 
   @override
-  State<BentoInteractiveWrapper> createState() => _BentoInteractiveWrapperState();
+  State<BentoInteractiveWrapper> createState() =>
+      _BentoInteractiveWrapperState();
 }
 
 class _BentoInteractiveWrapperState extends State<BentoInteractiveWrapper>

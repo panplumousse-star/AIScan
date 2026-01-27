@@ -72,7 +72,7 @@ class FolderHeaderWidget extends ConsumerWidget {
                 Text(
                   folder.name,
                   style: TextStyle(
-                  fontFamily: 'Outfit',
+                    fontFamily: 'Outfit',
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: theme.colorScheme.onSurface,
@@ -83,7 +83,7 @@ class FolderHeaderWidget extends ConsumerWidget {
                 Text(
                   'Dossier actuel',
                   style: TextStyle(
-                  fontFamily: 'Outfit',
+                    fontFamily: 'Outfit',
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
                     color: theme.colorScheme.onSurfaceVariant
@@ -283,7 +283,7 @@ class DocumentsSliverList extends StatelessWidget {
                               ? (l10n?.noFavorites ?? 'No favorites')
                               : (l10n?.noDocuments ?? 'No documents'),
                       style: TextStyle(
-                  fontFamily: 'Outfit',
+                        fontFamily: 'Outfit',
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: theme.colorScheme.onSurface,
@@ -326,7 +326,7 @@ class DocumentsSliverList extends StatelessWidget {
                     Text(
                       'Ce dossier est vide',
                       style: TextStyle(
-                  fontFamily: 'Outfit',
+                        fontFamily: 'Outfit',
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: theme.colorScheme.onSurface,

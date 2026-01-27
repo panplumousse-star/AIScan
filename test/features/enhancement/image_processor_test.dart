@@ -43,7 +43,7 @@ void main() {
       }
     }
 
-    return Uint8List.fromList(img.encodeJpg(image, quality: 100));
+    return Uint8List.fromList(img.encodeJpg(image));
   }
 
   group('ImageProcessorException', () {
@@ -319,7 +319,6 @@ void main() {
 
       final result = await processor.enhanceFromBytes(
         testImage,
-        options: EnhancementOptions.none,
       );
 
       expect(result.bytes, isNotEmpty);
@@ -483,13 +482,11 @@ void main() {
 
       final highQuality = await processor.enhanceFromBytes(
         testImage,
-        outputFormat: ImageOutputFormat.jpeg,
         quality: 100,
       );
 
       final lowQuality = await processor.enhanceFromBytes(
         testImage,
-        outputFormat: ImageOutputFormat.jpeg,
         quality: 10,
       );
 
@@ -652,7 +649,6 @@ void main() {
 
       final result = await processor.convertToGrayscale(
         testImage,
-        enhanceContrast: true,
       );
 
       expect(result.operationsApplied, contains('contrast:20'));
@@ -815,7 +811,7 @@ void main() {
     });
 
     test('should throw for out of bounds crop', () async {
-      final testImage = createTestImage(width: 100, height: 100);
+      final testImage = createTestImage();
 
       expect(
         () => processor.crop(
@@ -860,7 +856,7 @@ void main() {
 
   group('ImageProcessor.rotate', () {
     test('should rotate 90 degrees', () async {
-      final testImage = createTestImage(width: 100, height: 50);
+      final testImage = createTestImage(height: 50);
 
       final result = await processor.rotate(testImage, angle: 90);
 
@@ -870,7 +866,7 @@ void main() {
     });
 
     test('should rotate 180 degrees', () async {
-      final testImage = createTestImage(width: 100, height: 50);
+      final testImage = createTestImage(height: 50);
 
       final result = await processor.rotate(testImage, angle: 180);
 
@@ -880,7 +876,7 @@ void main() {
     });
 
     test('should rotate 270 degrees', () async {
-      final testImage = createTestImage(width: 100, height: 50);
+      final testImage = createTestImage(height: 50);
 
       final result = await processor.rotate(testImage, angle: 270);
 
@@ -899,7 +895,7 @@ void main() {
     });
 
     test('should handle negative angles', () async {
-      final testImage = createTestImage(width: 100, height: 50);
+      final testImage = createTestImage(height: 50);
 
       final result = await processor.rotate(testImage, angle: -90);
 
@@ -910,7 +906,7 @@ void main() {
 
   group('ImageProcessor.getImageInfo', () {
     test('should get JPEG info', () async {
-      final testImage = createTestImage(width: 150, height: 100);
+      final testImage = createTestImage(width: 150);
 
       final info = await processor.getImageInfo(testImage);
 

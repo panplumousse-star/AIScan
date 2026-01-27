@@ -50,7 +50,8 @@ class BentoLoadingView extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             displayMessage,
-            style: TextStyle(fontFamily: 'Outfit', 
+            style: TextStyle(
+              fontFamily: 'Outfit',
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: const Color(0xFF64748B),
@@ -92,7 +93,8 @@ class BentoErrorView extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    final displayTitle = title ?? l10n?.somethingWentWrong ?? 'Oops! Something went wrong';
+    final displayTitle =
+        title ?? l10n?.somethingWentWrong ?? 'Oops! Something went wrong';
     final displayRetryLabel = retryLabel ?? l10n?.retry ?? 'Retry';
 
     return Center(
@@ -111,7 +113,8 @@ class BentoErrorView extends StatelessWidget {
               Text(
                 displayTitle,
                 textAlign: TextAlign.center,
-                style: TextStyle(fontFamily: 'Outfit', 
+                style: TextStyle(
+                  fontFamily: 'Outfit',
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
                   color: theme.colorScheme.onSurface,
@@ -121,7 +124,8 @@ class BentoErrorView extends StatelessWidget {
               Text(
                 message,
                 textAlign: TextAlign.center,
-                style: TextStyle(fontFamily: 'Outfit', 
+                style: TextStyle(
+                  fontFamily: 'Outfit',
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
@@ -131,12 +135,14 @@ class BentoErrorView extends StatelessWidget {
                 icon: const Icon(Icons.refresh_rounded),
                 label: Text(
                   displayRetryLabel,
-                  style: TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                      fontFamily: 'Outfit', fontWeight: FontWeight.w600),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4F46E5),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -201,7 +207,8 @@ class BentoEmptyView extends StatelessWidget {
             const SizedBox(height: 24),
             Text(
               title,
-              style: TextStyle(fontFamily: 'Outfit', 
+              style: TextStyle(
+                fontFamily: 'Outfit',
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
                 color: theme.colorScheme.onSurface,
@@ -211,7 +218,8 @@ class BentoEmptyView extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               description,
-              style: TextStyle(fontFamily: 'Outfit', 
+              style: TextStyle(
+                fontFamily: 'Outfit',
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
               textAlign: TextAlign.center,
@@ -223,7 +231,8 @@ class BentoEmptyView extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4F46E5),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -231,7 +240,8 @@ class BentoEmptyView extends StatelessWidget {
                 ),
                 child: Text(
                   actionLabel!,
-                  style: TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                      fontFamily: 'Outfit', fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -274,8 +284,8 @@ class BentoNoResultsView extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final displayTitle = title ?? 'No results found';
-    final displayDescription = description ??
-        'Try adjusting your search or filters';
+    final displayDescription =
+        description ?? 'Try adjusting your search or filters';
 
     return Center(
       child: Padding(
@@ -297,7 +307,8 @@ class BentoNoResultsView extends StatelessWidget {
             const SizedBox(height: 24),
             Text(
               displayTitle,
-              style: TextStyle(fontFamily: 'Outfit', 
+              style: TextStyle(
+                fontFamily: 'Outfit',
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
                 color: theme.colorScheme.onSurface,
@@ -307,7 +318,8 @@ class BentoNoResultsView extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               displayDescription,
-              style: TextStyle(fontFamily: 'Outfit', 
+              style: TextStyle(
+                fontFamily: 'Outfit',
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
               textAlign: TextAlign.center,
@@ -319,7 +331,8 @@ class BentoNoResultsView extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4F46E5),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -327,7 +340,8 @@ class BentoNoResultsView extends StatelessWidget {
                 ),
                 child: Text(
                   actionLabel!,
-                  style: TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                      fontFamily: 'Outfit', fontWeight: FontWeight.w600),
                 ),
               ),
             ],

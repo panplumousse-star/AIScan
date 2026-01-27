@@ -1,4 +1,3 @@
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
@@ -995,7 +994,8 @@ class AccessiblePageRoute<T> extends MaterialPageRoute<T> {
     final result = super.didPush();
     if (announceOnPush && routeAnnouncement != null) {
       unawaited(result.then((_) {
-        unawaited(SemanticsService.announce(routeAnnouncement!, TextDirection.ltr));
+        unawaited(
+            SemanticsService.announce(routeAnnouncement!, TextDirection.ltr));
       }));
     }
     return result;

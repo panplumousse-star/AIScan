@@ -64,8 +64,7 @@ export 'memory_manager.dart';
 
 // Optimization utilities
 export 'optimization/scroll_optimization.dart';
-export 'optimization/image_optimization.dart'
-    show ImageOptimization;
+export 'optimization/image_optimization.dart' show ImageOptimization;
 
 // Optimized widgets
 export 'widgets/optimized_image.dart';

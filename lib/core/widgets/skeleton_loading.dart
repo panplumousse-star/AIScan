@@ -163,9 +163,7 @@ class SkeletonCard extends StatelessWidget {
       width: 36,
       height: 36,
       decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.surfaceVariantDark
-            : const Color(0xFFEEF2FF),
+        color: isDark ? AppColors.surfaceVariantDark : const Color(0xFFEEF2FF),
         borderRadius: BorderRadius.circular(12),
       ),
     );
@@ -179,9 +177,8 @@ class SkeletonCard extends StatelessWidget {
           width: 80,
           height: 16,
           decoration: BoxDecoration(
-            color: isDark
-                ? AppColors.surfaceVariantDark
-                : const Color(0xFFE2E8F0),
+            color:
+                isDark ? AppColors.surfaceVariantDark : const Color(0xFFE2E8F0),
             borderRadius: BorderRadius.circular(8),
           ),
         ),

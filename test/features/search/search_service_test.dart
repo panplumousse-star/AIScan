@@ -406,8 +406,7 @@ void main() {
 
     test('copyWith creates new instance with updated values', () {
       const original = SearchOptions(
-        limit: 50,
-        field: SearchField.all,
+        
       );
 
       final updated = original.copyWith(
@@ -534,7 +533,7 @@ void main() {
         results: [],
         totalCount: 100,
         searchTimeMs: 10,
-        options: const SearchOptions(limit: 50, offset: 0),
+        options: const SearchOptions(),
       );
       expect(results.hasMore, isTrue);
     });
@@ -546,7 +545,7 @@ void main() {
         results: [SearchResult(document: document, score: -1.0)],
         totalCount: 1,
         searchTimeMs: 10,
-        options: const SearchOptions(limit: 50, offset: 0),
+        options: const SearchOptions(),
       );
       expect(results.hasMore, isFalse);
     });
@@ -567,7 +566,7 @@ void main() {
     });
 
     test('documents returns list of documents', () {
-      final doc1 = createTestDocument(id: 'doc-1');
+      final doc1 = createTestDocument();
       final doc2 = createTestDocument(id: 'doc-2');
       final results = SearchResults(
         query: 'test',
@@ -682,7 +681,7 @@ void main() {
     test('copyWith creates new instance with updated values', () {
       final original = RecentSearch(
         query: 'original',
-        timestamp: DateTime(2024, 1, 1),
+        timestamp: DateTime(2024),
       );
 
       final updated = original.copyWith(
@@ -872,10 +871,9 @@ void main() {
             },
           ]);
 
-      when(mockDocumentRepository.getDocument('doc-1', includeTags: false))
+      when(mockDocumentRepository.getDocument('doc-1'))
           .thenAnswer((_) async => createTestDocument(
-                id: 'doc-1',
-                title: 'Test Document',
+                
               ));
 
       final results = await searchService.search('test');
@@ -975,7 +973,6 @@ void main() {
 
       await searchService.search(
         'test query',
-        options: const SearchOptions(matchMode: SearchMatchMode.prefix),
       );
 
       verify(
@@ -1314,9 +1311,9 @@ void main() {
             },
           ]);
 
-      when(mockDocumentRepository.getDocument('doc-1', includeTags: false))
-          .thenAnswer((_) async => createTestDocument(id: 'doc-1'));
-      when(mockDocumentRepository.getDocument('doc-2', includeTags: false))
+      when(mockDocumentRepository.getDocument('doc-1'))
+          .thenAnswer((_) async => createTestDocument());
+      when(mockDocumentRepository.getDocument('doc-2'))
           .thenAnswer((_) async => createTestDocument(id: 'doc-2'));
 
       // Use sortDescending: false to get best matches first (more negative scores)
@@ -1360,10 +1357,10 @@ void main() {
             },
           ]);
 
-      when(mockDocumentRepository.getDocument('doc-1', includeTags: false))
+      when(mockDocumentRepository.getDocument('doc-1'))
           .thenAnswer(
-              (_) async => createTestDocument(id: 'doc-1', title: 'Zebra'));
-      when(mockDocumentRepository.getDocument('doc-2', includeTags: false))
+              (_) async => createTestDocument(title: 'Zebra'));
+      when(mockDocumentRepository.getDocument('doc-2'))
           .thenAnswer(
               (_) async => createTestDocument(id: 'doc-2', title: 'Apple'));
 
@@ -1399,10 +1396,10 @@ void main() {
             },
           ]);
 
-      when(mockDocumentRepository.getDocument('doc-1', includeTags: false))
+      when(mockDocumentRepository.getDocument('doc-1'))
           .thenAnswer(
-              (_) async => createTestDocument(id: 'doc-1', fileSize: 100));
-      when(mockDocumentRepository.getDocument('doc-2', includeTags: false))
+              (_) async => createTestDocument(fileSize: 100));
+      when(mockDocumentRepository.getDocument('doc-2'))
           .thenAnswer(
               (_) async => createTestDocument(id: 'doc-2', fileSize: 1000));
 
@@ -1410,7 +1407,6 @@ void main() {
         'test',
         options: const SearchOptions(
           sortBy: SearchSortBy.fileSize,
-          sortDescending: true,
         ),
       );
 
@@ -1450,9 +1446,8 @@ void main() {
             },
           ]);
 
-      when(mockDocumentRepository.getDocument('doc-1', includeTags: false))
+      when(mockDocumentRepository.getDocument('doc-1'))
           .thenAnswer((_) async => createTestDocument(
-                id: 'doc-1',
                 title: 'Invoice 2024',
                 description: 'Annual invoice',
                 ocrText: 'Total: \$500',
@@ -1462,7 +1457,6 @@ void main() {
       final results = await searchService.search(
         'invoice',
         options: const SearchOptions(
-          includeSnippets: true,
           snippetLength: 100,
         ),
       );
@@ -1497,14 +1491,14 @@ void main() {
           ]);
 
       for (var i = 1; i <= 5; i++) {
-        when(mockDocumentRepository.getDocument('doc-$i', includeTags: false))
+        when(mockDocumentRepository.getDocument('doc-$i'))
             .thenAnswer((_) async => createTestDocument(id: 'doc-$i'));
       }
 
       // Get first page
       final page1 = await searchService.search(
         'test',
-        options: const SearchOptions(limit: 2, offset: 0),
+        options: const SearchOptions(limit: 2),
       );
 
       expect(page1.results.length, 2);

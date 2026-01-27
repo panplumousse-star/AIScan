@@ -137,7 +137,8 @@ class _BentoRenameDocumentDialogState extends State<BentoRenameDocumentDialog> {
                                   horizontal: 14, vertical: 10),
                               child: Text(
                                 'pshiit !!!',
-                                style: TextStyle(fontFamily: 'Outfit', 
+                                style: TextStyle(
+                                  fontFamily: 'Outfit',
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
                                   color: isDark
@@ -154,7 +155,8 @@ class _BentoRenameDocumentDialogState extends State<BentoRenameDocumentDialog> {
                     Text(
                       widget.dialogTitle ??
                           (l10n?.renameDocument ?? 'Rename document'),
-                      style: TextStyle(fontFamily: 'Outfit', 
+                      style: TextStyle(
+                        fontFamily: 'Outfit',
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                         color: theme.colorScheme.onSurface,
@@ -180,7 +182,9 @@ class _BentoRenameDocumentDialogState extends State<BentoRenameDocumentDialog> {
                           vertical: 14,
                         ),
                       ),
-                      style: TextStyle(fontFamily: 'Outfit', ),
+                      style: TextStyle(
+                        fontFamily: 'Outfit',
+                      ),
                       textCapitalization: TextCapitalization.sentences,
                       onSubmitted: (_) => _submit(),
                     ),
@@ -195,7 +199,8 @@ class _BentoRenameDocumentDialogState extends State<BentoRenameDocumentDialog> {
                             ),
                             child: Text(
                               l10n?.cancel ?? 'Cancel',
-                              style: TextStyle(fontFamily: 'Outfit', 
+                              style: TextStyle(
+                                fontFamily: 'Outfit',
                                 color: theme.colorScheme.onSurface
                                     .withValues(alpha: 0.5),
                               ),
@@ -219,7 +224,8 @@ class _BentoRenameDocumentDialogState extends State<BentoRenameDocumentDialog> {
                                   child: Text(
                                     widget.confirmButtonText ??
                                         (l10n?.save ?? 'Save'),
-                                    style: TextStyle(fontFamily: 'Outfit', 
+                                    style: TextStyle(
+                                      fontFamily: 'Outfit',
                                       fontWeight: FontWeight.w700,
                                       color: theme.colorScheme.onPrimary,
                                       fontSize: 15,

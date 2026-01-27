@@ -513,8 +513,6 @@ void main() {
 
     test('should support copyWith for all fields', () {
       const original = ImageExportOptions(
-        format: ExportImageFormat.jpeg,
-        quality: 90,
         maxWidth: 1000,
       );
 
@@ -547,18 +545,15 @@ void main() {
 
     test('should have correct equality', () {
       const options1 = ImageExportOptions(
-        format: ExportImageFormat.jpeg,
-        quality: 90,
+        
       );
 
       const options2 = ImageExportOptions(
-        format: ExportImageFormat.jpeg,
-        quality: 90,
+        
       );
 
       const options3 = ImageExportOptions(
         format: ExportImageFormat.png, // Different
-        quality: 90,
       );
 
       expect(options1, equals(options2));
@@ -567,13 +562,11 @@ void main() {
 
     test('should have correct hashCode', () {
       const options1 = ImageExportOptions(
-        format: ExportImageFormat.jpeg,
-        quality: 90,
+        
       );
 
       const options2 = ImageExportOptions(
-        format: ExportImageFormat.jpeg,
-        quality: 90,
+        
       );
 
       expect(options1.hashCode, equals(options2.hashCode));
@@ -581,8 +574,6 @@ void main() {
 
     test('should have meaningful toString', () {
       const options = ImageExportOptions(
-        format: ExportImageFormat.jpeg,
-        quality: 90,
         resizeMode: ExportResizeMode.fitWithin,
       );
 
@@ -697,7 +688,7 @@ void main() {
       });
 
       test('should resize with scale mode', () async {
-        final testImage = createTestImage(width: 100, height: 100);
+        final testImage = createTestImage();
 
         final result = await exporter.exportFromBytes(
           testImage,
@@ -712,7 +703,7 @@ void main() {
       });
 
       test('should resize with exact mode', () async {
-        final testImage = createTestImage(width: 100, height: 100);
+        final testImage = createTestImage();
 
         final result = await exporter.exportFromBytes(
           testImage,
@@ -728,13 +719,10 @@ void main() {
       });
 
       test('should maintain original size with original mode', () async {
-        final testImage = createTestImage(width: 100, height: 100);
+        final testImage = createTestImage();
 
         final result = await exporter.exportFromBytes(
           testImage,
-          options: const ImageExportOptions(
-            resizeMode: ExportResizeMode.original,
-          ),
         );
 
         expect(result.width, 100);
@@ -902,7 +890,7 @@ void main() {
     group('exportBatch', () {
       test('should export multiple images', () async {
         final images = [
-          createTestImage(width: 100, height: 100),
+          createTestImage(),
           createTestImage(width: 150, height: 150),
           createTestImage(width: 200, height: 200),
         ];
@@ -1025,7 +1013,6 @@ void main() {
         final result = await exporter.exportBatchToDirectory(
           imageBytesList: images,
           outputDirectory: outputDirectory,
-          baseName: 'scan',
         );
 
         expect(result.imageCount, 3);
@@ -1055,7 +1042,6 @@ void main() {
         await exporter.exportBatchToDirectory(
           imageBytesList: images,
           outputDirectory: outputDirectory,
-          baseName: 'scan',
           options: const ImageExportOptions(format: ExportImageFormat.png),
         );
 
@@ -1156,9 +1142,9 @@ void main() {
     group('stitchVertical', () {
       test('should stitch images vertically', () async {
         final images = [
-          createTestImage(width: 100, height: 50),
-          createTestImage(width: 100, height: 50),
-          createTestImage(width: 100, height: 50),
+          createTestImage(height: 50),
+          createTestImage(height: 50),
+          createTestImage(height: 50),
         ];
 
         final result = await exporter.stitchVertical(imageBytesList: images);
@@ -1169,7 +1155,7 @@ void main() {
 
       test('should center narrower images', () async {
         final images = [
-          createTestImage(width: 100, height: 50),
+          createTestImage(height: 50),
           createTestImage(width: 50, height: 50),
         ];
 
@@ -1180,8 +1166,8 @@ void main() {
 
       test('should add spacing between images', () async {
         final images = [
-          createTestImage(width: 100, height: 50),
-          createTestImage(width: 100, height: 50),
+          createTestImage(height: 50),
+          createTestImage(height: 50),
         ];
 
         final result = await exporter.stitchVertical(
@@ -1193,7 +1179,7 @@ void main() {
       });
 
       test('should return single image for single element list', () async {
-        final images = [createTestImage(width: 100, height: 50)];
+        final images = [createTestImage(height: 50)];
 
         final result = await exporter.stitchVertical(imageBytesList: images);
 
@@ -1216,9 +1202,9 @@ void main() {
     group('stitchHorizontal', () {
       test('should stitch images horizontally', () async {
         final images = [
-          createTestImage(width: 50, height: 100),
-          createTestImage(width: 50, height: 100),
-          createTestImage(width: 50, height: 100),
+          createTestImage(width: 50),
+          createTestImage(width: 50),
+          createTestImage(width: 50),
         ];
 
         final result = await exporter.stitchHorizontal(imageBytesList: images);
@@ -1229,7 +1215,7 @@ void main() {
 
       test('should center shorter images', () async {
         final images = [
-          createTestImage(width: 50, height: 100),
+          createTestImage(width: 50),
           createTestImage(width: 50, height: 50),
         ];
 
@@ -1240,8 +1226,8 @@ void main() {
 
       test('should add spacing between images', () async {
         final images = [
-          createTestImage(width: 50, height: 100),
-          createTestImage(width: 50, height: 100),
+          createTestImage(width: 50),
+          createTestImage(width: 50),
         ];
 
         final result = await exporter.stitchHorizontal(
@@ -1253,7 +1239,7 @@ void main() {
       });
 
       test('should return single image for single element list', () async {
-        final images = [createTestImage(width: 50, height: 100)];
+        final images = [createTestImage(width: 50)];
 
         final result = await exporter.stitchHorizontal(imageBytesList: images);
 
@@ -1391,11 +1377,10 @@ void main() {
     });
 
     test('should process PNG input correctly', () async {
-      final pngImage = createTestPngImage(width: 100, height: 100);
+      final pngImage = createTestPngImage();
 
       final result = await exporter.exportFromBytes(
         pngImage,
-        options: const ImageExportOptions(format: ExportImageFormat.jpeg),
       );
 
       expect(result.bytes, isNotEmpty);

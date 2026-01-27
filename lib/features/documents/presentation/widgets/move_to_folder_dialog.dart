@@ -133,7 +133,8 @@ class _MoveToFolderDialogState extends State<MoveToFolderDialog> {
                             children: [
                               Text(
                                 l10n?.saveUnder ?? 'Save under...',
-                                style: TextStyle(fontFamily: 'Outfit', 
+                                style: TextStyle(
+                                  fontFamily: 'Outfit',
                                   fontSize: 20,
                                   fontWeight: FontWeight.w700,
                                   color: theme.colorScheme.onSurface,
@@ -143,7 +144,8 @@ class _MoveToFolderDialogState extends State<MoveToFolderDialog> {
                               Text(
                                 l10n?.chooseDestinationFolder ??
                                     'Choose a destination folder',
-                                style: TextStyle(fontFamily: 'Outfit', 
+                                style: TextStyle(
+                                  fontFamily: 'Outfit',
                                   fontSize: 12,
                                   color: theme.colorScheme.onSurface
                                       .withValues(alpha: 0.5),
@@ -170,7 +172,8 @@ class _MoveToFolderDialogState extends State<MoveToFolderDialog> {
                                   horizontal: 10, vertical: 6),
                               child: Text(
                                 l10n?.save ?? 'Save',
-                                style: TextStyle(fontFamily: 'Outfit', 
+                                style: TextStyle(
+                                  fontFamily: 'Outfit',
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
                                   color: isDark
@@ -256,7 +259,8 @@ class _MoveToFolderDialogState extends State<MoveToFolderDialog> {
                             Expanded(
                               child: Text(
                                 l10n?.createNewFolder ?? 'New Folder',
-                                style: TextStyle(fontFamily: 'Outfit', 
+                                style: TextStyle(
+                                  fontFamily: 'Outfit',
                                   fontWeight: FontWeight.w600,
                                   color: theme.colorScheme.primary
                                       .withValues(alpha: 0.7),
@@ -283,7 +287,8 @@ class _MoveToFolderDialogState extends State<MoveToFolderDialog> {
                             ),
                             child: Text(
                               l10n?.cancel ?? 'Cancel',
-                              style: TextStyle(fontFamily: 'Outfit', 
+                              style: TextStyle(
+                                fontFamily: 'Outfit',
                                 fontWeight: FontWeight.w600,
                                 color: theme.colorScheme.onSurface
                                     .withValues(alpha: 0.4),
@@ -307,7 +312,8 @@ class _MoveToFolderDialogState extends State<MoveToFolderDialog> {
                                 child: Center(
                                   child: Text(
                                     l10n?.save ?? 'Save',
-                                    style: TextStyle(fontFamily: 'Outfit', 
+                                    style: TextStyle(
+                                      fontFamily: 'Outfit',
                                       fontWeight: FontWeight.w700,
                                       color: theme.colorScheme.onPrimary,
                                       fontSize: 15,
@@ -371,7 +377,8 @@ class _FolderOptionTile extends StatelessWidget {
             Expanded(
               child: Text(
                 title,
-                style: TextStyle(fontFamily: 'Outfit', 
+                style: TextStyle(
+                  fontFamily: 'Outfit',
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   color: theme.colorScheme.onSurface,
                 ),

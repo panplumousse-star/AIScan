@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -23,8 +22,8 @@ class MockDocumentScanner extends Mock implements DocumentScanner {
   Future<DocumentScanningResult?> scanDocument() async {
     return super.noSuchMethod(
       Invocation.method(#scanDocument, []),
-      returnValue: Future<DocumentScanningResult?>.value(null),
-      returnValueForMissingStub: Future<DocumentScanningResult?>.value(null),
+      returnValue: Future<DocumentScanningResult?>.value(),
+      returnValueForMissingStub: Future<DocumentScanningResult?>.value(),
     );
   }
 
@@ -81,7 +80,6 @@ void main() {
     pageCount: 1,
     fileSize: 1024,
     mimeType: 'image/jpeg',
-    ocrStatus: OcrStatus.pending,
     createdAt: DateTime.parse('2026-01-11T10:00:00.000Z'),
     updatedAt: DateTime.parse('2026-01-11T10:00:00.000Z'),
   );
@@ -1102,7 +1100,6 @@ void main() {
           scanResult,
           title: 'Cleanup Test',
           generateThumbnail: false,
-          cleanupAfterSave: true,
         );
 
         // Assert - Note: The cleanup is done by the storage service

@@ -656,8 +656,9 @@ class _AnimatedIconButtonState extends State<AnimatedIconButton>
       ),
     );
 
-    if (widget.tooltip != null) {
-      button = Tooltip(message: widget.tooltip!, child: button);
+    final tooltip = widget.tooltip;
+    if (tooltip != null) {
+      button = Tooltip(message: tooltip, child: button);
     }
 
     return button;

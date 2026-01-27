@@ -1074,13 +1074,15 @@ img.Image _applyResize(img.Image image, ImageExportOptions options) {
       );
 
     case ExportResizeMode.exact:
-      if (options.maxWidth == null || options.maxHeight == null) {
+      final exactWidth = options.maxWidth;
+      final exactHeight = options.maxHeight;
+      if (exactWidth == null || exactHeight == null) {
         return image; // Need both dimensions for exact mode
       }
       return img.copyResize(
         image,
-        width: options.maxWidth!,
-        height: options.maxHeight!,
+        width: exactWidth,
+        height: exactHeight,
         interpolation: img.Interpolation.linear,
       );
 

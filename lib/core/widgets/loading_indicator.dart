@@ -522,7 +522,7 @@ class LoadingOverlay extends StatelessWidget {
               child: AnimatedOpacity(
                 opacity: isLoading ? 1.0 : 0.0,
                 duration: AppDuration.standard,
-                child: Container(
+                child: ColoredBox(
                   color: overlayColor ??
                       colorScheme.surface.withValues(alpha: 0.8),
                   child: Center(

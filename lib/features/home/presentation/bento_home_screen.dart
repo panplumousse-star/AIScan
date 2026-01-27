@@ -209,7 +209,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
     return false;
   }
 
-  void _navigateToScanner(
+  Future<void> _navigateToScanner(
     BuildContext context,
     WidgetRef ref,
   ) async {
@@ -980,7 +980,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
 
                 if (isLoading)
                   Positioned.fill(
-                    child: Container(
+                    child: DecoratedBox(
                       decoration: BoxDecoration(
                         color: isDark
                             ? Colors.black45
@@ -1232,7 +1232,7 @@ class _PulsingGlowState extends State<_PulsingGlow>
     return AnimatedBuilder(
       animation: _glowAnimation,
       builder: (context, child) {
-        return Container(
+        return DecoratedBox(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
@@ -1244,7 +1244,7 @@ class _PulsingGlowState extends State<_PulsingGlow>
               ),
             ],
           ),
-          child: child,
+          child: child!,
         );
       },
       child: widget.child,

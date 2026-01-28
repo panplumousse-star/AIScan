@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -26,7 +25,6 @@ class PremiumSettingsCard extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isPremium = ref.watch(isPremiumProvider);
     final scanUsage = ref.watch(scanUsageProvider);
-    final debugPremium = ref.watch(debugPremiumProvider);
 
     return BentoCard(
       backgroundColor: isDark
@@ -212,85 +210,6 @@ class PremiumSettingsCard extends ConsumerWidget {
             ),
           ],
 
-          // Debug toggle (only in debug mode)
-          if (kDebugMode) ...[
-            const SizedBox(height: 16),
-            Divider(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.1)
-                  : Colors.black.withValues(alpha: 0.05),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(
-                  Icons.bug_report_outlined,
-                  size: 20,
-                  color: isDark ? AppColors.warningDark : AppColors.warningLight,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.premiumDebugToggleTitle,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: isDark ? Colors.white : Colors.black87,
-                        ),
-                      ),
-                      Text(
-                        l10n.premiumDebugToggleSubtitle,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: isDark ? Colors.white54 : Colors.black45,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Switch(
-                  value: debugPremium,
-                  onChanged: (value) {
-                    ref.read(debugPremiumProvider.notifier).setEnabled(value);
-                  },
-                  activeTrackColor: AppColors.warningLight,
-                ),
-              ],
-            ),
-
-            // Reset scan usage button (debug only)
-            if (!isPremium || debugPremium) ...[
-              const SizedBox(height: 12),
-              TextButton.icon(
-                onPressed: () async {
-                  await ref.read(scanUsageProvider.notifier).resetUsage();
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(l10n.premiumDebugResetSuccess),
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
-                  }
-                },
-                icon: Icon(
-                  Icons.refresh_rounded,
-                  size: 18,
-                  color: isDark ? AppColors.warningDark : AppColors.warningLight,
-                ),
-                label: Text(
-                  l10n.premiumDebugResetScans,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isDark ? AppColors.warningDark : AppColors.warningLight,
-                  ),
-                ),
-              ),
-            ],
-          ],
         ],
       ),
     );

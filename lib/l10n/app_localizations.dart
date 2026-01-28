@@ -1628,6 +1628,30 @@ abstract class AppLocalizations {
   /// **'Libere tout mon potentiel !'**
   String get premiumUnlockPotential;
 
+  /// No description provided for @premiumNoScansLeft.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tu n\'as plus de scans gratuits !'**
+  String get premiumNoScansLeft;
+
+  /// No description provided for @premiumTrialEnded.
+  ///
+  /// In fr, this message translates to:
+  /// **'Bonjour, ta periode d\'essai est terminee'**
+  String get premiumTrialEnded;
+
+  /// No description provided for @premiumOcrRequired.
+  ///
+  /// In fr, this message translates to:
+  /// **'L\'OCR est reserve aux membres premium'**
+  String get premiumOcrRequired;
+
+  /// No description provided for @premiumExportRequired.
+  ///
+  /// In fr, this message translates to:
+  /// **'L\'export PDF est reserve aux membres premium'**
+  String get premiumExportRequired;
+
   /// No description provided for @premiumFeatureUnlimitedScans.
   ///
   /// In fr, this message translates to:

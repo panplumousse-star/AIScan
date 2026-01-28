@@ -17,6 +17,7 @@ import 'core/storage/database_migration_helper.dart';
 import 'core/widgets/bento_card.dart';
 import 'core/widgets/bento_speech_bubble.dart';
 import 'features/app_lock/domain/app_lock_service.dart';
+import 'features/premium/domain/iap_service.dart';
 import 'features/premium/domain/premium_service.dart';
 import 'features/premium/domain/scan_usage_service.dart';
 import 'features/settings/domain/theme_persistence_service.dart';
@@ -47,32 +48,25 @@ void main() async {
   // Initialize SharedPreferences for premium service
   final sharedPreferences = await SharedPreferences.getInstance();
 
-  // Create a ProviderContainer to initialize services before app starts
-  // Override providers that need runtime dependencies
-  final container = ProviderContainer(
-    overrides: [
-      // Override scan usage service with SharedPreferences instance
-      scanUsageServiceProvider.overrideWithValue(
-        ScanUsageService(sharedPreferences),
-      ),
-    ],
-  );
-
-  // Initialize premium service with dependencies
-  // This must be done after container is created to access secureStorageServiceProvider
-  final secureStorage = container.read(secureStorageServiceProvider);
+  // Create services that need runtime dependencies
+  final secureStorage = SecureStorageService();
+  final scanUsageService = ScanUsageService(sharedPreferences);
   final premiumService = PremiumService(
     secureStorage: secureStorage,
     sharedPreferences: sharedPreferences,
   );
+  final iapService = IAPService(premiumService);
 
-  // Override premium service provider with initialized instance
-  container.updateOverrides([
-    scanUsageServiceProvider.overrideWithValue(
-      ScanUsageService(sharedPreferences),
-    ),
-    premiumServiceProvider.overrideWithValue(premiumService),
-  ]);
+  // Create a ProviderContainer to initialize services before app starts
+  // Override providers that need runtime dependencies
+  final container = ProviderContainer(
+    overrides: [
+      secureStorageServiceProvider.overrideWithValue(secureStorage),
+      scanUsageServiceProvider.overrideWithValue(scanUsageService),
+      premiumServiceProvider.overrideWithValue(premiumService),
+      iapServiceProvider.overrideWithValue(iapService),
+    ],
+  );
 
   // Clear session-only camera permissions on cold start
   // This ensures "Accept for this session" permissions reset when app restarts
@@ -81,6 +75,10 @@ void main() async {
   // Initialize app lock service to load biometric lock settings
   // This must happen before app launches to properly check lock state
   await container.read(appLockServiceProvider).initialize();
+
+  // Initialize IAP service to listen for purchases
+  // This should be done early to catch any pending purchases
+  unawaited(container.read(iapServiceProvider).initialize());
 
   // Migrate database from unencrypted to encrypted format if needed
   // This runs automatically on first launch after update

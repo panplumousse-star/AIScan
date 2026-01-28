@@ -7,6 +7,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/bento_card.dart';
 import '../../../../core/widgets/bento_mascot.dart';
 import '../../../../core/widgets/bento_speech_bubble.dart';
+import '../../domain/iap_service.dart';
 import '../../domain/premium_service.dart';
 
 /// A dialog prompting the user to upgrade to premium.
@@ -14,48 +15,155 @@ import '../../domain/premium_service.dart';
 /// Features:
 /// - Mascot with speech bubble
 /// - List of premium features with checkmarks
-/// - Purchase button with price
+/// - Purchase button with price (from Google Play)
 /// - Restore purchases link
 /// - "Later" button to dismiss
-class PremiumUpgradeDialog extends ConsumerWidget {
+class PremiumUpgradeDialog extends ConsumerStatefulWidget {
   const PremiumUpgradeDialog({
     super.key,
     this.feature,
-    this.onPurchase,
-    this.onRestore,
   });
 
   /// The feature that triggered the dialog (for context-aware messaging).
   final PremiumFeature? feature;
 
-  /// Callback when purchase button is pressed.
-  final VoidCallback? onPurchase;
-
-  /// Callback when restore purchases is pressed.
-  final VoidCallback? onRestore;
-
   /// Shows the premium upgrade dialog.
   static Future<bool?> show(
     BuildContext context, {
     PremiumFeature? feature,
-    VoidCallback? onPurchase,
-    VoidCallback? onRestore,
   }) {
     return showDialog<bool>(
       context: context,
       barrierDismissible: true,
       builder: (context) => PremiumUpgradeDialog(
         feature: feature,
-        onPurchase: onPurchase,
-        onRestore: onRestore,
       ),
     );
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PremiumUpgradeDialog> createState() =>
+      _PremiumUpgradeDialogState();
+}
+
+class _PremiumUpgradeDialogState extends ConsumerState<PremiumUpgradeDialog> {
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  /// Returns the appropriate message for the speech bubble based on the feature.
+  String _getSpeechBubbleMessage(AppLocalizations l10n) {
+    switch (widget.feature) {
+      case PremiumFeature.unlimitedScans:
+        return l10n.premiumNoScansLeft;
+      case PremiumFeature.ocr:
+        return l10n.premiumOcrRequired;
+      case PremiumFeature.pdfExport:
+        return l10n.premiumExportRequired;
+      default:
+        return l10n.premiumUnlockPotential;
+    }
+  }
+
+  Future<void> _handlePurchase() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final iapService = ref.read(iapServiceProvider);
+      final result = await iapService.purchasePremium();
+
+      if (!mounted) return;
+
+      switch (result) {
+        case IAPResult.success:
+        case IAPResult.pending:
+          // Purchase initiated, dialog will close when purchase completes
+          // via the purchase stream listener
+          Navigator.of(context).pop(true);
+        case IAPResult.alreadyOwned:
+          // User already owns premium, try to restore
+          await _handleRestore();
+        case IAPResult.cancelled:
+          setState(() {
+            _isLoading = false;
+          });
+        case IAPResult.notAvailable:
+          setState(() {
+            _isLoading = false;
+            _errorMessage = 'Achats non disponibles sur cet appareil';
+          });
+        case IAPResult.error:
+          setState(() {
+            _isLoading = false;
+            _errorMessage = 'Erreur lors de l\'achat. Réessayez.';
+          });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Erreur: $e';
+      });
+    }
+  }
+
+  Future<void> _handleRestore() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final iapService = ref.read(iapServiceProvider);
+      final result = await iapService.restorePurchases();
+
+      if (!mounted) return;
+
+      switch (result) {
+        case IAPResult.success:
+        case IAPResult.pending:
+          // Restore initiated, will be processed via stream
+          // Show a brief message then close
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Recherche des achats précédents...'),
+                duration: Duration(seconds: 2),
+              ),
+            );
+          }
+          Navigator.of(context).pop(true);
+        case IAPResult.notAvailable:
+          setState(() {
+            _isLoading = false;
+            _errorMessage = 'Achats non disponibles';
+          });
+        case IAPResult.error:
+        case IAPResult.cancelled:
+        case IAPResult.alreadyOwned:
+          setState(() {
+            _isLoading = false;
+            _errorMessage = 'Aucun achat trouvé';
+          });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Erreur: $e';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Get price from IAP service (or fallback to static price)
+    final priceString = ref.watch(premiumPriceProvider);
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -71,7 +179,7 @@ class PremiumUpgradeDialog extends ConsumerWidget {
               children: [
                 const BentoLevitationWidget(
                   child: BentoMascot(
-                    height: 120,
+                    height: 90,
                     variant: BentoMascotVariant.limited,
                   ),
                 ),
@@ -81,7 +189,7 @@ class PremiumUpgradeDialog extends ConsumerWidget {
                     tailDirection: BubbleTailDirection.left,
                     constraints: const BoxConstraints(maxWidth: 180),
                     child: Text(
-                      l10n.premiumUnlockPotential,
+                      _getSpeechBubbleMessage(l10n),
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -151,46 +259,67 @@ class PremiumUpgradeDialog extends ConsumerWidget {
                   ),
                   const SizedBox(height: 24),
 
+                  // Error message
+                  if (_errorMessage != null) ...[
+                    Text(
+                      _errorMessage!,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.errorLight,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+
                   // Purchase button
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {
-                        onPurchase?.call();
-                        Navigator.of(context).pop(true);
-                      },
+                      onPressed: _isLoading ? null : _handlePurchase,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryLight,
                         foregroundColor: Colors.white,
+                        disabledBackgroundColor:
+                            AppColors.primaryLight.withValues(alpha: 0.5),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
                         elevation: 0,
                       ),
-                      child: Text(
-                        l10n.premiumPurchaseButton,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text(
+                              'Débloquer pour $priceString',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                     ),
                   ),
                   const SizedBox(height: 12),
 
                   // Restore purchases
                   TextButton(
-                    onPressed: () {
-                      onRestore?.call();
-                    },
+                    onPressed: _isLoading ? null : _handleRestore,
                     child: Text(
                       l10n.premiumRestorePurchases,
                       style: TextStyle(
                         fontSize: 14,
-                        color: isDark
-                            ? AppColors.primaryDark
-                            : AppColors.primaryLight,
+                        color: _isLoading
+                            ? (isDark ? Colors.white30 : Colors.black26)
+                            : (isDark
+                                ? AppColors.primaryDark
+                                : AppColors.primaryLight),
                       ),
                     ),
                   ),
@@ -198,12 +327,15 @@ class PremiumUpgradeDialog extends ConsumerWidget {
 
                   // Later button
                   TextButton(
-                    onPressed: () => Navigator.of(context).pop(false),
+                    onPressed:
+                        _isLoading ? null : () => Navigator.of(context).pop(false),
                     child: Text(
                       l10n.premiumLater,
                       style: TextStyle(
                         fontSize: 14,
-                        color: isDark ? Colors.white54 : Colors.black45,
+                        color: _isLoading
+                            ? (isDark ? Colors.white30 : Colors.black26)
+                            : (isDark ? Colors.white54 : Colors.black45),
                       ),
                     ),
                   ),

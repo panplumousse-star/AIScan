@@ -13,6 +13,8 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../core/widgets/bento_share_format_dialog.dart';
 import '../../../../core/export/document_export_service.dart';
 import '../../../../core/storage/document_repository.dart';
+import '../../../premium/domain/premium_service.dart';
+import '../../../premium/presentation/widgets/premium_upgrade_dialog.dart';
 import '../../../sharing/domain/document_share_service.dart';
 import '../../../home/presentation/bento_home_screen.dart';
 import '../../../documents/presentation/documents_screen.dart';
@@ -43,7 +45,13 @@ class ScannerActionHandler {
 
     try {
       // Handle text format separately (no file sharing needed)
+      // OCR/text sharing requires premium
       if (format == ShareFormat.text) {
+        final isPremium = ref.read(isPremiumProvider);
+        if (!isPremium) {
+          await PremiumUpgradeDialog.show(context, feature: PremiumFeature.ocr);
+          return;
+        }
         String textToShare = state.savedDocument!.ocrText ?? '';
 
         // If no OCR text, extract it on-the-fly
@@ -156,6 +164,13 @@ class ScannerActionHandler {
   /// Handles exporting the scanned document to external storage.
   Future<void> handleExport(ScannerScreenState state) async {
     if (state.savedDocument == null) return;
+
+    // Check premium access for PDF export
+    final isPremium = ref.read(isPremiumProvider);
+    if (!isPremium) {
+      await PremiumUpgradeDialog.show(context, feature: PremiumFeature.pdfExport);
+      return;
+    }
 
     // Show loading indicator
     if (context.mounted) {

@@ -11,6 +11,8 @@ import '../../../core/performance/rate_limiting.dart';
 import '../../../core/performance/cache/thumbnail_cache_service.dart';
 import '../../folders/domain/folder_model.dart';
 import '../../folders/domain/folder_service.dart';
+import '../../premium/domain/premium_service.dart';
+import '../../premium/presentation/widgets/premium_upgrade_dialog.dart';
 import '../../sharing/domain/document_share_service.dart';
 import '../../../core/export/document_export_service.dart';
 import '../domain/document_model.dart';
@@ -1554,6 +1556,15 @@ class _DocumentsScreenWidgetState extends ConsumerState<DocumentsScreen>
     if (format == null) return; // User cancelled
     if (!context.mounted) return; // Widget was disposed
 
+    // OCR/text sharing requires premium
+    if (format == ShareFormat.text) {
+      final isPremium = ref.read(isPremiumProvider);
+      if (!isPremium) {
+        await PremiumUpgradeDialog.show(context, feature: PremiumFeature.ocr);
+        return;
+      }
+    }
+
     // Share with selected format
     await _shareDocuments(context, shareService, selectedDocuments, format);
   }
@@ -1596,6 +1607,13 @@ class _DocumentsScreenWidgetState extends ConsumerState<DocumentsScreen>
     BuildContext context,
     DocumentsScreenState state,
   ) async {
+    // Check premium access for PDF export
+    final isPremium = ref.read(isPremiumProvider);
+    if (!isPremium) {
+      await PremiumUpgradeDialog.show(context, feature: PremiumFeature.pdfExport);
+      return;
+    }
+
     final exportService = ref.read(documentExportServiceProvider);
 
     // Get selected documents

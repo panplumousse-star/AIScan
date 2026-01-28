@@ -137,7 +137,6 @@ Uint8List _decryptInIsolate(_DecryptParams params) {
 
   // Try new format with HMAC first
   final minLengthWithHmac = ivSizeBytes + blockSizeBytes + hmacSizeBytes;
-  var hmacVerificationFailed = false;
 
   if (params.encryptedData.length >= minLengthWithHmac) {
     try {
@@ -186,7 +185,6 @@ Uint8List _decryptInIsolate(_DecryptParams params) {
       }
 
       // Could be legacy format, will try legacy decryption below
-      hmacVerificationFailed = true;
     } catch (e) {
       // If it's already an IntegrityException, rethrow it
       if (e is IntegrityException) {
@@ -377,7 +375,6 @@ class EncryptionService {
 
     // Try new format with HMAC first
     final minLengthWithHmac = _ivSizeBytes + _blockSizeBytes + _hmacSizeBytes;
-    var hmacVerificationFailed = false;
 
     if (encryptedData.length >= minLengthWithHmac) {
       try {
@@ -426,7 +423,6 @@ class EncryptionService {
         }
 
         // Could be legacy format, will try legacy decryption below
-        hmacVerificationFailed = true;
       } catch (e) {
         // If it's already an IntegrityException, rethrow it
         if (e is IntegrityException) {

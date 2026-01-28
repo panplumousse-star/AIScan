@@ -890,6 +890,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get premiumUnlockPotential => 'Unlock my full potential!';
 
   @override
+  String get premiumNoScansLeft => 'You\'ve run out of free scans!';
+
+  @override
+  String get premiumTrialEnded => 'Hello, your trial period has ended';
+
+  @override
+  String get premiumOcrRequired => 'OCR is reserved for premium members';
+
+  @override
+  String get premiumExportRequired =>
+      'PDF export is reserved for premium members';
+
+  @override
   String get premiumFeatureUnlimitedScans => 'Unlimited scans';
 
   @override

@@ -11,6 +11,10 @@ import 'features/app_lock/presentation/lock_screen.dart';
 import 'features/home/presentation/bento_home_screen.dart';
 import 'l10n/app_localizations.dart';
 
+/// Global RouteObserver for tracking navigation events.
+/// Used by screens that need to know when they become visible again.
+final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
+
 /// The root widget of the Scanaï application.
 ///
 /// Configures MaterialApp with theming, routing, and global settings.
@@ -80,6 +84,9 @@ class ScanaiApp extends ConsumerWidget {
         pageTransitionsTheme: pageTransitionsTheme,
       ),
       themeMode: themeMode,
+
+      // Route observer for navigation-aware widgets
+      navigatorObservers: [routeObserver],
 
       // Home screen - check for lock requirement first
       home: const _AppHome(),

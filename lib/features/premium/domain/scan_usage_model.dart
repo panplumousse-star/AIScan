@@ -13,7 +13,7 @@ class ScanUsage with _$ScanUsage {
     @Default(0) int totalScans,
 
     /// Maximum number of scans allowed for free users.
-    @Default(10) int maxFreeScans,
+    @Default(1) int maxFreeScans,
   }) = _ScanUsage;
 
   factory ScanUsage.fromJson(Map<String, dynamic> json) =>

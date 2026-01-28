@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 
 import '../../features/documents/domain/document_model.dart';
 import '../../features/export/domain/pdf_generator.dart';
+import '../../features/premium/domain/premium_service.dart';
 import '../exceptions/base_exception.dart';
 import '../storage/document_repository.dart';
 import 'export_preferences.dart';
@@ -29,12 +30,87 @@ final documentExportServiceProvider = Provider<DocumentExportService>((ref) {
   );
 });
 
+/// Provider that checks if PDF export is available (premium feature).
+final canExportPdfProvider = Provider<bool>((ref) {
+  return ref.watch(isPremiumProvider);
+});
+
+/// Premium-aware export service that checks premium status before exporting.
+///
+/// Use this provider instead of [documentExportServiceProvider] when you want
+/// automatic premium gating for PDF export.
+final premiumExportServiceProvider = Provider<PremiumExportService>((ref) {
+  final exportService = ref.read(documentExportServiceProvider);
+  return PremiumExportService(exportService, ref);
+});
+
+/// Wrapper service that adds premium checking to export operations.
+class PremiumExportService {
+  PremiumExportService(this._exportService, this._ref);
+
+  final DocumentExportService _exportService;
+  final Ref _ref;
+
+  bool get _isPremium => _ref.read(isPremiumProvider);
+
+  /// Exports a document if premium access is available.
+  ///
+  /// Returns [ExportResult.premiumRequired] if the user doesn't have premium.
+  Future<ExportResult> exportDocument(Document document) async {
+    if (!_isPremium) {
+      return const ExportResult.premiumRequired();
+    }
+    return _exportService.exportDocument(document);
+  }
+
+  /// Exports multiple documents if premium access is available.
+  ///
+  /// Returns [ExportResult.premiumRequired] if the user doesn't have premium.
+  Future<ExportResult> exportDocuments(List<Document> documents) async {
+    if (!_isPremium) {
+      return const ExportResult.premiumRequired();
+    }
+    return _exportService.exportDocuments(documents);
+  }
+
+  /// Exports a document to bytes if premium access is available.
+  ///
+  /// Throws [PremiumRequiredException] if the user doesn't have premium.
+  Future<Uint8List> exportDocumentToBytes(Document document) async {
+    if (!_isPremium) {
+      throw const PremiumRequiredException(PremiumFeature.pdfExport);
+    }
+    return _exportService.exportDocumentToBytes(document);
+  }
+
+  /// Gets the last export folder path.
+  Future<String?> getLastExportFolder() => _exportService.getLastExportFolder();
+
+  /// Gets the last export folder display name.
+  Future<String?> getLastExportFolderName() =>
+      _exportService.getLastExportFolderName();
+
+  /// Clears the stored last export folder preference.
+  Future<void> clearLastExportFolder() =>
+      _exportService.clearLastExportFolder();
+}
+
 /// Exception thrown when document export operations fail.
 ///
 /// Contains the original error message and optional underlying exception.
 class DocumentExportException extends BaseException {
   /// Creates a [DocumentExportException] with the given [message].
   const DocumentExportException(super.message, {super.cause});
+}
+
+/// Exception thrown when a premium feature is accessed without premium access.
+class PremiumRequiredException extends BaseException {
+  /// Creates a [PremiumRequiredException] for the given feature.
+  const PremiumRequiredException(this.feature)
+      : super('Cette fonctionnalité nécessite un abonnement Premium');
+
+  /// The feature that requires premium access.
+  final PremiumFeature feature;
 }
 
 /// Status of an export operation.
@@ -47,6 +123,9 @@ enum ExportStatus {
 
   /// Export failed due to an error.
   failed,
+
+  /// Export blocked because premium is required.
+  premiumRequired,
 }
 
 /// Result of a document export operation.
@@ -91,6 +170,12 @@ class ExportResult {
           errorMessage: errorMessage,
         );
 
+  /// Creates a premium-required export result.
+  const ExportResult.premiumRequired()
+      : this(
+          status: ExportStatus.premiumRequired,
+        );
+
   /// The status of the export operation.
   final ExportStatus status;
 
@@ -117,6 +202,9 @@ class ExportResult {
 
   /// Whether the export failed.
   bool get isFailed => status == ExportStatus.failed;
+
+  /// Whether the export requires premium access.
+  bool get isPremiumRequired => status == ExportStatus.premiumRequired;
 
   @override
   bool operator ==(Object other) {

@@ -22,6 +22,8 @@ import '../../settings/presentation/settings_screen.dart';
 import '../../../core/services/audio_service.dart';
 import '../../../core/widgets/bento_mascot.dart';
 import '../../../core/widgets/bento_speech_bubble.dart';
+import '../../premium/domain/premium_service.dart';
+import '../../premium/domain/scan_usage_service.dart';
 import 'package:share_plus/share_plus.dart';
 
 /// Provider that gets the total document count.
@@ -704,11 +706,29 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                   ),
                 )
               else
-                BentoMascot(
-                  key: ValueKey('home_mascot_$_mascotKey'),
-                  height: 180,
-                  // animateOnce: false → loops 6 cycles, pauses 10s, repeats
-                  // Stops only on sleep mode or page navigation
+                Consumer(
+                  builder: (context, ref, child) {
+                    final isPremium = ref.watch(isPremiumProvider);
+                    final scanUsage = ref.watch(scanUsageProvider);
+                    final isLimited = !isPremium && !scanUsage.hasScansRemaining;
+
+                    if (isLimited) {
+                      return const BentoLevitationWidget(
+                        child: BentoMascot(
+                          key: ValueKey('limited_mascot'),
+                          height: 180,
+                          variant: BentoMascotVariant.limited,
+                        ),
+                      );
+                    }
+
+                    return BentoMascot(
+                      key: ValueKey('home_mascot_$_mascotKey'),
+                      height: 180,
+                      // animateOnce: false → loops 6 cycles, pauses 10s, repeats
+                      // Stops only on sleep mode or page navigation
+                    );
+                  },
                 ),
             ],
           ),

@@ -326,5 +326,41 @@
   "deviceSecurityWarningDetails": "Sur les appareils modifies, les fonctionnalites de securite comme le chiffrement, le stockage securise et l'authentification biometrique peuvent etre compromises. Vos documents peuvent etre en danger.\n\nL'application continuera a fonctionner, mais soyez conscient de la securite reduite.",
   "deviceSecurityContinue": "J'ai compris",
   "showSecurityWarnings": "Afficher les alertes de securite",
-  "showSecurityWarningsDescription": "Afficher des avertissements lors de l'execution sur des appareils rootés ou jailbreakés"
+  "showSecurityWarningsDescription": "Afficher des avertissements lors de l'execution sur des appareils rootés ou jailbreakés",
+
+  "premiumTitle": "Premium a vie",
+  "premiumSubtitle": "Debloquez toutes les fonctionnalites en un seul achat",
+  "premiumUnlockPotential": "Libere tout mon potentiel !",
+  "premiumFeatureUnlimitedScans": "Scans illimites",
+  "premiumFeatureMultipage": "Documents multi-pages (jusqu'a 100)",
+  "premiumFeaturePdfExport": "Export PDF",
+  "premiumFeatureSharing": "Partage de documents",
+  "premiumFeatureOcr": "Extraction de texte (OCR)",
+  "premiumPurchaseButton": "Debloquer pour 2,99 €",
+  "premiumRestorePurchases": "Restaurer les achats",
+  "premiumLater": "Peut-etre plus tard",
+  "premiumBadgeLabel": "Premium",
+  "premiumStatusPremium": "Premium",
+  "premiumStatusPremiumSubtitle": "Toutes les fonctionnalites debloquees",
+  "premiumStatusFree": "Gratuit",
+  "premiumStatusFreeSubtitle": "{remaining} scans restants sur {total}",
+  "@premiumStatusFreeSubtitle": {
+    "placeholders": {
+      "remaining": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "premiumScansRemaining": "Scans restants",
+  "premiumUpgradeButton": "Passer a Premium",
+  "premiumDebugToggleTitle": "Simuler Premium (Debug)",
+  "premiumDebugToggleSubtitle": "Activer toutes les fonctionnalites premium pour les tests",
+  "premiumDebugResetScans": "Reinitialiser le compteur de scans",
+  "premiumDebugResetSuccess": "Compteur de scans reinitialise",
+  "premiumBlockedNoScans": "Vous avez utilise tous vos scans gratuits",
+  "premiumRequiredTitle": "Premium requis",
+  "premiumRequiredMessage": "Cette fonctionnalite necessite un abonnement Premium",
+  "premiumFeatureLockedOcr": "L'extraction de texte OCR est une fonctionnalite Premium",
+  "premiumFeatureLockedExport": "L'export PDF est une fonctionnalite Premium",
+  "premiumFeatureLockedShare": "Le partage de documents est une fonctionnalite Premium",
+  "premiumFeatureLockedMultipage": "Le scan multi-pages est une fonctionnalite Premium"
 }

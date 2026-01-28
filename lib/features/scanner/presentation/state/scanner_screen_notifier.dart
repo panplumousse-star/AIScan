@@ -10,6 +10,7 @@
 /// - Save to encrypted storage with metadata
 /// - Error handling and recovery
 /// - State cleanup on disposal
+/// - Premium feature gating (scan limits, cooldown, multipage)
 ///
 /// Usage:
 /// ```dart
@@ -24,38 +25,89 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../documents/domain/document_model.dart';
+import '../../../premium/domain/premium_service.dart';
+import '../../../premium/domain/scan_usage_model.dart';
+import '../../../premium/domain/scan_usage_service.dart';
 import '../../domain/scanner_service.dart';
 import 'scanner_screen_state.dart';
 
 /// State notifier for the scanner screen.
 ///
 /// Handles the scanning process, preview, and saving workflow.
+/// Integrates premium feature gating for free tier limitations.
 class ScannerScreenNotifier extends StateNotifier<ScannerScreenState> {
   /// Creates a [ScannerScreenNotifier] with the given services.
   ScannerScreenNotifier(
     this._scannerService,
     this._storageService,
+    this._ref,
   ) : super(const ScannerScreenState());
 
   final ScannerService _scannerService;
   final ScannerStorageService _storageService;
+  final Ref _ref;
+
+  /// Checks if the user has premium access.
+  bool get _isPremium => _ref.read(isPremiumProvider);
+
+  /// Gets the current scan usage for free users.
+  ScanUsage get _scanUsage => _ref.read(scanUsageProvider);
+
+  /// Checks if the user can perform a scan.
+  ///
+  /// Returns [ScanBlockReason.none] if allowed, otherwise the reason for blocking.
+  ScanBlockReason _checkScanPermission() {
+    if (_isPremium) return ScanBlockReason.none;
+
+    final usage = _scanUsage;
+
+    if (!usage.hasScansRemaining) {
+      return ScanBlockReason.noScansRemaining;
+    }
+
+    return ScanBlockReason.none;
+  }
 
   /// Starts a document scan with the given options.
+  ///
+  /// For free users:
+  /// - Checks scan limits before proceeding
+  /// - Forces single-page mode (multipage disabled)
+  /// - Records scan usage after successful scan
   Future<void> startScan(
       {ScannerOptions options = const ScannerOptions()}) async {
     if (state.isLoading) return;
 
+    // Check premium gating for free users
+    final blockReason = _checkScanPermission();
+    if (blockReason != ScanBlockReason.none) {
+      state = state.copyWith(blocked: blockReason);
+      return;
+    }
+
+    // Clear any previous block state
     state = state.copyWith(
       isScanning: true,
       error: null,
       scanResult: null,
       savedDocument: null,
+      blocked: ScanBlockReason.none,
     );
 
+    // For free users, force single-page mode
+    final effectiveOptions = _isPremium
+        ? options
+        : const ScannerOptions.quickScan(); // pageLimit: 1
+
     try {
-      final result = await _scannerService.scanDocument(options: options);
+      final result = await _scannerService.scanDocument(options: effectiveOptions);
 
       if (result != null && result.isNotEmpty) {
+        // Record scan usage for free users
+        if (!_isPremium) {
+          await _ref.read(scanUsageProvider.notifier).recordScan();
+        }
+
         state = state.copyWith(
           scanResult: result,
           isScanning: false,
@@ -87,10 +139,19 @@ class ScannerScreenNotifier extends StateNotifier<ScannerScreenState> {
   ///
   /// [allowGalleryImport] controls whether the gallery import button is shown.
   /// Set to false if storage permission is not granted.
+  ///
+  /// Note: For free users, this will be converted to single-page mode in [startScan].
   Future<void> multiPageScan({
     int maxPages = 100,
     bool allowGalleryImport = true,
   }) async {
+    // Premium check - free users cannot use multi-page
+    if (!_isPremium) {
+      // Still allow scan but it will be converted to single page
+      await quickScan();
+      return;
+    }
+
     await startScan(
       options: ScannerOptions(
         pageLimit: maxPages,
@@ -98,6 +159,17 @@ class ScannerScreenNotifier extends StateNotifier<ScannerScreenState> {
       ),
     );
   }
+
+  /// Clears the blocked state.
+  void clearBlocked() {
+    state = state.copyWith(blocked: ScanBlockReason.none);
+  }
+
+  /// Returns true if the user has premium access.
+  bool get isPremium => _isPremium;
+
+  /// Returns the number of scans remaining for free users.
+  int get scansRemaining => _scanUsage.scansRemaining;
 
   /// Selects a page for preview.
   void selectPage(int index) {
@@ -204,6 +276,6 @@ final scannerScreenProvider = StateNotifierProvider.autoDispose<
   (ref) {
     final scannerService = ref.watch(scannerServiceProvider);
     final storageService = ref.watch(scannerStorageServiceProvider);
-    return ScannerScreenNotifier(scannerService, storageService);
+    return ScannerScreenNotifier(scannerService, storageService, ref);
   },
 );

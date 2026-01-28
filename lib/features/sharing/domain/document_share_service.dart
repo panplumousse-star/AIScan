@@ -11,6 +11,7 @@ import '../../../core/security/secure_file_deletion_service.dart';
 import '../../../core/storage/document_repository.dart';
 import '../../documents/domain/document_model.dart';
 import '../../export/domain/pdf_generator.dart';
+import '../../premium/domain/premium_service.dart';
 
 /// Riverpod provider for [DocumentShareService].
 ///
@@ -31,6 +32,20 @@ final documentShareServiceProvider = Provider<DocumentShareService>((ref) {
     pdfGenerator: pdfGenerator,
     secureFileDeletion: secureFileDeletion,
   );
+});
+
+/// Provider that checks if sharing is available (premium feature).
+final canShareProvider = Provider<bool>((ref) {
+  return ref.watch(isPremiumProvider);
+});
+
+/// Premium-aware share service that checks premium status before sharing.
+///
+/// Use this provider instead of [documentShareServiceProvider] when you want
+/// automatic premium gating for document sharing.
+final premiumShareServiceProvider = Provider<PremiumShareService>((ref) {
+  final shareService = ref.read(documentShareServiceProvider);
+  return PremiumShareService(shareService, ref);
 });
 
 /// Format for sharing documents.
@@ -66,6 +81,9 @@ enum SharePermissionResult {
 
   /// Permission was denied by user during this session.
   denied,
+
+  /// Premium subscription is required for sharing.
+  premiumRequired,
 }
 
 /// Exception thrown when document share operations fail.
@@ -659,4 +677,108 @@ class DocumentShareService {
     }
     return '${documents.length} Documents';
   }
+}
+
+/// Exception thrown when sharing requires premium access.
+class SharePremiumRequiredException extends BaseException {
+  /// Creates a [SharePremiumRequiredException].
+  const SharePremiumRequiredException()
+      : super('Cette fonctionnalité nécessite un abonnement Premium');
+}
+
+/// Wrapper service that adds premium checking to share operations.
+///
+/// Use this service when you want automatic premium gating for document sharing.
+/// For sharing without premium checks, use [DocumentShareService] directly.
+class PremiumShareService {
+  PremiumShareService(this._shareService, this._ref);
+
+  final DocumentShareService _shareService;
+  final Ref _ref;
+
+  bool get _isPremium => _ref.read(isPremiumProvider);
+
+  /// Checks if the user can share (premium + storage permission).
+  ///
+  /// Returns [SharePermissionResult.premiumRequired] if the user doesn't have premium,
+  /// otherwise delegates to the storage permission check.
+  Future<SharePermissionResult> checkSharePermission() async {
+    if (!_isPremium) {
+      return SharePermissionResult.premiumRequired;
+    }
+    return _shareService.checkSharePermission();
+  }
+
+  /// Requests storage permission from the system.
+  Future<StoragePermissionState> requestPermission() =>
+      _shareService.requestPermission();
+
+  /// Opens the app settings page for manual permission grant.
+  Future<bool> openSettings() => _shareService.openSettings();
+
+  /// Clears the permission cache.
+  void clearPermissionCache() => _shareService.clearPermissionCache();
+
+  /// Shares a document if premium access is available.
+  ///
+  /// Throws [SharePremiumRequiredException] if the user doesn't have premium.
+  Future<ShareResult> shareDocument(
+    Document document, {
+    ShareFormat format = ShareFormat.pdf,
+    String? subject,
+  }) async {
+    if (!_isPremium) {
+      throw const SharePremiumRequiredException();
+    }
+    return _shareService.shareDocument(document, format: format, subject: subject);
+  }
+
+  /// Shares multiple documents if premium access is available.
+  ///
+  /// Throws [SharePremiumRequiredException] if the user doesn't have premium.
+  Future<ShareResult> shareDocuments(
+    List<Document> documents, {
+    ShareFormat format = ShareFormat.pdf,
+    String? subject,
+  }) async {
+    if (!_isPremium) {
+      throw const SharePremiumRequiredException();
+    }
+    return _shareService.shareDocuments(documents, format: format, subject: subject);
+  }
+
+  /// Shares an already exported file if premium access is available.
+  ///
+  /// Throws [SharePremiumRequiredException] if the user doesn't have premium.
+  Future<void> shareExportedFile(
+    String filePath, {
+    required String fileName,
+    String? subject,
+  }) async {
+    if (!_isPremium) {
+      throw const SharePremiumRequiredException();
+    }
+    return _shareService.shareExportedFile(filePath, fileName: fileName, subject: subject);
+  }
+
+  /// Shares plain text content via the native share sheet.
+  ///
+  /// Note: Text sharing is allowed for free users (e.g., sharing OCR results
+  /// if they somehow obtained them). For full premium gating, check isPremium first.
+  Future<void> shareText(
+    String text, {
+    String? subject,
+  }) async {
+    // Text sharing could be allowed for free users in some cases
+    // For strict gating, uncomment:
+    // if (!_isPremium) throw const SharePremiumRequiredException();
+    return _shareService.shareText(text, subject: subject);
+  }
+
+  /// Cleans up temporary decrypted files after sharing.
+  Future<void> cleanupTempFiles(List<String> filePaths) =>
+      _shareService.cleanupTempFiles(filePaths);
+
+  /// Cleans up all temporary share files.
+  Future<void> cleanupAllTempFiles() => _shareService.cleanupAllTempFiles();
 }

@@ -880,4 +880,102 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get showSecurityWarningsDescription =>
       'Afficher des avertissements lors de l\'execution sur des appareils rootés ou jailbreakés';
+
+  @override
+  String get premiumTitle => 'Premium a vie';
+
+  @override
+  String get premiumSubtitle =>
+      'Debloquez toutes les fonctionnalites en un seul achat';
+
+  @override
+  String get premiumUnlockPotential => 'Libere tout mon potentiel !';
+
+  @override
+  String get premiumFeatureUnlimitedScans => 'Scans illimites';
+
+  @override
+  String get premiumFeatureMultipage => 'Documents multi-pages (jusqu\'a 100)';
+
+  @override
+  String get premiumFeaturePdfExport => 'Export PDF';
+
+  @override
+  String get premiumFeatureSharing => 'Partage de documents';
+
+  @override
+  String get premiumFeatureOcr => 'Extraction de texte (OCR)';
+
+  @override
+  String get premiumPurchaseButton => 'Debloquer pour 2,99 €';
+
+  @override
+  String get premiumRestorePurchases => 'Restaurer les achats';
+
+  @override
+  String get premiumLater => 'Peut-etre plus tard';
+
+  @override
+  String get premiumBadgeLabel => 'Premium';
+
+  @override
+  String get premiumStatusPremium => 'Premium';
+
+  @override
+  String get premiumStatusPremiumSubtitle =>
+      'Toutes les fonctionnalites debloquees';
+
+  @override
+  String get premiumStatusFree => 'Gratuit';
+
+  @override
+  String premiumStatusFreeSubtitle(int remaining, int total) {
+    return '$remaining scans restants sur $total';
+  }
+
+  @override
+  String get premiumScansRemaining => 'Scans restants';
+
+  @override
+  String get premiumUpgradeButton => 'Passer a Premium';
+
+  @override
+  String get premiumDebugToggleTitle => 'Simuler Premium (Debug)';
+
+  @override
+  String get premiumDebugToggleSubtitle =>
+      'Activer toutes les fonctionnalites premium pour les tests';
+
+  @override
+  String get premiumDebugResetScans => 'Reinitialiser le compteur de scans';
+
+  @override
+  String get premiumDebugResetSuccess => 'Compteur de scans reinitialise';
+
+  @override
+  String get premiumBlockedNoScans =>
+      'Vous avez utilise tous vos scans gratuits';
+
+  @override
+  String get premiumRequiredTitle => 'Premium requis';
+
+  @override
+  String get premiumRequiredMessage =>
+      'Cette fonctionnalite necessite un abonnement Premium';
+
+  @override
+  String get premiumFeatureLockedOcr =>
+      'L\'extraction de texte OCR est une fonctionnalite Premium';
+
+  @override
+  String get premiumFeatureLockedExport =>
+      'L\'export PDF est une fonctionnalite Premium';
+
+  @override
+  String get premiumFeatureLockedShare =>
+      'Le partage de documents est une fonctionnalite Premium';
+
+  @override
+  String get premiumFeatureLockedMultipage =>
+      'Le scan multi-pages est une fonctionnalite Premium';
 }

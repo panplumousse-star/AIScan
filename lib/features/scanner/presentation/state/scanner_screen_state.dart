@@ -18,6 +18,15 @@ import '../../domain/scanner_service.dart';
 
 part 'scanner_screen_state.freezed.dart';
 
+/// Reason why a scan is blocked for free users.
+enum ScanBlockReason {
+  /// Scan is not blocked.
+  none,
+
+  /// No scans remaining in free tier.
+  noScansRemaining,
+}
+
 /// State for the scanner screen.
 @freezed
 class ScannerScreenState with _$ScannerScreenState {
@@ -42,6 +51,9 @@ class ScannerScreenState with _$ScannerScreenState {
 
     /// Currently selected page index for preview.
     @Default(0) int selectedPageIndex,
+
+    /// Reason scan is blocked (for free users).
+    @Default(ScanBlockReason.none) ScanBlockReason blocked,
   }) = _ScannerScreenState;
 
   /// Whether we have a scan result to preview.
@@ -55,4 +67,7 @@ class ScannerScreenState with _$ScannerScreenState {
 
   /// Whether we have an error.
   bool get hasError => error != null;
+
+  /// Whether scan is blocked due to free tier limitations.
+  bool get isBlocked => blocked != ScanBlockReason.none;
 }

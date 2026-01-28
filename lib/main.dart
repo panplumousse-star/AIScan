@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app.dart';
 import 'l10n/app_localizations.dart';
@@ -11,11 +12,14 @@ import 'core/permissions/camera_permission_service.dart';
 import 'core/providers/locale_provider.dart';
 import 'core/providers/ocr_language_provider.dart';
 import 'core/security/device_security_service.dart';
+import 'core/security/secure_storage_service.dart';
 import 'core/storage/database_migration_helper.dart';
 import 'core/widgets/bento_card.dart';
 import 'core/widgets/bento_speech_bubble.dart';
 import 'features/app_lock/domain/app_lock_service.dart';
-import 'features/settings/presentation/settings_screen.dart';
+import 'features/premium/domain/premium_service.dart';
+import 'features/premium/domain/scan_usage_service.dart';
+import 'features/settings/domain/theme_persistence_service.dart';
 
 /// Application entry point.
 ///
@@ -40,8 +44,35 @@ void main() async {
     ),
   );
 
+  // Initialize SharedPreferences for premium service
+  final sharedPreferences = await SharedPreferences.getInstance();
+
   // Create a ProviderContainer to initialize services before app starts
-  final container = ProviderContainer();
+  // Override providers that need runtime dependencies
+  final container = ProviderContainer(
+    overrides: [
+      // Override scan usage service with SharedPreferences instance
+      scanUsageServiceProvider.overrideWithValue(
+        ScanUsageService(sharedPreferences),
+      ),
+    ],
+  );
+
+  // Initialize premium service with dependencies
+  // This must be done after container is created to access secureStorageServiceProvider
+  final secureStorage = container.read(secureStorageServiceProvider);
+  final premiumService = PremiumService(
+    secureStorage: secureStorage,
+    sharedPreferences: sharedPreferences,
+  );
+
+  // Override premium service provider with initialized instance
+  container.updateOverrides([
+    scanUsageServiceProvider.overrideWithValue(
+      ScanUsageService(sharedPreferences),
+    ),
+    premiumServiceProvider.overrideWithValue(premiumService),
+  ]);
 
   // Clear session-only camera permissions on cold start
   // This ensures "Accept for this session" permissions reset when app restarts

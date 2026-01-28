@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../core/exceptions/base_exception.dart';
+import '../../premium/domain/premium_service.dart';
 
 /// Riverpod provider for [OcrService].
 ///
@@ -16,12 +17,33 @@ final ocrServiceProvider = Provider<OcrService>((ref) {
   return OcrService();
 });
 
+/// Provider that checks if OCR is available (premium feature).
+final canUseOcrProvider = Provider<bool>((ref) {
+  return ref.watch(isPremiumProvider);
+});
+
+/// Premium-aware OCR service that checks premium status before processing.
+///
+/// Use this provider instead of [ocrServiceProvider] when you want
+/// automatic premium gating for OCR operations.
+final premiumOcrServiceProvider = Provider<PremiumOcrService>((ref) {
+  final ocrService = ref.read(ocrServiceProvider);
+  return PremiumOcrService(ocrService, ref);
+});
+
 /// Exception thrown when OCR operations fail.
 ///
 /// Contains the original error message and optional underlying exception.
 class OcrException extends BaseException {
   /// Creates an [OcrException] with the given [message].
   const OcrException(super.message, {super.cause});
+}
+
+/// Exception thrown when OCR requires premium access.
+class OcrPremiumRequiredException extends BaseException {
+  /// Creates an [OcrPremiumRequiredException].
+  const OcrPremiumRequiredException()
+      : super('Cette fonctionnalité nécessite un abonnement Premium');
 }
 
 /// Result of an OCR text extraction operation.
@@ -816,4 +838,136 @@ class OcrService {
   Future<void> dispose() async {
     await clearCache();
   }
+}
+
+/// Wrapper service that adds premium checking to OCR operations.
+///
+/// Use this service when you want automatic premium gating for OCR.
+/// For OCR without premium checks, use [OcrService] directly.
+class PremiumOcrService {
+  PremiumOcrService(this._ocrService, this._ref);
+
+  final OcrService _ocrService;
+  final Ref _ref;
+
+  bool get _isPremium => _ref.read(isPremiumProvider);
+
+  /// Whether OCR is available (requires premium).
+  bool get isAvailable => _isPremium;
+
+  /// Whether the underlying service is ready.
+  bool get isReady => _ocrService.isReady;
+
+  /// Default language for OCR.
+  static const OcrLanguage defaultLanguage = OcrService.defaultLanguage;
+
+  /// Gets the list of available languages.
+  List<OcrLanguage> get availableLanguages => _ocrService.availableLanguages;
+
+  /// Initializes the OCR service if premium is available.
+  ///
+  /// Throws [OcrPremiumRequiredException] if the user doesn't have premium.
+  Future<bool> initialize({
+    List<OcrLanguage> languages = const [OcrLanguage.latin],
+  }) async {
+    if (!_isPremium) {
+      throw const OcrPremiumRequiredException();
+    }
+    return _ocrService.initialize(languages: languages);
+  }
+
+  /// Checks if a specific language is available for OCR.
+  bool isLanguageAvailable(OcrLanguage language) {
+    if (!_isPremium) return false;
+    return _ocrService.isLanguageAvailable(language);
+  }
+
+  /// Extracts text from an image file if premium is available.
+  ///
+  /// Throws [OcrPremiumRequiredException] if the user doesn't have premium.
+  Future<OcrResult> extractTextFromFile(
+    String imagePath, {
+    OcrOptions options = OcrOptions.defaultDocument,
+  }) async {
+    if (!_isPremium) {
+      throw const OcrPremiumRequiredException();
+    }
+    return _ocrService.extractTextFromFile(imagePath, options: options);
+  }
+
+  /// Extracts text from image bytes if premium is available.
+  ///
+  /// Throws [OcrPremiumRequiredException] if the user doesn't have premium.
+  Future<OcrResult> extractTextFromBytes(
+    Uint8List bytes, {
+    OcrOptions options = OcrOptions.defaultDocument,
+  }) async {
+    if (!_isPremium) {
+      throw const OcrPremiumRequiredException();
+    }
+    return _ocrService.extractTextFromBytes(bytes, options: options);
+  }
+
+  /// Extracts text from multiple images if premium is available.
+  ///
+  /// Throws [OcrPremiumRequiredException] if the user doesn't have premium.
+  Future<OcrResult> extractTextFromMultipleFiles(
+    List<String> imagePaths, {
+    OcrOptions options = OcrOptions.defaultDocument,
+    String separator = '\n\n',
+  }) async {
+    if (!_isPremium) {
+      throw const OcrPremiumRequiredException();
+    }
+    return _ocrService.extractTextFromMultipleFiles(
+      imagePaths,
+      options: options,
+      separator: separator,
+    );
+  }
+
+  /// Extracts text with progress callback if premium is available.
+  ///
+  /// Throws [OcrPremiumRequiredException] if the user doesn't have premium.
+  Future<OcrResult> extractTextWithProgress(
+    List<String> imagePaths, {
+    OcrOptions options = OcrOptions.defaultDocument,
+    required void Function(
+            int currentPage, int totalPages, OcrResult partialResult)
+        onProgress,
+    String separator = '\n\n',
+  }) async {
+    if (!_isPremium) {
+      throw const OcrPremiumRequiredException();
+    }
+    return _ocrService.extractTextWithProgress(
+      imagePaths,
+      options: options,
+      onProgress: onProgress,
+      separator: separator,
+    );
+  }
+
+  /// Quickly checks if an image contains text (requires premium).
+  ///
+  /// Returns false if user doesn't have premium.
+  Future<bool> containsText(
+    String imagePath, {
+    OcrLanguage language = OcrLanguage.latin,
+  }) async {
+    if (!_isPremium) return false;
+    return _ocrService.containsText(imagePath, language: language);
+  }
+
+  /// Clears cached recognizers.
+  Future<void> clearCache() => _ocrService.clearCache();
+
+  /// Gets the storage size used.
+  Future<int> getCacheSize() => _ocrService.getCacheSize();
+
+  /// Gets a formatted string of the cache size.
+  Future<String> getCacheSizeFormatted() => _ocrService.getCacheSizeFormatted();
+
+  /// Closes all recognizers and releases resources.
+  Future<void> dispose() => _ocrService.dispose();
 }

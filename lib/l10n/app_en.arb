@@ -326,5 +326,41 @@
   "deviceSecurityWarningDetails": "On modified devices, security features like encryption, secure storage, and biometric authentication may be compromised. Your documents may be at risk.\n\nThe app will continue to function, but please be aware of the reduced security.",
   "deviceSecurityContinue": "I Understand",
   "showSecurityWarnings": "Show security warnings",
-  "showSecurityWarningsDescription": "Display warnings when running on rooted or jailbroken devices"
+  "showSecurityWarningsDescription": "Display warnings when running on rooted or jailbroken devices",
+
+  "premiumTitle": "Premium Lifetime",
+  "premiumSubtitle": "Unlock all features with a one-time purchase",
+  "premiumUnlockPotential": "Unlock my full potential!",
+  "premiumFeatureUnlimitedScans": "Unlimited scans",
+  "premiumFeatureMultipage": "Multi-page documents (up to 100)",
+  "premiumFeaturePdfExport": "PDF export",
+  "premiumFeatureSharing": "Document sharing",
+  "premiumFeatureOcr": "Text extraction (OCR)",
+  "premiumPurchaseButton": "Unlock for €2.99",
+  "premiumRestorePurchases": "Restore purchases",
+  "premiumLater": "Maybe later",
+  "premiumBadgeLabel": "Premium",
+  "premiumStatusPremium": "Premium",
+  "premiumStatusPremiumSubtitle": "All features unlocked",
+  "premiumStatusFree": "Free",
+  "premiumStatusFreeSubtitle": "{remaining} of {total} scans remaining",
+  "@premiumStatusFreeSubtitle": {
+    "placeholders": {
+      "remaining": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "premiumScansRemaining": "Scans remaining",
+  "premiumUpgradeButton": "Upgrade to Premium",
+  "premiumDebugToggleTitle": "Simulate Premium (Debug)",
+  "premiumDebugToggleSubtitle": "Activate all premium features for testing",
+  "premiumDebugResetScans": "Reset scan counter",
+  "premiumDebugResetSuccess": "Scan counter reset",
+  "premiumBlockedNoScans": "You've used all your free scans",
+  "premiumRequiredTitle": "Premium Required",
+  "premiumRequiredMessage": "This feature requires a Premium subscription",
+  "premiumFeatureLockedOcr": "OCR text extraction is a Premium feature",
+  "premiumFeatureLockedExport": "PDF export is a Premium feature",
+  "premiumFeatureLockedShare": "Document sharing is a Premium feature",
+  "premiumFeatureLockedMultipage": "Multi-page scanning is a Premium feature"
 }

@@ -31,7 +31,9 @@
       "Bash(export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH:*)",
       "Bash(/home/plum_-/snap/flutter/common/flutter/bin/flutter --version:*)",
       "Bash(export PATH=/home/plum_-/snap/flutter/common/flutter/bin:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH:*)",
-      "Bash(ANDROID_HOME=/home/plum_-/android-sdk ANDROID_SDK_ROOT=/home/plum_-/android-sdk ./gradlew:*)"
+      "Bash(ANDROID_HOME=/home/plum_-/android-sdk ANDROID_SDK_ROOT=/home/plum_-/android-sdk ./gradlew:*)",
+      "Bash(flutter pub run build_runner build:*)",
+      "Bash(flutter gen-l10n:*)"
     ]
   }
 }

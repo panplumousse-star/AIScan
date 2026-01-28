@@ -54,6 +54,12 @@
 @import google_mlkit_text_recognition;
 #endif
 
+#if __has_include(<in_app_purchase_storekit/InAppPurchasePlugin.h>)
+#import <in_app_purchase_storekit/InAppPurchasePlugin.h>
+#else
+@import in_app_purchase_storekit;
+#endif
+
 #if __has_include(<jailbreak_root_detection/JailbreakRootDetectionPlugin.h>)
 #import <jailbreak_root_detection/JailbreakRootDetectionPlugin.h>
 #else
@@ -125,6 +131,7 @@
   [GoogleMlKitCommonsPlugin registerWithRegistrar:[registry registrarForPlugin:@"GoogleMlKitCommonsPlugin"]];
   [GoogleMlKitDocumentScannerPlugin registerWithRegistrar:[registry registrarForPlugin:@"GoogleMlKitDocumentScannerPlugin"]];
   [GoogleMlKitTextRecognitionPlugin registerWithRegistrar:[registry registrarForPlugin:@"GoogleMlKitTextRecognitionPlugin"]];
+  [InAppPurchasePlugin registerWithRegistrar:[registry registrarForPlugin:@"InAppPurchasePlugin"]];
   [JailbreakRootDetectionPlugin registerWithRegistrar:[registry registrarForPlugin:@"JailbreakRootDetectionPlugin"]];
   [LocalAuthPlugin registerWithRegistrar:[registry registrarForPlugin:@"LocalAuthPlugin"]];
   [NativeCameraSoundPlugin registerWithRegistrar:[registry registrarForPlugin:@"NativeCameraSoundPlugin"]];

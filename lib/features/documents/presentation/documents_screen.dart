@@ -1249,7 +1249,12 @@ class _DocumentsScreenWidgetState extends ConsumerState<DocumentsScreen>
     });
 
     return GestureDetector(
-      onTap: () => _searchFocusNode.unfocus(),
+      behavior: HitTestBehavior.translucent,
+      onTap: () {
+        // Unfocus search field and dismiss keyboard when tapping outside
+        _searchFocusNode.unfocus();
+        FocusScope.of(context).unfocus();
+      },
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: _buildBody(context, state, notifier, theme),
@@ -1306,6 +1311,10 @@ class _DocumentsScreenWidgetState extends ConsumerState<DocumentsScreen>
         const BentoBackground(),
         GestureDetector(
           onTap: () {
+            // Dismiss keyboard and unfocus search field
+            _searchFocusNode.unfocus();
+            FocusScope.of(context).unfocus();
+            // Clear selection mode if active
             if (state.isSelectionMode) {
               notifier.clearSelection();
             }

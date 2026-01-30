@@ -186,6 +186,7 @@ class DocumentsSliverList extends StatelessWidget {
     return RefreshIndicator(
       onRefresh: notifier.refresh,
       child: CustomScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         slivers: [
           // Folders section (only at root)
           if (state.isAtRoot &&

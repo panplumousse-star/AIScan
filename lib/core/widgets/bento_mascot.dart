@@ -27,6 +27,9 @@ enum BentoMascotVariant {
 
   /// Photo/Camera mascot (static).
   photo,
+
+  /// Limited/free mode mascot (static, sad with lock).
+  limited,
 }
 
 class BentoMascot extends ConsumerStatefulWidget {
@@ -75,6 +78,7 @@ class _BentoMascotState extends ConsumerState<BentoMascot>
       case BentoMascotVariant.unlock:
       case BentoMascotVariant.folderEdit:
       case BentoMascotVariant.photo:
+      case BentoMascotVariant.limited:
         // 5 frames ping-pong, ~80ms per frame = 400ms
         duration = const Duration(milliseconds: 400);
     }
@@ -177,6 +181,9 @@ class _BentoMascotState extends ConsumerState<BentoMascot>
     } else if (widget.variant == BentoMascotVariant.photo) {
       unawaited(precacheImage(
           const AssetImage('assets/images/scanai_photo.png'), context));
+    } else if (widget.variant == BentoMascotVariant.limited) {
+      unawaited(precacheImage(
+          const AssetImage('assets/images/scanai_limited.png'), context));
     }
   }
 
@@ -269,6 +276,9 @@ class _BentoMascotState extends ConsumerState<BentoMascot>
 
           case BentoMascotVariant.photo:
             assetPath = 'assets/images/scanai_photo.png';
+
+          case BentoMascotVariant.limited:
+            assetPath = 'assets/images/scanai_limited.png';
         }
 
         return Image.asset(

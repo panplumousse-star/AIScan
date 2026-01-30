@@ -23,10 +23,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../folders/domain/folder_model.dart';
 import '../../../folders/domain/folder_service.dart';
 import '../../../folders/presentation/widgets/bento_folder_dialog.dart';
+import '../../../premium/domain/premium_service.dart';
+import '../../../premium/domain/scan_usage_service.dart';
+import '../../../premium/presentation/widgets/premium_upgrade_dialog.dart';
 
 /// Multi-step action wizard for document scanning workflow.
 ///
@@ -58,7 +62,7 @@ import '../../../folders/presentation/widgets/bento_folder_dialog.dart';
 ///   onDone: () => navigateToDocuments(),
 /// )
 /// ```
-class ActionWizard extends StatefulWidget {
+class ActionWizard extends ConsumerStatefulWidget {
   const ActionWizard({
     super.key,
     required this.initialTitle,
@@ -68,6 +72,7 @@ class ActionWizard extends StatefulWidget {
     required this.onShare,
     required this.onExport,
     required this.onDone,
+    this.onCancel,
   });
 
   /// Initial document title (typically a timestamp)
@@ -91,11 +96,14 @@ class ActionWizard extends StatefulWidget {
   /// Callback when finishing the workflow
   final VoidCallback onDone;
 
+  /// Callback when canceling due to document limit reached (for free users)
+  final VoidCallback? onCancel;
+
   @override
-  State<ActionWizard> createState() => _ActionWizardState();
+  ConsumerState<ActionWizard> createState() => _ActionWizardState();
 }
 
-class _ActionWizardState extends State<ActionWizard>
+class _ActionWizardState extends ConsumerState<ActionWizard>
     with TickerProviderStateMixin {
   late AnimationController _flipController;
   late AnimationController _pulseController;
@@ -166,6 +174,30 @@ class _ActionWizardState extends State<ActionWizard>
   }
 
   Future<void> _handleNextWithFlip() async {
+    // Check document limit for free users
+    final isPremium = ref.read(isPremiumProvider);
+    if (!isPremium) {
+      // Refresh document count and check limit
+      await ref.read(scanUsageProvider.notifier).refresh();
+      if (!mounted) return;
+
+      final usage = ref.read(scanUsageProvider);
+
+      if (usage.hasReachedLimit) {
+        // Show premium dialog and wait for it to close
+        await PremiumUpgradeDialog.show(
+          context,
+          feature: PremiumFeature.unlimitedScans,
+        );
+
+        // After dialog closes, abandon scan and go back to home
+        if (mounted) {
+          widget.onCancel?.call();
+        }
+        return;
+      }
+    }
+
     // Phase 1: Flip to halfway (90 degrees)
     await _flipController.animateTo(0.5,
         duration: const Duration(milliseconds: 300));
@@ -445,7 +477,7 @@ class _ActionWizardState extends State<ActionWizard>
                                   onTap: () => setState(
                                       () => _selectedFolderId = folder.id),
                                   color: folder.color != null
-                                      ? _parseColor(folder.color!)
+                                      ? AppTheme.parseColor(folder.color) ?? Colors.grey
                                       : null,
                                 );
                               }
@@ -476,17 +508,8 @@ class _ActionWizardState extends State<ActionWizard>
                                           _folderSearchQuery = '';
                                           _folderSearchController.clear();
                                         });
-                                      } on Object catch (e) {
-                                        if (context.mounted) {
-                                          final l10n =
-                                              AppLocalizations.of(context);
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                                content: Text(
-                                                    '${l10n?.folderCreationFailed ?? 'Folder creation failed'}: $e')),
-                                          );
-                                        }
+                                      } on Object catch (_) {
+                                        // Error handled silently - mascot bubble provides feedback
                                       }
                                     }
                                   },
@@ -516,7 +539,7 @@ class _ActionWizardState extends State<ActionWizard>
                                   onTap: () => setState(
                                       () => _selectedFolderId = folder.id),
                                   color: folder.color != null
-                                      ? _parseColor(folder.color!)
+                                      ? AppTheme.parseColor(folder.color) ?? Colors.grey
                                       : null,
                                 );
                               }
@@ -532,7 +555,7 @@ class _ActionWizardState extends State<ActionWizard>
                                 onTap: () => setState(
                                     () => _selectedFolderId = folder.id),
                                 color: folder.color != null
-                                    ? _parseColor(folder.color!)
+                                    ? AppTheme.parseColor(folder.color) ?? Colors.grey
                                     : null,
                               );
                             }
@@ -551,7 +574,7 @@ class _ActionWizardState extends State<ActionWizard>
                             (f) => f.id == _selectedFolderId,
                             orElse: () => folders.first);
                         if (folder.color != null) {
-                          btnColor = _parseColor(folder.color!);
+                          btnColor = AppTheme.parseColor(folder.color) ?? Colors.grey;
                         }
                       }
 
@@ -827,12 +850,4 @@ class _ActionWizardState extends State<ActionWizard>
     );
   }
 
-  Color _parseColor(String hexColor) {
-    try {
-      final hex = hexColor.replaceFirst('#', '');
-      return Color(int.parse('FF$hex', radix: 16));
-    } on Object catch (_) {
-      return Colors.grey;
-    }
-  }
 }

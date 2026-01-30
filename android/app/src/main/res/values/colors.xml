@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary brand color (indigo) for splash screen -->
+    <color name="splash_background">#6366F1</color>
+    <!-- Alternative: white background -->
+    <color name="splash_background_light">#FAFAFA</color>
+</resources>

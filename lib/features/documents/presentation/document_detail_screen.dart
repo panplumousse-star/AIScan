@@ -16,6 +16,8 @@ import '../../../core/widgets/bento_share_format_dialog.dart';
 import '../../../core/widgets/bento_state_views.dart';
 import '../../folders/domain/folder_service.dart';
 import '../../ocr/domain/ocr_service.dart';
+import '../../premium/domain/premium_service.dart';
+import '../../premium/presentation/widgets/premium_upgrade_dialog.dart';
 import '../../sharing/domain/document_share_service.dart';
 import '../domain/document_model.dart';
 import 'state/document_detail_notifier.dart';
@@ -554,8 +556,13 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
     try {
       final shareService = ref.read(documentShareServiceProvider);
 
-      // Handle text format - run OCR if needed
+      // Handle text format - run OCR if needed (requires premium)
       if (format == ShareFormat.text) {
+        final isPremium = ref.read(isPremiumProvider);
+        if (!isPremium) {
+          await PremiumUpgradeDialog.show(context, feature: PremiumFeature.ocr);
+          return;
+        }
         String? textToShare = state.document!.ocrText;
 
         // If no OCR text, run OCR first
@@ -666,6 +673,14 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
   Future<void> _handleOcr(
       BuildContext context, DocumentDetailScreenState state) async {
     if (state.document == null) return;
+
+    // Check premium access for OCR
+    final isPremium = ref.read(isPremiumProvider);
+    if (!isPremium) {
+      await PremiumUpgradeDialog.show(context, feature: PremiumFeature.ocr);
+      return;
+    }
+
     final notifier = ref.read(documentDetailScreenProvider.notifier);
     final bytes = await notifier.loadImageBytes();
     if (bytes != null && mounted) {
@@ -686,6 +701,14 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
   Future<void> _handleExport(
       BuildContext context, DocumentDetailScreenState state) async {
     if (state.document == null) return;
+
+    // Check premium access for PDF export
+    final isPremium = ref.read(isPremiumProvider);
+    if (!isPremium) {
+      await PremiumUpgradeDialog.show(context, feature: PremiumFeature.pdfExport);
+      return;
+    }
+
     final notifier = ref.read(documentDetailScreenProvider.notifier);
     final bytes = await notifier.loadImageBytes();
     if (bytes != null && mounted) {

@@ -32,8 +32,26 @@
       "Bash(/home/plum_-/snap/flutter/common/flutter/bin/flutter --version:*)",
       "Bash(export PATH=/home/plum_-/snap/flutter/common/flutter/bin:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH:*)",
       "Bash(ANDROID_HOME=/home/plum_-/android-sdk ANDROID_SDK_ROOT=/home/plum_-/android-sdk ./gradlew:*)",
-      "Bash(flutter pub run build_runner build:*)",
-      "Bash(flutter gen-l10n:*)"
+      "Bash(flutter run:*)",
+      "Bash(adb.exe logcat:*)",
+      "Bash(/mnt/c/Users/*/AppData/Local/Android/Sdk/platform-tools/adb.exe)",
+      "Bash(logcat:*)",
+      "Bash(install:*)",
+      "Bash(shell am start -n com.music3.aiscan/.MainActivity)",
+      "Bash(shell pm:*)",
+      "Bash(shell monkey -p com.plumstudio.scanai -c android.intent.category.LAUNCHER 1)",
+      "Bash(convert:*)",
+      "Bash(file:*)",
+      "Bash(/mnt/c/Users/music/AppData/Local/Android/Sdk/platform-tools/adb.exe devices)",
+      "Bash(/mnt/c/Users/PluM_/AppData/Local/Android/Sdk/platform-tools/adb.exe devices:*)",
+      "Bash(/mnt/c/Users/PluM_/AppData/Local/Android/Sdk/platform-tools/adb.exe install:*)",
+      "Bash(dart run build_runner:*)",
+      "Bash(flutter gen-l10n:*)",
+      "Bash(sonar-scanner:*)",
+      "Bash(docker run:*)",
+      "Bash(docker cp:*)",
+      "Bash(docker restart:*)",
+      "Bash(keytool:*)"
     ]
   }
 }

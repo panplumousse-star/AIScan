@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // For HapticFeedback
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../app.dart' show routeObserver;
 import '../../../core/accessibility/accessibility_config.dart';
 import '../../../core/permissions/camera_permission_service.dart';
 import '../../../core/permissions/permission_dialog.dart';
@@ -22,6 +23,9 @@ import '../../settings/presentation/settings_screen.dart';
 import '../../../core/services/audio_service.dart';
 import '../../../core/widgets/bento_mascot.dart';
 import '../../../core/widgets/bento_speech_bubble.dart';
+import '../../premium/domain/premium_service.dart';
+import '../../premium/domain/scan_usage_service.dart';
+import '../../premium/presentation/widgets/premium_upgrade_dialog.dart';
 import 'package:share_plus/share_plus.dart';
 
 /// Provider that gets the total document count.
@@ -62,7 +66,7 @@ class BentoHomeScreen extends ConsumerStatefulWidget {
 }
 
 class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, RouteAware {
   Timer? _idleTimer;
   Timer? _sleepTimer;
   Timer? _unlockTimer;
@@ -76,6 +80,13 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _resetIdleTimer();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Subscribe to route observer to detect navigation
+    routeObserver.subscribe(this, ModalRoute.of(context)! as PageRoute);
   }
 
   void _handleUnlockStateChange(bool? previous, bool justUnlocked) {
@@ -103,11 +114,33 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
 
   @override
   void dispose() {
+    routeObserver.unsubscribe(this);
     WidgetsBinding.instance.removeObserver(this);
     _idleTimer?.cancel();
     _sleepTimer?.cancel();
     _unlockTimer?.cancel();
     super.dispose();
+  }
+
+  /// Called when this screen becomes visible again after a push (e.g., returning from documents screen).
+  @override
+  void didPopNext() {
+    // Reset idle state when returning to home screen
+    setState(() {
+      _isSleeping = false;
+      _sleepTimer?.cancel();
+      _sleepMessageIndex = 0;
+      _mascotKey++; // Force rebuild for waving animation
+    });
+    _resetIdleTimer();
+  }
+
+  /// Called when a new route is pushed on top of this one.
+  @override
+  void didPushNext() {
+    // Cancel timers when navigating away
+    _idleTimer?.cancel();
+    _sleepTimer?.cancel();
   }
 
   @override
@@ -251,7 +284,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
     unawaited(HapticFeedback.mediumImpact());
     final l10n = AppLocalizations.of(context);
     const playStoreUrl =
-        'https://play.google.com/store/apps/details?id=com.plumstudio.scanai';
+        'https://play.google.com/store/apps/details?id=com.panplumoussestudio.scanai';
     final shareText =
         '${l10n?.shareAppText ?? 'I use Scanai to secure and organize my important documents.'}\n\n$playStoreUrl';
     unawaited(Share.share(
@@ -379,7 +412,25 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 40), // Bottom breathing room
+                            // 4. Premium Upgrade Tile (only for free users)
+                            Consumer(
+                              builder: (context, ref, child) {
+                                final isPremium = ref.watch(isPremiumProvider);
+                                if (isPremium) return const SizedBox.shrink();
+
+                                return Column(
+                                  children: [
+                                    const SizedBox(height: 28),
+                                    BentoAnimatedEntry(
+                                      delay: const Duration(milliseconds: 350),
+                                      child: _buildPremiumCard(context),
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+
+                            const SizedBox(height: 52), // Bottom breathing room
                           ],
                         ),
                       ),
@@ -521,6 +572,11 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = AppLocalizations.of(context);
 
+    // Check if free user has no scans remaining
+    final isPremium = ref.watch(isPremiumProvider);
+    final scanUsage = ref.watch(scanUsageProvider);
+    final isTrialEnded = !isPremium && !scanUsage.hasScansRemaining;
+
     // Localized greeting subtitles
     final greetingSubtitles = [
       l10n?.randomMessage1 ?? "Besoin d'un PDF ?",
@@ -550,9 +606,11 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
             'Zzz ...',
             'Zzz ... Zzz'
           ][_sleepMessageIndex]
-        : (hasJustScanned ? celebrationMessage : _getGreeting(context));
+        : isTrialEnded
+            ? (l10n?.premiumTrialEnded ?? "Bonjour, ta periode d'essai est terminee")
+            : (hasJustScanned ? celebrationMessage : _getGreeting(context));
 
-    final String semanticLabel = (!hasJustScanned && !_isSleeping)
+    final String semanticLabel = (!hasJustScanned && !_isSleeping && !isTrialEnded)
         ? '$greetingText. $greetingSubtitle'
         : greetingText;
 
@@ -600,17 +658,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                               fit: BoxFit.scaleDown,
                               alignment: Alignment.centerLeft,
                               child: Text(
-                                _isSleeping
-                                    ? [
-                                        'Zzz',
-                                        'Zzz .',
-                                        'Zzz ..',
-                                        'Zzz ...',
-                                        'Zzz ... Zzz'
-                                      ][_sleepMessageIndex]
-                                    : (hasJustScanned
-                                        ? celebrationMessage
-                                        : _getGreeting(context)),
+                                greetingText,
                                 style: TextStyle(
                                   fontFamily: 'Outfit',
                                   fontSize:
@@ -625,7 +673,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                             ),
                           ),
                         ),
-                        if (!hasJustScanned && !_isSleeping) ...[
+                        if (!hasJustScanned && !_isSleeping && !isTrialEnded) ...[
                           const SizedBox(height: 2),
                           Text(
                             greetingSubtitle,
@@ -704,11 +752,29 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                   ),
                 )
               else
-                BentoMascot(
-                  key: ValueKey('home_mascot_$_mascotKey'),
-                  height: 180,
-                  // animateOnce: false → loops 6 cycles, pauses 10s, repeats
-                  // Stops only on sleep mode or page navigation
+                Consumer(
+                  builder: (context, ref, child) {
+                    final isPremium = ref.watch(isPremiumProvider);
+                    final scanUsage = ref.watch(scanUsageProvider);
+                    final isLimited = !isPremium && !scanUsage.hasScansRemaining;
+
+                    if (isLimited) {
+                      return const BentoLevitationWidget(
+                        child: BentoMascot(
+                          key: ValueKey('limited_mascot'),
+                          height: 100,
+                          variant: BentoMascotVariant.limited,
+                        ),
+                      );
+                    }
+
+                    return BentoMascot(
+                      key: ValueKey('home_mascot_$_mascotKey'),
+                      height: 180,
+                      // animateOnce: false → loops 6 cycles, pauses 10s, repeats
+                      // Stops only on sleep mode or page navigation
+                    );
+                  },
                 ),
             ],
           ),
@@ -972,6 +1038,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                   ),
                 ),
 
+                // Document count badge
                 if (count > 0)
                   Positioned(
                     top: 8,
@@ -997,6 +1064,180 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                       ),
                     ),
                   ),
+
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPremiumCard(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final scanUsage = ref.watch(scanUsageProvider);
+    final l10n = AppLocalizations.of(context);
+
+    return Semantics(
+      label: 'Upgrade to Premium',
+      hint: 'Unlock all features',
+      button: true,
+      enabled: true,
+      child: BentoInteractiveWrapper(
+        onTap: () {
+          unawaited(HapticFeedback.selectionClick());
+          PremiumUpgradeDialog.show(context);
+        },
+        child: _PremiumShimmer(
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? const Color(0xFF1E1B4B).withValues(alpha: 0.8)
+                  : Colors.white.withValues(alpha: 0.95),
+              gradient: LinearGradient(
+                colors: isDark
+                    ? [
+                        const Color(0xFF4F46E5).withValues(alpha: 0.7),
+                        const Color(0xFF7C3AED).withValues(alpha: 0.7),
+                        const Color(0xFFC026D3).withValues(alpha: 0.6),
+                      ]
+                    : [
+                        const Color(0xFF6366F1).withValues(alpha: 0.1),
+                        const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+                        const Color(0xFFD946EF).withValues(alpha: 0.05),
+                      ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(
+                color: isDark
+                    ? const Color(0xFFFFFFFF).withValues(alpha: 0.15)
+                    : const Color(0xFFE2E8F0),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+                  blurRadius: 20,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Stack(
+              children: [
+                Row(
+                  children: [
+                    // Icon container with glow
+                    _PulsingGlow(
+                      glowColor: const Color(0xFF7C3AED),
+                      child: Container(
+                        width: 46,
+                        height: 46,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF4F46E5), Color(0xFFC026D3)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF7C3AED).withValues(alpha: 0.4),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.workspace_premium_rounded,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    // Text content
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                l10n?.premiumUpgradeButton ?? 'Passer à Premium',
+                                style: TextStyle(
+                                  fontFamily: 'Outfit',
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w800,
+                                  color: isDark ? Colors.white : const Color(0xFF1E1B4B),
+                                  letterSpacing: -0.2,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                                  ),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Text(
+                                  'PRO',
+                                  style: TextStyle(
+                                    fontFamily: 'Outfit',
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${scanUsage.scansRemaining}/${scanUsage.maxFreeScans} scans • PDF • OCR • Partage',
+                            style: TextStyle(
+                              fontFamily: 'Outfit',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.7)
+                                  : const Color(0xFF6366F1),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Arrow
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.1)
+                            : const Color(0xFF7C3AED).withValues(alpha: 0.08),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : const Color(0xFF7C3AED).withValues(alpha: 0.1),
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.arrow_forward_rounded,
+                        color: isDark ? Colors.white : const Color(0xFF7C3AED),
+                        size: 18,
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -1252,26 +1493,20 @@ class _ShakeableWrapper extends StatefulWidget {
 class _ShakeableWrapperState extends State<_ShakeableWrapper>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _shakeAnimation;
+  late Animation<double> _animation;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 500),
       vsync: this,
     );
-
-    _scaleAnimation = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.95), weight: 30),
-      TweenSequenceItem(tween: Tween(begin: 0.95, end: 1.0), weight: 70),
-    ]).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
-
-    _shakeAnimation = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 0.0, end: -4.0), weight: 25),
-      TweenSequenceItem(tween: Tween(begin: -4.0, end: 4.0), weight: 50),
-      TweenSequenceItem(tween: Tween(begin: 4.0, end: 0.0), weight: 25),
+    _animation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0, end: 10), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 10, end: -10), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: -10, end: 10), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: 10, end: 0), weight: 1),
     ]).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
@@ -1281,10 +1516,8 @@ class _ShakeableWrapperState extends State<_ShakeableWrapper>
     super.dispose();
   }
 
-  void _handleTap() {
-    unawaited(_controller.forward(from: 0.0));
-    unawaited(HapticFeedback.vibrate()); // Stronger feedback for launch
-    widget.onTap();
+  void _shake() {
+    _controller.forward(from: 0);
   }
 
   @override
@@ -1293,22 +1526,85 @@ class _ShakeableWrapperState extends State<_ShakeableWrapper>
       label: widget.semanticLabel,
       hint: widget.semanticHint,
       button: true,
-      enabled: true,
       child: GestureDetector(
-        onTap: _handleTap,
+        onTap: () {
+          _shake();
+          widget.onTap();
+        },
         child: AnimatedBuilder(
-          animation: _controller,
+          animation: _animation,
           builder: (context, child) {
             return Transform.translate(
-              offset: Offset(_shakeAnimation.value, 0),
-              child: Transform.scale(
-                scale: _scaleAnimation.value,
-                child: child,
-              ),
+              offset: Offset(_animation.value, 0),
+              child: child,
             );
           },
           child: widget.child,
         ),
+      ),
+    );
+  }
+}
+
+class _PremiumShimmer extends StatefulWidget {
+  final Widget child;
+
+  const _PremiumShimmer({required this.child});
+
+  @override
+  State<_PremiumShimmer> createState() => _PremiumShimmerState();
+}
+
+class _PremiumShimmerState extends State<_PremiumShimmer>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 4),
+      vsync: this,
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(28),
+      child: Stack(
+        children: [
+          widget.child,
+          Positioned.fill(
+            child: AnimatedBuilder(
+              animation: _controller,
+              builder: (context, child) {
+                return FractionallySizedBox(
+                  widthFactor: 0.3,
+                  alignment: Alignment(_controller.value * 10 - 5, 0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.white.withValues(alpha: 0.0),
+                          Colors.white.withValues(alpha: 0.2),
+                          Colors.white.withValues(alpha: 0.0),
+                        ],
+                        stops: const [0.0, 0.5, 1.0],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

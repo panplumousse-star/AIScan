@@ -1609,6 +1609,204 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Afficher des avertissements lors de l\'execution sur des appareils rootés ou jailbreakés'**
   String get showSecurityWarningsDescription;
+
+  /// No description provided for @premiumTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Premium a vie'**
+  String get premiumTitle;
+
+  /// No description provided for @premiumSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Debloquez toutes les fonctionnalites en un seul achat'**
+  String get premiumSubtitle;
+
+  /// No description provided for @premiumUnlockPotential.
+  ///
+  /// In fr, this message translates to:
+  /// **'Libere tout mon potentiel !'**
+  String get premiumUnlockPotential;
+
+  /// No description provided for @premiumNoScansLeft.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tu n\'as plus de scans gratuits !'**
+  String get premiumNoScansLeft;
+
+  /// No description provided for @premiumTrialEnded.
+  ///
+  /// In fr, this message translates to:
+  /// **'Bonjour, ta periode d\'essai est terminee'**
+  String get premiumTrialEnded;
+
+  /// No description provided for @premiumOcrRequired.
+  ///
+  /// In fr, this message translates to:
+  /// **'L\'OCR est reserve aux membres premium'**
+  String get premiumOcrRequired;
+
+  /// No description provided for @premiumExportRequired.
+  ///
+  /// In fr, this message translates to:
+  /// **'L\'export PDF est reserve aux membres premium'**
+  String get premiumExportRequired;
+
+  /// No description provided for @premiumFeatureUnlimitedScans.
+  ///
+  /// In fr, this message translates to:
+  /// **'Scans illimites'**
+  String get premiumFeatureUnlimitedScans;
+
+  /// No description provided for @premiumFeatureMultipage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Documents multi-pages (jusqu\'a 100)'**
+  String get premiumFeatureMultipage;
+
+  /// No description provided for @premiumFeaturePdfExport.
+  ///
+  /// In fr, this message translates to:
+  /// **'Export PDF'**
+  String get premiumFeaturePdfExport;
+
+  /// No description provided for @premiumFeatureSharing.
+  ///
+  /// In fr, this message translates to:
+  /// **'Partage de documents'**
+  String get premiumFeatureSharing;
+
+  /// No description provided for @premiumFeatureOcr.
+  ///
+  /// In fr, this message translates to:
+  /// **'Extraction de texte (OCR)'**
+  String get premiumFeatureOcr;
+
+  /// No description provided for @premiumPurchaseButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Debloquer pour 2,99 €'**
+  String get premiumPurchaseButton;
+
+  /// No description provided for @premiumRestorePurchases.
+  ///
+  /// In fr, this message translates to:
+  /// **'Restaurer les achats'**
+  String get premiumRestorePurchases;
+
+  /// No description provided for @premiumLater.
+  ///
+  /// In fr, this message translates to:
+  /// **'Peut-etre plus tard'**
+  String get premiumLater;
+
+  /// No description provided for @premiumBadgeLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Premium'**
+  String get premiumBadgeLabel;
+
+  /// No description provided for @premiumStatusPremium.
+  ///
+  /// In fr, this message translates to:
+  /// **'Premium'**
+  String get premiumStatusPremium;
+
+  /// No description provided for @premiumStatusPremiumSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Toutes les fonctionnalites debloquees'**
+  String get premiumStatusPremiumSubtitle;
+
+  /// No description provided for @premiumStatusFree.
+  ///
+  /// In fr, this message translates to:
+  /// **'Gratuit'**
+  String get premiumStatusFree;
+
+  /// No description provided for @premiumStatusFreeSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'{remaining} scans restants sur {total}'**
+  String premiumStatusFreeSubtitle(int remaining, int total);
+
+  /// No description provided for @premiumScansRemaining.
+  ///
+  /// In fr, this message translates to:
+  /// **'Scans restants'**
+  String get premiumScansRemaining;
+
+  /// No description provided for @premiumUpgradeButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Passer a Premium'**
+  String get premiumUpgradeButton;
+
+  /// No description provided for @premiumDebugToggleTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Simuler Premium (Debug)'**
+  String get premiumDebugToggleTitle;
+
+  /// No description provided for @premiumDebugToggleSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Activer toutes les fonctionnalites premium pour les tests'**
+  String get premiumDebugToggleSubtitle;
+
+  /// No description provided for @premiumDebugResetScans.
+  ///
+  /// In fr, this message translates to:
+  /// **'Reinitialiser le compteur de scans'**
+  String get premiumDebugResetScans;
+
+  /// No description provided for @premiumDebugResetSuccess.
+  ///
+  /// In fr, this message translates to:
+  /// **'Compteur de scans reinitialise'**
+  String get premiumDebugResetSuccess;
+
+  /// No description provided for @premiumBlockedNoScans.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous avez utilise tous vos scans gratuits'**
+  String get premiumBlockedNoScans;
+
+  /// No description provided for @premiumRequiredTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Premium requis'**
+  String get premiumRequiredTitle;
+
+  /// No description provided for @premiumRequiredMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cette fonctionnalite necessite un abonnement Premium'**
+  String get premiumRequiredMessage;
+
+  /// No description provided for @premiumFeatureLockedOcr.
+  ///
+  /// In fr, this message translates to:
+  /// **'L\'extraction de texte OCR est une fonctionnalite Premium'**
+  String get premiumFeatureLockedOcr;
+
+  /// No description provided for @premiumFeatureLockedExport.
+  ///
+  /// In fr, this message translates to:
+  /// **'L\'export PDF est une fonctionnalite Premium'**
+  String get premiumFeatureLockedExport;
+
+  /// No description provided for @premiumFeatureLockedShare.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le partage de documents est une fonctionnalite Premium'**
+  String get premiumFeatureLockedShare;
+
+  /// No description provided for @premiumFeatureLockedMultipage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le scan multi-pages est une fonctionnalite Premium'**
+  String get premiumFeatureLockedMultipage;
 }
 
 class _AppLocalizationsDelegate

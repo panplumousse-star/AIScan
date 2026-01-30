@@ -1,4 +1,4 @@
-package com.plumstudio.scanai
+package com.panplumoussestudio.scanai
 
 import android.content.Intent
 import android.util.Log

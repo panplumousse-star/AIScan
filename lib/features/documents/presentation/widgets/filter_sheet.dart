@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/storage/database_helper.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../folders/domain/folder_model.dart';
 import '../../../folders/domain/folder_service.dart';
-import '../../domain/document_model.dart';
 import '../models/documents_ui_models.dart';
 
 /// A provider for loading folders for the filter sheet.
@@ -20,24 +19,11 @@ final _filterFoldersProvider =
   }
 });
 
-/// A provider for loading tags for the filter sheet.
-final _filterTagsProvider = FutureProvider.autoDispose<List<Tag>>((ref) async {
-  final database = ref.watch(databaseHelperProvider);
-  try {
-    await database.initialize();
-    final tagMaps = await database.getAllTags();
-    return tagMaps.map((map) => Tag.fromMap(map)).toList();
-  } on Object catch (_) {
-    return [];
-  }
-});
-
 /// Bottom sheet widget for sorting and filtering documents.
 ///
 /// Provides options for:
 /// - Sorting by date, name, size, etc.
 /// - Filtering by folder
-/// - Filtering by tag
 /// - Filtering by favorites and OCR status
 ///
 /// ## Usage
@@ -168,13 +154,6 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                         Icons.folder_outlined),
                     const SizedBox(height: 8),
                     _buildFolderFilter(context, l10n),
-                    const SizedBox(height: 24),
-
-                    // Tag filter section
-                    _buildSectionHeader(
-                        context, l10n?.tags ?? 'Tags', Icons.label_outline),
-                    const SizedBox(height: 8),
-                    _buildTagFilter(context, l10n),
                     const SizedBox(height: 32),
                   ],
                 ),
@@ -445,8 +424,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                   context: context,
                   title: folder.name,
                   icon: Icons.folder,
-                  color:
-                      folder.color != null ? _parseColor(folder.color!) : null,
+                  color: AppTheme.parseColor(folder.color),
                   isSelected: isSelected,
                   onTap: () {
                     setState(() {
@@ -516,104 +494,6 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
     );
   }
 
-  Widget _buildTagFilter(BuildContext context, AppLocalizations? l10n) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final tagsAsync = ref.watch(_filterTagsProvider);
-
-    return tagsAsync.when(
-      loading: () => const Center(
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-      ),
-      error: (error, stack) => Text(
-        l10n?.failedToLoadTags ?? 'Failed to load tags',
-        style: TextStyle(color: colorScheme.error),
-      ),
-      data: (tags) {
-        if (tags.isEmpty) {
-          return Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.label_off_outlined,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  l10n?.noTagsYet ?? 'No tags created yet',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-
-        final selectedTagIds = _selectedFilter.tagIds;
-
-        return Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: tags.sortedByName().map((tag) {
-            final isSelected = selectedTagIds.contains(tag.id);
-            final tagColor = _parseColor(tag.color);
-
-            return FilterChip(
-              label: Text(tag.name),
-              selected: isSelected,
-              onSelected: (selected) {
-                setState(() {
-                  if (selected) {
-                    _selectedFilter = _selectedFilter.copyWith(
-                      tagIds: [...selectedTagIds, tag.id],
-                    );
-                  } else {
-                    _selectedFilter = _selectedFilter.copyWith(
-                      tagIds:
-                          selectedTagIds.where((id) => id != tag.id).toList(),
-                    );
-                  }
-                });
-              },
-              selectedColor: tagColor.withValues(alpha: 0.3),
-              checkmarkColor: tagColor,
-              side: BorderSide(
-                color: isSelected ? tagColor : colorScheme.outline,
-              ),
-              labelStyle: TextStyle(
-                color: isSelected ? tagColor : colorScheme.onSurfaceVariant,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-              ),
-              avatar: isSelected
-                  ? null
-                  : CircleAvatar(
-                      backgroundColor: tagColor.withValues(alpha: 0.2),
-                      radius: 8,
-                      child: Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: tagColor,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
-            );
-          }).toList(),
-        );
-      },
-    );
-  }
-
   bool get _hasActiveFilters =>
       _selectedFilter.hasActiveFilters ||
       _selectedSort != DocumentsSortBy.createdDesc;
@@ -638,21 +518,6 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
     Navigator.of(context).pop();
   }
 
-  /// Parses a hex color string to a Color.
-  Color _parseColor(String hexColor) {
-    try {
-      final hex = hexColor.replaceAll('#', '');
-      if (hex.length == 6) {
-        return Color(int.parse('FF$hex', radix: 16));
-      }
-      if (hex.length == 8) {
-        return Color(int.parse(hex, radix: 16));
-      }
-    } on Object catch (_) {
-      // Fall through to default
-    }
-    return Colors.blue;
-  }
 }
 
 /// Shows the filter bottom sheet.

@@ -10,6 +10,8 @@ import '../../../core/widgets/bento_confirmation_dialog.dart';
 import '../../../core/widgets/bento_state_views.dart';
 import '../../documents/domain/document_model.dart';
 import '../../documents/presentation/documents_screen.dart';
+import '../../premium/domain/premium_service.dart';
+import '../../premium/presentation/widgets/premium_upgrade_dialog.dart';
 import '../domain/scanner_service.dart';
 import 'state/scanner_screen_state.dart';
 import 'state/scanner_screen_notifier.dart';
@@ -110,6 +112,20 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
       // Track when scan is active
       if (next.isScanning) {
         _scanWasActive = true;
+      }
+
+      // Handle scan blocked by premium limits
+      if (next.blocked != ScanBlockReason.none &&
+          previous?.blocked != next.blocked) {
+        // Show premium upgrade dialog and go back
+        unawaited(() async {
+          await PremiumUpgradeDialog.show(context, feature: PremiumFeature.unlimitedScans);
+          notifier.clearBlocked();
+          if (context.mounted) {
+            Navigator.of(context).pop();
+          }
+        }());
+        return;
       }
 
       // If scan was cancelled (was active, now not active, no result) and

@@ -101,14 +101,6 @@ class SecureStorageService {
       accountName: 'Scanaï',
     );
 
-    const linuxOptions = LinuxOptions();
-
-    const webOptions = WebOptions();
-
-    const macOsOptions = MacOsOptions();
-
-    const windowsOptions = WindowsOptions();
-
     return const FlutterSecureStorage(
       aOptions: androidOptions,
       iOptions: iOSOptions,

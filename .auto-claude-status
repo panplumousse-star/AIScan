@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "078-consolidate-duplicate-exception-classes-into-share",
+  "spec": "079-split-settings-screen-dart-into-modular-domain-com",
   "state": "building",
   "subtasks": {
-    "completed": 9,
-    "total": 12,
+    "completed": 15,
+    "total": 16,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Verification and Cleanup",
+    "current": "Cleanup and Final Polish",
     "id": null,
-    "total": 3
+    "total": 2
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 11,
-    "started_at": "2026-01-27T14:59:25.126079"
+    "number": 711,
+    "started_at": "2026-01-27T17:31:48.743357"
   },
-  "last_update": "2026-01-27T15:18:01.472433"
+  "last_update": "2026-01-27T19:09:25.311047"
 }

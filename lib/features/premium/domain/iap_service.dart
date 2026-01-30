@@ -36,6 +36,13 @@ class IAPService {
   bool _isAvailable = false;
   bool _isInitialized = false;
 
+  /// QC-07: Error stream for purchase stream errors.
+  /// UI can listen to this to show error messages to users.
+  final _errorController = StreamController<String>.broadcast();
+
+  /// Stream of error messages from the purchase stream.
+  Stream<String> get errorStream => _errorController.stream;
+
   /// Whether IAP is available on this device.
   bool get isAvailable => _isAvailable;
 
@@ -62,10 +69,13 @@ class IAPService {
     }
 
     // Listen to purchase updates
+    // QC-07: Added proper error handling with error stream for UI notification
     _subscription = _iap.purchaseStream.listen(
       _onPurchaseUpdate,
       onError: (error) {
         debugPrint('IAPService: Purchase stream error: $error');
+        // QC-07: Emit error to stream for UI to handle
+        _errorController.add('Purchase error: ${error.toString()}');
       },
       onDone: () {
         _subscription?.cancel();
@@ -255,6 +265,7 @@ class IAPService {
   void dispose() {
     _subscription?.cancel();
     _subscription = null;
+    _errorController.close();
     _isInitialized = false;
   }
 }

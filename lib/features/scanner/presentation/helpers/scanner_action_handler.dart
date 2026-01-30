@@ -9,7 +9,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../l10n/app_localizations.dart';
 import '../../../../core/widgets/bento_share_format_dialog.dart';
 import '../../../../core/export/document_export_service.dart';
 import '../../../../core/storage/document_repository.dart';
@@ -31,13 +30,14 @@ class ScannerActionHandler {
 
   /// Handles sharing the scanned document.
   Future<void> handleShare(ScannerScreenState state) async {
-    if (state.savedDocument == null) return;
+    // QC-01: Capture in local variable for null safety
+    final savedDocument = state.savedDocument;
+    if (savedDocument == null) return;
 
     // Show format selection dialog with OCR text if available
     final format = await showBentoShareFormatDialog(
       context,
-      ocrText:
-          state.savedDocument!.hasOcrText ? state.savedDocument!.ocrText : null,
+      ocrText: savedDocument.hasOcrText ? savedDocument.ocrText : null,
     );
     if (format == null) return; // User cancelled
 
@@ -52,36 +52,15 @@ class ScannerActionHandler {
           await PremiumUpgradeDialog.show(context, feature: PremiumFeature.ocr);
           return;
         }
-        String textToShare = state.savedDocument!.ocrText ?? '';
+        String textToShare = savedDocument.ocrText ?? '';
 
         // If no OCR text, extract it on-the-fly
         if (textToShare.isEmpty) {
-          // Show loading indicator
-          if (context.mounted) {
-            final l10n = AppLocalizations.of(context);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Row(
-                  children: [
-                    const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                    const SizedBox(width: 16),
-                    Text(l10n?.extractingText ?? 'Extracting text...'),
-                  ],
-                ),
-                duration: const Duration(seconds: 30),
-              ),
-            );
-          }
-
           try {
             // Get decrypted page paths
             final documentRepo = ref.read(documentRepositoryProvider);
             final pagePaths =
-                await documentRepo.getDecryptedAllPages(state.savedDocument!);
+                await documentRepo.getDecryptedAllPages(savedDocument);
 
             // Run OCR on pages
             final ocrService = ref.read(ocrServiceProvider);
@@ -91,43 +70,19 @@ class ScannerActionHandler {
             // Cleanup temp files
             await documentRepo.cleanupTempFiles();
 
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).hideCurrentSnackBar();
-            }
-
             if (ocrResult.hasText) {
               textToShare = ocrResult.text;
             } else {
-              // No text found
-              if (context.mounted) {
-                final l10n = AppLocalizations.of(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content:
-                        Text(l10n?.noTextFound ?? 'No text found in document'),
-                    backgroundColor: Theme.of(context).colorScheme.error,
-                  ),
-                );
-              }
               return;
             }
-          } on Object catch (e) {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).hideCurrentSnackBar();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('OCR failed: $e'),
-                  backgroundColor: Theme.of(context).colorScheme.error,
-                ),
-              );
-            }
+          } on Object catch (_) {
             return;
           }
         }
 
         await shareService.shareText(
           textToShare,
-          subject: state.savedDocument!.title,
+          subject: savedDocument.title,
         );
         // Navigate to documents after sharing
         if (context.mounted) {
@@ -139,7 +94,7 @@ class ScannerActionHandler {
 
       // Handle PDF and images formats
       final result = await shareService.shareDocuments(
-        [state.savedDocument!],
+        [savedDocument],
         format: format,
       );
       await shareService.cleanupTempFiles(result.tempFilePaths);
@@ -149,21 +104,16 @@ class ScannerActionHandler {
         ref.read(hasJustScannedProvider.notifier).state = true;
         _navigateToDocuments(context);
       }
-    } on Object catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Échec du partage: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-      }
+    } on Object catch (_) {
+      // Error handled silently
     }
   }
 
   /// Handles exporting the scanned document to external storage.
   Future<void> handleExport(ScannerScreenState state) async {
-    if (state.savedDocument == null) return;
+    // QC-01: Capture in local variable for null safety
+    final savedDocument = state.savedDocument;
+    if (savedDocument == null) return;
 
     // Check premium access for PDF export
     final isPremium = ref.read(isPremiumProvider);
@@ -172,74 +122,21 @@ class ScannerActionHandler {
       return;
     }
 
-    // Show loading indicator
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Row(
-            children: [
-              SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-              SizedBox(width: 16),
-              Text('Exportation en cours...'),
-            ],
-          ),
-          duration: Duration(seconds: 30),
-        ),
-      );
-    }
-
     final exportService = ref.read(documentExportServiceProvider);
 
     try {
-      final result = await exportService.exportDocument(state.savedDocument!);
-
-      // Hide loading snackbar
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      }
+      final result = await exportService.exportDocument(savedDocument);
 
       if (!context.mounted) return;
 
       if (result.isSuccess) {
-        // Show success message with folder name
-        final l10n = AppLocalizations.of(context);
-        final folderName = result.folderDisplayName ?? 'external storage';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n?.documentExportedTo(folderName) ??
-                'Document exported to $folderName'),
-            backgroundColor: Theme.of(context).colorScheme.primary,
-            duration: const Duration(seconds: 2),
-          ),
-        );
         // Set just scanned state for celebration message
         ref.read(hasJustScannedProvider.notifier).state = true;
         _navigateToDocuments(context);
-      } else if (result.isFailed) {
-        final l10n = AppLocalizations.of(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-                result.errorMessage ?? (l10n?.exportFailed ?? 'Export failed')),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
       }
-      // If cancelled, do nothing (user cancelled the picker)
-    } on Object catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Échec de l\'exportation: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-      }
+      // If cancelled or failed, do nothing
+    } on Object catch (_) {
+      // Error handled silently
     }
   }
 

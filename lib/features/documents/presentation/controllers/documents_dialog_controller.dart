@@ -184,12 +184,8 @@ class DocumentsDialogController {
               if (context.mounted) {
                 Navigator.of(context).pop(newFolder.id);
               }
-            } on Object catch (e) {
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Failed to create folder: $e')),
-                );
-              }
+            } on Object catch (_) {
+              // Error handled silently
             }
           }
         },
@@ -200,18 +196,7 @@ class DocumentsDialogController {
     if (selectedFolderId == '_cancelled_') return;
 
     // Move selected documents to folder
-    final movedCount = await notifier.moveSelectedToFolder(selectedFolderId);
-    if (context.mounted && movedCount > 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            selectedFolderId == null
-                ? 'Moved $movedCount ${movedCount == 1 ? 'document' : 'documents'} to My Documents'
-                : 'Moved $movedCount ${movedCount == 1 ? 'document' : 'documents'} to folder',
-          ),
-        ),
-      );
-    }
+    await notifier.moveSelectedToFolder(selectedFolderId);
   }
 
   /// Shows dialog to create a new folder when moving documents.
@@ -242,12 +227,8 @@ class DocumentsDialogController {
           color: result.color,
         );
         await notifier.loadDocuments();
-      } on Object catch (e) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Échec de la création du dossier: $e')),
-          );
-        }
+      } on Object catch (_) {
+        // Error handled silently
       }
     }
   }

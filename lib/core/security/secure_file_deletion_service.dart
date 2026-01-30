@@ -60,7 +60,15 @@ class SecureFileDeletionService {
 
   /// Number of times to overwrite file contents before deletion.
   ///
-  /// Standard DOD 5220.22-M recommendation is 3 passes for secure erasure.
+  /// SEC-12: Uses DOD 5220.22-M standard (3 passes) which is appropriate for
+  /// mobile flash storage. Note: On flash memory, wear leveling makes additional
+  /// passes less effective. The primary security comes from:
+  /// 1. All documents are stored encrypted (AES-256)
+  /// 2. Only encrypted files exist on disk; this overwrites temp decrypted files
+  /// 3. TRIM commands on modern flash help erase freed blocks
+  ///
+  /// For maximum security, we could increase to 7 passes (Schneier method),
+  /// but diminishing returns on modern flash storage don't justify the I/O cost.
   static const int _overwritePasses = 3;
 
   /// Buffer size for overwriting files (64 KB).

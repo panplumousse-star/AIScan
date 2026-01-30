@@ -231,7 +231,7 @@ class SecureStorageService {
 
     // If another call is already generating the key, wait for it
     if (_keyGenerationCompleter != null) {
-      debugPrint('SecureStorage: Waiting for ongoing key generation...');
+      // SEC-03: Removed debug logging of key generation state
       return _keyGenerationCompleter!.future;
     }
 
@@ -246,7 +246,7 @@ class SecureStorageService {
         return existingKey;
       }
 
-      debugPrint('SecureStorage: No existing key found, generating NEW key');
+      // SEC-03: Removed debug logging of key generation
       final newKey = _generateSecureRandomBytes(_keyLengthBytes);
       final encodedKey = base64Encode(newKey);
       await storeEncryptionKey(encodedKey);

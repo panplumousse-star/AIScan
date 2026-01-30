@@ -310,13 +310,15 @@ class DocumentDetailScreenNotifier
 
   /// Toggles favorite status.
   Future<void> toggleFavorite() async {
-    if (state.document == null) return;
+    // QC-01: Capture in local variable for null safety
+    final document = state.document;
+    if (document == null) return;
 
     try {
-      await _repository.toggleFavorite(state.document!.id);
+      await _repository.toggleFavorite(document.id);
 
       // Reload the document to get updated state
-      final updatedDoc = await _repository.getDocument(state.document!.id);
+      final updatedDoc = await _repository.getDocument(document.id);
       if (updatedDoc != null) {
         state = state.copyWith(document: updatedDoc);
       }
@@ -329,10 +331,12 @@ class DocumentDetailScreenNotifier
 
   /// Updates the document title.
   Future<void> updateTitle(String newTitle) async {
-    if (state.document == null) return;
+    // QC-01: Capture in local variable for null safety
+    final document = state.document;
+    if (document == null) return;
 
     try {
-      final updatedDoc = state.document!.copyWith(
+      final updatedDoc = document.copyWith(
         title: newTitle,
         updatedAt: DateTime.now(),
       );
@@ -349,12 +353,14 @@ class DocumentDetailScreenNotifier
   ///
   /// Returns true if deletion was successful.
   Future<bool> deleteDocument() async {
-    if (state.document == null) return false;
+    // QC-01: Capture in local variable for null safety
+    final document = state.document;
+    if (document == null) return false;
 
     state = state.copyWith(isDeleting: true, clearError: true);
 
     try {
-      await _repository.deleteDocument(state.document!.id);
+      await _repository.deleteDocument(document.id);
       state = state.copyWith(isDeleting: false);
       return true;
     } on DocumentRepositoryException catch (e) {

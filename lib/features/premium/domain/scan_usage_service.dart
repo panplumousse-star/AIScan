@@ -1,85 +1,88 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/storage/document_repository.dart';
 import 'scan_usage_model.dart';
 
-/// Storage keys for scan usage tracking.
-class _ScanUsageKeys {
-  static const totalScanCount = 'aiscan_total_scan_count';
-}
-
-/// Service for tracking and managing scan usage for free users.
+/// Service for tracking document usage for free users.
+///
+/// The document count is retrieved directly from the [DocumentRepository],
+/// ensuring accurate counts even if documents are deleted.
 class ScanUsageService {
-  ScanUsageService(this._prefs);
+  ScanUsageService(this._repository);
 
-  final SharedPreferences _prefs;
+  final DocumentRepository _repository;
 
-  /// Loads the current scan usage from SharedPreferences.
-  ScanUsage loadUsage() {
-    final totalScans = _prefs.getInt(_ScanUsageKeys.totalScanCount) ?? 0;
-    return ScanUsage(totalScans: totalScans);
+  /// Loads the current document usage from the repository.
+  Future<ScanUsage> loadUsage() async {
+    final documents = await _repository.getAllDocuments();
+    return ScanUsage(documentCount: documents.length);
   }
 
-  /// Records a new scan, incrementing the counter.
-  Future<ScanUsage> recordScan() async {
-    final currentUsage = loadUsage();
-    final newTotalScans = currentUsage.totalScans + 1;
-
-    await _prefs.setInt(_ScanUsageKeys.totalScanCount, newTotalScans);
-
-    return currentUsage.copyWith(totalScans: newTotalScans);
-  }
-
-  /// Resets the scan usage (used when user upgrades to premium or for testing).
-  Future<void> resetUsage() async {
-    await _prefs.remove(_ScanUsageKeys.totalScanCount);
+  /// Checks if the user can save a new document.
+  Future<bool> canSaveDocument() async {
+    final usage = await loadUsage();
+    return usage.canSaveDocument;
   }
 }
 
 /// Provider for the ScanUsageService.
 final scanUsageServiceProvider = Provider<ScanUsageService>((ref) {
-  throw UnimplementedError(
-    'scanUsageServiceProvider must be overridden with SharedPreferences instance',
-  );
+  final repository = ref.read(documentRepositoryProvider);
+  return ScanUsageService(repository);
 });
 
-/// StateNotifier for managing scan usage state reactively.
+/// StateNotifier for managing document usage state reactively.
 class ScanUsageNotifier extends StateNotifier<ScanUsage> {
-  ScanUsageNotifier(this._service) : super(_service.loadUsage());
+  ScanUsageNotifier(this._service) : super(const ScanUsage());
 
   final ScanUsageService _service;
 
-  /// Records a scan and updates the state.
-  Future<void> recordScan() async {
-    state = await _service.recordScan();
+  /// Refreshes the document count from the repository.
+  Future<void> refresh() async {
+    state = await _service.loadUsage();
   }
 
-  /// Resets usage (for premium upgrade or testing).
-  Future<void> resetUsage() async {
-    await _service.resetUsage();
-    state = _service.loadUsage();
-  }
-
-  /// Refreshes the state from storage.
-  void refresh() {
-    state = _service.loadUsage();
+  /// Checks if a new document can be saved.
+  Future<bool> canSaveDocument() async {
+    await refresh();
+    return state.canSaveDocument;
   }
 }
 
 /// Provider for the scan usage state notifier.
-final scanUsageProvider = StateNotifierProvider<ScanUsageNotifier, ScanUsage>((ref) {
+final scanUsageProvider =
+    StateNotifierProvider<ScanUsageNotifier, ScanUsage>((ref) {
   final service = ref.watch(scanUsageServiceProvider);
   return ScanUsageNotifier(service);
 });
 
-/// Provider that exposes whether the user can currently scan.
-final canScanProvider = Provider<bool>((ref) {
+/// Provider that exposes the current document count.
+final documentCountProvider = Provider<int>((ref) {
   final usage = ref.watch(scanUsageProvider);
-  return usage.canScan;
+  return usage.documentCount;
 });
 
-/// Provider that exposes the number of scans remaining.
+/// Provider that exposes the maximum free documents allowed.
+final maxFreeDocumentsProvider = Provider<int>((ref) {
+  final usage = ref.watch(scanUsageProvider);
+  return usage.maxFreeDocuments;
+});
+
+/// Provider that exposes whether the user can save more documents.
+final canSaveDocumentProvider = Provider<bool>((ref) {
+  final usage = ref.watch(scanUsageProvider);
+  return usage.canSaveDocument;
+});
+
+// Legacy providers for backward compatibility
+/// @deprecated Use [canSaveDocumentProvider] instead.
+final canScanProvider = Provider<bool>((ref) {
+  final usage = ref.watch(scanUsageProvider);
+  return usage.canSaveDocument;
+});
+
+/// @deprecated Use [documentCountProvider] instead.
 final scansRemainingProvider = Provider<int>((ref) {
   final usage = ref.watch(scanUsageProvider);
-  return usage.scansRemaining;
+  return usage.documentsRemaining;
 });

@@ -66,34 +66,33 @@ class StorageStatsCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          if (stats == null)
-            _buildLoadingIndicator()
-          else ...[
+          if (stats case final s?) ...[
+            // QC-01: Using pattern matching to safely unwrap stats
             _buildStatRow(
               Icons.description_outlined,
               'Documents',
-              '${stats!.documentCount}',
+              '${s.documentCount}',
               isDark,
             ),
             const SizedBox(height: 12),
             _buildStatRow(
               Icons.insert_drive_file_outlined,
               'Taille documents',
-              stats!.formattedDocumentsSize,
+              s.formattedDocumentsSize,
               isDark,
             ),
             const SizedBox(height: 12),
             _buildStatRow(
               Icons.image_outlined,
               'Miniatures',
-              stats!.formattedThumbnailsSize,
+              s.formattedThumbnailsSize,
               isDark,
             ),
             const SizedBox(height: 12),
             _buildStatRow(
               Icons.schedule_outlined,
               'Fichiers temporaires',
-              stats!.formattedTempSize,
+              s.formattedTempSize,
               isDark,
             ),
             const SizedBox(height: 16),
@@ -107,11 +106,12 @@ class StorageStatsCard extends StatelessWidget {
             _buildStatRow(
               Icons.folder_outlined,
               'Total',
-              stats!.formattedTotalSize,
+              s.formattedTotalSize,
               isDark,
               isTotal: true,
             ),
-          ],
+          ] else
+            _buildLoadingIndicator(),
         ],
       ),
     );

@@ -50,8 +50,6 @@ class SettingsScreenNotifier extends StateNotifier<SettingsScreenState> {
           await _clipboardSecurityService.isSecurityEnabled();
       final clipboardTimeout =
           await _clipboardSecurityService.getAutoClearTimeout();
-      final sensitiveDetectionEnabled =
-          await _clipboardSecurityService.isSensitiveDetectionEnabled();
 
       // Load storage statistics
       final storageInfoMap = await _documentRepository.getStorageInfo();
@@ -64,7 +62,6 @@ class SettingsScreenNotifier extends StateNotifier<SettingsScreenState> {
         isBiometricAvailable: isBiometricAvailable,
         clipboardSecurityEnabled: clipboardEnabled,
         clipboardClearTimeout: clipboardTimeout.inSeconds,
-        sensitiveDataDetectionEnabled: sensitiveDetectionEnabled,
         storageStats: storageStats,
         isLoading: false,
         isInitialized: true,
@@ -177,28 +174,6 @@ class SettingsScreenNotifier extends StateNotifier<SettingsScreenState> {
     } on Object catch (_) {
       state = state.copyWith(
         error: 'Failed to update clipboard timeout',
-      );
-    }
-  }
-
-  /// Toggles sensitive data detection enabled state.
-  Future<void> setSensitiveDataDetectionEnabled(bool enabled) async {
-    if (enabled == state.sensitiveDataDetectionEnabled) return;
-
-    // Optimistically update UI
-    state = state.copyWith(
-      sensitiveDataDetectionEnabled: enabled,
-      error: null,
-    );
-
-    try {
-      await _clipboardSecurityService.setSensitiveDetectionEnabled(enabled);
-    } on Object catch (e) {
-      // Revert on error
-      state = state.copyWith(
-        sensitiveDataDetectionEnabled: !enabled,
-        error:
-            'Failed to ${enabled ? 'enable' : 'disable'} sensitive data detection: $e',
       );
     }
   }

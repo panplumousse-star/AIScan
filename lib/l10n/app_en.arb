@@ -332,7 +332,6 @@
   "premiumSubtitle": "Unlock all features with a one-time purchase",
   "premiumUnlockPotential": "Unlock my full potential!",
   "premiumNoScansLeft": "You've run out of free scans!",
-  "premiumTrialEnded": "Hello, your trial period has ended",
   "premiumOcrRequired": "OCR is reserved for premium members",
   "premiumExportRequired": "PDF export is reserved for premium members",
   "premiumFeatureUnlimitedScans": "Unlimited scans",
@@ -340,7 +339,10 @@
   "premiumFeaturePdfExport": "PDF export",
   "premiumFeatureSharing": "Document sharing",
   "premiumFeatureOcr": "Text extraction (OCR)",
-  "premiumPurchaseButton": "Unlock for €2.99",
+  "premiumPurchaseButton": "Unlock for {price}",
+  "@premiumPurchaseButton": {
+    "placeholders": { "price": { "type": "String" } }
+  },
   "premiumRestorePurchases": "Restore purchases",
   "premiumLater": "Maybe later",
   "premiumBadgeLabel": "Premium",

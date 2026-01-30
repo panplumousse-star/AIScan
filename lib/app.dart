@@ -123,9 +123,12 @@ class _AppHomeState extends ConsumerState<_AppHome>
     // Cleanup temporary decrypted files from any previous crashed sessions
     // This ensures leftover sensitive data is securely deleted on app startup
     final repository = ref.read(documentRepositoryProvider);
-    repository.cleanupTempFiles().catchError((error) {
-      // Silently ignore cleanup errors to prevent app startup issues
-      // Logging would happen inside cleanupTempFiles if needed
+    repository.cleanupTempFiles().catchError((error, stackTrace) {
+      // QC-04: Log cleanup errors for debugging instead of silent failure
+      // Don't block app startup, but record the error for investigation
+      debugPrint('Warning: Failed to cleanup temp files on startup: $error');
+      debugPrint('Stack trace: $stackTrace');
+      return null; // Return null to satisfy catchError type requirements
     });
 
     // Setup fade animation for smooth transition
@@ -175,9 +178,12 @@ class _AppHomeState extends ConsumerState<_AppHome>
     if (state == AppLifecycleState.paused || state == AppLifecycleState.detached) {
       // Run cleanup asynchronously without blocking lifecycle transition
       final repository = ref.read(documentRepositoryProvider);
-      repository.cleanupTempFiles().catchError((error) {
-        // Silently ignore cleanup errors to prevent app lifecycle issues
-        // Logging would happen inside cleanupTempFiles if needed
+      repository.cleanupTempFiles().catchError((error, stackTrace) {
+        // QC-04: Log cleanup errors for debugging instead of silent failure
+        // Don't block lifecycle transition, but record the error for investigation
+        debugPrint('Warning: Failed to cleanup temp files on lifecycle $state: $error');
+        debugPrint('Stack trace: $stackTrace');
+        return null; // Return null to satisfy catchError type requirements
       });
     }
   }

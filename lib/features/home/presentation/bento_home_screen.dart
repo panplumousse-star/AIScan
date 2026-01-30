@@ -80,6 +80,10 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _resetIdleTimer();
+    // Refresh document count on screen init
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(ref.read(scanUsageProvider.notifier).refresh());
+    });
   }
 
   @override
@@ -133,6 +137,8 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
       _mascotKey++; // Force rebuild for waving animation
     });
     _resetIdleTimer();
+    // Refresh document count when returning to home screen
+    unawaited(ref.read(scanUsageProvider.notifier).refresh());
   }
 
   /// Called when a new route is pushed on top of this one.
@@ -182,6 +188,10 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
         setState(() {
           _sleepMessageIndex = (_sleepMessageIndex + 1) % 5;
         });
+      } else {
+        // Stop timer immediately when widget is unmounted to prevent memory leak
+        timer.cancel();
+        _sleepTimer = null;
       }
     });
   }
@@ -572,11 +582,6 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = AppLocalizations.of(context);
 
-    // Check if free user has no scans remaining
-    final isPremium = ref.watch(isPremiumProvider);
-    final scanUsage = ref.watch(scanUsageProvider);
-    final isTrialEnded = !isPremium && !scanUsage.hasScansRemaining;
-
     // Localized greeting subtitles
     final greetingSubtitles = [
       l10n?.randomMessage1 ?? "Besoin d'un PDF ?",
@@ -606,11 +611,9 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
             'Zzz ...',
             'Zzz ... Zzz'
           ][_sleepMessageIndex]
-        : isTrialEnded
-            ? (l10n?.premiumTrialEnded ?? "Bonjour, ta periode d'essai est terminee")
-            : (hasJustScanned ? celebrationMessage : _getGreeting(context));
+        : (hasJustScanned ? celebrationMessage : _getGreeting(context));
 
-    final String semanticLabel = (!hasJustScanned && !_isSleeping && !isTrialEnded)
+    final String semanticLabel = (!hasJustScanned && !_isSleeping)
         ? '$greetingText. $greetingSubtitle'
         : greetingText;
 
@@ -673,7 +676,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                             ),
                           ),
                         ),
-                        if (!hasJustScanned && !_isSleeping && !isTrialEnded) ...[
+                        if (!hasJustScanned && !_isSleeping) ...[
                           const SizedBox(height: 2),
                           Text(
                             greetingSubtitle,
@@ -752,29 +755,11 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                   ),
                 )
               else
-                Consumer(
-                  builder: (context, ref, child) {
-                    final isPremium = ref.watch(isPremiumProvider);
-                    final scanUsage = ref.watch(scanUsageProvider);
-                    final isLimited = !isPremium && !scanUsage.hasScansRemaining;
-
-                    if (isLimited) {
-                      return const BentoLevitationWidget(
-                        child: BentoMascot(
-                          key: ValueKey('limited_mascot'),
-                          height: 100,
-                          variant: BentoMascotVariant.limited,
-                        ),
-                      );
-                    }
-
-                    return BentoMascot(
-                      key: ValueKey('home_mascot_$_mascotKey'),
-                      height: 180,
-                      // animateOnce: false → loops 6 cycles, pauses 10s, repeats
-                      // Stops only on sleep mode or page navigation
-                    );
-                  },
+                BentoMascot(
+                  key: ValueKey('home_mascot_$_mascotKey'),
+                  height: 180,
+                  // animateOnce: false → loops 6 cycles, pauses 10s, repeats
+                  // Stops only on sleep mode or page navigation
                 ),
             ],
           ),
@@ -1200,7 +1185,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '${scanUsage.scansRemaining}/${scanUsage.maxFreeScans} scans • PDF • OCR • Partage',
+                            '${scanUsage.documentCount}/${scanUsage.maxFreeDocuments} docs • PDF • OCR • Partage',
                             style: TextStyle(
                               fontFamily: 'Outfit',
                               fontSize: 12,

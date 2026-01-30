@@ -1053,11 +1053,12 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
       if (state.currentFolderId == folderId && state.currentFolder != null) {
         folder = state.currentFolder!;
       } else {
-        try {
-          folder = state.folders.firstWhere((f) => f.id == folderId);
-        } on Object catch (_) {
-          throw StateError('Folder not found');
+        // QC-02: Using orElse pattern instead of try-catch for cleaner code
+        final foundFolder = state.folders.where((f) => f.id == folderId).firstOrNull;
+        if (foundFolder == null) {
+          throw StateError('Folder not found: $folderId');
         }
+        folder = foundFolder;
       }
 
       final updatedFolder = folder.copyWith(
@@ -1240,18 +1241,10 @@ class _DocumentsScreenWidgetState extends ConsumerState<DocumentsScreen>
     final notifier = ref.read(documentsScreenProvider.notifier);
     final theme = Theme.of(context);
 
-    // Listen for errors and show snackbar
+    // Clear errors silently - mascot bubble handles feedback
     ref.listen<DocumentsScreenState>(documentsScreenProvider, (prev, next) {
       if (next.error != null && prev?.error != next.error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.error!),
-            action: SnackBarAction(
-              label: 'Dismiss',
-              onPressed: notifier.clearError,
-            ),
-          ),
-        );
+        notifier.clearError();
       }
     });
 
@@ -1503,6 +1496,12 @@ class _DocumentsScreenWidgetState extends ConsumerState<DocumentsScreen>
     Document document,
     DocumentsScreenNotifier notifier,
   ) {
+    // Check if user is premium - multi-select is a premium feature
+    final isPremium = ref.read(isPremiumProvider);
+    if (!isPremium) {
+      unawaited(PremiumUpgradeDialog.show(context, feature: PremiumFeature.unlimitedScans));
+      return;
+    }
     notifier.enterSelectionMode();
     notifier.toggleDocumentSelection(document.id);
   }
@@ -1527,6 +1526,12 @@ class _DocumentsScreenWidgetState extends ConsumerState<DocumentsScreen>
     Folder folder,
     DocumentsScreenNotifier notifier,
   ) {
+    // Check if user is premium - multi-select is a premium feature
+    final isPremium = ref.read(isPremiumProvider);
+    if (!isPremium) {
+      unawaited(PremiumUpgradeDialog.show(context, feature: PremiumFeature.unlimitedScans));
+      return;
+    }
     notifier.enterSelectionMode();
     notifier.toggleFolderSelection(folder.id);
   }
@@ -1581,28 +1586,14 @@ class _DocumentsScreenWidgetState extends ConsumerState<DocumentsScreen>
           await shareService.shareDocuments(documents, format: format);
       // Clean up temporary files after sharing
       await shareService.cleanupTempFiles(result.tempFilePaths);
-    } on DocumentShareException catch (e) {
-      if (context.mounted) {
-        String message;
-        if (e.message.contains('not found')) {
-          message = 'Document file not found. It may have been deleted.';
-        } else if (e.message.contains('prepare') ||
-            e.message.contains('decrypt')) {
-          message = 'Failed to prepare document for sharing. Please try again.';
-        } else {
-          message = 'Failed to share: ${e.message}';
-        }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
-        );
-      }
+    } on DocumentShareException catch (_) {
+      // Error handled silently
     }
   }
 
   /// Handles exporting selected documents to external storage.
   ///
   /// Opens SAF file picker for each selected document and exports as PDF.
-  /// Shows success or error feedback via SnackBar.
   Future<void> _handleExportSelected(
     BuildContext context,
     DocumentsScreenState state,
@@ -1627,34 +1618,9 @@ class _DocumentsScreenWidgetState extends ConsumerState<DocumentsScreen>
 
     // Export documents
     try {
-      final result = await exportService.exportDocuments(selectedDocuments);
-
-      if (!context.mounted) return;
-
-      if (result.isSuccess) {
-        final l10n = AppLocalizations.of(context);
-        final message = result.exportedCount == 1
-            ? (l10n?.documentExported ?? 'Document exported')
-            : (l10n?.documentsExported(result.exportedCount) ??
-                '${result.exportedCount} documents exported');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
-        );
-      } else if (result.isFailed) {
-        final l10n = AppLocalizations.of(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(result.errorMessage ??
-                  (l10n?.exportFailed ?? 'Export failed'))),
-        );
-      }
-      // If cancelled, do nothing
-    } on DocumentExportException catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message)),
-        );
-      }
+      await exportService.exportDocuments(selectedDocuments);
+    } on DocumentExportException catch (_) {
+      // Error handled silently
     }
   }
 }

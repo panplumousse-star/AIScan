@@ -18,12 +18,15 @@ import '../../domain/scanner_service.dart';
 
 part 'scanner_screen_state.freezed.dart';
 
-/// Reason why a scan is blocked for free users.
+/// Reason why saving is blocked for free users.
 enum ScanBlockReason {
-  /// Scan is not blocked.
+  /// Not blocked.
   none,
 
-  /// No scans remaining in free tier.
+  /// Document limit reached (10 documents max for free users).
+  documentLimitReached,
+
+  /// @deprecated Use [documentLimitReached] instead.
   noScansRemaining,
 }
 
@@ -52,12 +55,13 @@ class ScannerScreenState with _$ScannerScreenState {
     /// Currently selected page index for preview.
     @Default(0) int selectedPageIndex,
 
-    /// Reason scan is blocked (for free users).
+    /// Reason saving is blocked (for free users who reached document limit).
     @Default(ScanBlockReason.none) ScanBlockReason blocked,
   }) = _ScannerScreenState;
 
   /// Whether we have a scan result to preview.
-  bool get hasResult => scanResult != null && scanResult!.isNotEmpty;
+  // QC-01: Using null-safe pattern
+  bool get hasResult => scanResult?.isNotEmpty ?? false;
 
   /// Whether a document was saved to storage.
   bool get hasSavedDocument => savedDocument != null;
@@ -68,6 +72,6 @@ class ScannerScreenState with _$ScannerScreenState {
   /// Whether we have an error.
   bool get hasError => error != null;
 
-  /// Whether scan is blocked due to free tier limitations.
+  /// Whether saving is blocked due to free tier limitations.
   bool get isBlocked => blocked != ScanBlockReason.none;
 }

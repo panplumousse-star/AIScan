@@ -565,19 +565,11 @@ class _EnhancementScreenWidgetState extends ConsumerState<EnhancementScreen> {
     final notifier = ref.read(enhancementScreenProvider.notifier);
     final theme = Theme.of(context);
 
-    // Listen for errors and show snackbar
+    // Clear errors silently
     ref.listen<EnhancementScreenState>(enhancementScreenProvider,
         (previous, next) {
       if (next.error != null && previous?.error != next.error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.error!),
-            action: SnackBarAction(
-              label: 'Dismiss',
-              onPressed: notifier.clearError,
-            ),
-          ),
-        );
+        notifier.clearError();
       }
     });
 

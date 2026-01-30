@@ -189,17 +189,13 @@ final premiumStatusProvider = Provider<PremiumStatus>((ref) {
 
 /// Main provider to check if user has premium access.
 ///
-/// This provider checks:
-/// 1. Debug premium toggle (if in debug mode)
-/// 2. Actual premium status from secure storage
+/// This provider checks the actual premium status from secure storage.
+///
+/// NOTE: Debug premium toggle has been removed for security reasons.
+/// Use a separate debug build flavor if testing is needed.
 final isPremiumProvider = Provider<bool>((ref) {
-  // In debug mode, check the debug toggle first
-  if (kDebugMode) {
-    final debugPremium = ref.watch(debugPremiumProvider);
-    if (debugPremium) return true;
-  }
-
-  // Check the actual premium status
+  // Check the actual premium status only
+  // Debug bypass removed for production security (SEC-01)
   final status = ref.watch(premiumStatusProvider);
   return status.isPremium && status.isValidated;
 });
@@ -257,15 +253,18 @@ extension PremiumFeatureExtension on PremiumFeature {
   }
 }
 
-/// Provider that checks if the user can perform a scan.
-final scanPermissionProvider = Provider<ScanBlockReason>((ref) {
+/// Provider that checks if the user can save a document.
+///
+/// Free users are limited to 10 documents. This check is performed
+/// at save time, not at scan time (users can always scan).
+final savePermissionProvider = Provider<ScanBlockReason>((ref) {
   final isPremium = ref.watch(isPremiumProvider);
   if (isPremium) return ScanBlockReason.none;
 
   final usage = ref.watch(scanUsageProvider);
 
-  if (!usage.hasScansRemaining) {
-    return ScanBlockReason.noScansRemaining;
+  if (usage.hasReachedLimit) {
+    return ScanBlockReason.documentLimitReached;
   }
 
   return ScanBlockReason.none;

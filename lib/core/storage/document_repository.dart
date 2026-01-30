@@ -208,6 +208,75 @@ class DocumentRepository {
   }
 
   // ============================================================
+  // SEC-10: Path Validation (prevent path traversal attacks)
+  // ============================================================
+
+  /// Validates that a file path is within an allowed directory.
+  ///
+  /// SEC-10: Prevents path traversal attacks by canonicalizing the path
+  /// (resolving . and ..) and checking it's within allowed boundaries.
+  ///
+  /// Parameters:
+  /// - [filePath]: The path to validate
+  /// - [allowedDirs]: List of allowed base directories
+  ///
+  /// Returns the canonicalized path if valid.
+  ///
+  /// Throws [DocumentRepositoryException] if the path is outside allowed directories.
+  String _validatePathWithinAllowed(String filePath, List<String> allowedDirs) {
+    // Canonicalize the path to resolve .. and .
+    final canonicalPath = path.canonicalize(filePath);
+
+    // Check if the canonicalized path starts with any allowed directory
+    final isAllowed = allowedDirs.any((dir) {
+      final canonicalDir = path.canonicalize(dir);
+      return canonicalPath.startsWith(canonicalDir);
+    });
+
+    if (!isAllowed) {
+      throw DocumentRepositoryException(
+        'SEC-10: Path traversal attempt detected. Path is outside allowed directories.',
+      );
+    }
+
+    return canonicalPath;
+  }
+
+  /// Validates that a source file path is safe to read from.
+  ///
+  /// SEC-10: Source files must be in temp, cache, or external storage directories.
+  Future<void> _validateSourcePath(String sourcePath) async {
+    final tempDir = await getTemporaryDirectory();
+    final cacheDir = await getApplicationCacheDirectory();
+    final appDir = await getApplicationDocumentsDirectory();
+
+    // Allow temp, cache, and app directories (where scanner saves files)
+    final allowedDirs = [
+      tempDir.path,
+      cacheDir.path,
+      appDir.path,
+      // Also allow external storage paths on Android for file picker imports
+      '/storage/emulated/',
+      '/sdcard/',
+      '/data/user/',
+    ];
+
+    _validatePathWithinAllowed(sourcePath, allowedDirs);
+  }
+
+  /// Validates that an encrypted file path is within our storage directories.
+  ///
+  /// SEC-10: Encrypted paths must be within our documents or thumbnails directory.
+  Future<void> _validateEncryptedPath(String encryptedPath) async {
+    final documentsDir = await _getDocumentsDirectory();
+    final thumbnailsDir = await _getThumbnailsDirectory();
+
+    final allowedDirs = [documentsDir.path, thumbnailsDir.path];
+
+    _validatePathWithinAllowed(encryptedPath, allowedDirs);
+  }
+
+  // ============================================================
   // Create Operations
   // ============================================================
 
@@ -249,6 +318,14 @@ class DocumentRepository {
     final now = DateTime.now();
 
     try {
+      // SEC-10: Validate all source paths are safe before processing
+      for (final sourcePath in sourceImagePaths) {
+        await _validateSourcePath(sourcePath);
+      }
+      if (thumbnailSourcePath != null) {
+        await _validateSourcePath(thumbnailSourcePath);
+      }
+
       // Validate all source files exist
       int totalFileSize = 0;
       for (final sourcePath in sourceImagePaths) {
@@ -635,6 +712,10 @@ class DocumentRepository {
       }
 
       final encryptedPath = document.pagesPaths[pageIndex];
+
+      // SEC-10: Validate encrypted path is within our storage directories
+      await _validateEncryptedPath(encryptedPath);
+
       final encryptedFile = File(encryptedPath);
       if (!await encryptedFile.exists()) {
         throw const DocumentRepositoryException(
@@ -671,6 +752,11 @@ class DocumentRepository {
   /// Throws [DocumentRepositoryException] if decryption fails.
   Future<List<String>> getDecryptedAllPages(Document document) async {
     try {
+      // SEC-10: Validate all encrypted paths before decryption
+      for (final encPath in document.pagesPaths) {
+        await _validateEncryptedPath(encPath);
+      }
+
       final tempDir = await _getTempDirectory();
       final timestamp = DateTime.now().millisecondsSinceEpoch;
 
@@ -727,6 +813,10 @@ class DocumentRepository {
       }
 
       final encryptedPath = document.pagesPaths[pageIndex];
+
+      // SEC-10: Validate encrypted path is within our storage directories
+      await _validateEncryptedPath(encryptedPath);
+
       final encryptedFile = File(encryptedPath);
       if (!await encryptedFile.exists()) {
         throw const DocumentRepositoryException(
@@ -784,6 +874,9 @@ class DocumentRepository {
     }
 
     try {
+      // SEC-10: Validate thumbnail path is within our storage directories
+      await _validateEncryptedPath(document.thumbnailPath!);
+
       // Check cache first
       final cachedBytes = _thumbnailCache.getCachedThumbnail(document.id);
       if (cachedBytes != null) {

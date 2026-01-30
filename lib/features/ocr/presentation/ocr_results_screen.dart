@@ -12,7 +12,6 @@ import 'package:path/path.dart' as p;
 
 import '../../../l10n/app_localizations.dart';
 import '../../../core/security/clipboard_security_service.dart';
-import '../../../core/widgets/sensitive_data_warning_dialog.dart';
 import '../../documents/domain/document_model.dart';
 import '../domain/ocr_service.dart';
 import 'widgets/empty_result_view.dart';
@@ -457,18 +456,10 @@ class _OcrResultsScreenWidgetState extends ConsumerState<OcrResultsScreen> {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
 
-    // Listen for errors and show snackbar
+    // Clear errors silently
     ref.listen<OcrResultsScreenState>(ocrResultsScreenProvider, (prev, next) {
       if (next.error != null && prev?.error != next.error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.error!),
-            action: SnackBarAction(
-              label: l10n?.dismiss ?? 'Dismiss',
-              onPressed: notifier.clearError,
-            ),
-          ),
-        );
+        notifier.clearError();
       }
     });
 
@@ -624,10 +615,6 @@ class _OcrResultsScreenWidgetState extends ConsumerState<OcrResultsScreen> {
       case 'save':
         if (state.ocrResult != null) {
           widget.onSaveRequested?.call(state.ocrResult!.trimmedText);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text(l10n?.ocrSaved ?? 'OCR text saved to document')),
-          );
         }
     }
   }
@@ -643,14 +630,6 @@ class _OcrResultsScreenWidgetState extends ConsumerState<OcrResultsScreen> {
     try {
       final result = await clipboardService.copyToClipboard(
         state.ocrResult!.trimmedText,
-        onSensitiveDataDetected: (detection) async {
-          if (!context.mounted) return false;
-          return showSensitiveDataWarningDialog(
-            context: context,
-            ref: ref,
-            detection: detection,
-          );
-        },
       );
 
       if (!result.success) {
@@ -704,14 +683,6 @@ class _OcrResultsScreenWidgetState extends ConsumerState<OcrResultsScreen> {
     try {
       final result = await clipboardService.copyToClipboard(
         state.selectedText!,
-        onSensitiveDataDetected: (detection) async {
-          if (!context.mounted) return false;
-          return showSensitiveDataWarningDialog(
-            context: context,
-            ref: ref,
-            detection: detection,
-          );
-        },
       );
 
       if (!result.success) {

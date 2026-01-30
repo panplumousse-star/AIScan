@@ -298,7 +298,7 @@ class _PremiumUpgradeDialogState extends ConsumerState<PremiumUpgradeDialog> {
                               ),
                             )
                           : Text(
-                              'Débloquer pour $priceString',
+                              l10n.premiumPurchaseButton(priceString),
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,

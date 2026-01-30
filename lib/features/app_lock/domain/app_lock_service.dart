@@ -387,6 +387,9 @@ class AppLockService {
   /// This is a convenience method that wraps [BiometricAuthService.authenticate]
   /// with an app-specific reason message.
   ///
+  /// SEC-07: Uses biometricOnly=true to prevent fallback to device credentials
+  /// (PIN/password), ensuring only biometric authentication is accepted.
+  ///
   /// Returns `true` if authentication succeeded, `false` if the user cancelled
   /// or authentication failed.
   ///
@@ -395,6 +398,7 @@ class AppLockService {
   Future<bool> authenticateUser() {
     return _biometricAuth.authenticate(
       reason: 'Verify your identity to access Scanaï',
+      biometricOnly: true,
     );
   }
 

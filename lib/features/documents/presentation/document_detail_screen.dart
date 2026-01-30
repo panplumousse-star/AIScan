@@ -135,23 +135,14 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
     final state = ref.watch(documentDetailScreenProvider);
     final notifier = ref.read(documentDetailScreenProvider.notifier);
     final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context);
 
-    // Listen for errors and show snackbar
+    // Clear errors silently - mascot bubble handles feedback
     ref.listen<DocumentDetailScreenState>(documentDetailScreenProvider, (
       prev,
       next,
     ) {
       if (next.error != null && prev?.error != next.error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.error!),
-            action: SnackBarAction(
-              label: l10n?.dismiss ?? 'Dismiss',
-              onPressed: notifier.clearError,
-            ),
-          ),
-        );
+        notifier.clearError();
       }
     });
 
@@ -235,14 +226,15 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                 ),
                 const Spacer(),
                 // Action icons: favorite, info, delete (no background)
-                if (state.hasDocument) ...[
+                // QC-01: Using pattern matching for null safety
+                if (state.document case final doc?) ...[
                   // Favorite button
                   IconButton(
                     icon: Icon(
-                      state.document!.isFavorite
+                      doc.isFavorite
                           ? Icons.favorite_rounded
                           : Icons.favorite_border_rounded,
-                      color: state.document!.isFavorite
+                      color: doc.isFavorite
                           ? Colors.redAccent
                           : (isDark ? Colors.white : const Color(0xFF1E1B4B)),
                     ),
@@ -273,11 +265,12 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
               ],
             ),
             // Title row below
-            if (state.hasDocument) ...[
+            // QC-01: Using pattern matching for null safety
+            if (state.document case final document?) ...[
               const SizedBox(height: 8),
               GestureDetector(
                 onTap: () =>
-                    _showRenameDialog(context, state.document!, notifier),
+                    _showRenameDialog(context, document, notifier),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -341,6 +334,10 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
       );
     }
 
+    // QC-01: Extract to local variables after isReady check guarantees non-null
+    final document = state.document!;
+    final imageBytes = state.imageBytes!;
+
     return Column(
       children: [
         SizedBox(height: MediaQuery.of(context).padding.top + 100),
@@ -358,7 +355,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                 child: GestureDetector(
                   onDoubleTap: notifier.toggleFullScreen,
                   child: DocumentPreview(
-                    imageBytes: state.imageBytes!,
+                    imageBytes: imageBytes,
                     transformationController: _transformationController,
                   ),
                 ),
@@ -373,7 +370,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: DocumentInfoPanel(
-            document: state.document!,
+            document: document,
             currentPage: state.currentPage,
             onPageChanged: (page) => notifier.goToPage(page),
             onPreviousPage: () => notifier.previousPage(),
@@ -384,11 +381,11 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
         ),
 
         // OCR text panel (if available)
-        if (state.document!.hasOcrText)
+        if (document.hasOcrText)
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
             child: OcrTextPanel(
-              ocrText: state.document!.ocrText!,
+              ocrText: document.ocrText!,
               theme: theme,
               onSelectionChanged: (selectedText) {
                 // Selection is handled internally by OcrTextPanel for haptic feedback.
@@ -569,59 +566,20 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
         if (textToShare == null || textToShare.isEmpty) {
           if (!context.mounted) return;
 
-          // Show loading indicator
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Row(
-                children: [
-                  SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                  SizedBox(width: 16),
-                  Text('Extraction du texte en cours...'),
-                ],
-              ),
-              duration: Duration(seconds: 30),
-            ),
-          );
-
-          // Run OCR
+          // Run OCR silently
           final ocrService = ref.read(ocrServiceProvider);
           final notifier = ref.read(documentDetailScreenProvider.notifier);
           final imageBytes = await notifier.loadImageBytes();
 
           if (imageBytes == null) {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).hideCurrentSnackBar();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                    content: Text(
-                        AppLocalizations.of(context)?.unableToLoadImage ??
-                            'Unable to load image')),
-              );
-            }
             return;
           }
 
           final ocrResult = await ocrService.extractTextFromBytes(imageBytes);
           textToShare = ocrResult.text;
 
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          }
-
           // Check if OCR found any text
           if (textToShare.isEmpty) {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                    content: Text(
-                        AppLocalizations.of(context)?.noTextDetected ??
-                            'No text detected in document')),
-              );
-            }
             return;
           }
 
@@ -634,13 +592,6 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
 
         // Final check before sharing (textToShare is guaranteed non-null here)
         if (textToShare.isEmpty) {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                  content: Text(AppLocalizations.of(context)?.noTextToShare ??
-                      'No text to share')),
-            );
-          }
           return;
         }
 
@@ -660,13 +611,8 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
 
       // Clean up temp files
       await shareService.cleanupTempFiles(result.tempFilePaths);
-    } on Object catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur de partage: $e')),
-        );
-      }
+    } on Object catch (_) {
+      // Error handled silently
     }
   }
 
@@ -715,50 +661,6 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
       widget.onExport?.call(state.document!, bytes);
     }
   }
-
-  // TODO: Re-enable when signature feature is fixed
-  // Future<void> _handleSign(
-  //   BuildContext context,
-  //   DocumentDetailScreenState state,
-  // ) async {
-  //   if (state.document == null || state.imageBytes == null) return;
-  //
-  //   // Allow external handler if provided
-  //   if (widget.onSign != null) {
-  //     widget.onSign?.call(state.document!, state.imageBytes!);
-  //     return;
-  //   }
-  //
-  //   // Navigate to signature overlay screen
-  //   final signedBytes = await Navigator.of(context).push<Uint8List>(
-  //     MaterialPageRoute(
-  //       builder: (context) => SignatureOverlayScreen(
-  //         documentBytes: state.imageBytes!,
-  //         onSave: (bytes) {
-  //           // Result will be returned via Navigator.pop
-  //         },
-  //         onCancel: () {
-  //           // User cancelled
-  //         },
-  //       ),
-  //     ),
-  //   );
-  //
-  //   // Save the signed document if we got a result
-  //   if (signedBytes != null && mounted) {
-  //     final notifier = ref.read(documentDetailScreenProvider.notifier);
-  //     final success = await notifier.updateDocumentImage(signedBytes);
-  //
-  //     if (success && mounted) {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         const SnackBar(
-  //           content: Text('Document signed successfully'),
-  //           duration: Duration(seconds: 2),
-  //         ),
-  //       );
-  //     }
-  //   }
-  // }
 
   Future<void> _showRenameDialog(
     BuildContext context,
@@ -910,15 +812,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
             color: color,
           );
           return newFolder;
-        } on Object catch (e) {
-          if (context.mounted) {
-            final l10n = AppLocalizations.of(context);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                  content: Text(
-                      '${l10n?.folderCreationError ?? 'Error creating folder'}: $e')),
-            );
-          }
+        } on Object catch (_) {
           return null;
         }
       },
@@ -930,26 +824,13 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
     try {
       await repository.moveToFolder(state.document!.id, selectedFolderId);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              selectedFolderId == null
-                  ? 'Moved to My Documents'
-                  : 'Moved to folder',
-            ),
-          ),
-        );
         // Refresh document state
         unawaited(ref
             .read(documentDetailScreenProvider.notifier)
             .loadDocument(state.document!.id));
       }
-    } on Object catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to move document: $e')),
-        );
-      }
+    } on Object catch (_) {
+      // Error handled silently
     }
   }
 

@@ -22,9 +22,11 @@ class BentoStatsHeader extends StatelessWidget {
   final DateTime? lastUpdated;
 
   String _formatLastUpdated(AppLocalizations? l10n) {
-    if (lastUpdated == null) return '';
+    // QC-01: Capture in local variable for null safety
+    final date = lastUpdated;
+    if (date == null) return '';
     final now = DateTime.now();
-    final diff = now.difference(lastUpdated!);
+    final diff = now.difference(date);
 
     if (diff.inMinutes < 1) {
       return l10n?.justNow ?? 'Just now';
@@ -38,7 +40,7 @@ class BentoStatsHeader extends StatelessWidget {
     if (diff.inDays < 7) {
       return l10n?.daysAgo(diff.inDays) ?? '${diff.inDays} days ago';
     }
-    return '${lastUpdated!.day}/${lastUpdated!.month}/${lastUpdated!.year}';
+    return '${date.day}/${date.month}/${date.year}';
   }
 
   @override

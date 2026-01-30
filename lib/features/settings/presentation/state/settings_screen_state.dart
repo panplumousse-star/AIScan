@@ -53,9 +53,6 @@ class SettingsScreenState with _$SettingsScreenState {
     /// Timeout in seconds before clipboard is automatically cleared.
     @Default(30) int clipboardClearTimeout,
 
-    /// Whether sensitive data detection is enabled for clipboard operations.
-    @Default(false) bool sensitiveDataDetectionEnabled,
-
     /// Storage usage statistics, if loaded.
     StorageStats? storageStats,
   }) = _SettingsScreenState;

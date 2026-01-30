@@ -10,7 +10,7 @@
 /// - Save to encrypted storage with metadata
 /// - Error handling and recovery
 /// - State cleanup on disposal
-/// - Premium feature gating (scan limits, cooldown, multipage)
+/// - Premium feature gating (document limit for free users)
 ///
 /// Usage:
 /// ```dart
@@ -26,7 +26,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../documents/domain/document_model.dart';
 import '../../../premium/domain/premium_service.dart';
-import '../../../premium/domain/scan_usage_model.dart';
 import '../../../premium/domain/scan_usage_service.dart';
 import '../../domain/scanner_service.dart';
 import 'scanner_screen_state.dart';
@@ -50,40 +49,15 @@ class ScannerScreenNotifier extends StateNotifier<ScannerScreenState> {
   /// Checks if the user has premium access.
   bool get _isPremium => _ref.read(isPremiumProvider);
 
-  /// Gets the current scan usage for free users.
-  ScanUsage get _scanUsage => _ref.read(scanUsageProvider);
-
-  /// Checks if the user can perform a scan.
-  ///
-  /// Returns [ScanBlockReason.none] if allowed, otherwise the reason for blocking.
-  ScanBlockReason _checkScanPermission() {
-    if (_isPremium) return ScanBlockReason.none;
-
-    final usage = _scanUsage;
-
-    if (!usage.hasScansRemaining) {
-      return ScanBlockReason.noScansRemaining;
-    }
-
-    return ScanBlockReason.none;
-  }
-
   /// Starts a document scan with the given options.
   ///
   /// For free users:
-  /// - Checks scan limits before proceeding
+  /// - Scans are always allowed (no limit on scanning)
   /// - Forces single-page mode (multipage disabled)
-  /// - Records scan usage after successful scan
+  /// - Document limit is checked at save time, not scan time
   Future<void> startScan(
       {ScannerOptions options = const ScannerOptions()}) async {
     if (state.isLoading) return;
-
-    // Check premium gating for free users
-    final blockReason = _checkScanPermission();
-    if (blockReason != ScanBlockReason.none) {
-      state = state.copyWith(blocked: blockReason);
-      return;
-    }
 
     // Clear any previous block state
     state = state.copyWith(
@@ -103,11 +77,6 @@ class ScannerScreenNotifier extends StateNotifier<ScannerScreenState> {
       final result = await _scannerService.scanDocument(options: effectiveOptions);
 
       if (result != null && result.isNotEmpty) {
-        // Record scan usage for free users
-        if (!_isPremium) {
-          await _ref.read(scanUsageProvider.notifier).recordScan();
-        }
-
         state = state.copyWith(
           scanResult: result,
           isScanning: false,
@@ -168,8 +137,14 @@ class ScannerScreenNotifier extends StateNotifier<ScannerScreenState> {
   /// Returns true if the user has premium access.
   bool get isPremium => _isPremium;
 
-  /// Returns the number of scans remaining for free users.
-  int get scansRemaining => _scanUsage.scansRemaining;
+  /// Returns the number of documents remaining for free users.
+  int get documentsRemaining {
+    final usage = _ref.read(scanUsageProvider);
+    return usage.documentsRemaining;
+  }
+
+  /// @deprecated Use [documentsRemaining] instead.
+  int get scansRemaining => documentsRemaining;
 
   /// Selects a page for preview.
   void selectPage(int index) {
@@ -190,6 +165,18 @@ class ScannerScreenNotifier extends StateNotifier<ScannerScreenState> {
     );
   }
 
+  /// Checks if the user can save a document.
+  ///
+  /// Returns true if the user is premium or has not reached the document limit.
+  Future<bool> _canSaveDocument() async {
+    if (_isPremium) return true;
+
+    // Refresh the document count from repository
+    await _ref.read(scanUsageProvider.notifier).refresh();
+    final usage = _ref.read(scanUsageProvider);
+    return usage.canSaveDocument;
+  }
+
   /// Saves the current scan result to encrypted document storage.
   ///
   /// Parameters:
@@ -200,6 +187,9 @@ class ScannerScreenNotifier extends StateNotifier<ScannerScreenState> {
   ///
   /// Returns the saved [Document] if successful.
   ///
+  /// For free users, this will fail if the document limit (10) is reached.
+  /// The [blocked] state will be set to [ScanBlockReason.documentLimitReached].
+  ///
   /// Throws [ScannerException] if saving fails.
   Future<Document?> saveToStorage({
     String? title,
@@ -208,6 +198,12 @@ class ScannerScreenNotifier extends StateNotifier<ScannerScreenState> {
     bool isFavorite = false,
   }) async {
     if (state.scanResult == null || state.isLoading) return null;
+
+    // Check document limit for free users
+    if (!await _canSaveDocument()) {
+      state = state.copyWith(blocked: ScanBlockReason.documentLimitReached);
+      return null;
+    }
 
     state = state.copyWith(isSaving: true, error: null);
 
@@ -219,6 +215,9 @@ class ScannerScreenNotifier extends StateNotifier<ScannerScreenState> {
         folderId: folderId,
         isFavorite: isFavorite,
       );
+
+      // Refresh document count after saving
+      unawaited(_ref.read(scanUsageProvider.notifier).refresh());
 
       state = state.copyWith(
         isSaving: false,

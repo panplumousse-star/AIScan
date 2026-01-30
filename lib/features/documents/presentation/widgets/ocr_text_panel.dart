@@ -7,7 +7,6 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/security/clipboard_security_service.dart';
 import '../../../../core/widgets/bento_card.dart';
-import '../../../../core/widgets/sensitive_data_warning_dialog.dart';
 import '../../../../l10n/app_localizations.dart';
 
 /// An expandable panel that displays OCR text extracted from a document.
@@ -233,14 +232,6 @@ class _OcrTextPanelState extends ConsumerState<OcrTextPanel> {
     try {
       final result = await clipboardService.copyToClipboard(
         widget.ocrText,
-        onSensitiveDataDetected: (detection) async {
-          if (!context.mounted) return false;
-          return showSensitiveDataWarningDialog(
-            context: context,
-            ref: ref,
-            detection: detection,
-          );
-        },
       );
 
       if (!result.success) {
@@ -284,14 +275,6 @@ class _OcrTextPanelState extends ConsumerState<OcrTextPanel> {
     try {
       final result = await clipboardService.copyToClipboard(
         selectedText,
-        onSensitiveDataDetected: (detection) async {
-          if (!context.mounted) return false;
-          return showSensitiveDataWarningDialog(
-            context: context,
-            ref: ref,
-            detection: detection,
-          );
-        },
       );
 
       if (!result.success) {

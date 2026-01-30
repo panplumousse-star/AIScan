@@ -19,7 +19,6 @@ import 'core/widgets/bento_speech_bubble.dart';
 import 'features/app_lock/domain/app_lock_service.dart';
 import 'features/premium/domain/iap_service.dart';
 import 'features/premium/domain/premium_service.dart';
-import 'features/premium/domain/scan_usage_service.dart';
 import 'features/settings/domain/theme_persistence_service.dart';
 
 /// Application entry point.
@@ -50,7 +49,6 @@ void main() async {
 
   // Create services that need runtime dependencies
   final secureStorage = SecureStorageService();
-  final scanUsageService = ScanUsageService(sharedPreferences);
   final premiumService = PremiumService(
     secureStorage: secureStorage,
     sharedPreferences: sharedPreferences,
@@ -59,10 +57,10 @@ void main() async {
 
   // Create a ProviderContainer to initialize services before app starts
   // Override providers that need runtime dependencies
+  // Note: scanUsageService is not overridden as it uses documentRepositoryProvider
   final container = ProviderContainer(
     overrides: [
       secureStorageServiceProvider.overrideWithValue(secureStorage),
-      scanUsageServiceProvider.overrideWithValue(scanUsageService),
       premiumServiceProvider.overrideWithValue(premiumService),
       iapServiceProvider.overrideWithValue(iapService),
     ],
@@ -302,7 +300,8 @@ class _SecurityWarningDialog extends StatelessWidget {
                                 vertical: 10,
                               ),
                               child: Text(
-                                'Security Notice',
+                                // QC-03: Using localized string instead of hardcoded
+                                l10n.deviceSecurityWarningTitle,
                                 style: TextStyle(
                                   fontFamily: 'Outfit',
                                   fontSize: 14,

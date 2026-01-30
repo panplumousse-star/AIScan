@@ -114,16 +114,14 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
         _scanWasActive = true;
       }
 
-      // Handle scan blocked by premium limits
-      if (next.blocked != ScanBlockReason.none &&
+      // Handle save blocked by document limit
+      if (next.blocked == ScanBlockReason.documentLimitReached &&
           previous?.blocked != next.blocked) {
-        // Show premium upgrade dialog and go back
+        // Show premium upgrade dialog but stay on result screen
+        // User has already scanned, so they can see their scan but not save
         unawaited(() async {
           await PremiumUpgradeDialog.show(context, feature: PremiumFeature.unlimitedScans);
           notifier.clearBlocked();
-          if (context.mounted) {
-            Navigator.of(context).pop();
-          }
         }());
         return;
       }
@@ -144,20 +142,9 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
         unawaited(_showLocalStorageWarningIfNeeded());
       }
 
-      // Show error snackbar
+      // Clear error silently (mascot bubble handles feedback)
       if (next.error != null && previous?.error != next.error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.error!),
-            action: SnackBarAction(
-              label: 'Retry',
-              onPressed: () {
-                notifier.clearError();
-                unawaited(notifier.multiPageScan());
-              },
-            ),
-          ),
-        );
+        notifier.clearError();
       }
     });
 
@@ -212,6 +199,13 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
         onShare: () => _actionHandler.handleShare(state),
         onExport: () => _actionHandler.handleExport(state),
         onDone: () => _navigateToDocuments(context),
+        onCancel: () async {
+          // Discard the scan and go back to home
+          await notifier.discardScan();
+          if (context.mounted) {
+            Navigator.of(context).pop();
+          }
+        },
       );
     }
 

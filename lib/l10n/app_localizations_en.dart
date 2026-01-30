@@ -893,9 +893,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get premiumNoScansLeft => 'You\'ve run out of free scans!';
 
   @override
-  String get premiumTrialEnded => 'Hello, your trial period has ended';
-
-  @override
   String get premiumOcrRequired => 'OCR is reserved for premium members';
 
   @override
@@ -918,7 +915,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get premiumFeatureOcr => 'Text extraction (OCR)';
 
   @override
-  String get premiumPurchaseButton => 'Unlock for €2.99';
+  String premiumPurchaseButton(String price) {
+    return 'Unlock for $price';
+  }
 
   @override
   String get premiumRestorePurchases => 'Restore purchases';

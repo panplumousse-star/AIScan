@@ -5,8 +5,13 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
 
+import 'app_localizations_de.dart';
 import 'app_localizations_en.dart';
+import 'app_localizations_es.dart';
 import 'app_localizations_fr.dart';
+import 'app_localizations_ja.dart';
+import 'app_localizations_ko.dart';
+import 'app_localizations_zh.dart';
 
 // ignore_for_file: type=lint
 
@@ -94,8 +99,13 @@ abstract class AppLocalizations {
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
+    Locale('de'),
     Locale('en'),
-    Locale('fr')
+    Locale('es'),
+    Locale('fr'),
+    Locale('ja'),
+    Locale('ko'),
+    Locale('zh')
   ];
 
   /// No description provided for @appTitle.
@@ -1634,12 +1644,6 @@ abstract class AppLocalizations {
   /// **'Tu n\'as plus de scans gratuits !'**
   String get premiumNoScansLeft;
 
-  /// No description provided for @premiumTrialEnded.
-  ///
-  /// In fr, this message translates to:
-  /// **'Bonjour, ta periode d\'essai est terminee'**
-  String get premiumTrialEnded;
-
   /// No description provided for @premiumOcrRequired.
   ///
   /// In fr, this message translates to:
@@ -1685,8 +1689,8 @@ abstract class AppLocalizations {
   /// No description provided for @premiumPurchaseButton.
   ///
   /// In fr, this message translates to:
-  /// **'Debloquer pour 2,99 €'**
-  String get premiumPurchaseButton;
+  /// **'Débloquer pour {price}'**
+  String premiumPurchaseButton(String price);
 
   /// No description provided for @premiumRestorePurchases.
   ///
@@ -1819,8 +1823,15 @@ class _AppLocalizationsDelegate
   }
 
   @override
-  bool isSupported(Locale locale) =>
-      <String>['en', 'fr'].contains(locale.languageCode);
+  bool isSupported(Locale locale) => <String>[
+        'de',
+        'en',
+        'es',
+        'fr',
+        'ja',
+        'ko',
+        'zh'
+      ].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -1829,10 +1840,20 @@ class _AppLocalizationsDelegate
 AppLocalizations lookupAppLocalizations(Locale locale) {
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
+    case 'de':
+      return AppLocalizationsDe();
     case 'en':
       return AppLocalizationsEn();
+    case 'es':
+      return AppLocalizationsEs();
     case 'fr':
       return AppLocalizationsFr();
+    case 'ja':
+      return AppLocalizationsJa();
+    case 'ko':
+      return AppLocalizationsKo();
+    case 'zh':
+      return AppLocalizationsZh();
   }
 
   throw FlutterError(

@@ -66,16 +66,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     ref.listen<SettingsScreenState>(settingsScreenProvider, (previous, next) {
+      // Clear errors silently - no snackbar needed
       if (next.error != null && previous?.error != next.error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.error!),
-            action: SnackBarAction(
-              label: 'Dismiss',
-              onPressed: notifier.clearError,
-            ),
-          ),
-        );
+        notifier.clearError();
       }
     });
 
@@ -175,14 +168,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                         state.clipboardSecurityEnabled,
                                     clipboardClearTimeout:
                                         state.clipboardClearTimeout,
-                                    sensitiveDataDetectionEnabled:
-                                        state.sensitiveDataDetectionEnabled,
                                     onClipboardSecurityChanged:
                                         notifier.setClipboardSecurityEnabled,
                                     onTimeoutChanged:
                                         notifier.setClipboardClearTimeout,
-                                    onSensitiveDetectionChanged: notifier
-                                        .setSensitiveDataDetectionEnabled,
                                     isDark: isDark,
                                   ),
                                 ),

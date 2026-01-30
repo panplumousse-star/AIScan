@@ -5,19 +5,16 @@ import '../../../../core/widgets/bento_interactive_wrapper.dart';
 
 /// A Bento-style card that displays clipboard security settings.
 ///
-/// Shows clipboard auto-clear toggle, timeout slider, and sensitive data
-/// detection toggle in a visually appealing format consistent with
-/// the app's design language.
+/// Shows clipboard auto-clear toggle and timeout slider in a visually
+/// appealing format consistent with the app's design language.
 class ClipboardSecurityCard extends StatelessWidget {
   /// Creates a [ClipboardSecurityCard] with the given settings and callbacks.
   const ClipboardSecurityCard({
     super.key,
     required this.clipboardSecurityEnabled,
     required this.clipboardClearTimeout,
-    required this.sensitiveDataDetectionEnabled,
     required this.onClipboardSecurityChanged,
     required this.onTimeoutChanged,
-    required this.onSensitiveDetectionChanged,
     required this.isDark,
   });
 
@@ -27,17 +24,11 @@ class ClipboardSecurityCard extends StatelessWidget {
   /// Timeout in seconds before clipboard is cleared.
   final int clipboardClearTimeout;
 
-  /// Whether sensitive data detection is enabled.
-  final bool sensitiveDataDetectionEnabled;
-
   /// Callback when clipboard security toggle changes.
   final ValueChanged<bool> onClipboardSecurityChanged;
 
   /// Callback when timeout value changes.
   final ValueChanged<int> onTimeoutChanged;
-
-  /// Callback when sensitive data detection toggle changes.
-  final ValueChanged<bool> onSensitiveDetectionChanged;
 
   /// Whether dark mode is active.
   final bool isDark;
@@ -106,17 +97,6 @@ class ClipboardSecurityCard extends StatelessWidget {
               isDark: isDark,
             ),
           ],
-
-          const SizedBox(height: 16),
-
-          // Sensitive data detection toggle
-          _buildToggleRow(
-            label: 'Detection donnees sensibles',
-            subtitle: 'Alertes pour donnees sensibles',
-            value: sensitiveDataDetectionEnabled,
-            onChanged: onSensitiveDetectionChanged,
-            isDark: isDark,
-          ),
         ],
       ),
     );

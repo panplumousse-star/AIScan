@@ -687,9 +687,13 @@ class DatabaseMigrationHelper {
       return; // Table is empty, nothing to verify
     }
 
+    // QC-02: Extract first records to local variables for safety
+    final oldRecord = oldFirst.first;
+    final newRecord = newFirst.first;
+
     // Compare first records (basic sanity check)
     // We compare the number of columns as a simple integrity check
-    if (oldFirst.first.length != newFirst.first.length) {
+    if (oldRecord.length != newRecord.length) {
       throw MigrationException(
         'Sample record mismatch for table $tableName: '
         'column count differs',

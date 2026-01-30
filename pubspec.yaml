@@ -1,7 +1,7 @@
 name: aiscan
 description: A privacy-first document scanner application with local-only processing and AES-256 encryption.
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.0+2
 
 environment:
   sdk: '>=3.0.0 <4.0.0'

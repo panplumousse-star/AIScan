@@ -8,13 +8,28 @@ const String _localeKey = 'aiscan_locale';
 /// Represents the supported locales in the application.
 enum AppLocale {
   /// System default locale
-  system('system', 'Systeme'),
+  system('system', 'Système'),
 
   /// French locale
-  french('fr', 'Francais'),
+  french('fr', 'Français'),
 
   /// English locale
-  english('en', 'English');
+  english('en', 'English'),
+
+  /// German locale
+  german('de', 'Deutsch'),
+
+  /// Spanish locale
+  spanish('es', 'Español'),
+
+  /// Japanese locale
+  japanese('ja', '日本語'),
+
+  /// Korean locale
+  korean('ko', '한국어'),
+
+  /// Chinese (Simplified) locale
+  chinese('zh', '中文');
 
   const AppLocale(this.code, this.displayName);
 
@@ -33,6 +48,16 @@ enum AppLocale {
         return const Locale('fr');
       case AppLocale.english:
         return const Locale('en');
+      case AppLocale.german:
+        return const Locale('de');
+      case AppLocale.spanish:
+        return const Locale('es');
+      case AppLocale.japanese:
+        return const Locale('ja');
+      case AppLocale.korean:
+        return const Locale('ko');
+      case AppLocale.chinese:
+        return const Locale('zh');
     }
   }
 
@@ -43,6 +68,16 @@ enum AppLocale {
         return AppLocale.french;
       case 'en':
         return AppLocale.english;
+      case 'de':
+        return AppLocale.german;
+      case 'es':
+        return AppLocale.spanish;
+      case 'ja':
+        return AppLocale.japanese;
+      case 'ko':
+        return AppLocale.korean;
+      case 'zh':
+        return AppLocale.chinese;
       case 'system':
       default:
         return AppLocale.system;

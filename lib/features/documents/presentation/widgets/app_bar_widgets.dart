@@ -137,18 +137,20 @@ class DocumentsBentoHeader extends StatelessWidget {
                     : const Color(0xFFF1F5F9).withValues(alpha: 0.8),
                 borderRadius: 20,
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 child: Center(
                   child: Text(
                     l10n?.whatAreYouLookingFor ?? 'What are you looking for?',
                     style: TextStyle(
                       fontFamily: 'Outfit',
-                      fontSize: 16,
+                      fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: theme.colorScheme.onSurface,
-                      letterSpacing: -0.5,
+                      letterSpacing: -0.3,
                     ),
                     textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ),

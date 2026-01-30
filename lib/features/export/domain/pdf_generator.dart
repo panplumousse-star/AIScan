@@ -414,16 +414,17 @@ class PDFPage {
   }
 
   @override
-  int get hashCode => Object.hash(
-        imageBytes != null ? Object.hashAll(imageBytes!) : null,
-        imagePath,
-        orientation,
-      );
+  int get hashCode {
+    // QC-01: Content-based hash for imageBytes
+    final bytesHash = imageBytes != null ? Object.hashAll(imageBytes!) : null;
+    return Object.hash(bytesHash, imagePath, orientation);
+  }
 
   @override
   String toString() {
-    if (usesBytes) {
-      return 'PDFPage(bytes: ${imageBytes!.length} bytes, '
+    // QC-01: Using pattern matching for null safety
+    if (imageBytes case final bytes?) {
+      return 'PDFPage(bytes: ${bytes.length} bytes, '
           'orientation: $orientation)';
     } else if (usesFile) {
       return 'PDFPage(file: $imagePath, orientation: $orientation)';

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../folders/domain/folder_model.dart';
 import '../../../folders/domain/folder_service.dart';
@@ -45,7 +46,8 @@ class FolderHeaderWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final folderColor = _parseHexColor(folder.color, theme);
+    final folderColor =
+        AppTheme.parseColor(folder.color) ?? theme.colorScheme.primary;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -131,21 +133,6 @@ class FolderHeaderWidget extends ConsumerWidget {
     );
   }
 
-  /// Helper to parse hex color strings from folder.color
-  Color _parseHexColor(String? hexString, ThemeData theme) {
-    if (hexString == null) {
-      return theme.colorScheme.primary;
-    }
-    try {
-      final buffer = StringBuffer();
-      if (hexString.length == 6 || hexString.length == 7) buffer.write('ff');
-      buffer.write(hexString.replaceFirst('#', ''));
-      return Color(int.parse(buffer.toString(), radix: 16));
-    } on Object catch (_) {
-      // Fallback to primary color if parsing fails
-      return theme.colorScheme.primary;
-    }
-  }
 }
 
 /// Documents sliver list widget that displays folders and documents.

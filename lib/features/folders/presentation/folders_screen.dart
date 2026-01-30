@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/bento_confirmation_dialog.dart';
 import '../../../core/widgets/bento_state_views.dart';
 import '../../../l10n/app_localizations.dart';
@@ -486,18 +487,10 @@ class _FoldersScreenWidgetState extends ConsumerState<FoldersScreen> {
     final notifier = ref.read(foldersScreenProvider.notifier);
     final theme = Theme.of(context);
 
-    // Listen for errors and show snackbar
+    // Clear errors silently
     ref.listen<FoldersScreenState>(foldersScreenProvider, (prev, next) {
       if (next.error != null && prev?.error != next.error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.error!),
-            action: SnackBarAction(
-              label: 'Dismiss',
-              onPressed: notifier.clearError,
-            ),
-          ),
-        );
+        notifier.clearError();
       }
     });
 
@@ -975,7 +968,7 @@ class _FolderListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = theme.colorScheme;
     final folderColor =
-        folder.hasColor ? _parseColor(folder.color!) : colorScheme.primary;
+        AppTheme.parseColor(folder.color) ?? colorScheme.primary;
 
     return Material(
       color: isSelected
@@ -1125,20 +1118,6 @@ class _FolderListItem extends StatelessWidget {
     );
   }
 
-  Color _parseColor(String hexColor) {
-    try {
-      final hex = hexColor.replaceAll('#', '');
-      if (hex.length == 6) {
-        return Color(int.parse('FF$hex', radix: 16));
-      }
-      if (hex.length == 8) {
-        return Color(int.parse(hex, radix: 16));
-      }
-    } on Object catch (_) {
-      // Fall through to default
-    }
-    return Colors.blue;
-  }
 }
 
 /// Color picker dialog.
@@ -1219,7 +1198,7 @@ class _ColorOption extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     final displayColor =
-        color != null ? _parseColor(color!) : colorScheme.primary;
+        AppTheme.parseColor(color) ?? colorScheme.primary;
 
     return InkWell(
       onTap: onTap,
@@ -1252,21 +1231,6 @@ class _ColorOption extends StatelessWidget {
                 : null,
       ),
     );
-  }
-
-  Color _parseColor(String hexColor) {
-    try {
-      final hex = hexColor.replaceAll('#', '');
-      if (hex.length == 6) {
-        return Color(int.parse('FF$hex', radix: 16));
-      }
-      if (hex.length == 8) {
-        return Color(int.parse(hex, radix: 16));
-      }
-    } on Object catch (_) {
-      // Fall through to default
-    }
-    return Colors.blue;
   }
 
   Color _getContrastColor(Color color) {

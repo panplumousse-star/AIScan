@@ -218,14 +218,20 @@ class DeviceSecurityService {
       }
 
       // Determine overall status
+      // SEC-13: Clear logic for security status determination
       final DeviceSecurityStatus status;
-      if (threats.contains(DeviceSecurityThreat.jailbroken)) {
+      if (threats.contains(DeviceSecurityThreat.jailbroken) ||
+          threats.contains(DeviceSecurityThreat.rooted)) {
+        // Root/jailbreak = compromised (real security risk)
         status = DeviceSecurityStatus.compromised;
       } else if (threats.isEmpty) {
+        // No threats detected = secure
         status = DeviceSecurityStatus.secure;
       } else {
-        // Development mode or emulator without root - still considered secure
-        // for the purposes of showing a warning
+        // Development mode or emulator without root/jailbreak
+        // These are informational only - not blocking for end users
+        // Developers need these to work, and they don't compromise
+        // the security of production app data
         status = DeviceSecurityStatus.secure;
       }
 

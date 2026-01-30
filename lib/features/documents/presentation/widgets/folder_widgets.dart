@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../folders/domain/folder_model.dart';
 
@@ -56,8 +57,20 @@ class _FoldersSectionState extends State<FoldersSection> {
     }
   }
 
+  /// Détermine si on affiche une seule ligne (≤4 dossiers) ou deux lignes (>4 dossiers)
+  bool get _isSingleRow => widget.folders.length <= 3; // +1 pour le bouton = 4 max
+
+  /// Nombre d'éléments par page selon le mode (4 pour une ligne, 8 pour deux lignes)
+  int get _itemsPerPage => _isSingleRow ? 4 : 8;
+
+  /// Hauteur de la section selon le mode
+  double get _sectionHeight => _isSingleRow ? 70.0 : 145.0;
+
   @override
   Widget build(BuildContext context) {
+    final totalItemsWithButton = widget.folders.length + 1;
+    final totalPages = (totalItemsWithButton / _itemsPerPage).ceil();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -74,28 +87,26 @@ class _FoldersSectionState extends State<FoldersSection> {
           ),
         ),
         SizedBox(
-          height: 180,
+          height: _sectionHeight,
           child: PageView.builder(
             controller: _pageController,
-            // +1 pour le bouton d'ajout sur la première page
-            itemCount: ((widget.folders.length + 1) / 8).ceil(),
+            itemCount: totalPages,
             itemBuilder: (context, pageIndex) {
               // Sur la première page, on a le bouton + puis les dossiers
               // Sur les autres pages, juste les dossiers
-              final totalItemsWithButton = widget.folders.length + 1;
-              final startIndex = pageIndex * 8;
-              final endIndex = min(startIndex + 8, totalItemsWithButton);
+              final startIndex = pageIndex * _itemsPerPage;
+              final endIndex = min(startIndex + _itemsPerPage, totalItemsWithButton);
               final itemsOnThisPage = endIndex - startIndex;
 
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: GridView.builder(
                   physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 4,
-                    mainAxisSpacing: 8,
-                    crossAxisSpacing: 8,
-                    childAspectRatio: 0.85,
+                    mainAxisSpacing: 0,
+                    crossAxisSpacing: 4,
+                    childAspectRatio: _isSingleRow ? 1.2 : 1.15,
                   ),
                   itemCount: itemsOnThisPage,
                   itemBuilder: (context, index) {
@@ -129,9 +140,9 @@ class _FoldersSectionState extends State<FoldersSection> {
           ),
         ),
         // Page indicator dots (only show if multiple pages)
-        if (((widget.folders.length + 1) / 8).ceil() > 1)
+        if (totalPages > 1)
           PageIndicatorDots(
-            totalPages: ((widget.folders.length + 1) / 8).ceil(),
+            totalPages: totalPages,
             currentPage: _currentPage,
             theme: widget.theme,
           ),
@@ -172,42 +183,40 @@ class AddFolderButton extends StatelessWidget {
 
     return Material(
       color: Colors.transparent,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(10),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: isDark
-                ? colorScheme.primary.withValues(alpha: 0.15)
-                : colorScheme.primary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: colorScheme.primary.withValues(alpha: 0.3),
-              width: 1.5,
-            ),
-          ),
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.all(4),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
-                  color: colorScheme.primary.withValues(alpha: 0.2),
-                  shape: BoxShape.circle,
+                  color: isDark
+                      ? colorScheme.primary.withValues(alpha: 0.15)
+                      : colorScheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: colorScheme.primary.withValues(alpha: 0.3),
+                    width: 1.5,
+                  ),
                 ),
                 child: Icon(
                   Icons.add_rounded,
-                  size: 24,
+                  size: 22,
                   color: colorScheme.primary,
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               Text(
                 l10n?.newFolder ?? 'New',
                 style: TextStyle(
                   fontFamily: 'Outfit',
-                  fontSize: 11,
+                  fontSize: 10,
                   fontWeight: FontWeight.w600,
                   color: colorScheme.primary,
                 ),
@@ -240,19 +249,10 @@ class FolderCard extends StatelessWidget {
   final VoidCallback onLongPress;
   final ThemeData theme;
 
-  Color _parseColor(String? hexColor) {
-    if (hexColor == null) return theme.colorScheme.secondary;
-    try {
-      final hex = hexColor.replaceFirst('#', '');
-      return Color(int.parse('FF$hex', radix: 16));
-    } on Object catch (_) {
-      return theme.colorScheme.secondary;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final folderColor = _parseColor(folder.color);
+    final folderColor =
+        AppTheme.parseColor(folder.color) ?? theme.colorScheme.secondary;
     final colorScheme = theme.colorScheme;
 
     return Material(
@@ -273,11 +273,11 @@ class FolderCard extends StatelessWidget {
                 clipBehavior: Clip.none,
                 children: [
                   Container(
-                    width: 48,
-                    height: 48,
+                    width: 40,
+                    height: 40,
                     decoration: BoxDecoration(
                       color: folderColor.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
                       border: isSelected
                           ? Border.all(color: colorScheme.primary, width: 2)
                           : null,
@@ -285,17 +285,17 @@ class FolderCard extends StatelessWidget {
                     child: Icon(
                       Icons.folder,
                       color: folderColor,
-                      size: 28,
+                      size: 24,
                     ),
                   ),
                   // Selection indicator (only in selection mode)
                   if (isSelectionMode)
                     Positioned(
-                      top: -4,
-                      right: -4,
+                      top: -3,
+                      right: -3,
                       child: Container(
-                        width: 20,
-                        height: 20,
+                        width: 17,
+                        height: 17,
                         decoration: BoxDecoration(
                           color: isSelected
                               ? colorScheme.primary
@@ -311,7 +311,7 @@ class FolderCard extends StatelessWidget {
                         child: isSelected
                             ? Icon(
                                 Icons.check,
-                                size: 14,
+                                size: 12,
                                 color: colorScheme.onPrimary,
                               )
                             : null,
@@ -330,14 +330,14 @@ class FolderCard extends StatelessWidget {
                         ),
                         child: Icon(
                           Icons.favorite_rounded,
-                          size: 12,
+                          size: 10,
                           color: colorScheme.error,
                         ),
                       ),
                     ),
                 ],
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               Text(
                 folder.name,
                 style: theme.textTheme.bodySmall?.copyWith(

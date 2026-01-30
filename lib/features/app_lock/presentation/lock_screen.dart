@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import '../../../core/security/biometric_rate_limiter.dart';
 import '../../../core/widgets/bento_background.dart';
 import '../../../core/widgets/bento_card.dart';
 import '../../../l10n/app_localizations.dart';
@@ -30,6 +31,15 @@ class LockScreenState with _$LockScreenState {
 
     /// Error message, if any.
     String? error,
+
+    /// Warning message (e.g., "X attempts remaining").
+    String? warning,
+
+    /// Whether the user is currently locked out.
+    @Default(false) bool isLockedOut,
+
+    /// Remaining lockout time in seconds.
+    @Default(0) int lockoutSecondsRemaining,
   }) = _LockScreenState;
 }
 
@@ -40,21 +50,109 @@ class LockScreenState with _$LockScreenState {
 /// State notifier for the lock screen.
 ///
 /// Manages the biometric authentication flow for unlocking the app.
+/// Includes rate limiting to prevent brute force attacks.
 class LockScreenNotifier extends StateNotifier<LockScreenState> {
   /// Creates a [LockScreenNotifier] with the given [AppLockService].
-  LockScreenNotifier(this._appLockService) : super(const LockScreenState());
+  LockScreenNotifier(this._appLockService, this._rateLimiter)
+      : super(const LockScreenState());
 
   final AppLockService _appLockService;
+  final BiometricRateLimiter _rateLimiter;
+
+  Timer? _lockoutTimer;
 
   /// Callback invoked when authentication succeeds.
   ///
   /// This is set by the UI to handle navigation after successful unlock.
   VoidCallback? onAuthenticationSuccess;
 
+  /// Initializes the notifier and checks rate limit status.
+  Future<void> initialize() async {
+    await _rateLimiter.initialize();
+    await _checkRateLimitStatus();
+  }
+
+  /// Checks and updates the rate limit status.
+  Future<void> _checkRateLimitStatus() async {
+    final info = await _rateLimiter.checkStatus();
+
+    switch (info.status) {
+      case RateLimitStatus.lockedOut:
+        _startLockoutTimer(info.remainingLockout);
+        state = state.copyWith(
+          isLockedOut: true,
+          lockoutSecondsRemaining: info.remainingLockout.inSeconds,
+          error: info.message,
+          warning: null,
+        );
+
+      case RateLimitStatus.delayed:
+        // Wait for the delay before allowing next attempt
+        await Future.delayed(info.waitDuration);
+        state = state.copyWith(
+          isLockedOut: false,
+          warning: info.message,
+          error: null,
+        );
+
+      case RateLimitStatus.allowed:
+        state = state.copyWith(
+          isLockedOut: false,
+          lockoutSecondsRemaining: 0,
+          warning: info.message, // May contain "X attempts remaining"
+          error: null,
+        );
+    }
+  }
+
+  /// Starts a timer to update lockout countdown.
+  void _startLockoutTimer(Duration remaining) {
+    _lockoutTimer?.cancel();
+    _lockoutTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+
+      final newRemaining = state.lockoutSecondsRemaining - 1;
+      if (newRemaining <= 0) {
+        timer.cancel();
+        state = state.copyWith(
+          isLockedOut: false,
+          lockoutSecondsRemaining: 0,
+          error: null,
+        );
+      } else {
+        final minutes = newRemaining ~/ 60;
+        final seconds = newRemaining % 60;
+        state = state.copyWith(
+          lockoutSecondsRemaining: newRemaining,
+          error: minutes > 0
+              ? 'Trop de tentatives. Reessayez dans $minutes min $seconds s'
+              : 'Trop de tentatives. Reessayez dans $seconds s',
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _lockoutTimer?.cancel();
+    super.dispose();
+  }
+
   /// Attempts to authenticate the user using biometric authentication.
   ///
   /// Returns `true` if authentication succeeded, `false` otherwise.
+  /// Implements rate limiting to prevent brute force attacks.
   Future<bool> authenticate() async {
+    // Check rate limit first
+    final rateLimitInfo = await _rateLimiter.checkStatus();
+    if (!rateLimitInfo.canAttemptNow) {
+      await _checkRateLimitStatus();
+      return false;
+    }
+
     // Clear any previous errors and show loading state
     state = state.copyWith(isAuthenticating: true, error: null);
 
@@ -63,36 +161,56 @@ class LockScreenNotifier extends StateNotifier<LockScreenState> {
       final authenticated = await _appLockService.authenticateUser();
 
       if (authenticated) {
-        // Record successful authentication
+        // Record successful authentication (resets rate limiter)
+        await _rateLimiter.recordSuccess();
         _appLockService.recordSuccessfulAuth();
 
         // Update state
-        state = state.copyWith(isAuthenticating: false, error: null);
+        state = state.copyWith(
+          isAuthenticating: false,
+          error: null,
+          warning: null,
+          isLockedOut: false,
+        );
 
         // Notify success callback
         onAuthenticationSuccess?.call();
 
         return true;
       } else {
-        // Authentication failed or was cancelled
+        // Authentication failed - record failure and check rate limit
+        final newInfo = await _rateLimiter.recordFailure();
+
         state = state.copyWith(
           isAuthenticating: false,
-          error: 'Authentication failed. Please try again.',
+          error: newInfo.status == RateLimitStatus.lockedOut
+              ? newInfo.message
+              : 'Echec de l\'authentification. Reessayez.',
+          warning: newInfo.status == RateLimitStatus.allowed
+              ? newInfo.message
+              : null,
+          isLockedOut: newInfo.status == RateLimitStatus.lockedOut,
+          lockoutSecondsRemaining: newInfo.remainingLockout.inSeconds,
         );
+
+        if (newInfo.status == RateLimitStatus.lockedOut) {
+          _startLockoutTimer(newInfo.remainingLockout);
+        }
+
         return false;
       }
     } on AppLockException catch (e) {
-      // Handle app lock service errors
+      // Handle app lock service errors (don't count as failed attempt)
       state = state.copyWith(
         isAuthenticating: false,
         error: e.message,
       );
       return false;
     } on Exception catch (e) {
-      // Handle unexpected errors
+      // Handle unexpected errors (don't count as failed attempt)
       state = state.copyWith(
         isAuthenticating: false,
-        error: 'An unexpected error occurred: $e',
+        error: 'Une erreur inattendue s\'est produite: $e',
       );
       return false;
     }
@@ -109,7 +227,11 @@ final lockScreenProvider =
     StateNotifierProvider.autoDispose<LockScreenNotifier, LockScreenState>(
   (ref) {
     final appLockService = ref.watch(appLockServiceProvider);
-    return LockScreenNotifier(appLockService);
+    final rateLimiter = ref.watch(biometricRateLimiterProvider);
+    final notifier = LockScreenNotifier(appLockService, rateLimiter);
+    // Initialize rate limiter asynchronously
+    notifier.initialize();
+    return notifier;
   },
 );
 
@@ -178,6 +300,13 @@ class _LockScreenWidgetState extends ConsumerState<LockScreen> {
     if (mounted) {
       await ref.read(lockScreenProvider.notifier).authenticate();
     }
+  }
+
+  /// Formats the lockout time in MM:SS format.
+  String _formatLockoutTime(int seconds) {
+    final minutes = seconds ~/ 60;
+    final remainingSeconds = seconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -261,8 +390,47 @@ class _LockScreenWidgetState extends ConsumerState<LockScreen> {
                                   : const Color(0xFF64748B),
                             ),
                           ),
-                          if (state.error != null ||
-                              !state.isAuthenticating) ...[
+                          // Warning message (attempts remaining)
+                          if (state.warning != null && !state.isLockedOut) ...[
+                            const SizedBox(height: 16),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: Colors.orange.withValues(alpha: 0.3),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.warning_amber_rounded,
+                                    size: 16,
+                                    color: Colors.orange,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: Text(
+                                      state.warning!,
+                                      style: const TextStyle(
+                                        fontFamily: 'Outfit',
+                                        fontSize: 12,
+                                        color: Colors.orange,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                          // Unlock button (disabled when locked out)
+                          if (!state.isAuthenticating && !state.isLockedOut) ...[
                             const SizedBox(height: 32),
                             _UnlockButton(
                               onTap: () => ref
@@ -271,6 +439,49 @@ class _LockScreenWidgetState extends ConsumerState<LockScreen> {
                               isDark: isDark,
                             ),
                           ],
+                          // Lockout indicator
+                          if (state.isLockedOut) ...[
+                            const SizedBox(height: 24),
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.red.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.red.withValues(alpha: 0.3),
+                                ),
+                              ),
+                              child: Column(
+                                children: [
+                                  const Icon(
+                                    Icons.lock_clock_rounded,
+                                    size: 32,
+                                    color: Colors.redAccent,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    _formatLockoutTime(state.lockoutSecondsRemaining),
+                                    style: const TextStyle(
+                                      fontFamily: 'Outfit',
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.redAccent,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Trop de tentatives',
+                                    style: TextStyle(
+                                      fontFamily: 'Outfit',
+                                      fontSize: 12,
+                                      color: Colors.redAccent.withValues(alpha: 0.8),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                          // Loading indicator
                           if (state.isAuthenticating) ...[
                             const SizedBox(height: 40),
                             SizedBox(
@@ -288,8 +499,8 @@ class _LockScreenWidgetState extends ConsumerState<LockScreen> {
                       ),
                     ),
 
-                    // Error Message (Subtle)
-                    if (state.error != null) ...[
+                    // Error Message (Subtle) - only show when not locked out
+                    if (state.error != null && !state.isLockedOut) ...[
                       const SizedBox(height: 24),
                       Text(
                         state.error!,

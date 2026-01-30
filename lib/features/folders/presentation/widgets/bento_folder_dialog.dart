@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/bento_card.dart';
 import '../../../../core/widgets/bento_mascot.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -117,15 +118,6 @@ class _BentoFolderDialogState extends State<BentoFolderDialog> {
       color: _selectedColor,
       clearColor: _selectedColor == null && widget.folder?.color != null,
     ));
-  }
-
-  Color _parseColor(String hexColor) {
-    try {
-      final hex = hexColor.replaceFirst('#', '');
-      return Color(int.parse('FF$hex', radix: 16));
-    } on Object catch (_) {
-      return Colors.grey;
-    }
   }
 
   @override
@@ -257,7 +249,7 @@ class _BentoFolderDialogState extends State<BentoFolderDialog> {
                         ),
                         ..._folderColors.map((hex) => _ColorChip(
                               isSelected: _selectedColor == hex,
-                              color: _parseColor(hex),
+                              color: AppTheme.parseColor(hex) ?? Colors.grey,
                               onTap: () => setState(() => _selectedColor = hex),
                             )),
                       ],

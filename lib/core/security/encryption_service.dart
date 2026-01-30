@@ -40,7 +40,12 @@ class IntegrityException extends BaseException {
 /// Performs constant-time comparison of two byte arrays.
 ///
 /// This prevents timing attacks by ensuring the comparison always
-/// takes the same amount of time regardless of where the arrays differ.
+/// takes the same amount of time regardless of where the arrays differ
+/// or if the lengths are different.
+///
+/// SEC-11: Fixed to avoid early return on length mismatch which could
+/// leak timing information. Now uses constant-time length comparison
+/// and always iterates over the maximum length.
 ///
 /// Parameters:
 /// - [a]: The first byte array to compare.
@@ -48,13 +53,17 @@ class IntegrityException extends BaseException {
 ///
 /// Returns `true` if the arrays are equal, `false` otherwise.
 bool _constantTimeEquals(List<int> a, List<int> b) {
-  if (a.length != b.length) {
-    return false;
-  }
+  // XOR the lengths to detect mismatch without branching
+  var result = a.length ^ b.length;
 
-  var result = 0;
-  for (var i = 0; i < a.length; i++) {
-    result |= a[i] ^ b[i];
+  // Iterate over the longer array to ensure constant time
+  final maxLength = a.length > b.length ? a.length : b.length;
+
+  for (var i = 0; i < maxLength; i++) {
+    // Use 0 as default for out-of-bounds access to maintain constant time
+    final aValue = i < a.length ? a[i] : 0;
+    final bValue = i < b.length ? b[i] : 0;
+    result |= aValue ^ bValue;
   }
 
   return result == 0;
@@ -287,8 +296,15 @@ class EncryptionService {
   /// Files larger than this should use [encryptFile] instead.
   static const int maxInMemorySize = 1024 * 1024;
 
+  /// SEC-06: Cache timeout duration (5 minutes).
+  /// After this duration, the cached key is cleared and must be re-fetched.
+  static const Duration _cacheTimeout = Duration(minutes: 5);
+
   /// Cached encryption key for performance.
   String? _cachedKey;
+
+  /// SEC-06: Timestamp when the key was last cached.
+  DateTime? _cachedKeyTimestamp;
 
   /// Encrypts data in memory using AES-256-CBC with HMAC-SHA256 authentication.
   ///
@@ -704,19 +720,31 @@ class EncryptionService {
   /// sensitive operations that require re-authentication.
   void clearCache() {
     _cachedKey = null;
+    _cachedKeyTimestamp = null;
   }
 
   /// Gets the encryption key as a base64-encoded string.
   ///
   /// Creates a new key if one doesn't exist.
+  /// SEC-06: Checks cache timeout and refreshes if expired.
   Future<String> _getEncryptionKeyString() async {
-    if (_cachedKey != null) {
-      return _cachedKey!;
+    // SEC-06: Check if cache is valid (not null and not expired)
+    final cachedKey = _cachedKey;
+    final cachedTimestamp = _cachedKeyTimestamp;
+    if (cachedKey != null && cachedTimestamp != null) {
+      final elapsed = DateTime.now().difference(cachedTimestamp);
+      if (elapsed < _cacheTimeout) {
+        return cachedKey;
+      }
+      // Cache expired, clear it
+      clearCache();
     }
 
     try {
-      _cachedKey = await _secureStorage.getOrCreateEncryptionKey();
-      return _cachedKey!;
+      final key = await _secureStorage.getOrCreateEncryptionKey();
+      _cachedKey = key;
+      _cachedKeyTimestamp = DateTime.now();
+      return key;
     } catch (e) {
       throw EncryptionException('Failed to get encryption key', cause: e);
     }

@@ -66,6 +66,7 @@ class DatabaseHelper {
   static const String columnTitle = 'title';
   static const String columnDescription = 'description';
   static const String columnOcrText = 'ocr_text';
+  static const String columnOcrStatus = 'ocr_status';
   static const String columnCreatedAt = 'created_at';
   static const String columnUpdatedAt = 'updated_at';
   static const String columnFolderId = 'folder_id';
@@ -127,8 +128,7 @@ class DatabaseHelper {
   Future<Database> _initDatabase() async {
     final String path = join(await getDatabasesPath(), _databaseName);
     final encryptionKey = await _secureStorage.getOrCreateEncryptionKey();
-    debugPrint(
-        'DatabaseHelper: Opening database with key length: ${encryptionKey.length}');
+    // SEC-03: Removed debug logging of encryption key metadata
     return openDatabase(
       path,
       version: _databaseVersion,
@@ -238,6 +238,8 @@ class DatabaseHelper {
         'CREATE INDEX idx_documents_favorite ON $tableDocuments($columnIsFavorite)');
     await db.execute(
         'CREATE INDEX idx_documents_created ON $tableDocuments($columnCreatedAt)');
+    await db.execute(
+        'CREATE INDEX idx_documents_ocr_status ON $tableDocuments($columnOcrStatus)');
     await db.execute(
         'CREATE INDEX idx_document_pages_document ON $tableDocumentPages($columnDocumentId)');
     await db.execute(
@@ -670,7 +672,9 @@ class DatabaseHelper {
     return results;
   }
 
-  /// Escapes special characters in FTS queries to prevent syntax errors.
+  /// Escapes special characters in FTS queries to prevent syntax errors and injection.
+  ///
+  /// SEC-09: Enhanced escaping to prevent FTS injection attacks.
   ///
   /// FTS5 and FTS4 have special characters that can cause query syntax errors:
   /// - `"` (double quote) - phrase queries
@@ -678,21 +682,67 @@ class DatabaseHelper {
   /// - `^` (caret) - boost operator (FTS5 only)
   /// - `-` (minus) - exclusion operator
   /// - `+` (plus) - required term operator
+  /// - `\` (backslash) - escape character
+  /// - `(` `)` - grouping operators
+  /// - `NEAR`, `AND`, `OR`, `NOT` - boolean operators
   ///
-  /// This method wraps each search term in double quotes to treat them as literals.
+  /// This method sanitizes and wraps each search term in double quotes
+  /// to treat them as literals and prevent injection attacks.
   ///
   /// Parameters:
   /// - [query]: The raw search query from user input
   ///
   /// Returns an escaped query string safe for FTS MATCH operations.
+  /// Returns an empty string if the query contains only special characters or whitespace.
   String _escapeFtsQuery(String query) {
-    // Split query into terms and wrap each in double quotes
-    // This treats each term as a literal phrase, escaping special characters
-    final terms = query.trim().split(RegExp(r'\s+'));
-    final escapedTerms = terms
+    // SEC-09: Maximum term length to prevent DoS
+    const maxTermLength = 100;
+    const maxTermCount = 20;
+
+    // Trim and handle empty input
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) {
+      return '';
+    }
+
+    // SEC-09: Remove control characters and null bytes that could cause issues
+    final sanitized = trimmed.replaceAll(RegExp(r'[\x00-\x1F\x7F]'), ' ');
+
+    // Split query into terms
+    final terms = sanitized.split(RegExp(r'\s+'));
+
+    // SEC-09: Limit number of terms to prevent DoS
+    final limitedTerms = terms.take(maxTermCount);
+
+    final escapedTerms = limitedTerms
         .where((term) => term.isNotEmpty)
-        .map((term) => '"${term.replaceAll('"', '""')}"')
+        .map((term) {
+          // SEC-09: Truncate overly long terms
+          var truncated = term.length > maxTermLength
+              ? term.substring(0, maxTermLength)
+              : term;
+
+          // SEC-09: Remove backslashes which could interfere with SQL/FTS parsing
+          truncated = truncated.replaceAll(r'\', '');
+
+          // SEC-09: Escape double quotes by doubling them (standard SQL escaping)
+          truncated = truncated.replaceAll('"', '""');
+
+          // Skip empty terms after sanitization
+          if (truncated.isEmpty) {
+            return null;
+          }
+
+          // Wrap in double quotes to treat as literal phrase
+          return '"$truncated"';
+        })
+        .whereType<String>() // Filter out null values
         .toList();
+
+    // Handle case where all terms were filtered out
+    if (escapedTerms.isEmpty) {
+      return '';
+    }
 
     return escapedTerms.join(' ');
   }

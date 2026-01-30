@@ -140,6 +140,19 @@ class BiometricAuthService {
   /// Cached list of available biometric types.
   List<BiometricAuthType>? _cachedBiometrics;
 
+  // SEC-08: Rate limiting for authentication attempts
+  /// Maximum number of failed attempts before lockout.
+  static const int _maxFailedAttempts = 5;
+
+  /// Lockout duration after max failed attempts.
+  static const Duration _lockoutDuration = Duration(minutes: 5);
+
+  /// Counter for consecutive failed authentication attempts.
+  int _failedAttempts = 0;
+
+  /// Timestamp when the last lockout started.
+  DateTime? _lockoutStartTime;
+
   /// Checks the biometric capability of the device.
   ///
   /// Returns the current [BiometricCapability] based on hardware availability
@@ -220,9 +233,11 @@ class BiometricAuthService {
   /// authentication is required (e.g., "Verify your identity to access encrypted documents").
   ///
   /// Optional parameters:
-  /// - [useErrorDialogs]: Whether to show error dialogs for common failures (default: true)
-  /// - [stickyAuth]: Whether authentication dialog should stay visible if app goes to background (default: false)
-  /// - [biometricOnly]: Whether to allow only biometric authentication, disabling device credentials (default: false)
+  /// - [persistAcrossBackgrounding]: Whether authentication should automatically retry
+  ///   when app returns from background instead of failing (default: false)
+  /// - [biometricOnly]: Whether to allow only biometric authentication, disabling
+  ///   device credentials like PIN/passcode (default: false). SEC-07: Use this to
+  ///   enforce biometric-only authentication for sensitive operations.
   ///
   /// Returns `true` if authentication succeeded, `false` if the user cancelled
   /// or authentication failed.
@@ -234,21 +249,39 @@ class BiometricAuthService {
   /// ## Error handling:
   /// - User cancellation returns `false` (not an exception)
   /// - Too many failed attempts may lock out biometrics temporarily (platform-enforced)
+  /// - SEC-08: Application-level rate limiting also applies (5 attempts, 5 min lockout)
   /// - System errors throw [BiometricAuthException]
   ///
   /// Throws [BiometricAuthException] if authentication cannot be performed
-  /// due to system errors (not user cancellation or failed attempts).
+  /// due to system errors (not user cancellation or failed attempts), or if
+  /// SEC-08 rate limiting is in effect.
   Future<bool> authenticate({
     required String reason,
-    bool useErrorDialogs = true,
-    bool stickyAuth = false,
+    bool persistAcrossBackgrounding = false,
     bool biometricOnly = false,
   }) async {
+    // SEC-08: Check if we're currently in lockout
+    if (isLockedOut) {
+      final remainingTime = remainingLockoutTime;
+      throw BiometricAuthException(
+        'Too many failed attempts. Please wait ${remainingTime.inMinutes} minute(s) before trying again.',
+      );
+    }
+
     try {
+      // SEC-07: Pass biometricOnly to ensure only biometric auth is accepted
       final authenticated = await _localAuth.authenticate(
         localizedReason: reason,
-        authMessages: const [],
+        biometricOnly: biometricOnly,
+        persistAcrossBackgrounding: persistAcrossBackgrounding,
       );
+
+      // SEC-08: Update attempt counters based on result
+      if (authenticated) {
+        _resetFailedAttempts();
+      } else {
+        _recordFailedAttempt();
+      }
 
       return authenticated;
     } on Exception catch (e) {
@@ -258,6 +291,8 @@ class BiometricAuthService {
       if (errorMessage.contains('cancel') ||
           errorMessage.contains('user') ||
           errorMessage.contains('auth') && errorMessage.contains('fail')) {
+        // SEC-08: Record failed attempt on authentication failure
+        _recordFailedAttempt();
         return false;
       }
 
@@ -266,6 +301,50 @@ class BiometricAuthService {
         cause: e,
       );
     }
+  }
+
+  // SEC-08: Rate limiting helper methods
+
+  /// Returns `true` if the user is currently locked out due to too many failed attempts.
+  bool get isLockedOut {
+    final lockoutStart = _lockoutStartTime;
+    if (lockoutStart == null) return false;
+
+    final elapsed = DateTime.now().difference(lockoutStart);
+    if (elapsed >= _lockoutDuration) {
+      // Lockout period has expired, reset state
+      _lockoutStartTime = null;
+      _failedAttempts = 0;
+      return false;
+    }
+    return true;
+  }
+
+  /// Returns the remaining lockout time, or [Duration.zero] if not locked out.
+  Duration get remainingLockoutTime {
+    final lockoutStart = _lockoutStartTime;
+    if (lockoutStart == null) return Duration.zero;
+
+    final elapsed = DateTime.now().difference(lockoutStart);
+    final remaining = _lockoutDuration - elapsed;
+    return remaining.isNegative ? Duration.zero : remaining;
+  }
+
+  /// Returns the number of failed authentication attempts.
+  int get failedAttempts => _failedAttempts;
+
+  /// Records a failed authentication attempt.
+  void _recordFailedAttempt() {
+    _failedAttempts++;
+    if (_failedAttempts >= _maxFailedAttempts) {
+      _lockoutStartTime = DateTime.now();
+    }
+  }
+
+  /// Resets the failed attempts counter after successful authentication.
+  void _resetFailedAttempts() {
+    _failedAttempts = 0;
+    _lockoutStartTime = null;
   }
 
   /// Stops any ongoing authentication.
@@ -307,9 +386,20 @@ class BiometricAuthService {
   ///
   /// Useful when returning from device settings where the user may have
   /// enrolled new biometrics.
+  ///
+  /// Note: This does NOT reset rate limiting state. Use [resetRateLimiting]
+  /// explicitly if needed.
   void clearCache() {
     _cachedCapability = null;
     _cachedBiometrics = null;
+  }
+
+  /// Resets the rate limiting state.
+  ///
+  /// SEC-08: Use this method to reset failed attempts counter and lockout state.
+  /// Should only be called after successful authentication or by admin action.
+  void resetRateLimiting() {
+    _resetFailedAttempts();
   }
 
   /// Maps the platform [BiometricType] to our [BiometricAuthType].

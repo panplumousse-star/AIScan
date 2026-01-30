@@ -69,6 +69,7 @@ class ResultView extends ConsumerWidget {
     required this.onShare,
     required this.onExport,
     required this.onDone,
+    this.onCancel,
   });
 
   /// The scan result containing page data.
@@ -102,6 +103,9 @@ class ResultView extends ConsumerWidget {
 
   /// Callback when the user completes all actions.
   final VoidCallback onDone;
+
+  /// Callback when canceling due to document limit reached.
+  final VoidCallback? onCancel;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -214,13 +218,13 @@ class ResultView extends ConsumerWidget {
                     : Colors.white,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(28),
-                  child: savedDocument != null
-                      ? SavedPreview(document: savedDocument!)
-                      : (scanResult != null
-                          ? PagePreview(
-                              imagePath:
-                                  scanResult!.pages[selectedIndex].imagePath)
-                          : const SizedBox()),
+                  // QC-01: Using pattern matching for null safety
+                  child: switch ((savedDocument, scanResult)) {
+                    (final doc?, _) => SavedPreview(document: doc),
+                    (_, final result?) => PagePreview(
+                        imagePath: result.pages[selectedIndex].imagePath),
+                    _ => const SizedBox(),
+                  },
                 ),
               ),
             ),
@@ -229,9 +233,11 @@ class ResultView extends ConsumerWidget {
           const SizedBox(height: 8),
 
           // Page Info Text
-          if (!isSaved && scanResult != null)
-            Text(
-              'Page ${selectedIndex + 1} sur ${scanResult!.pageCount}',
+          // QC-01: Using null-safe pattern with local variable promotion
+          if (!isSaved)
+            if (scanResult case final result?)
+              Text(
+                'Page ${selectedIndex + 1} sur ${result.pageCount}',
               style: TextStyle(
                 fontFamily: 'Outfit',
                 fontSize: 14,
@@ -253,6 +259,7 @@ class ResultView extends ConsumerWidget {
               onShare: onShare,
               onExport: onExport,
               onDone: onDone,
+              onCancel: onCancel,
             ),
           ),
         ],

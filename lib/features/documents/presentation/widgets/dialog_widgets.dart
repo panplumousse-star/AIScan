@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import '../../../folders/domain/folder_model.dart';
 
 /// Dialog for moving documents to a different folder.
@@ -47,16 +48,6 @@ class MoveToFolderDialog extends StatelessWidget {
   final int selectedCount;
   final VoidCallback onCreateFolder;
 
-  Color _parseColor(String? hexColor, ThemeData theme) {
-    if (hexColor == null) return theme.colorScheme.secondary;
-    try {
-      final hex = hexColor.replaceFirst('#', '');
-      return Color(int.parse('FF$hex', radix: 16));
-    } on Object catch (_) {
-      return theme.colorScheme.secondary;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -103,7 +94,8 @@ class MoveToFolderDialog extends StatelessWidget {
                         Icons.folder,
                         color: isCurrentFolder
                             ? theme.colorScheme.primary
-                            : _parseColor(folder.color, theme),
+                            : AppTheme.parseColor(folder.color) ??
+                                theme.colorScheme.secondary,
                       ),
                       title: Text(folder.name),
                       selected: isCurrentFolder,

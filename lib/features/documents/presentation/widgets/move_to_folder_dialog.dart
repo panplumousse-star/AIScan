@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/bento_card.dart';
 import '../../../../core/widgets/bento_mascot.dart';
 import '../../../../core/widgets/bento_speech_bubble.dart';
@@ -61,11 +62,13 @@ class MoveToFolderDialog extends StatefulWidget {
 
 class _MoveToFolderDialogState extends State<MoveToFolderDialog> {
   late String? _selectedFolderId;
+  late List<Folder> _folders;
 
   @override
   void initState() {
     super.initState();
     _selectedFolderId = widget.currentFolderId;
+    _folders = List.from(widget.folders);
   }
 
   Future<void> _showCreateFolderDialog() async {
@@ -73,23 +76,16 @@ class _MoveToFolderDialogState extends State<MoveToFolderDialog> {
     if (result != null && result.name.isNotEmpty && mounted) {
       final newFolder = await widget.onCreateFolder(result.name, result.color);
       if (newFolder != null && mounted) {
-        setState(() => _selectedFolderId = newFolder.id);
+        setState(() {
+          _folders.add(newFolder);
+          _selectedFolderId = newFolder.id;
+        });
       }
     }
   }
 
   void _save() {
     Navigator.of(context).pop(_selectedFolderId);
-  }
-
-  Color _parseColor(String? hexColor) {
-    if (hexColor == null) return const Color(0xFF4F46E5);
-    try {
-      final hex = hexColor.replaceFirst('#', '');
-      return Color(int.parse('FF$hex', radix: 16));
-    } on Object catch (_) {
-      return const Color(0xFF4F46E5);
-    }
   }
 
   @override
@@ -215,14 +211,15 @@ class _MoveToFolderDialogState extends State<MoveToFolderDialog> {
                             ),
                             const SizedBox(height: 8),
                             // Specific folders
-                            ...widget.folders.map((folder) => Padding(
+                            ..._folders.map((folder) => Padding(
                                   padding: const EdgeInsets.only(bottom: 8),
                                   child: _FolderOptionTile(
                                     onTap: () => setState(
                                         () => _selectedFolderId = folder.id),
                                     icon: Icons.folder_rounded,
                                     title: folder.name,
-                                    color: _parseColor(folder.color),
+                                    color: AppTheme.parseColor(folder.color) ??
+                                        const Color(0xFF4F46E5),
                                     isSelected: _selectedFolderId == folder.id,
                                     theme: theme,
                                   ),
@@ -301,7 +298,7 @@ class _MoveToFolderDialogState extends State<MoveToFolderDialog> {
                           child: Container(
                             height: 50,
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.primary,
+                              color: const Color(0xFF6366F1),
                               borderRadius: BorderRadius.circular(14),
                             ),
                             child: Material(
@@ -312,10 +309,10 @@ class _MoveToFolderDialogState extends State<MoveToFolderDialog> {
                                 child: Center(
                                   child: Text(
                                     l10n?.save ?? 'Save',
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       fontFamily: 'Outfit',
                                       fontWeight: FontWeight.w700,
-                                      color: theme.colorScheme.onPrimary,
+                                      color: Colors.white,
                                       fontSize: 15,
                                     ),
                                   ),

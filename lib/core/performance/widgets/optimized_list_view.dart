@@ -54,7 +54,7 @@ import '../optimization/scroll_optimization.dart';
 /// - Bouncing scroll physics with always scrollable
 /// - Automatic keep-alives enabled
 /// - Repaint boundaries enabled
-class OptimizedListView extends ConsumerWidget {
+class OptimizedListView extends ConsumerStatefulWidget {
   /// Creates an [OptimizedListView].
   const OptimizedListView({
     required this.itemCount,
@@ -89,49 +89,110 @@ class OptimizedListView extends ConsumerWidget {
   final VoidCallback? onScrollEnd;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<OptimizedListView> createState() =>
+      _OptimizedListViewState();
+}
+
+class _OptimizedListViewState extends ConsumerState<OptimizedListView> {
+  ScrollController? _ownController;
+  bool _ownsController = false;
+
+  ScrollController get _effectiveController {
+    if (widget.scrollController != null) {
+      return widget.scrollController!;
+    }
+    _ownController ??= ScrollController();
+    _ownsController = true;
+    return _ownController!;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _setupScrollListener();
+  }
+
+  @override
+  void didUpdateWidget(OptimizedListView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // If the external controller or callback changed, re-setup listener
+    if (oldWidget.scrollController != widget.scrollController ||
+        oldWidget.onScrollEnd != widget.onScrollEnd) {
+      _removeScrollListener(oldWidget);
+      // If the external controller changed and we owned the old one, dispose it
+      if (oldWidget.scrollController == null &&
+          widget.scrollController != null &&
+          _ownController != null) {
+        _ownController!.dispose();
+        _ownController = null;
+        _ownsController = false;
+      }
+      _setupScrollListener();
+    }
+  }
+
+  void _setupScrollListener() {
+    if (widget.onScrollEnd != null) {
+      _effectiveController.addListener(_onScroll);
+    }
+  }
+
+  void _removeScrollListener(OptimizedListView oldWidget) {
+    final oldController = oldWidget.scrollController ?? _ownController;
+    oldController?.removeListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_effectiveController.position.pixels >=
+        _effectiveController.position.maxScrollExtent * 0.9) {
+      widget.onScrollEnd?.call();
+    }
+  }
+
+  @override
+  void dispose() {
+    final controller = widget.scrollController ?? _ownController;
+    controller?.removeListener(_onScroll);
+    if (_ownsController) {
+      _ownController?.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final devicePerformance = ref.watch(devicePerformanceProvider);
     final config = ScrollOptimizationConfig.forDevice(devicePerformance);
 
-    // Add scroll listener for pagination
-    final controller = scrollController ?? ScrollController();
+    final controller = _effectiveController;
 
-    if (onScrollEnd != null) {
-      controller.addListener(() {
-        if (controller.position.pixels >=
-            controller.position.maxScrollExtent * 0.9) {
-          onScrollEnd!();
-        }
-      });
-    }
-
-    if (separatorBuilder != null) {
+    if (widget.separatorBuilder != null) {
       return ListView.separated(
         controller: controller,
-        padding: padding,
+        padding: widget.padding,
         physics: config.physics,
         cacheExtent: config.cacheExtent,
         addAutomaticKeepAlives: config.addAutomaticKeepAlives,
         addRepaintBoundaries: config.addRepaintBoundaries,
-        itemCount: itemCount,
+        itemCount: widget.itemCount,
         itemBuilder: (context, index) {
-          return RepaintBoundary(child: itemBuilder(context, index));
+          return RepaintBoundary(child: widget.itemBuilder(context, index));
         },
-        separatorBuilder: separatorBuilder!,
+        separatorBuilder: widget.separatorBuilder!,
       );
     }
 
     return ListView.builder(
       controller: controller,
-      padding: padding,
+      padding: widget.padding,
       physics: config.physics,
       cacheExtent: config.cacheExtent,
       addAutomaticKeepAlives: config.addAutomaticKeepAlives,
       addRepaintBoundaries: config.addRepaintBoundaries,
-      itemExtent: itemExtent ?? config.itemExtent,
-      itemCount: itemCount,
+      itemExtent: widget.itemExtent ?? config.itemExtent,
+      itemCount: widget.itemCount,
       itemBuilder: (context, index) {
-        return RepaintBoundary(child: itemBuilder(context, index));
+        return RepaintBoundary(child: widget.itemBuilder(context, index));
       },
     );
   }

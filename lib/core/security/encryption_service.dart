@@ -82,16 +82,32 @@ bool _constantTimeEquals(List<int> a, List<int> b) {
 ///
 /// Throws [EncryptionException] if key derivation fails.
 Uint8List _deriveHmacKeyTopLevel(Uint8List masterKey) {
-  try {
-    // Use HMAC-SHA256 with the master key to derive HMAC key
-    const hmacKeyDerivationConstant = 'HMAC-KEY-DERIVATION';
-    final hmac = Hmac(sha256, masterKey);
-    final derivedKeyBytes =
-        hmac.convert(utf8.encode(hmacKeyDerivationConstant)).bytes;
+  return _deriveSubKey(masterKey, 'HMAC-KEY-DERIVATION');
+}
 
+/// Derives a purpose-specific sub-key from the master key.
+///
+/// Uses HMAC-SHA256(masterKey, context) to produce a 32-byte key that is
+/// cryptographically independent from the master key and from any other
+/// sub-key derived with a different [context] string.
+///
+/// Parameters:
+/// - [masterKey]: The master encryption key bytes (32 bytes for AES-256).
+/// - [context]: A unique string identifying the purpose of this sub-key.
+///
+/// Returns a 32-byte derived key.
+///
+/// Throws [EncryptionException] if key derivation fails.
+Uint8List _deriveSubKey(Uint8List masterKey, String context) {
+  try {
+    final hmac = Hmac(sha256, masterKey);
+    final derivedKeyBytes = hmac.convert(utf8.encode(context)).bytes;
     return Uint8List.fromList(derivedKeyBytes);
   } catch (e) {
-    throw EncryptionException('Failed to derive HMAC key', cause: e);
+    throw EncryptionException(
+      'Failed to derive sub-key for context: $context',
+      cause: e,
+    );
   }
 }
 
@@ -204,6 +220,9 @@ Uint8List _decryptInIsolate(_DecryptParams params) {
   }
 
   // Try legacy format (IV + ciphertext without HMAC)
+  // SEC-S2: Legacy path has no integrity verification — an attacker could
+  // craft ciphertext that decrypts without HMAC checks. Log a warning so
+  // we can track remaining legacy data and plan a full migration.
   try {
     final cipherLength = params.encryptedData.length - ivSizeBytes;
 
@@ -221,6 +240,14 @@ Uint8List _decryptInIsolate(_DecryptParams params) {
 
       final encrypted = enc.Encrypted(cipherBytes);
       final decrypted = encrypter.decryptBytes(encrypted, iv: iv);
+
+      // ignore: avoid_print — isolate cannot use debugPrint
+      print(
+        '[EncryptionService] WARNING: Legacy decryption without HMAC '
+        'integrity check (isolate path). Data length: '
+        '${params.encryptedData.length} bytes. '
+        'This data should be re-encrypted with HMAC.',
+      );
 
       return Uint8List.fromList(decrypted);
     }
@@ -449,6 +476,9 @@ class EncryptionService {
     }
 
     // Try legacy format (IV + ciphertext without HMAC)
+    // SEC-S2: Legacy path has no integrity verification — an attacker could
+    // craft ciphertext that decrypts without HMAC checks. Log a warning so
+    // we can track remaining legacy data and plan a full migration.
     try {
       final cipherLength = encryptedData.length - _ivSizeBytes;
 
@@ -466,6 +496,12 @@ class EncryptionService {
 
         final encrypted = enc.Encrypted(cipherBytes);
         final decrypted = encrypter.decryptBytes(encrypted, iv: iv);
+
+        debugPrint(
+          '[EncryptionService] WARNING: Legacy decryption without HMAC '
+          'integrity check. Data length: ${encryptedData.length} bytes. '
+          'This data should be re-encrypted with HMAC.',
+        );
 
         return Uint8List.fromList(decrypted);
       }
@@ -550,7 +586,8 @@ class EncryptionService {
     }
 
     try {
-      final key = await _getEncryptionKeyString();
+      // Use derived file-specific key for new encryptions
+      final key = await deriveFileKey();
       final aesEncryptor = AesEncryptFile();
       await aesEncryptor.encryptFile(
         inputPath: inputPath,
@@ -588,13 +625,33 @@ class EncryptionService {
       );
     }
 
+    final aesEncryptor = AesEncryptFile();
+
+    // Try derived file key first (new key-separation scheme)
     try {
-      final key = await _getEncryptionKeyString();
-      final aesEncryptor = AesEncryptFile();
+      final fileKey = await deriveFileKey();
       await aesEncryptor.decryptFile(
         inputPath: inputPath,
         outputPath: outputPath,
-        key: key,
+        key: fileKey,
+      );
+      return;
+    } catch (_) {
+      // Derived key failed — file may have been encrypted with the
+      // legacy raw master key. Fall back below.
+    }
+
+    // Backward-compatible fallback: try raw master key
+    try {
+      final masterKey = await _getEncryptionKeyString();
+      debugPrint(
+        '[EncryptionService] WARNING: file decrypted with legacy master key '
+        '(no key separation). File: $inputPath',
+      );
+      await aesEncryptor.decryptFile(
+        inputPath: inputPath,
+        outputPath: outputPath,
+        key: masterKey,
       );
     } on EncryptionException {
       rethrow;
@@ -784,6 +841,49 @@ class EncryptionService {
   /// Throws [EncryptionException] if key derivation fails.
   Uint8List _deriveHmacKey(Uint8List masterKey) {
     return _deriveHmacKeyTopLevel(masterKey);
+  }
+
+  // ------------------------------------------------------------------
+  // Key separation: purpose-specific sub-keys derived from master key
+  // ------------------------------------------------------------------
+
+  /// Context strings for HMAC-based sub-key derivation.
+  static const _dbKeyContext = 'aiscan-db-encryption';
+  static const _fileKeyContext = 'aiscan-file-encryption';
+
+  /// Derives the database encryption key from the master key.
+  ///
+  /// Uses HMAC-SHA256(masterKey, "aiscan-db-encryption") to produce a
+  /// 32-byte key exclusively for SQLCipher database encryption.
+  /// This is cryptographically independent from the file encryption key.
+  ///
+  /// Returns the derived key as a base64-encoded string (the format
+  /// expected by SQLCipher's `password` parameter).
+  Future<String> deriveDatabaseKey() async {
+    final masterBytes = await _getEncryptionKeyBytes();
+    final dbKeyBytes = _deriveSubKey(masterBytes, _dbKeyContext);
+    return base64Encode(dbKeyBytes);
+  }
+
+  /// Derives the file encryption key from the master key.
+  ///
+  /// Uses HMAC-SHA256(masterKey, "aiscan-file-encryption") to produce a
+  /// 32-byte key exclusively for file encryption via `aes_encrypt_file`.
+  /// This is cryptographically independent from the database key.
+  ///
+  /// Returns the derived key as a base64-encoded string.
+  Future<String> deriveFileKey() async {
+    final masterBytes = await _getEncryptionKeyBytes();
+    final fileKeyBytes = _deriveSubKey(masterBytes, _fileKeyContext);
+    return base64Encode(fileKeyBytes);
+  }
+
+  /// Returns the raw (un-derived) master key string.
+  ///
+  /// Used only for backward-compatible decryption of files/databases
+  /// that were encrypted before key separation was introduced.
+  Future<String> getMasterKeyString() async {
+    return _getEncryptionKeyString();
   }
 
   /// Generates cryptographically secure random bytes.

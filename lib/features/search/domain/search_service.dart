@@ -665,17 +665,17 @@ class RecentSearch {
 /// - Field: `title:word` for specific field
 class SearchService {
   /// Creates a [SearchService] with the required dependencies.
+  ///
+  /// [documentRepository] is accepted for API compatibility but no longer
+  /// used directly — batch queries go through [databaseHelper] instead.
   SearchService({
     required DatabaseHelper databaseHelper,
-    required DocumentRepository documentRepository,
-  })  : _database = databaseHelper,
-        _documentRepository = documentRepository;
+    // ignore: avoid_unused_constructor_parameters
+    DocumentRepository? documentRepository,
+  }) : _database = databaseHelper;
 
-  /// The database helper for FTS queries.
+  /// The database helper for FTS and batch queries.
   final DatabaseHelper _database;
-
-  /// The document repository for retrieving full documents.
-  final DocumentRepository _documentRepository;
 
   /// Maximum number of recent searches to store.
   static const int maxRecentSearches = 20;
@@ -816,28 +816,29 @@ class SearchService {
 
   /// Builds an FTS5 query string based on search options.
   String _buildFtsQuery(String query, SearchOptions options) {
-    // Escape special FTS5 characters
-    var escapedQuery = _escapeFtsSpecialChars(query);
+    // Sanitize using the same logic as DatabaseHelper (SEC-09)
+    final terms = DatabaseHelper.sanitizeFtsTerms(query);
+    if (terms.isEmpty) return '';
+
+    String escapedQuery;
 
     // Apply match mode
     switch (options.matchMode) {
       case SearchMatchMode.prefix:
-        // Add prefix operator to each word
-        final words = escapedQuery.split(RegExp(r'\s+'));
-        escapedQuery = words.map((w) => w.isEmpty ? w : '$w*').join(' ');
+        // Add prefix operator to each quoted term
+        escapedQuery = terms.map((t) => '"$t"*').join(' ');
 
       case SearchMatchMode.phrase:
-        // Wrap in quotes for phrase matching
-        escapedQuery = '"$escapedQuery"';
+        // Wrap all terms as a single quoted phrase
+        escapedQuery = '"${terms.join(' ')}"';
 
       case SearchMatchMode.allWords:
-        // Default FTS5 behavior is AND
-        break; // Keep break for empty case
+        // Default FTS5 behavior is AND — quote each term
+        escapedQuery = terms.map((t) => '"$t"').join(' ');
 
       case SearchMatchMode.anyWord:
-        // Join words with OR
-        final words = escapedQuery.split(RegExp(r'\s+'));
-        escapedQuery = words.where((w) => w.isNotEmpty).join(' OR ');
+        // Join quoted terms with OR
+        escapedQuery = terms.map((t) => '"$t"').join(' OR ');
     }
 
     // Apply field filter if not searching all fields
@@ -847,17 +848,6 @@ class SearchService {
     }
 
     return escapedQuery;
-  }
-
-  /// Escapes special FTS5 characters in a query.
-  String _escapeFtsSpecialChars(String query) {
-    // FTS5 special characters: " * - ^ OR AND NOT NEAR
-    // We want to treat them as literals, so escape with quotes where needed
-    return query
-        .replaceAll('"', ' ')
-        .replaceAll('*', ' ')
-        .replaceAll('^', ' ')
-        .trim();
   }
 
   /// Gets the FTS column name for a search field.
@@ -1033,21 +1023,56 @@ class SearchService {
   }
 
   /// Builds full search results with documents and snippets.
+  ///
+  /// Uses batch queries to avoid N+1: 1 query for documents, 1 for page paths,
+  /// 1 for tags (if requested) instead of 2-3 queries per result.
   Future<List<SearchResult>> _buildSearchResults(
     List<_RawSearchResult> rawResults,
     String query,
     SearchOptions options,
   ) async {
+    if (rawResults.isEmpty) return [];
+
+    final documentIds = rawResults.map((r) => r.documentId).toList();
+
+    // Batch fetch all documents in a single query
+    final placeholders = List.filled(documentIds.length, '?').join(', ');
+    final docRows = await _database.rawQuery(
+      '''
+      SELECT * FROM ${DatabaseHelper.tableDocuments}
+      WHERE ${DatabaseHelper.columnId} IN ($placeholders)
+      ''',
+      documentIds,
+    );
+
+    // Batch fetch page paths for all documents
+    final allPagePaths =
+        await _database.getBatchDocumentPagePaths(documentIds);
+
+    // Batch fetch tags if requested
+    Map<String, List<String>>? allTags;
+    if (options.includeTags) {
+      allTags = await _database.getBatchDocumentTags(documentIds);
+    }
+
+    // Index document rows by ID for O(1) lookup
+    final docRowsById = <String, Map<String, dynamic>>{};
+    for (final row in docRows) {
+      final id = row[DatabaseHelper.columnId] as String;
+      docRowsById[id] = row;
+    }
+
+    // Build results preserving the original order from rawResults
     final results = <SearchResult>[];
-
     for (final raw in rawResults) {
-      // Get full document
-      final document = await _documentRepository.getDocument(
-        raw.documentId,
-        includeTags: options.includeTags,
-      );
+      final row = docRowsById[raw.documentId];
+      if (row == null) continue;
 
-      if (document == null) continue;
+      final pagePaths = allPagePaths[raw.documentId] ?? [];
+      final tags =
+          options.includeTags ? allTags![raw.documentId] : null;
+      final document =
+          Document.fromMap(row, pagesPaths: pagePaths, tags: tags);
 
       // Determine matched fields
       final matchedFields = _determineMatchedFields(raw, query);

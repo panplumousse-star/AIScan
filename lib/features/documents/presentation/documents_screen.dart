@@ -192,23 +192,23 @@ class DocumentsScreenState with _$DocumentsScreenState {
   bool get allSelected => allDocumentsSelected && allFoldersSelected;
 }
 
-/// State notifier for the documents screen.
+/// Notifier for the documents screen.
 ///
 /// Manages document loading, filtering, sorting, and selection.
-class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
-  /// Creates a [DocumentsScreenNotifier] with the given repository and folder service.
-  DocumentsScreenNotifier(
-    this._repository,
-    this._folderService,
-    this._shareService,
-  ) : super(DocumentsScreenState()) {
+class DocumentsScreenNotifier extends AutoDisposeNotifier<DocumentsScreenState> {
+  late final DocumentRepository _repository;
+  late final FolderService _folderService;
+  late final DocumentShareService _shareService;
+
+  @override
+  DocumentsScreenState build() {
+    _repository = ref.watch(documentRepositoryProvider);
+    _folderService = ref.watch(folderServiceProvider);
+    _shareService = ref.watch(documentShareServiceProvider);
     // Initialize LazyLoader for document pagination
     _initializeLazyLoader();
+    return DocumentsScreenState();
   }
-
-  final DocumentRepository _repository;
-  final FolderService _folderService;
-  final DocumentShareService _shareService;
 
   /// Lazy loader for document pagination (20 documents per page).
   late LazyLoader<Document> _lazyLoader;
@@ -587,7 +587,6 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
         .toList();
 
     if (documentsNeedingThumbnails.isEmpty) return;
-    if (!mounted) return;
 
     try {
       // Start performance measurement
@@ -598,7 +597,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
       );
 
       // Update state once with all results
-      if (decryptedThumbnails.isNotEmpty && mounted) {
+      if (decryptedThumbnails.isNotEmpty) {
         state = state.copyWith(
           decryptedThumbnails: {
             ...state.decryptedThumbnails,
@@ -622,7 +621,7 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
       final decryptedBytes = await _repository.getDecryptedThumbnailBytes(
         document,
       );
-      if (decryptedBytes != null && mounted) {
+      if (decryptedBytes != null) {
         state = state.copyWith(
           decryptedThumbnails: {
             ...state.decryptedThumbnails,
@@ -1085,13 +1084,10 @@ class DocumentsScreenNotifier extends StateNotifier<DocumentsScreenState> {
 }
 
 /// Riverpod provider for the documents screen state.
-final documentsScreenProvider = StateNotifierProvider.autoDispose<
-    DocumentsScreenNotifier, DocumentsScreenState>((ref) {
-  final repository = ref.watch(documentRepositoryProvider);
-  final folderService = ref.watch(folderServiceProvider);
-  final shareService = ref.watch(documentShareServiceProvider);
-  return DocumentsScreenNotifier(repository, folderService, shareService);
-});
+final documentsScreenProvider = NotifierProvider.autoDispose<
+    DocumentsScreenNotifier, DocumentsScreenState>(
+  DocumentsScreenNotifier.new,
+);
 
 /// Main documents library screen.
 ///

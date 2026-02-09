@@ -237,9 +237,9 @@ class _AppHomeState extends ConsumerState<_AppHome>
       },
       // While checking lock status, show loading screen
       loading: () => const _LoadingScreen(),
-      // On error, show main app (fail-open for better UX)
+      // On error, fail-closed: keep lock screen up for security
       error: (error, stackTrace) {
-        return const BentoHomeScreen();
+        return const _LockScreenWrapper();
       },
     );
   }

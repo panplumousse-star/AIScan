@@ -31,8 +31,7 @@ import 'package:share_plus/share_plus.dart';
 /// Provider that gets the total document count.
 final totalDocumentCountProvider = FutureProvider.autoDispose<int>((ref) async {
   final repository = ref.read(documentRepositoryProvider);
-  final documents = await repository.getAllDocuments();
-  return documents.length;
+  return repository.getDocumentCount();
 });
 
 /// Provider for a random greeting subtitle index.
@@ -51,11 +50,7 @@ final celebrationMessageIndexProvider = Provider.autoDispose<int>((ref) {
 /// Provider for the number of documents secured in the current month.
 final monthlyScanCountProvider = FutureProvider.autoDispose<int>((ref) async {
   final repository = ref.watch(documentRepositoryProvider);
-  final documents = await repository.getAllDocuments();
-  final now = DateTime.now();
-  final startOfMonth = DateTime(now.year, now.month);
-
-  return documents.where((d) => d.createdAt.isAfter(startOfMonth)).length;
+  return await repository.getMonthlyDocumentCount();
 });
 
 class BentoHomeScreen extends ConsumerStatefulWidget {
@@ -476,13 +471,13 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             decoration: BoxDecoration(
               color: isDark
-                  ? const Color(0xFF000000).withValues(alpha: 0.6)
+                  ? Colors.black.withValues(alpha: 0.6)
                   : AppColors.bentoCardWhite,
               borderRadius: BorderRadius.circular(32),
               border: Border.all(
                 color: isDark
-                    ? const Color(0xFFFFFFFF).withValues(alpha: 0.1)
-                    : const Color(0xFFE2E8F0),
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : AppColors.bentoBorderLight,
                 width: 1.5,
               ),
               boxShadow: [
@@ -500,14 +495,14 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                   decoration: BoxDecoration(
                     color: isDark
                         ? AppColors.surfaceVariantDark
-                        : const Color(0xFFEEF2FF),
+                        : AppColors.bentoIconBgLight,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.verified_user_rounded,
                     color: isDark
-                        ? const Color(0xFF818CF8)
-                        : const Color(0xFF6366F1),
+                        ? AppColors.bentoAccentDark
+                        : AppColors.bentoAccentLight,
                     size: 20,
                   ),
                 ),
@@ -528,7 +523,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                           fontWeight: FontWeight.w700,
                           color: isDark
                               ? AppColors.surfaceVariantLight
-                              : const Color(0xFF1E1B4B),
+                              : AppColors.bentoTextDark,
                         ),
                       ),
                       Text(
@@ -551,12 +546,12 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                     decoration: BoxDecoration(
                       color: isDark
                           ? AppColors.surfaceVariantDark
-                          : const Color(0xFFF5F3FF),
+                          : AppColors.bentoSoftViolet,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: isDark
-                            ? const Color(0xFF818CF8).withValues(alpha: 0.2)
-                            : const Color(0xFF6366F1).withValues(alpha: 0.1),
+                            ? AppColors.bentoAccentDark.withValues(alpha: 0.2)
+                            : AppColors.bentoAccentLight.withValues(alpha: 0.1),
                       ),
                     ),
                     child: Image.asset(
@@ -646,7 +641,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                         : AppColors.surfaceLight,
                     borderColor: isDark
                         ? AppColors.surfaceLight.withValues(alpha: 0.1)
-                        : const Color(0xFFE2E8F0),
+                        : AppColors.bentoBorderLight,
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 12),
                     child: Column(
@@ -722,7 +717,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
             border: Border.all(
               color: isDark
                   ? AppColors.surfaceLight.withValues(alpha: 0.1)
-                  : const Color(0xFFE2E8F0),
+                  : AppColors.bentoBorderLight,
               width: 1.5,
             ),
             boxShadow: [
@@ -917,13 +912,13 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
             height: 140,
             decoration: BoxDecoration(
               color: isDark
-                  ? const Color(0xFF000000).withValues(alpha: 0.6)
+                  ? Colors.black.withValues(alpha: 0.6)
                   : AppColors.bentoCardWhite,
               borderRadius: BorderRadius.circular(32),
               border: Border.all(
                 color: isDark
-                    ? const Color(0xFFFFFFFF).withValues(alpha: 0.1)
-                    : const Color(0xFFE2E8F0),
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : AppColors.bentoBorderLight,
                 width: 1.5,
               ),
               boxShadow: [
@@ -947,11 +942,11 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                         decoration: BoxDecoration(
                           color: isDark
                               ? AppColors.surfaceVariantDark
-                              : const Color(0xFFEEF2FF),
+                              : AppColors.bentoIconBgLight,
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF6366F1)
+                              color: AppColors.bentoAccentLight
                                   .withValues(alpha: isDark ? 0.1 : 0.05),
                               blurRadius: 8,
                             ),
@@ -960,8 +955,8 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                         child: Icon(
                           Icons.folder_copy_rounded,
                           color: isDark
-                              ? const Color(0xFF818CF8)
-                              : const Color(0xFF6366F1),
+                              ? AppColors.bentoAccentDark
+                              : AppColors.bentoAccentLight,
                           size: 20,
                         ),
                       ),
@@ -977,7 +972,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                               fontWeight: FontWeight.w700,
                               color: isDark
                                   ? AppColors.surfaceVariantLight
-                                  : const Color(0xFF1E1B4B),
+                                  : AppColors.bentoTextDark,
                             ),
                           ),
                           Text(
@@ -989,7 +984,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                               fontSize: 14,
                               color: isDark
                                   ? AppColors.neutralDark
-                                  : const Color(0xFF6366F1)
+                                  : AppColors.bentoAccentLight
                                       .withValues(alpha: 0.7),
                             ),
                             maxLines: 1,
@@ -1010,14 +1005,14 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                     decoration: BoxDecoration(
                       color: isDark
                           ? AppColors.surfaceVariantDark
-                          : const Color(0xFFEEF2FF).withValues(alpha: 0.5),
+                          : AppColors.bentoIconBgLight.withValues(alpha: 0.5),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       Icons.arrow_forward_rounded,
                       color: isDark
-                          ? const Color(0xFF818CF8)
-                          : const Color(0xFF6366F1),
+                          ? AppColors.bentoAccentDark
+                          : AppColors.bentoAccentLight,
                       size: 16,
                     ),
                   ),
@@ -1032,7 +1027,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF6366F1),
+                        color: AppColors.bentoAccentLight,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                             color: Colors.white.withValues(alpha: 0.2),
@@ -1079,19 +1074,19 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
             decoration: BoxDecoration(
               color: isDark
-                  ? const Color(0xFF1E1B4B).withValues(alpha: 0.8)
+                  ? AppColors.bentoTextDark.withValues(alpha: 0.8)
                   : Colors.white.withValues(alpha: 0.95),
               gradient: LinearGradient(
                 colors: isDark
                     ? [
-                        const Color(0xFF4F46E5).withValues(alpha: 0.7),
-                        const Color(0xFF7C3AED).withValues(alpha: 0.7),
-                        const Color(0xFFC026D3).withValues(alpha: 0.6),
+                        AppColors.premiumIndigo.withValues(alpha: 0.7),
+                        AppColors.tertiaryLight.withValues(alpha: 0.7),
+                        AppColors.premiumFuchsia.withValues(alpha: 0.6),
                       ]
                     : [
-                        const Color(0xFF6366F1).withValues(alpha: 0.1),
-                        const Color(0xFF8B5CF6).withValues(alpha: 0.1),
-                        const Color(0xFFD946EF).withValues(alpha: 0.05),
+                        AppColors.bentoAccentLight.withValues(alpha: 0.1),
+                        AppColors.premiumViolet.withValues(alpha: 0.1),
+                        AppColors.premiumFuchsiaLight.withValues(alpha: 0.05),
                       ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -1099,8 +1094,8 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
               borderRadius: BorderRadius.circular(28),
               border: Border.all(
                 color: isDark
-                    ? const Color(0xFFFFFFFF).withValues(alpha: 0.15)
-                    : const Color(0xFFE2E8F0),
+                    ? Colors.white.withValues(alpha: 0.15)
+                    : AppColors.bentoBorderLight,
                 width: 1.5,
               ),
               boxShadow: [
@@ -1117,20 +1112,20 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                   children: [
                     // Icon container with glow
                     _PulsingGlow(
-                      glowColor: const Color(0xFF7C3AED),
+                      glowColor: AppColors.tertiaryLight,
                       child: Container(
                         width: 46,
                         height: 46,
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            colors: [Color(0xFF4F46E5), Color(0xFFC026D3)],
+                            colors: [AppColors.premiumIndigo, AppColors.premiumFuchsia],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF7C3AED).withValues(alpha: 0.4),
+                              color: AppColors.tertiaryLight.withValues(alpha: 0.4),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
@@ -1157,7 +1152,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                                   fontFamily: 'Outfit',
                                   fontSize: 17,
                                   fontWeight: FontWeight.w800,
-                                  color: isDark ? Colors.white : const Color(0xFF1E1B4B),
+                                  color: isDark ? Colors.white : AppColors.bentoTextDark,
                                   letterSpacing: -0.2,
                                 ),
                               ),
@@ -1167,7 +1162,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                                     horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
                                   gradient: const LinearGradient(
-                                    colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                                    colors: [AppColors.premiumGold, AppColors.premiumOrange],
                                   ),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
@@ -1192,7 +1187,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                               fontWeight: FontWeight.w500,
                               color: isDark
                                   ? Colors.white.withValues(alpha: 0.7)
-                                  : const Color(0xFF6366F1),
+                                  : AppColors.bentoAccentLight,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -1207,17 +1202,17 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                       decoration: BoxDecoration(
                         color: isDark
                             ? Colors.white.withValues(alpha: 0.1)
-                            : const Color(0xFF7C3AED).withValues(alpha: 0.08),
+                            : AppColors.tertiaryLight.withValues(alpha: 0.08),
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: isDark
                               ? Colors.white.withValues(alpha: 0.05)
-                              : const Color(0xFF7C3AED).withValues(alpha: 0.1),
+                              : AppColors.tertiaryLight.withValues(alpha: 0.1),
                         ),
                       ),
                       child: Icon(
                         Icons.arrow_forward_rounded,
-                        color: isDark ? Colors.white : const Color(0xFF7C3AED),
+                        color: isDark ? Colors.white : AppColors.tertiaryLight,
                         size: 18,
                       ),
                     ),
@@ -1278,14 +1273,14 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                 decoration: BoxDecoration(
                   color: isDark
                       ? AppColors.surfaceVariantDark
-                      : const Color(0xFFEEF2FF), // Soft Indigo background
+                      : AppColors.bentoIconBgLight, // Soft Indigo background
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   Icons.settings_rounded,
                   color: isDark
-                      ? const Color(0xFF818CF8)
-                      : const Color(0xFF6366F1), // Vibrant Indigo
+                      ? AppColors.bentoAccentDark
+                      : AppColors.bentoAccentLight, // Vibrant Indigo
                   size: 20,
                 ),
               ),
@@ -1302,7 +1297,7 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                       fontWeight: FontWeight.w700,
                       color: isDark
                           ? AppColors.surfaceVariantLight
-                          : const Color(0xFF1E1B4B), // Deep Indigo / Off White
+                          : AppColors.bentoTextDark, // Deep Indigo / Off White
                     ),
                   ),
                   Text(
@@ -1314,81 +1309,13 @@ class _BentoHomeScreenState extends ConsumerState<BentoHomeScreen>
                       fontSize: 11,
                       color: isDark
                           ? AppColors.neutralDark
-                          : const Color(0xFF6366F1).withValues(alpha: 0.6),
+                          : AppColors.bentoAccentLight.withValues(alpha: 0.6),
                     ),
                   ),
                 ],
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _FloatingAsset extends StatefulWidget {
-  final double height;
-  final String assetPath;
-  final Offset offset;
-
-  const _FloatingAsset({
-    required this.height,
-    required this.assetPath,
-    required this.offset,
-  });
-
-  @override
-  State<_FloatingAsset> createState() => _FloatingAssetState();
-}
-
-class _FloatingAssetState extends State<_FloatingAsset>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<Offset> _animation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(seconds: 4),
-      vsync: this,
-    );
-    unawaited(_controller.repeat(reverse: true));
-
-    _animation = Tween<Offset>(
-      begin: Offset.zero,
-      end: const Offset(0, 10),
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    ));
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Positioned(
-      right: widget.offset.dx,
-      bottom: widget.offset.dy,
-      child: AnimatedBuilder(
-        animation: _animation,
-        builder: (context, child) {
-          return Transform.translate(
-            offset: _animation.value,
-            child: child,
-          );
-        },
-        child: Image.asset(
-          widget.assetPath,
-          height: widget.height,
-          fit: BoxFit.contain,
-          alignment: Alignment.bottomRight,
         ),
       ),
     );
@@ -1420,11 +1347,21 @@ class _PulsingGlowState extends State<_PulsingGlow>
       duration: const Duration(seconds: 2),
       vsync: this,
     );
-    unawaited(_controller.repeat(reverse: true));
 
     _glowAnimation = Tween<double>(begin: 2.0, end: 12.0).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    if (reduceMotion) {
+      _controller.stop();
+    } else if (!_controller.isAnimating) {
+      _controller.repeat(reverse: true);
+    }
   }
 
   @override
@@ -1435,6 +1372,23 @@ class _PulsingGlowState extends State<_PulsingGlow>
 
   @override
   Widget build(BuildContext context) {
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    if (reduceMotion) {
+      // Static glow at mid-point
+      return DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: widget.glowColor.withValues(alpha: 0.3),
+              blurRadius: 7.0,
+              spreadRadius: 1.75,
+            ),
+          ],
+        ),
+        child: widget.child,
+      );
+    }
     return AnimatedBuilder(
       animation: _glowAnimation,
       builder: (context, child) {
@@ -1550,7 +1504,18 @@ class _PremiumShimmerState extends State<_PremiumShimmer>
     _controller = AnimationController(
       duration: const Duration(seconds: 4),
       vsync: this,
-    )..repeat();
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    if (reduceMotion) {
+      _controller.stop();
+    } else if (!_controller.isAnimating) {
+      _controller.repeat();
+    }
   }
 
   @override
@@ -1561,6 +1526,13 @@ class _PremiumShimmerState extends State<_PremiumShimmer>
 
   @override
   Widget build(BuildContext context) {
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    if (reduceMotion) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: widget.child,
+      );
+    }
     return ClipRRect(
       borderRadius: BorderRadius.circular(28),
       child: Stack(
@@ -1595,39 +1567,3 @@ class _PremiumShimmerState extends State<_PremiumShimmer>
   }
 }
 
-class _RotatingWidget extends StatefulWidget {
-  final Widget child;
-  const _RotatingWidget({required this.child});
-
-  @override
-  State<_RotatingWidget> createState() => _RotatingWidgetState();
-}
-
-class _RotatingWidgetState extends State<_RotatingWidget>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(seconds: 20), // Slower, more majestic rotation
-      vsync: this,
-    );
-    unawaited(_controller.repeat());
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return RotationTransition(
-      turns: _controller,
-      child: widget.child,
-    );
-  }
-}

@@ -9,24 +9,23 @@ import '../../domain/storage_stats.dart';
 import '../../domain/theme_persistence_service.dart';
 import 'settings_screen_state.dart';
 
-/// State notifier for the settings screen.
+/// Notifier for the settings screen.
 ///
 /// Manages theme mode selection and persistence, biometric lock settings, and clipboard security.
-class SettingsScreenNotifier extends StateNotifier<SettingsScreenState> {
-  /// Creates a [SettingsScreenNotifier] with the given dependencies.
-  SettingsScreenNotifier(
-    this._persistenceService,
-    this._themeModeNotifier,
-    this._appLockService,
-    this._clipboardSecurityService,
-    this._documentRepository,
-  ) : super(const SettingsScreenState());
+class SettingsScreenNotifier extends AutoDisposeNotifier<SettingsScreenState> {
+  late final ThemePersistenceService _persistenceService;
+  late final AppLockService _appLockService;
+  late final ClipboardSecurityService _clipboardSecurityService;
+  late final DocumentRepository _documentRepository;
 
-  final ThemePersistenceService _persistenceService;
-  final StateController<ThemeMode> _themeModeNotifier;
-  final AppLockService _appLockService;
-  final ClipboardSecurityService _clipboardSecurityService;
-  final DocumentRepository _documentRepository;
+  @override
+  SettingsScreenState build() {
+    _persistenceService = ref.read(themePersistenceServiceProvider);
+    _appLockService = ref.read(appLockServiceProvider);
+    _clipboardSecurityService = ref.read(clipboardSecurityServiceProvider);
+    _documentRepository = ref.read(documentRepositoryProvider);
+    return const SettingsScreenState();
+  }
 
   /// Initializes settings by loading saved preferences.
   Future<void> initialize() async {
@@ -37,7 +36,7 @@ class SettingsScreenNotifier extends StateNotifier<SettingsScreenState> {
     try {
       // Load theme mode
       final savedThemeMode = await _persistenceService.loadThemeMode();
-      _themeModeNotifier.state = savedThemeMode;
+      ref.read(themeModeProvider.notifier).state = savedThemeMode;
 
       // Initialize and load app lock settings
       await _appLockService.initialize();
@@ -80,7 +79,7 @@ class SettingsScreenNotifier extends StateNotifier<SettingsScreenState> {
     if (mode == state.themeMode) return;
 
     // Update immediately for responsive UI
-    _themeModeNotifier.state = mode;
+    ref.read(themeModeProvider.notifier).state = mode;
     state = state.copyWith(themeMode: mode, error: null);
 
     // Persist in background
@@ -180,21 +179,7 @@ class SettingsScreenNotifier extends StateNotifier<SettingsScreenState> {
 }
 
 /// Riverpod provider for the settings screen state.
-final settingsScreenProvider = StateNotifierProvider.autoDispose<
+final settingsScreenProvider = NotifierProvider.autoDispose<
     SettingsScreenNotifier, SettingsScreenState>(
-  (ref) {
-    final persistenceService = ref.watch(themePersistenceServiceProvider);
-    final themeModeNotifier = ref.watch(themeModeProvider.notifier);
-    final appLockService = ref.watch(appLockServiceProvider);
-    final clipboardSecurityService =
-        ref.watch(clipboardSecurityServiceProvider);
-    final documentRepository = ref.watch(documentRepositoryProvider);
-    return SettingsScreenNotifier(
-      persistenceService,
-      themeModeNotifier,
-      appLockService,
-      clipboardSecurityService,
-      documentRepository,
-    );
-  },
+  SettingsScreenNotifier.new,
 );

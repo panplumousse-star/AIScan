@@ -103,15 +103,17 @@ class FoldersScreenState with _$FoldersScreenState {
   Folder? get currentFolder => breadcrumbs.isNotEmpty ? breadcrumbs.last : null;
 }
 
-/// State notifier for the folders screen.
+/// Notifier for the folders screen.
 ///
 /// Manages folder loading, navigation, creation, and deletion.
-class FoldersScreenNotifier extends StateNotifier<FoldersScreenState> {
-  /// Creates a [FoldersScreenNotifier] with the given service.
-  FoldersScreenNotifier(this._folderService)
-      : super(const FoldersScreenState());
+class FoldersScreenNotifier extends AutoDisposeNotifier<FoldersScreenState> {
+  late final FolderService _folderService;
 
-  final FolderService _folderService;
+  @override
+  FoldersScreenState build() {
+    _folderService = ref.watch(folderServiceProvider);
+    return const FoldersScreenState();
+  }
 
   /// Initializes the screen and loads folders.
   Future<void> initialize() async {
@@ -194,15 +196,13 @@ class FoldersScreenNotifier extends StateNotifier<FoldersScreenState> {
     for (final folder in folders) {
       try {
         final count = await _folderService.getDocumentCount(folder.id);
-        if (mounted) {
-          stats[folder.id] = count;
-        }
+        stats[folder.id] = count;
       } on Object catch (_) {
         // Ignore stats loading errors
       }
     }
 
-    if (mounted && stats.isNotEmpty) {
+    if (stats.isNotEmpty) {
       state = state.copyWith(folderStats: {...state.folderStats, ...stats});
     }
   }
@@ -425,11 +425,10 @@ class FoldersScreenNotifier extends StateNotifier<FoldersScreenState> {
 }
 
 /// Riverpod provider for the folders screen state.
-final foldersScreenProvider = StateNotifierProvider.autoDispose<
-    FoldersScreenNotifier, FoldersScreenState>((ref) {
-  final folderService = ref.watch(folderServiceProvider);
-  return FoldersScreenNotifier(folderService);
-});
+final foldersScreenProvider = NotifierProvider.autoDispose<
+    FoldersScreenNotifier, FoldersScreenState>(
+  FoldersScreenNotifier.new,
+);
 
 /// Main folder management screen.
 ///

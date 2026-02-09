@@ -831,6 +831,13 @@ class DatabaseMigrationHelper {
       )
     ''');
 
+    // Create indexes for common queries
+    await DatabaseHelper.createIndexes(db);
+
+    // Initialize FTS tables and triggers for full-text search
+    // Triggers will fire during data copy to populate the FTS index
+    await DatabaseHelper.initializeFts(db);
+
     debugPrint('Database schema created successfully');
   }
 }

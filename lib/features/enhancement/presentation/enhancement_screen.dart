@@ -102,17 +102,13 @@ class EnhancementScreenState with _$EnhancementScreenState {
   }
 }
 
-/// State notifier for the enhancement screen.
+/// Notifier for the enhancement screen.
 ///
 /// Manages enhancement adjustments and preview generation with debouncing.
-class EnhancementScreenNotifier extends StateNotifier<EnhancementScreenState> {
-  /// Creates an [EnhancementScreenNotifier] with the given image processor.
-  EnhancementScreenNotifier(
-    this._imageProcessor,
-  ) : super(EnhancementScreenState());
-
-  final ImageProcessor _imageProcessor;
+class EnhancementScreenNotifier extends AutoDisposeNotifier<EnhancementScreenState> {
+  late final ImageProcessor _imageProcessor;
   Timer? _debounceTimer;
+  bool _disposed = false;
 
   /// Duration to wait before applying preview updates.
   static const _debounceDuration = Duration(milliseconds: 300);
@@ -121,6 +117,17 @@ class EnhancementScreenNotifier extends StateNotifier<EnhancementScreenState> {
   ///
   /// Images are resized to fit within this dimension for faster processing.
   static const int _previewMaxDimension = 1200;
+
+  @override
+  EnhancementScreenState build() {
+    _imageProcessor = ref.read(imageProcessorProvider);
+    _disposed = false;
+    ref.onDispose(() {
+      _debounceTimer?.cancel();
+      _disposed = true;
+    });
+    return EnhancementScreenState();
+  }
 
   /// Loads an image from the given file path.
   Future<void> loadImage(String imagePath) async {
@@ -355,22 +362,22 @@ class EnhancementScreenNotifier extends StateNotifier<EnhancementScreenState> {
         quality: 85, // Lower quality for preview
       );
 
-      // Only update if still mounted and state hasn't changed
-      if (mounted) {
+      // Only update if still alive and state hasn't changed
+      if (!_disposed) {
         state = state.copyWith(
           previewBytes: result.bytes,
           isProcessing: false,
         );
       }
     } on ImageProcessorException catch (e) {
-      if (mounted) {
+      if (!_disposed) {
         state = state.copyWith(
           isProcessing: false,
           error: e.message,
         );
       }
     } on Object catch (_) {
-      if (mounted) {
+      if (!_disposed) {
         state = state.copyWith(
           isProcessing: false,
           error: 'Failed to process image',
@@ -454,20 +461,12 @@ class EnhancementScreenNotifier extends StateNotifier<EnhancementScreenState> {
     state = state.copyWith(error: null);
   }
 
-  @override
-  void dispose() {
-    _debounceTimer?.cancel();
-    super.dispose();
-  }
 }
 
 /// Riverpod provider for the enhancement screen state.
-final enhancementScreenProvider = StateNotifierProvider.autoDispose<
+final enhancementScreenProvider = NotifierProvider.autoDispose<
     EnhancementScreenNotifier, EnhancementScreenState>(
-  (ref) {
-    final imageProcessor = ref.watch(imageProcessorProvider);
-    return EnhancementScreenNotifier(imageProcessor);
-  },
+  EnhancementScreenNotifier.new,
 );
 
 /// Enhancement preview screen with adjustment controls.

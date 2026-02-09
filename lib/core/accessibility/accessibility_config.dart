@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -404,34 +405,8 @@ abstract final class A11yContrast {
 // Helper extension for power function
 extension _DoubleExtension on double {
   double power(double exponent) {
-    if (this < 0) return 0;
-    return this == 0 ? 0 : (this > 0 ? exp(log(this) * exponent) : 0);
-  }
-
-  // Simple exp and log approximation for dart
-  double exp(double x) {
-    // Using dart:math would be better, but keeping it simple
-    double result = 1.0;
-    double term = 1.0;
-    for (int i = 1; i <= 20; i++) {
-      term *= x / i;
-      result += term;
-    }
-    return result;
-  }
-
-  double log(double x) {
-    if (x <= 0) return double.negativeInfinity;
-    // Natural log approximation using continued fraction
-    double y = (x - 1) / (x + 1);
-    double y2 = y * y;
-    double result = 0.0;
-    double term = y;
-    for (int i = 1; i <= 40; i += 2) {
-      result += term / i;
-      term *= y2;
-    }
-    return 2 * result;
+    if (this <= 0) return 0;
+    return math.pow(this, exponent).toDouble();
   }
 }
 

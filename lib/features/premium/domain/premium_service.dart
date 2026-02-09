@@ -139,18 +139,19 @@ final premiumServiceProvider = Provider<PremiumService>((ref) {
 });
 
 /// Provider for the debug premium toggle state.
-final debugPremiumProvider = StateNotifierProvider<DebugPremiumNotifier, bool>(
-  (ref) {
-    final service = ref.watch(premiumServiceProvider);
-    return DebugPremiumNotifier(service);
-  },
+final debugPremiumProvider = NotifierProvider<DebugPremiumNotifier, bool>(
+  DebugPremiumNotifier.new,
 );
 
 /// Notifier for the debug premium toggle.
-class DebugPremiumNotifier extends StateNotifier<bool> {
-  DebugPremiumNotifier(this._service) : super(_service.isDebugPremiumEnabled());
+class DebugPremiumNotifier extends Notifier<bool> {
+  late final PremiumService _service;
 
-  final PremiumService _service;
+  @override
+  bool build() {
+    _service = ref.watch(premiumServiceProvider);
+    return _service.isDebugPremiumEnabled();
+  }
 
   /// Toggles the debug premium mode.
   Future<void> toggle() async {

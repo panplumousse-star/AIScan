@@ -181,6 +181,7 @@ class _BentoAnimatedEntryState extends State<BentoAnimatedEntry>
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  bool _reduceMotion = false;
 
   @override
   void initState() {
@@ -200,12 +201,22 @@ class _BentoAnimatedEntryState extends State<BentoAnimatedEntry>
     ).animate(
       CurvedAnimation(parent: _controller, curve: widget.curve),
     );
+  }
 
-    Future.delayed(widget.delay, () {
-      if (mounted) {
-        unawaited(_controller.forward());
-      }
-    });
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _reduceMotion = MediaQuery.disableAnimationsOf(context);
+    if (_reduceMotion) {
+      // Show immediately — no animation
+      _controller.value = 1.0;
+    } else if (!_controller.isCompleted && !_controller.isAnimating) {
+      Future.delayed(widget.delay, () {
+        if (mounted) {
+          unawaited(_controller.forward());
+        }
+      });
+    }
   }
 
   @override
@@ -216,6 +227,9 @@ class _BentoAnimatedEntryState extends State<BentoAnimatedEntry>
 
   @override
   Widget build(BuildContext context) {
+    if (_reduceMotion) {
+      return widget.child;
+    }
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {

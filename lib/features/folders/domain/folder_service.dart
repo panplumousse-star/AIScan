@@ -829,26 +829,25 @@ class FolderService {
       // Get all descendants (already sorted from children outward)
       final descendants = await getDescendantFolders(folderId);
 
-      // Delete in reverse order (deepest first) to avoid orphaning
-      int deleteCount = 0;
-      for (final descendant in descendants.reversed) {
-        await _database.delete(
-          DatabaseHelper.tableFolders,
-          where: '${DatabaseHelper.columnId} = ?',
-          whereArgs: [descendant.id],
-        );
-        deleteCount++;
-      }
+      // Collect all IDs to delete (deepest first, then the folder itself)
+      final idsToDelete = [
+        ...descendants.reversed.map((d) => d.id),
+        folderId,
+      ];
 
-      // Delete the folder itself
-      await _database.delete(
-        DatabaseHelper.tableFolders,
-        where: '${DatabaseHelper.columnId} = ?',
-        whereArgs: [folderId],
-      );
-      deleteCount++;
-
-      return deleteCount;
+      // Delete all in a single transaction so a mid-way failure rolls back
+      return await _database.transaction<int>((txn) async {
+        int deleteCount = 0;
+        for (final id in idsToDelete) {
+          await txn.delete(
+            DatabaseHelper.tableFolders,
+            where: '${DatabaseHelper.columnId} = ?',
+            whereArgs: [id],
+          );
+          deleteCount++;
+        }
+        return deleteCount;
+      });
     } on Object catch (e) {
       if (e is FolderServiceException) {
         rethrow;

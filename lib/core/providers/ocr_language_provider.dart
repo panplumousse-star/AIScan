@@ -126,12 +126,16 @@ final ocrLanguagePersistenceServiceProvider =
   return OcrLanguagePersistenceService();
 });
 
-/// State notifier for managing the OCR language preference.
-class OcrLanguageNotifier extends StateNotifier<OcrLanguageOption> {
-  OcrLanguageNotifier(this._persistenceService) : super(OcrLanguageOption.auto);
-
-  final OcrLanguagePersistenceService _persistenceService;
+/// Notifier for managing the OCR language preference.
+class OcrLanguageNotifier extends Notifier<OcrLanguageOption> {
+  late final OcrLanguagePersistenceService _persistenceService;
   bool _isInitialized = false;
+
+  @override
+  OcrLanguageOption build() {
+    _persistenceService = ref.read(ocrLanguagePersistenceServiceProvider);
+    return OcrLanguageOption.auto;
+  }
 
   /// Whether the OCR language has been loaded from storage.
   bool get isInitialized => _isInitialized;
@@ -164,10 +168,9 @@ class OcrLanguageNotifier extends StateNotifier<OcrLanguageOption> {
 /// Provides the current [OcrLanguageOption] and allows changing it.
 /// The preference is persisted to SharedPreferences.
 final ocrLanguageProvider =
-    StateNotifierProvider<OcrLanguageNotifier, OcrLanguageOption>((ref) {
-  final persistenceService = ref.watch(ocrLanguagePersistenceServiceProvider);
-  return OcrLanguageNotifier(persistenceService);
-});
+    NotifierProvider<OcrLanguageNotifier, OcrLanguageOption>(
+  OcrLanguageNotifier.new,
+);
 
 /// Riverpod provider that converts OcrLanguageOption to OcrLanguage.
 ///

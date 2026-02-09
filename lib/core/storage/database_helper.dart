@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqflite_sqlcipher/sqflite.dart';
@@ -17,7 +19,9 @@ final databaseHelperProvider = Provider<DatabaseHelper>((ref) {
 /// Uses SQLCipher for AES-256 encryption of all database contents including
 /// metadata, OCR text, and full-text search indexes. The encryption key is
 /// managed by [SecureStorageService] using platform secure storage
-/// (Android KeyStore/iOS Keychain) - the same key used for file encryption.
+/// (Android KeyStore/iOS Keychain). A database-specific sub-key is derived
+/// from the master key using HMAC-SHA256, ensuring the DB key is
+/// cryptographically independent from the file encryption key.
 ///
 /// Implements FTS5/FTS4 fallback strategy for full-text search capabilities.
 /// Supports three modes:
@@ -117,25 +121,66 @@ class DatabaseHelper {
     return _database!;
   }
 
+  /// Context string for deriving the database-specific encryption key.
+  static const _dbKeyContext = 'aiscan-db-encryption';
+
   /// Initializes the encrypted database using SQLCipher.
   ///
-  /// Retrieves the encryption key from [SecureStorageService] and passes it
-  /// to SQLCipher as the database password. This ensures all database contents
-  /// are encrypted at rest using AES-256 encryption.
+  /// Derives a database-specific key from the master encryption key using
+  /// HMAC-SHA256(masterKey, "aiscan-db-encryption") so the database and
+  /// file encryption keys are cryptographically independent.
   ///
-  /// The same encryption key is used for both file encryption and database
-  /// encryption, providing consistent security across all stored data.
+  /// For backward compatibility with existing databases encrypted with the
+  /// raw master key, falls back to the master key if the derived key fails
+  /// to open the database, then rekeys to the derived key.
   Future<Database> _initDatabase() async {
     final String path = join(await getDatabasesPath(), _databaseName);
-    final encryptionKey = await _secureStorage.getOrCreateEncryptionKey();
-    // SEC-03: Removed debug logging of encryption key metadata
-    return openDatabase(
+    final masterKey = await _secureStorage.getOrCreateEncryptionKey();
+    final derivedDbKey = _deriveDatabaseKey(masterKey);
+
+    // Try derived key first (new installs or already-migrated databases)
+    try {
+      return await openDatabase(
+        path,
+        version: _databaseVersion,
+        onCreate: _onCreate,
+        onUpgrade: _onUpgrade,
+        password: derivedDbKey,
+      );
+    } catch (_) {
+      // Derived key failed — database may be encrypted with raw master key.
+    }
+
+    // Fallback: open with raw master key, then rekey to derived key
+    debugPrint(
+      '[DatabaseHelper] Opening database with legacy master key, '
+      'will rekey to derived key.',
+    );
+    final db = await openDatabase(
       path,
       version: _databaseVersion,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
-      password: encryptionKey,
+      password: masterKey,
     );
+
+    // Rekey the database to the derived key for future opens
+    // SQLCipher PRAGMA rekey changes the encryption key in-place.
+    try {
+      await db.rawQuery("PRAGMA rekey = '$derivedDbKey'");
+    } catch (e) {
+      debugPrint('[DatabaseHelper] WARNING: rekey failed: $e');
+    }
+
+    return db;
+  }
+
+  /// Derives a database-specific key from the master key using HMAC-SHA256.
+  String _deriveDatabaseKey(String masterKeyBase64) {
+    final masterBytes = base64Decode(masterKeyBase64);
+    final hmac = Hmac(sha256, masterBytes);
+    final derivedBytes = hmac.convert(utf8.encode(_dbKeyContext)).bytes;
+    return base64Encode(derivedBytes);
   }
 
   /// Creates database tables and FTS indexes within the encrypted database.
@@ -232,23 +277,10 @@ class DatabaseHelper {
     ''');
 
     // Create indices for common queries
-    await db.execute(
-        'CREATE INDEX idx_documents_folder ON $tableDocuments($columnFolderId)');
-    await db.execute(
-        'CREATE INDEX idx_documents_favorite ON $tableDocuments($columnIsFavorite)');
-    await db.execute(
-        'CREATE INDEX idx_documents_created ON $tableDocuments($columnCreatedAt)');
-    await db.execute(
-        'CREATE INDEX idx_documents_ocr_status ON $tableDocuments($columnOcrStatus)');
-    await db.execute(
-        'CREATE INDEX idx_document_pages_document ON $tableDocumentPages($columnDocumentId)');
-    await db.execute(
-        'CREATE UNIQUE INDEX idx_document_pages_order ON $tableDocumentPages($columnDocumentId, $columnPageNumber)');
-    await db.execute(
-        'CREATE INDEX idx_search_history_timestamp ON $tableSearchHistory($columnTimestamp)');
+    await createIndexes(db);
 
     // Initialize FTS tables and triggers with automatic fallback
-    await _initializeFts(db);
+    await initializeFts(db);
   }
 
   /// Handles database upgrades.
@@ -265,16 +297,20 @@ class DatabaseHelper {
     // Migration from version 2 to 3: Add search_history table
     if (oldVersion < 3) {
       await db.execute('''
-        CREATE TABLE $tableSearchHistory (
+        CREATE TABLE IF NOT EXISTS $tableSearchHistory (
           $columnId INTEGER PRIMARY KEY AUTOINCREMENT,
           $columnQuery TEXT NOT NULL,
           $columnTimestamp TEXT NOT NULL,
           $columnResultCount INTEGER NOT NULL DEFAULT 0
         )
       ''');
-      await db.execute(
-          'CREATE INDEX idx_search_history_timestamp ON $tableSearchHistory($columnTimestamp)');
     }
+
+    // Ensure all indexes exist (uses IF NOT EXISTS for safety)
+    await createIndexes(db);
+
+    // Ensure FTS tables and triggers exist and rebuild index for existing data
+    await initializeFts(db);
   }
 
   /// Closes the database connection.
@@ -309,7 +345,7 @@ class DatabaseHelper {
   ///
   /// Throws [DatabaseException] with 'no such module: fts5' if FTS5
   /// is not available on the device.
-  Future<void> _createFts5Tables(Database db) async {
+  static Future<void> _createFts5Tables(Database db) async {
     await db.execute('''
       CREATE VIRTUAL TABLE $tableDocumentsFts USING fts5(
         $columnTitle,
@@ -330,7 +366,7 @@ class DatabaseHelper {
   ///
   /// Note: FTS5 uses a special 'delete' command syntax for removing entries,
   /// which differs from FTS4's standard DELETE statement.
-  Future<void> _createFts5Triggers(Database db) async {
+  static Future<void> _createFts5Triggers(Database db) async {
     // AFTER INSERT trigger - add new document to FTS index
     await db.execute('''
       CREATE TRIGGER documents_ai AFTER INSERT ON $tableDocuments BEGIN
@@ -369,7 +405,7 @@ class DatabaseHelper {
   ///
   /// Throws [DatabaseException] with 'no such module: fts4' if FTS4
   /// is not available on the device.
-  Future<void> _createFts4Tables(Database db) async {
+  static Future<void> _createFts4Tables(Database db) async {
     await db.execute('''
       CREATE VIRTUAL TABLE $tableDocumentsFts USING fts4(
         $columnTitle,
@@ -389,7 +425,7 @@ class DatabaseHelper {
   ///
   /// Note: FTS4 uses standard DELETE statement syntax for removing entries,
   /// which differs from FTS5's special 'delete' command syntax.
-  Future<void> _createFts4Triggers(Database db) async {
+  static Future<void> _createFts4Triggers(Database db) async {
     // AFTER INSERT trigger - add new document to FTS index
     // FTS4 uses docid instead of rowid for the primary key reference
     await db.execute('''
@@ -418,6 +454,29 @@ class DatabaseHelper {
     ''');
   }
 
+  /// Creates all database indexes using IF NOT EXISTS for idempotent execution.
+  ///
+  /// Can be called safely from both [_onCreate] and [_onUpgrade] as well as
+  /// from [DatabaseMigrationHelper] after migration. Uses IF NOT EXISTS to
+  /// avoid errors when indexes already exist.
+  static Future<void> createIndexes(Database db) async {
+    await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_documents_folder ON $tableDocuments($columnFolderId)');
+    await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_documents_favorite ON $tableDocuments($columnIsFavorite)');
+    await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_documents_created ON $tableDocuments($columnCreatedAt)');
+    await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_documents_ocr_status ON $tableDocuments($columnOcrStatus)');
+    await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_document_pages_document ON $tableDocumentPages($columnDocumentId)');
+    await db.execute(
+        'CREATE UNIQUE INDEX IF NOT EXISTS idx_document_pages_order ON $tableDocumentPages($columnDocumentId, $columnPageNumber)');
+    await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_search_history_timestamp ON $tableSearchHistory($columnTimestamp)');
+    debugPrint('Database indexes created/verified successfully');
+  }
+
   /// Initializes FTS (Full-Text Search) tables with automatic fallback.
   ///
   /// Implements a three-tier fallback strategy:
@@ -435,28 +494,36 @@ class DatabaseHelper {
   /// ```dart
   /// Future<void> _onCreate(Database db, int version) async {
   ///   await db.execute('CREATE TABLE ...');
-  ///   await _initializeFts(db);
+  ///   await initializeFts(db);
   /// }
   /// ```
-  Future<void> _initializeFts(Database db) async {
+  static Future<void> initializeFts(Database db) async {
+    // Clean up any existing FTS tables/triggers first so we can recreate them
+    // This makes initializeFts idempotent and safe to call from _onUpgrade
+    await _cleanupFts(db);
+
     // Check FTS5 availability first (without creating table)
     if (await _isFtsModuleAvailable(db, 'fts5')) {
       try {
         await _createFts5Tables(db);
         await _createFts5Triggers(db);
+        await _rebuildFtsIndex(db);
         setFtsVersion(5);
+        debugPrint('FTS5 initialized and rebuilt successfully');
         return;
       } on Object catch (_) {
         await _cleanupFts(db);
       }
-    } else {}
+    }
 
     // Check FTS4 availability
     if (await _isFtsModuleAvailable(db, 'fts4')) {
       try {
         await _createFts4Tables(db);
         await _createFts4Triggers(db);
+        await _rebuildFtsIndex(db);
         setFtsVersion(4);
+        debugPrint('FTS4 initialized and rebuilt successfully');
         return;
       } on Object catch (_) {
         await _cleanupFts(db);
@@ -465,10 +532,25 @@ class DatabaseHelper {
 
     // FTS completely disabled - app will use LIKE-based search
     setFtsVersion(0);
+    debugPrint('FTS unavailable, using LIKE-based search');
+  }
+
+  /// Rebuilds the FTS index to include all existing documents.
+  ///
+  /// This is essential after migration or upgrade to ensure existing
+  /// data is indexed in the FTS virtual table.
+  static Future<void> _rebuildFtsIndex(Database db) async {
+    try {
+      await db.execute('''
+        INSERT INTO $tableDocumentsFts($tableDocumentsFts) VALUES('rebuild')
+      ''');
+    } on Object catch (e) {
+      debugPrint('FTS rebuild failed: $e');
+    }
   }
 
   /// Checks if an FTS module is available without creating a table.
-  Future<bool> _isFtsModuleAvailable(Database db, String moduleName) async {
+  static Future<bool> _isFtsModuleAvailable(Database db, String moduleName) async {
     try {
       // Query the compile_options to check for FTS support
       final result = await db.rawQuery('PRAGMA compile_options');
@@ -492,7 +574,7 @@ class DatabaseHelper {
   }
 
   /// Cleans up FTS tables and triggers after a failed initialization attempt.
-  Future<void> _cleanupFts(Database db) async {
+  static Future<void> _cleanupFts(Database db) async {
     try {
       await db.execute('DROP TRIGGER IF EXISTS documents_ai');
       await db.execute('DROP TRIGGER IF EXISTS documents_ad');
@@ -695,56 +777,51 @@ class DatabaseHelper {
   /// Returns an escaped query string safe for FTS MATCH operations.
   /// Returns an empty string if the query contains only special characters or whitespace.
   String _escapeFtsQuery(String query) {
-    // SEC-09: Maximum term length to prevent DoS
+    final terms = sanitizeFtsTerms(query);
+    if (terms.isEmpty) return '';
+    return terms.map((t) => '"$t"').join(' ');
+  }
+
+  /// Sanitizes a raw query string into safe FTS search terms.
+  ///
+  /// SEC-09: Prevents FTS injection and DoS by:
+  /// - Removing control characters and null bytes
+  /// - Limiting term count and length
+  /// - Removing backslashes that could interfere with SQL/FTS parsing
+  /// - Escaping double quotes by doubling them
+  ///
+  /// Returns a list of sanitized terms safe for use in FTS MATCH queries.
+  /// Callers are responsible for wrapping terms with FTS operators
+  /// (e.g. prefix `*`, phrase `""`, `OR`).
+  static List<String> sanitizeFtsTerms(String query) {
     const maxTermLength = 100;
     const maxTermCount = 20;
 
-    // Trim and handle empty input
     final trimmed = query.trim();
-    if (trimmed.isEmpty) {
-      return '';
-    }
+    if (trimmed.isEmpty) return [];
 
-    // SEC-09: Remove control characters and null bytes that could cause issues
+    // Remove control characters and null bytes
     final sanitized = trimmed.replaceAll(RegExp(r'[\x00-\x1F\x7F]'), ' ');
 
-    // Split query into terms
+    // Split into terms and limit count
     final terms = sanitized.split(RegExp(r'\s+'));
-
-    // SEC-09: Limit number of terms to prevent DoS
     final limitedTerms = terms.take(maxTermCount);
 
-    final escapedTerms = limitedTerms
+    return limitedTerms
         .where((term) => term.isNotEmpty)
         .map((term) {
-          // SEC-09: Truncate overly long terms
-          var truncated = term.length > maxTermLength
+          // Truncate overly long terms
+          var t = term.length > maxTermLength
               ? term.substring(0, maxTermLength)
               : term;
-
-          // SEC-09: Remove backslashes which could interfere with SQL/FTS parsing
-          truncated = truncated.replaceAll(r'\', '');
-
-          // SEC-09: Escape double quotes by doubling them (standard SQL escaping)
-          truncated = truncated.replaceAll('"', '""');
-
-          // Skip empty terms after sanitization
-          if (truncated.isEmpty) {
-            return null;
-          }
-
-          // Wrap in double quotes to treat as literal phrase
-          return '"$truncated"';
+          // Remove backslashes
+          t = t.replaceAll(r'\', '');
+          // Escape double quotes by doubling
+          t = t.replaceAll('"', '""');
+          return t.isEmpty ? null : t;
         })
-        .whereType<String>() // Filter out null values
+        .whereType<String>()
         .toList();
-
-    // Handle case where all terms were filtered out
-    if (escapedTerms.isEmpty) {
-      return '';
-    }
-
-    return escapedTerms.join(' ');
   }
 
   /// Searches documents using the best available search method.

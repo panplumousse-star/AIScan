@@ -112,7 +112,10 @@ class ExportedImage {
 
   @override
   int get hashCode => Object.hash(
-        Object.hashAll(bytes),
+        bytes.length,
+        bytes.isEmpty ? 0 : bytes.first,
+        bytes.length > 1 ? bytes[bytes.length ~/ 2] : 0,
+        bytes.isEmpty ? 0 : bytes.last,
         width,
         height,
         format,
@@ -178,7 +181,7 @@ class BatchExportResult {
 
   @override
   int get hashCode => Object.hash(
-        Object.hashAll(exportedImages),
+        exportedImages.length,
         totalFileSize,
         outputDirectory,
         baseName,

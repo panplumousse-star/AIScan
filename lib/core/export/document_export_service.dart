@@ -530,23 +530,19 @@ class DocumentExportService {
 
   /// Generates a PDF from decrypted page images.
   ///
+  /// Uses file-based generation to avoid loading all page images into
+  /// memory simultaneously, preventing OOM on large documents.
+  ///
   /// Returns the PDF bytes.
   Future<Uint8List> _generatePdfFromPages(
     Document document,
     List<String> pagePaths,
   ) async {
     try {
-      // Read page images
-      final imageBytesList = <Uint8List>[];
-      for (final pagePath in pagePaths) {
-        final file = File(pagePath);
-        final bytes = await file.readAsBytes();
-        imageBytesList.add(bytes);
-      }
-
-      // Generate PDF with high quality settings
-      final pdfResult = await _pdfGenerator.generateFromBytes(
-        imageBytesList: imageBytesList,
+      // Generate PDF directly from file paths — each page is read, processed,
+      // and released one at a time inside the isolate
+      final pdfResult = await _pdfGenerator.generateFromFiles(
+        imagePaths: pagePaths,
         options: PDFGeneratorOptions(
           title: document.title,
           imageQuality: 95,

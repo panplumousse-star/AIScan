@@ -137,12 +137,16 @@ final localePersistenceServiceProvider =
   return LocalePersistenceService();
 });
 
-/// State notifier for managing the application locale.
-class LocaleNotifier extends StateNotifier<AppLocale> {
-  LocaleNotifier(this._persistenceService) : super(AppLocale.system);
-
-  final LocalePersistenceService _persistenceService;
+/// Notifier for managing the application locale.
+class LocaleNotifier extends Notifier<AppLocale> {
+  late final LocalePersistenceService _persistenceService;
   bool _isInitialized = false;
+
+  @override
+  AppLocale build() {
+    _persistenceService = ref.read(localePersistenceServiceProvider);
+    return AppLocale.system;
+  }
 
   /// Whether the locale has been loaded from storage.
   bool get isInitialized => _isInitialized;
@@ -174,10 +178,9 @@ class LocaleNotifier extends StateNotifier<AppLocale> {
 ///
 /// Provides the current [AppLocale] and allows changing it.
 /// The locale is persisted to SharedPreferences.
-final localeProvider = StateNotifierProvider<LocaleNotifier, AppLocale>((ref) {
-  final persistenceService = ref.watch(localePersistenceServiceProvider);
-  return LocaleNotifier(persistenceService);
-});
+final localeProvider = NotifierProvider<LocaleNotifier, AppLocale>(
+  LocaleNotifier.new,
+);
 
 /// Riverpod provider that converts AppLocale to Flutter Locale.
 ///

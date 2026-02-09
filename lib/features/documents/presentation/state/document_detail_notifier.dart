@@ -117,7 +117,8 @@ class DocumentDetailScreenState {
         other.isDecrypting == isDecrypting &&
         other.isDeleting == isDeleting &&
         other.isFullScreen == isFullScreen &&
-        other.error == error;
+        other.error == error &&
+        listEquals(other.imageBytes, imageBytes);
   }
 
   @override
@@ -129,19 +130,25 @@ class DocumentDetailScreenState {
         isDeleting,
         isFullScreen,
         error,
+        imageBytes == null ? null : identityHashCode(imageBytes),
       );
 }
 
-/// State notifier for the document detail screen.
+/// Notifier for the document detail screen.
 ///
 /// Manages document loading, decryption, and actions.
 class DocumentDetailScreenNotifier
-    extends StateNotifier<DocumentDetailScreenState> {
-  /// Creates a [DocumentDetailScreenNotifier] with the given repository.
-  DocumentDetailScreenNotifier(this._repository)
-      : super(const DocumentDetailScreenState());
+    extends AutoDisposeNotifier<DocumentDetailScreenState> {
+  late final DocumentRepository _repository;
 
-  final DocumentRepository _repository;
+  @override
+  DocumentDetailScreenState build() {
+    _repository = ref.watch(documentRepositoryProvider);
+    ref.onDispose(() {
+      unawaited(cleanup());
+    });
+    return const DocumentDetailScreenState();
+  }
 
   /// Loads a document by ID.
   Future<void> loadDocument(String documentId) async {
@@ -409,16 +416,10 @@ class DocumentDetailScreenNotifier
     }
   }
 
-  @override
-  void dispose() {
-    unawaited(cleanup());
-    super.dispose();
-  }
 }
 
 /// Riverpod provider for the document detail screen state.
-final documentDetailScreenProvider = StateNotifierProvider.autoDispose<
-    DocumentDetailScreenNotifier, DocumentDetailScreenState>((ref) {
-  final repository = ref.watch(documentRepositoryProvider);
-  return DocumentDetailScreenNotifier(repository);
-});
+final documentDetailScreenProvider = NotifierProvider.autoDispose<
+    DocumentDetailScreenNotifier, DocumentDetailScreenState>(
+  DocumentDetailScreenNotifier.new,
+);

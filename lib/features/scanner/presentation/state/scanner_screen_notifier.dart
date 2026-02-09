@@ -30,24 +30,30 @@ import '../../../premium/domain/scan_usage_service.dart';
 import '../../domain/scanner_service.dart';
 import 'scanner_screen_state.dart';
 
-/// State notifier for the scanner screen.
+/// Notifier for the scanner screen.
 ///
 /// Handles the scanning process, preview, and saving workflow.
 /// Integrates premium feature gating for free tier limitations.
-class ScannerScreenNotifier extends StateNotifier<ScannerScreenState> {
-  /// Creates a [ScannerScreenNotifier] with the given services.
-  ScannerScreenNotifier(
-    this._scannerService,
-    this._storageService,
-    this._ref,
-  ) : super(const ScannerScreenState());
+class ScannerScreenNotifier extends AutoDisposeNotifier<ScannerScreenState> {
+  late final ScannerService _scannerService;
+  late final ScannerStorageService _storageService;
 
-  final ScannerService _scannerService;
-  final ScannerStorageService _storageService;
-  final Ref _ref;
+  @override
+  ScannerScreenState build() {
+    _scannerService = ref.watch(scannerServiceProvider);
+    _storageService = ref.watch(scannerStorageServiceProvider);
+
+    ref.onDispose(() {
+      if (state.scanResult != null) {
+        unawaited(_scannerService.cleanupScanResult(state.scanResult!));
+      }
+    });
+
+    return const ScannerScreenState();
+  }
 
   /// Checks if the user has premium access.
-  bool get _isPremium => _ref.read(isPremiumProvider);
+  bool get _isPremium => ref.read(isPremiumProvider);
 
   /// Starts a document scan with the given options.
   ///
@@ -139,7 +145,7 @@ class ScannerScreenNotifier extends StateNotifier<ScannerScreenState> {
 
   /// Returns the number of documents remaining for free users.
   int get documentsRemaining {
-    final usage = _ref.read(scanUsageProvider);
+    final usage = ref.read(scanUsageProvider);
     return usage.documentsRemaining;
   }
 
@@ -172,8 +178,8 @@ class ScannerScreenNotifier extends StateNotifier<ScannerScreenState> {
     if (_isPremium) return true;
 
     // Refresh the document count from repository
-    await _ref.read(scanUsageProvider.notifier).refresh();
-    final usage = _ref.read(scanUsageProvider);
+    await ref.read(scanUsageProvider.notifier).refresh();
+    final usage = ref.read(scanUsageProvider);
     return usage.canSaveDocument;
   }
 
@@ -217,7 +223,7 @@ class ScannerScreenNotifier extends StateNotifier<ScannerScreenState> {
       );
 
       // Refresh document count after saving
-      unawaited(_ref.read(scanUsageProvider.notifier).refresh());
+      unawaited(ref.read(scanUsageProvider.notifier).refresh());
 
       state = state.copyWith(
         isSaving: false,
@@ -259,22 +265,10 @@ class ScannerScreenNotifier extends StateNotifier<ScannerScreenState> {
 
   /// Gets the saved document, if any.
   Document? get savedDocument => state.savedDocument;
-
-  @override
-  void dispose() {
-    if (state.scanResult != null) {
-      unawaited(_scannerService.cleanupScanResult(state.scanResult!));
-    }
-    super.dispose();
-  }
 }
 
 /// Riverpod provider for the scanner screen state.
-final scannerScreenProvider = StateNotifierProvider.autoDispose<
+final scannerScreenProvider = NotifierProvider.autoDispose<
     ScannerScreenNotifier, ScannerScreenState>(
-  (ref) {
-    final scannerService = ref.watch(scannerServiceProvider);
-    final storageService = ref.watch(scannerStorageServiceProvider);
-    return ScannerScreenNotifier(scannerService, storageService, ref);
-  },
+  ScannerScreenNotifier.new,
 );

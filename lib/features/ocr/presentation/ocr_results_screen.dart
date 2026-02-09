@@ -92,14 +92,17 @@ class OcrResultsScreenState with _$OcrResultsScreenState {
   bool get canCopy => hasResult && !isLoading;
 }
 
-/// State notifier for the OCR results screen.
+/// Notifier for the OCR results screen.
 ///
 /// Manages OCR processing, text extraction, and user actions.
-class OcrResultsScreenNotifier extends StateNotifier<OcrResultsScreenState> {
-  /// Creates an [OcrResultsScreenNotifier] with the given OCR service.
-  OcrResultsScreenNotifier(this._ocrService) : super(OcrResultsScreenState());
+class OcrResultsScreenNotifier extends AutoDisposeNotifier<OcrResultsScreenState> {
+  late final OcrService _ocrService;
 
-  final OcrService _ocrService;
+  @override
+  OcrResultsScreenState build() {
+    _ocrService = ref.read(ocrServiceProvider);
+    return OcrResultsScreenState();
+  }
 
   /// Sets up the screen with initial data.
   ///
@@ -310,12 +313,9 @@ class OcrResultsScreenNotifier extends StateNotifier<OcrResultsScreenState> {
 }
 
 /// Riverpod provider for the OCR results screen state.
-final ocrResultsScreenProvider = StateNotifierProvider.autoDispose<
+final ocrResultsScreenProvider = NotifierProvider.autoDispose<
     OcrResultsScreenNotifier, OcrResultsScreenState>(
-  (ref) {
-    final ocrService = ref.watch(ocrServiceProvider);
-    return OcrResultsScreenNotifier(ocrService);
-  },
+  OcrResultsScreenNotifier.new,
 );
 
 /// Screen for displaying and interacting with OCR results.

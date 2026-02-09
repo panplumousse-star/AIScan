@@ -85,6 +85,22 @@ abstract final class AppColors {
   static const Color bentoBackground = Color(0xFFF8FAFC);
   static const Color bentoCardWhite = Color(0xFFFFFFFF);
 
+  // Bento Home screen semantic colors
+  static const Color bentoBorderLight = Color(0xFFE2E8F0); // Slate-200
+  static const Color bentoIconBgLight = Color(0xFFEEF2FF); // Indigo-50
+  static const Color bentoAccentLight = Color(0xFF6366F1); // Indigo-500
+  static const Color bentoAccentDark = Color(0xFF818CF8); // Indigo-400
+  static const Color bentoTextDark = Color(0xFF1E1B4B); // Indigo-950
+  static const Color bentoSoftViolet = Color(0xFFF5F3FF); // Violet-50
+
+  // Premium gradient colors
+  static const Color premiumIndigo = Color(0xFF4F46E5); // Indigo-600
+  static const Color premiumFuchsia = Color(0xFFC026D3); // Fuchsia-600
+  static const Color premiumViolet = Color(0xFF8B5CF6); // Violet-500
+  static const Color premiumFuchsiaLight = Color(0xFFD946EF); // Fuchsia-500
+  static const Color premiumGold = Color(0xFFFFD700);
+  static const Color premiumOrange = Color(0xFFFFA500);
+
   // Folder colors for organization
   static const List<Color> folderColors = [
     Color(0xFFEF4444), // Red
@@ -292,7 +308,7 @@ abstract final class AppTheme {
   // ==========================================================================
 
   /// The light theme for the application.
-  static ThemeData get lightTheme => _buildLightTheme();
+  static final ThemeData lightTheme = _buildLightTheme();
 
   static ThemeData _buildLightTheme() {
     final colorScheme = ColorScheme.fromSeed(
@@ -666,7 +682,7 @@ abstract final class AppTheme {
   // ==========================================================================
 
   /// The dark theme for the application.
-  static ThemeData get darkTheme => _buildDarkTheme();
+  static final ThemeData darkTheme = _buildDarkTheme();
 
   static ThemeData _buildDarkTheme() {
     final colorScheme = ColorScheme.fromSeed(

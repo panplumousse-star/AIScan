@@ -47,24 +47,38 @@ class LockScreenState with _$LockScreenState {
 // Lock Screen Notifier
 // ============================================================================
 
-/// State notifier for the lock screen.
+/// Notifier for the lock screen.
 ///
 /// Manages the biometric authentication flow for unlocking the app.
 /// Includes rate limiting to prevent brute force attacks.
-class LockScreenNotifier extends StateNotifier<LockScreenState> {
-  /// Creates a [LockScreenNotifier] with the given [AppLockService].
-  LockScreenNotifier(this._appLockService, this._rateLimiter)
-      : super(const LockScreenState());
-
-  final AppLockService _appLockService;
-  final BiometricRateLimiter _rateLimiter;
+class LockScreenNotifier extends AutoDisposeNotifier<LockScreenState> {
+  late final AppLockService _appLockService;
+  late final BiometricRateLimiter _rateLimiter;
 
   Timer? _lockoutTimer;
+  bool _disposed = false;
 
   /// Callback invoked when authentication succeeds.
   ///
   /// This is set by the UI to handle navigation after successful unlock.
   VoidCallback? onAuthenticationSuccess;
+
+  @override
+  LockScreenState build() {
+    _appLockService = ref.watch(appLockServiceProvider);
+    _rateLimiter = ref.watch(biometricRateLimiterProvider);
+    _disposed = false;
+
+    ref.onDispose(() {
+      _disposed = true;
+      _lockoutTimer?.cancel();
+    });
+
+    // Initialize rate limiter asynchronously
+    initialize();
+
+    return const LockScreenState();
+  }
 
   /// Initializes the notifier and checks rate limit status.
   Future<void> initialize() async {
@@ -109,7 +123,7 @@ class LockScreenNotifier extends StateNotifier<LockScreenState> {
   void _startLockoutTimer(Duration remaining) {
     _lockoutTimer?.cancel();
     _lockoutTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) {
+      if (_disposed) {
         timer.cancel();
         return;
       }
@@ -133,12 +147,6 @@ class LockScreenNotifier extends StateNotifier<LockScreenState> {
         );
       }
     });
-  }
-
-  @override
-  void dispose() {
-    _lockoutTimer?.cancel();
-    super.dispose();
   }
 
   /// Attempts to authenticate the user using biometric authentication.
@@ -224,15 +232,8 @@ class LockScreenNotifier extends StateNotifier<LockScreenState> {
 
 /// Riverpod provider for the lock screen state.
 final lockScreenProvider =
-    StateNotifierProvider.autoDispose<LockScreenNotifier, LockScreenState>(
-  (ref) {
-    final appLockService = ref.watch(appLockServiceProvider);
-    final rateLimiter = ref.watch(biometricRateLimiterProvider);
-    final notifier = LockScreenNotifier(appLockService, rateLimiter);
-    // Initialize rate limiter asynchronously
-    notifier.initialize();
-    return notifier;
-  },
+    NotifierProvider.autoDispose<LockScreenNotifier, LockScreenState>(
+  LockScreenNotifier.new,
 );
 
 // ============================================================================

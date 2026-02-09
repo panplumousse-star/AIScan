@@ -76,15 +76,21 @@ class SearchScreenState with _$SearchScreenState {
   bool get showInitialState => query.isEmpty && results == null;
 }
 
-/// State notifier for the search screen.
+/// Notifier for the search screen.
 ///
 /// Manages search operations, suggestions, and history.
-class SearchScreenNotifier extends StateNotifier<SearchScreenState> {
-  /// Creates a [SearchScreenNotifier] with the given search service.
-  SearchScreenNotifier(this._searchService) : super(const SearchScreenState());
-
-  final SearchService _searchService;
+class SearchScreenNotifier extends AutoDisposeNotifier<SearchScreenState> {
+  late final SearchService _searchService;
   Timer? _debounceTimer;
+
+  @override
+  SearchScreenState build() {
+    _searchService = ref.watch(searchServiceProvider);
+    ref.onDispose(() {
+      _debounceTimer?.cancel();
+    });
+    return const SearchScreenState();
+  }
 
   /// Duration to wait before performing search after typing.
   static const _searchDebounce = Duration(milliseconds: 400);
@@ -297,20 +303,12 @@ class SearchScreenNotifier extends StateNotifier<SearchScreenState> {
     state = state.copyWith(error: null);
   }
 
-  @override
-  void dispose() {
-    _debounceTimer?.cancel();
-    super.dispose();
-  }
 }
 
 /// Riverpod provider for the search screen state.
 final searchScreenProvider =
-    StateNotifierProvider.autoDispose<SearchScreenNotifier, SearchScreenState>(
-  (ref) {
-    final searchService = ref.watch(searchServiceProvider);
-    return SearchScreenNotifier(searchService);
-  },
+    NotifierProvider.autoDispose<SearchScreenNotifier, SearchScreenState>(
+  SearchScreenNotifier.new,
 );
 
 /// Search screen with query input and results list.

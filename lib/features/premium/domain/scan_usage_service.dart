@@ -14,8 +14,8 @@ class ScanUsageService {
 
   /// Loads the current document usage from the repository.
   Future<ScanUsage> loadUsage() async {
-    final documents = await _repository.getAllDocuments();
-    return ScanUsage(documentCount: documents.length);
+    final count = await _repository.getDocumentCount();
+    return ScanUsage(documentCount: count);
   }
 
   /// Checks if the user can save a new document.
@@ -31,11 +31,15 @@ final scanUsageServiceProvider = Provider<ScanUsageService>((ref) {
   return ScanUsageService(repository);
 });
 
-/// StateNotifier for managing document usage state reactively.
-class ScanUsageNotifier extends StateNotifier<ScanUsage> {
-  ScanUsageNotifier(this._service) : super(const ScanUsage());
+/// Notifier for managing document usage state reactively.
+class ScanUsageNotifier extends Notifier<ScanUsage> {
+  late final ScanUsageService _service;
 
-  final ScanUsageService _service;
+  @override
+  ScanUsage build() {
+    _service = ref.watch(scanUsageServiceProvider);
+    return const ScanUsage();
+  }
 
   /// Refreshes the document count from the repository.
   Future<void> refresh() async {
@@ -51,10 +55,9 @@ class ScanUsageNotifier extends StateNotifier<ScanUsage> {
 
 /// Provider for the scan usage state notifier.
 final scanUsageProvider =
-    StateNotifierProvider<ScanUsageNotifier, ScanUsage>((ref) {
-  final service = ref.watch(scanUsageServiceProvider);
-  return ScanUsageNotifier(service);
-});
+    NotifierProvider<ScanUsageNotifier, ScanUsage>(
+  ScanUsageNotifier.new,
+);
 
 /// Provider that exposes the current document count.
 final documentCountProvider = Provider<int>((ref) {
